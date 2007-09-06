@@ -1,0 +1,273 @@
+Index: madwifi/net80211/ieee80211_ioctl.h
+===================================================================
+--- madwifi.orig/net80211/ieee80211_ioctl.h	2007-09-06 23:18:31.000000000 +0200
++++ madwifi/net80211/ieee80211_ioctl.h	2007-09-06 23:14:59.000000000 +0200
+@@ -246,7 +246,7 @@
+ 	u_int8_t im_ssid[IEEE80211_NWID_LEN];
+ };
+ 
+-/* 
++/*
+  * MAC ACL operations.
+  */
+ enum {
+@@ -534,6 +534,7 @@
+ #define	IEEE80211_IOCTL_WDSADDMAC	(SIOCIWFIRSTPRIV+26)
+ #define	IEEE80211_IOCTL_WDSDELMAC	(SIOCIWFIRSTPRIV+28)
+ #define	IEEE80211_IOCTL_KICKMAC		(SIOCIWFIRSTPRIV+30)
++#define	IEEE80211_IOCTL_MESHMODE	(SIOCIWFIRSTPRIV+32)
+ 
+ enum {
+ 	IEEE80211_WMMPARAMS_CWMIN       = 1,
+@@ -602,7 +603,7 @@
+ 	IEEE80211_PARAM_MARKDFS			= 58,	/* mark a dfs interference channel when found */
+ 	IEEE80211_PARAM_REGCLASS		= 59,	/* enable regclass ids in country IE */
+ 	IEEE80211_PARAM_DROPUNENC_EAPOL		= 60,	/* drop unencrypted eapol frames */
+- 	IEEE80211_PARAM_SHPREAMBLE		= 61,	/* Short Preamble */
++	IEEE80211_PARAM_SHPREAMBLE		= 61,	/* Short Preamble */
+ 	IEEE80211_PARAM_DUMPREGS		= 62,   /* Pretty printed dump of Atheros hardware registers */
+ };
+ 
+Index: madwifi/net80211/ieee80211_wireless.c
+===================================================================
+--- madwifi.orig/net80211/ieee80211_wireless.c	2007-09-06 23:18:23.000000000 +0200
++++ madwifi/net80211/ieee80211_wireless.c	2007-09-06 23:30:58.000000000 +0200
+@@ -213,7 +213,7 @@
+ 
+ 			/*
+ 			 * Set key contents.  This interface only supports WEP.
+-			 * Indicate intended key index.			 
++			 * Indicate intended key index.
+ 			 */
+ 			k->wk_keyix = kix;
+ 			if (ieee80211_crypto_newkey(vap, IEEE80211_CIPHER_WEP,
+@@ -495,10 +495,10 @@
+ 	if (vap->iv_opmode == IEEE80211_M_WDS)
+ 		IEEE80211_ADDR_COPY(vap->wds_mac, &ap_addr->sa_data);
+ 
+-	/* 
+-	 * zero address corresponds to 'iwconfig ath0 ap off', which means 
++	/*
++	 * zero address corresponds to 'iwconfig ath0 ap off', which means
+ 	 * enable automatic choice of AP without actually forcing a
+-	 * reassociation.  
++	 * reassociation.
+ 	 *
+ 	 * broadcast address corresponds to 'iwconfig ath0 ap any', which
+ 	 * means scan for the current best AP.
+@@ -756,8 +756,8 @@
+ 			ic->ic_set_channel(ic);
+ 		}
+ 	} else if(vap->iv_opmode == IEEE80211_M_HOSTAP) {
+-		/* Need to use channel switch announcement on beacon if we are 
+-		 * up and running.  We use ic_set_channel directly if we are 
++		/* Need to use channel switch announcement on beacon if we are
++		 * up and running.  We use ic_set_channel directly if we are
+ 		 * "running" but not "up".  Otherwise, iv_des_chan will take
+ 		 * effect when we are transitioned to RUN state later. */
+ 		if(IS_UP(vap->iv_dev)) {
+@@ -960,9 +960,9 @@
+ 		}
+ 	}
+ 
+-	/* Atheros' RSSI value is SNR: 0 -> 60 for old chipsets. Range 
+-	 * for newer chipsets is unknown. This value is arbitarily chosen 
+-	 * to give an indication that full rate will be available and to be 
++	/* Atheros' RSSI value is SNR: 0 -> 60 for old chipsets. Range
++	 * for newer chipsets is unknown. This value is arbitarily chosen
++	 * to give an indication that full rate will be available and to be
+ 	 * a practicable maximum. */
+ 	range->max_qual.qual  = 70;
+ #if WIRELESS_EXT >= 19
+@@ -1148,7 +1148,7 @@
+ 		IEEE80211_DPRINTF(vap, IEEE80211_MSG_DEBUG,
+ 			"%s: disabled iw_spy threshold\n", __func__);
+ 	} else {
+-		/* We are passed a signal level/strength - calculate 
++		/* We are passed a signal level/strength - calculate
+ 		 * corresponding RSSI values */
+ 		/* XXX: We should use current noise value. */
+ 		vap->iv_spy.thr_low = threshold.low.level + ATH_DEFAULT_NOISE;
+@@ -1236,7 +1236,7 @@
+ 	struct ieee80211vap *vap = dev->priv;
+ 	struct ieee80211com *ic = vap->iv_ic;
+ 
+-	/* XXX: These values, flags, and caps do not seem to be used elsewhere 
++	/* XXX: These values, flags, and caps do not seem to be used elsewhere
+ 	 * at all? */
+ 
+ 	if ((ic->ic_caps & IEEE80211_C_PMGT) == 0)
+@@ -1425,6 +1425,19 @@
+ 	return 0;
+ }
+ 
++static int
++ieee80211_ioctl_meshmode(struct net_device *dev, struct iw_request_info *info, void *w, char *extra)
++{
++	unsigned int *params = (unsigned int*) extra;
++	switch (params[1]) {
++	case 1:
++		return -EPERM;
++	case 0:
++	default:
++		return -EINVAL;
++	}
++}
++
+ #ifdef ATH_REVERSE_ENGINEERING
+ static int
+ ieee80211_dump_registers(struct net_device *dev, struct iw_request_info *info, void *w, char *extra)
+@@ -2308,7 +2321,7 @@
+ 	case IEEE80211_PARAM_WMM:
+ 		if (ic->ic_caps & IEEE80211_C_WME){
+ 			retv = ENETRESET;	/* Renegotiate for capabilities */
+-			
++
+ 			if (value) {
+ 				/* All TKIP keys need resetting to use software MIC.
+ 				 * They aren't, so this is disabled.
+@@ -2321,11 +2334,11 @@
+ 				}
+ 			} else {
+ 				vap->iv_flags &= ~IEEE80211_F_WME;
+-				
++
+ 				{
+ 					struct ieee80211vap *v = NULL;
+ 					int all = 1;
+-					
++
+ 					TAILQ_FOREACH(v, &vap->iv_ic->ic_vaps, iv_next) {
+ 						if (v->iv_flags & IEEE80211_F_WME) {
+ 							all = 0;
+@@ -2386,10 +2399,10 @@
+ 		if (vap->iv_ath_cap != caps) {
+ 			if ((vap->iv_ath_cap ^ caps) & IEEE80211_ATHC_TURBOP) {
+ 				/* no turbo and XR at the same time */
+-				if ((caps & IEEE80211_ATHC_TURBOP) && 
++				if ((caps & IEEE80211_ATHC_TURBOP) &&
+ 						(caps & IEEE80211_ATHC_XR))
+ 					return -EINVAL;
+-				if (ieee80211_set_turbo(dev, 
++				if (ieee80211_set_turbo(dev,
+ 						(caps & IEEE80211_ATHC_TURBOP)))
+ 					return -EINVAL;
+ 				ieee80211_scan_flush(ic);
+@@ -2639,7 +2652,7 @@
+ 		vap->iv_xrvap->iv_ath_cap &= IEEE80211_ATHC_XR;
+ 	}
+ 	/*
+-	 * do not reset the xr vap , which is automatically 
++	 * do not reset the xr vap , which is automatically
+ 	 * reset by the state machine now.
+ 	 */
+ 	if (!vap->iv_xrvap || (vap->iv_xrvap && !(vap->iv_flags & IEEE80211_F_XR))) {
+@@ -3320,7 +3333,7 @@
+ 
+ 	kix = dk->idk_keyix;
+ 
+-	/* XXX: This cast can be removed when struct ieee80211req_del_key is 
++	/* XXX: This cast can be removed when struct ieee80211req_del_key is
+ 	 * fixed. */
+ 	if (dk->idk_keyix == (u_int8_t) IEEE80211_KEYIX_NONE) {
+ 		struct ieee80211_node *ni;
+@@ -3520,7 +3533,7 @@
+ 	if (IEEE80211_ADDR_NULL(vap->wds_mac))
+ 		return 0;
+ 
+-	/* Compare suplied MAC address with WDS MAC of this interface 
++	/* Compare suplied MAC address with WDS MAC of this interface
+ 	 * remove when mac address is known
+ 	 */
+ 	if (memcmp(vap->wds_mac, sa->sa_data, IEEE80211_ADDR_LEN) == 0) {
+@@ -4454,14 +4467,14 @@
+ 	return ieee80211_ioctl_setparam(dev, NULL, NULL, (char*)args);
+ }
+ 
+-/* 
++/*
+  * If this function is invoked it means someone is using the wireless extensions
+  * API instead of the private madwifi ioctls.  That's fine.  We translate their
+- * request into the format used by the private ioctls.  Note that the 
+- * iw_request_info and iw_param structures are not the same ones as the 
++ * request into the format used by the private ioctls.  Note that the
++ * iw_request_info and iw_param structures are not the same ones as the
+  * private ioctl handler expects.  Luckily, the private ioctl handler doesn't
+- * do anything with those at the moment.  We pass NULL for those, because in 
+- * case someone does modify the ioctl handler to use those values, a null 
++ * do anything with those at the moment.  We pass NULL for those, because in
++ * case someone does modify the ioctl handler to use those values, a null
+  * pointer will be easier to debug than other bad behavior.
+  */
+ static int
+@@ -4840,7 +4853,7 @@
+ 
+ 	/* TODO This memcmp for the broadcast address seems hackish, but
+ 	 * mimics what wpa supplicant was doing.  The wpa supplicant comments
+-	 * make it sound like they were having trouble with 
++	 * make it sound like they were having trouble with
+ 	 * IEEE80211_IOCTL_SETKEY and static WEP keys.  It might be worth
+ 	 * figuring out what their trouble was so the rest of this function
+ 	 * can be implemented in terms of ieee80211_ioctl_setkey */
+@@ -5266,6 +5279,8 @@
+ 	  0, IW_PRIV_TYPE_APPIEBUF, "getiebuf" },
+ 	{ IEEE80211_IOCTL_FILTERFRAME,
+ 	  IW_PRIV_TYPE_FILTER , 0, "setfilter" },
++	{ IEEE80211_IOCTL_MESHMODE,
++	  IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "mesh" },
+ 
+ #ifdef ATH_REVERSE_ENGINEERING
+ 	/*
+@@ -5359,6 +5374,7 @@
+ 	set_priv(IEEE80211_IOCTL_WDSADDMAC, ieee80211_ioctl_wdsmac),
+ 	set_priv(IEEE80211_IOCTL_WDSDELMAC, ieee80211_ioctl_wdsdelmac),
+ 	set_priv(IEEE80211_IOCTL_KICKMAC, ieee80211_ioctl_kickmac),
++	set_priv(IEEE80211_IOCTL_MESHMODE, ieee80211_ioctl_meshmode),
+ #ifdef ATH_REVERSE_ENGINEERING
+ 	set_priv(IEEE80211_IOCTL_READREG, ieee80211_ioctl_readreg),
+ 	set_priv(IEEE80211_IOCTL_WRITEREG, ieee80211_ioctl_writereg),
+Index: madwifi/tools/athchans.c
+===================================================================
+--- madwifi.orig/tools/athchans.c	2007-09-06 23:17:53.000000000 +0200
++++ madwifi/tools/athchans.c	2007-09-06 23:14:59.000000000 +0200
+@@ -119,6 +119,7 @@
+ 				IOCTL_ERR(IEEE80211_IOCTL_WDSDELMAC),
+ 				IOCTL_ERR(IEEE80211_IOCTL_READREG),
+ 				IOCTL_ERR(IEEE80211_IOCTL_WRITEREG),
++				IOCTL_ERR(IEEE80211_IOCTL_MESHMODE),
+ 			};
+ 			if (IEEE80211_IOCTL_SETPARAM <= op &&
+ 			    op <= IEEE80211_IOCTL_SETCHANLIST)
+Index: madwifi/tools/athkey.c
+===================================================================
+--- madwifi.orig/tools/athkey.c	2007-09-06 23:18:08.000000000 +0200
++++ madwifi/tools/athkey.c	2007-09-06 20:50:58.000000000 +0200
+@@ -119,6 +119,7 @@
+ 				IOCTL_ERR(IEEE80211_IOCTL_WDSDELMAC),
+ 				IOCTL_ERR(IEEE80211_IOCTL_READREG),
+ 				IOCTL_ERR(IEEE80211_IOCTL_WRITEREG),
++				IOCTL_ERR(IEEE80211_IOCTL_MESHMODE),
+ 			};
+ 			if (IEEE80211_IOCTL_SETPARAM <= op &&
+ 			    op <= IEEE80211_IOCTL_SETCHANLIST)
+Index: madwifi/tools/wlanconfig.c
+===================================================================
+--- madwifi.orig/tools/wlanconfig.c	2007-09-06 23:18:12.000000000 +0200
++++ madwifi/tools/wlanconfig.c	2007-09-06 20:50:22.000000000 +0200
+@@ -204,7 +204,7 @@
+ }
+ 
+ // if_split_name - takes a name and splits it into the longest non-numeric only string
+-// 		   including the first character plus the value of the longest numeric 
++// 		   including the first character plus the value of the longest numeric
+ // 		   string including the last character
+ // 	returns  : < 0 on error
+ // 		   0 on finding only a string
+@@ -965,6 +965,7 @@
+ 			IOCTL_ERR(IEEE80211_IOCTL_WDSDELMAC),
+ 			IOCTL_ERR(IEEE80211_IOCTL_READREG),
+ 			IOCTL_ERR(IEEE80211_IOCTL_WRITEREG),
++			IOCTL_ERR(IEEE80211_IOCTL_MESHMODE),
+ 		};
+ 		op -= SIOCIWFIRSTPRIV;
+ 		if (0 <= op && op < N(opnames))
