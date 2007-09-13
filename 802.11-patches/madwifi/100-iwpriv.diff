@@ -1,7 +1,7 @@
 Index: madwifi/net80211/ieee80211_ioctl.h
 ===================================================================
---- madwifi.orig/net80211/ieee80211_ioctl.h	2007-09-07 20:16:17.000000000 +0200
-+++ madwifi/net80211/ieee80211_ioctl.h	2007-09-07 19:55:12.000000000 +0200
+--- madwifi.orig/net80211/ieee80211_ioctl.h	2007-09-08 00:45:20.000000000 +0200
++++ madwifi/net80211/ieee80211_ioctl.h	2007-09-08 00:49:41.000000000 +0200
 @@ -246,7 +246,7 @@
  	u_int8_t im_ssid[IEEE80211_NWID_LEN];
  };
@@ -21,8 +21,8 @@ Index: madwifi/net80211/ieee80211_ioctl.h
  #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
 Index: madwifi/net80211/ieee80211_wireless.c
 ===================================================================
---- madwifi.orig/net80211/ieee80211_wireless.c	2007-09-07 20:16:14.000000000 +0200
-+++ madwifi/net80211/ieee80211_wireless.c	2007-09-08 00:08:31.000000000 +0200
+--- madwifi.orig/net80211/ieee80211_wireless.c	2007-09-08 00:45:19.000000000 +0200
++++ madwifi/net80211/ieee80211_wireless.c	2007-09-13 18:20:55.000000000 +0200
 @@ -213,7 +213,7 @@
  
  			/*
@@ -124,23 +124,27 @@ Index: madwifi/net80211/ieee80211_wireless.c
  						(caps & IEEE80211_ATHC_TURBOP)))
  					return -EINVAL;
  				ieee80211_scan_flush(ic);
-@@ -2627,6 +2627,15 @@
+@@ -2627,6 +2627,19 @@
  		ieee80211_dump_registers(dev, info, w, extra);
  		break;
  #endif /* #ifdef ATH_REVERSE_ENGINEERING */
 +	case IEEE80211_PARAM_BATMAN:
 +		if (value) {
-+			if (batman_ops != NULL)
-+				retv = - batman_ops->attach(2);
++			if (batman_ops_net80211 != NULL)
++				retv = - batman_ops_net80211->attach(2);
++			else
++				retv = EOPNOTSUPP;
 +		} else {
-+			if (batman_ops != NULL)
-+				retv = - batman_ops->deattach(2);
++			if (batman_ops_net80211 != NULL)
++				retv = - batman_ops_net80211->detach(2);
++			else
++				retv = EOPNOTSUPP;
 +		}
 +		break;
  	default:
  		retv = EOPNOTSUPP;
  		break;
-@@ -2639,7 +2648,7 @@
+@@ -2639,7 +2652,7 @@
  		vap->iv_xrvap->iv_ath_cap &= IEEE80211_ATHC_XR;
  	}
  	/*
@@ -149,7 +153,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * reset by the state machine now.
  	 */
  	if (!vap->iv_xrvap || (vap->iv_xrvap && !(vap->iv_flags & IEEE80211_F_XR))) {
-@@ -3320,7 +3329,7 @@
+@@ -3320,7 +3333,7 @@
  
  	kix = dk->idk_keyix;
  
@@ -158,7 +162,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * fixed. */
  	if (dk->idk_keyix == (u_int8_t) IEEE80211_KEYIX_NONE) {
  		struct ieee80211_node *ni;
-@@ -3520,7 +3529,7 @@
+@@ -3520,7 +3533,7 @@
  	if (IEEE80211_ADDR_NULL(vap->wds_mac))
  		return 0;
  
@@ -167,7 +171,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * remove when mac address is known
  	 */
  	if (memcmp(vap->wds_mac, sa->sa_data, IEEE80211_ADDR_LEN) == 0) {
-@@ -4454,14 +4463,14 @@
+@@ -4454,14 +4467,14 @@
  	return ieee80211_ioctl_setparam(dev, NULL, NULL, (char*)args);
  }
  
@@ -187,7 +191,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
   * pointer will be easier to debug than other bad behavior.
   */
  static int
-@@ -4840,7 +4849,7 @@
+@@ -4840,7 +4853,7 @@
  
  	/* TODO This memcmp for the broadcast address seems hackish, but
  	 * mimics what wpa supplicant was doing.  The wpa supplicant comments
@@ -196,7 +200,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * IEEE80211_IOCTL_SETKEY and static WEP keys.  It might be worth
  	 * figuring out what their trouble was so the rest of this function
  	 * can be implemented in terms of ieee80211_ioctl_setkey */
-@@ -5266,6 +5275,8 @@
+@@ -5266,6 +5279,8 @@
  	  0, IW_PRIV_TYPE_APPIEBUF, "getiebuf" },
  	{ IEEE80211_IOCTL_FILTERFRAME,
  	  IW_PRIV_TYPE_FILTER , 0, "setfilter" },
@@ -207,8 +211,8 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	/*
 Index: madwifi/net80211/ieee80211_linux.c
 ===================================================================
---- madwifi.orig/net80211/ieee80211_linux.c	2007-09-07 23:57:30.000000000 +0200
-+++ madwifi/net80211/ieee80211_linux.c	2007-09-08 00:09:31.000000000 +0200
+--- madwifi.orig/net80211/ieee80211_linux.c	2007-09-08 00:45:19.000000000 +0200
++++ madwifi/net80211/ieee80211_linux.c	2007-09-13 18:21:41.000000000 +0200
 @@ -956,6 +956,12 @@
  }
  EXPORT_SYMBOL(ether_sprintf);		/* XXX */
@@ -216,17 +220,25 @@ Index: madwifi/net80211/ieee80211_linux.c
 +/*
 + * Hooks for batman functions
 + */
-+struct batman_ops *batman_ops = NULL;
-+EXPORT_SYMBOL(batman_ops);
++struct batman_ops_net80211 *batman_ops_net80211 = NULL;
++EXPORT_SYMBOL(batman_ops_net80211);
 +
  /* Function to handle the device event notifications.
   * If the event is a NETDEV_CHANGENAME, and is for an interface
   * we are taking care of, then we want to remove its existing
 Index: madwifi/net80211/ieee80211_linux.h
 ===================================================================
---- madwifi.orig/net80211/ieee80211_linux.h	2007-09-07 23:47:16.000000000 +0200
-+++ madwifi/net80211/ieee80211_linux.h	2007-09-08 00:09:26.000000000 +0200
-@@ -55,15 +55,15 @@
+--- madwifi.orig/net80211/ieee80211_linux.h	2007-09-08 00:45:19.000000000 +0200
++++ madwifi/net80211/ieee80211_linux.h	2007-09-13 18:12:03.000000000 +0200
+@@ -31,6 +31,7 @@
+ 
+ #include <linux/wireless.h>
+ #include <linux/fs.h>
++#include "ieee80211_batman.h"
+ 
+ /*
+  * Compatibility definition of statistics flags
+@@ -55,15 +56,15 @@
  #endif
  
  /*
@@ -246,7 +258,7 @@ Index: madwifi/net80211/ieee80211_linux.h
   * negative depending on context.
   *
   */
-@@ -113,14 +113,14 @@
+@@ -113,14 +114,14 @@
  
  /* Locking */
  /* NB: beware, spin_is_locked() is not usefully defined for !(DEBUG || SMP)
@@ -264,14 +276,51 @@ Index: madwifi/net80211/ieee80211_linux.h
   */
  typedef spinlock_t ieee80211com_lock_t;
  #define	IEEE80211_LOCK_INIT(_ic, _name)				\
-@@ -576,4 +576,10 @@
+@@ -576,4 +577,5 @@
  	struct net_device *);
  struct ieee80211vap *ieee80211_create_vap(struct ieee80211com *, char *,
  	struct net_device *, int, int);
 +
-+struct batman_ops {
-+	int (*attach) (int);
-+	int (*deattach) (int);
-+};
-+extern struct batman_ops *batman_ops;
  #endif /* _NET80211_IEEE80211_LINUX_H_ */
+Index: madwifi/net80211/ieee80211_batman.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ madwifi/net80211/ieee80211_batman.h	2007-09-13 18:11:19.000000000 +0200
+@@ -0,0 +1,37 @@
++/*-
++ * Copyright (c) 2007 Marek Lindner
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * $Id: ieee80211_batman.h 2634 2007-08-04 02:06:48Z mentor $
++ */
++
++
++
++struct batman_ops_net80211 {
++	int (*attach) (int);
++	int (*detach) (int);
++};
++
++extern struct batman_ops_net80211 *batman_ops_net80211;
