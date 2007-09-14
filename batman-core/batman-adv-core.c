@@ -21,20 +21,55 @@
 
 
 
-#include <linux/module.h>    /* needed by all modules */
-#include <linux/version.h>   /* LINUX_VERSION_CODE */
+#include "batman-adv-core.h"
 
 
 
-/* Kernel Programming */
-#define LINUX
+int init_module( void )
+{
+	return 0;
+}
 
-#define DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>"
-#define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
-#define DRIVER_DEVICE "batman-adv"
+void cleanup_module( void )
+{
+}
+
+int batman_attach(void)
+{
+	printk( "B.A.T.M.A.N. Adv: attaching !\n" );
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+	MOD_INC_USE_COUNT;
+#else
+	try_module_get(THIS_MODULE);
+#endif
+
+	return 0;
+}
+
+int batman_detach(void)
+{
+	printk( "B.A.T.M.A.N. Adv: detaching !\n" );
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+	MOD_DEC_USE_COUNT;
+#else
+	module_put(THIS_MODULE);
+#endif
+
+	return 0;
+}
 
 
 
-int batman_attach(void);
-int batman_detach(void);
+EXPORT_SYMBOL(batman_attach);
+EXPORT_SYMBOL(batman_detach);
+
+
+
+MODULE_LICENSE("GPL");
+
+MODULE_AUTHOR(DRIVER_AUTHOR);
+MODULE_DESCRIPTION(DRIVER_DESC);
+MODULE_SUPPORTED_DEVICE(DRIVER_DEVICE);
 

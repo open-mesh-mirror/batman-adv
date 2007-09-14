@@ -1,5 +1,5 @@
 
-obj-m += batman-adv.o
+obj-m += batman-adv-core.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

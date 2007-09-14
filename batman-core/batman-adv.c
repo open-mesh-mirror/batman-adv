@@ -34,9 +34,9 @@ void cleanup_module( void )
 {
 }
 
-int batman_attach( int arg )
+int batman_attach(void)
 {
-	printk( "B.A.T.M.A.N. Adv: attaching - %i !\n", arg );
+	printk( "B.A.T.M.A.N. Adv: attaching !\n" );
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 	MOD_INC_USE_COUNT;
@@ -47,9 +47,9 @@ int batman_attach( int arg )
 	return 0;
 }
 
-int batman_detach( int arg )
+int batman_detach(void)
 {
-	printk( "B.A.T.M.A.N. Adv: detaching - %i !\n", arg );
+	printk( "B.A.T.M.A.N. Adv: detaching !\n" );
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 	MOD_DEC_USE_COUNT;

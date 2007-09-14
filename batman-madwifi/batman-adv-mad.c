@@ -21,14 +21,17 @@
 
 
 
-#include "batman-adv.h"
+#include "batman-adv-core.h"
 #include "net80211/ieee80211_batman.h"
 
 
+int batman_attach_net80211(void);
+int batman_detach_net80211(void);
+
 
 struct batman_ops_net80211 bops_net80211 = {
-	.attach = batman_attach,
-	.detach = batman_detach,
+	.attach = &batman_attach_net80211,
+	.detach = &batman_detach_net80211,
 };
 
 
@@ -42,6 +45,46 @@ int init_module( void )
 void cleanup_module( void )
 {
 	batman_ops_net80211 = NULL;
+}
+
+
+
+int batman_attach_net80211(void)
+{
+	int retval;
+
+	retval = batman_attach();
+
+	if ( retval == 0 ) {
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+		MOD_INC_USE_COUNT;
+#else
+		try_module_get(THIS_MODULE);
+#endif
+
+	}
+
+	return retval;
+}
+
+int batman_detach_net80211(void)
+{
+	int retval;
+
+	retval = batman_detach();
+
+	if ( retval == 0 ) {
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+		MOD_DEC_USE_COUNT;
+#else
+		module_put(THIS_MODULE);
+#endif
+
+	}
+
+	return retval;
 }
 
 

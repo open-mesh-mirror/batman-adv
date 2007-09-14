@@ -285,7 +285,7 @@ Index: madwifi/net80211/ieee80211_linux.h
 Index: madwifi/net80211/ieee80211_batman.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ madwifi/net80211/ieee80211_batman.h	2007-09-13 18:11:19.000000000 +0200
++++ madwifi/net80211/ieee80211_batman.h	2007-09-14 17:57:49.000000000 +0200
 @@ -0,0 +1,37 @@
 +/*-
 + * Copyright (c) 2007 Marek Lindner
@@ -319,8 +319,8 @@ Index: madwifi/net80211/ieee80211_batman.h
 +
 +
 +struct batman_ops_net80211 {
-+	int (*attach) (int);
-+	int (*detach) (int);
++	int (*attach) (void);
++	int (*detach) (void);
 +};
 +
 +extern struct batman_ops_net80211 *batman_ops_net80211;
