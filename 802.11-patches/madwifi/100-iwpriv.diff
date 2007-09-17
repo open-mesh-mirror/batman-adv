@@ -1,16 +1,7 @@
 Index: madwifi/net80211/ieee80211_ioctl.h
 ===================================================================
---- madwifi.orig/net80211/ieee80211_ioctl.h	2007-09-08 00:45:20.000000000 +0200
-+++ madwifi/net80211/ieee80211_ioctl.h	2007-09-08 00:49:41.000000000 +0200
-@@ -246,7 +246,7 @@
- 	u_int8_t im_ssid[IEEE80211_NWID_LEN];
- };
- 
--/* 
-+/*
-  * MAC ACL operations.
-  */
- enum {
+--- madwifi.orig/net80211/ieee80211_ioctl.h	2007-09-17 17:42:10.000000000 +0200
++++ madwifi/net80211/ieee80211_ioctl.h	2007-09-17 17:42:01.000000000 +0200
 @@ -604,6 +604,7 @@
  	IEEE80211_PARAM_DROPUNENC_EAPOL		= 60,	/* drop unencrypted eapol frames */
   	IEEE80211_PARAM_SHPREAMBLE		= 61,	/* Short Preamble */
@@ -19,10 +10,20 @@ Index: madwifi/net80211/ieee80211_ioctl.h
  };
  
  #define	SIOCG80211STATS			(SIOCDEVPRIVATE+2)
+@@ -633,7 +634,8 @@
+ 	IEEE80211_APPIE_FRAME_PROBE_RESP	= 2,
+ 	IEEE80211_APPIE_FRAME_ASSOC_REQ		= 3,
+ 	IEEE80211_APPIE_FRAME_ASSOC_RESP	= 4,
+-	IEEE80211_APPIE_NUM_OF_FRAME		= 5
++	IEEE80211_APPIE_BATMAN			= 5,
++	IEEE80211_APPIE_NUM_OF_FRAME		= 6
+ };
+ 
+ struct ieee80211req_getset_appiebuf {
 Index: madwifi/net80211/ieee80211_wireless.c
 ===================================================================
 --- madwifi.orig/net80211/ieee80211_wireless.c	2007-09-08 00:45:19.000000000 +0200
-+++ madwifi/net80211/ieee80211_wireless.c	2007-09-13 18:20:55.000000000 +0200
++++ madwifi/net80211/ieee80211_wireless.c	2007-09-17 23:13:14.000000000 +0200
 @@ -213,7 +213,7 @@
  
  			/*
@@ -124,27 +125,45 @@ Index: madwifi/net80211/ieee80211_wireless.c
  						(caps & IEEE80211_ATHC_TURBOP)))
  					return -EINVAL;
  				ieee80211_scan_flush(ic);
-@@ -2627,6 +2627,19 @@
+@@ -2627,6 +2627,37 @@
  		ieee80211_dump_registers(dev, info, w, extra);
  		break;
  #endif /* #ifdef ATH_REVERSE_ENGINEERING */
 +	case IEEE80211_PARAM_BATMAN:
++		if (batman_ops_net80211 == NULL) {
++			retv = EOPNOTSUPP;
++			break;
++		}
++
++		if ((vap->iv_opmode != IEEE80211_M_HOSTAP) && (vap->iv_opmode != IEEE80211_M_IBSS)) {
++			retv = EMEDIUMTYPE;
++			break;
++		}
++
 +		if (value) {
-+			if (batman_ops_net80211 != NULL)
-+				retv = - batman_ops_net80211->attach(2);
-+			else
-+				retv = EOPNOTSUPP;
++			u_int8_t batman_buff[sizeof(struct ieee80211req_getset_appiebuf) + sizeof(struct ieee80211_ie) + 255];
++			struct ieee80211_ie *ie = (struct ieee80211_ie *)(batman_buff + sizeof(struct ieee80211req_getset_appiebuf));
++
++			retv = - batman_ops_net80211->attach(vap->iv_dev, ie->info, &ie->len);
++
++			if (retv == 0) {
++				((struct ieee80211req_getset_appiebuf *)batman_buff)->app_frmtype = IEEE80211_APPIE_BATMAN;
++				((struct ieee80211req_getset_appiebuf *)batman_buff)->app_buflen = sizeof(struct ieee80211_ie) + ie->len;
++				ie->id = IEEE80211_ELEMID_BATMAN;
++
++				add_app_ie(IEEE80211_APPIE_BATMAN, vap, (struct ieee80211req_getset_appiebuf *)batman_buff);
++			}
 +		} else {
-+			if (batman_ops_net80211 != NULL)
-+				retv = - batman_ops_net80211->detach(2);
-+			else
-+				retv = EOPNOTSUPP;
++			retv = - batman_ops_net80211->detach(vap->iv_dev);
++
++			if (retv == 0)
++				remove_app_ie(IEEE80211_APPIE_BATMAN, vap);
 +		}
 +		break;
  	default:
  		retv = EOPNOTSUPP;
  		break;
-@@ -2639,7 +2652,7 @@
+@@ -2639,7 +2670,7 @@
  		vap->iv_xrvap->iv_ath_cap &= IEEE80211_ATHC_XR;
  	}
  	/*
@@ -153,7 +172,25 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * reset by the state machine now.
  	 */
  	if (!vap->iv_xrvap || (vap->iv_xrvap && !(vap->iv_flags & IEEE80211_F_XR))) {
-@@ -3320,7 +3333,7 @@
+@@ -3032,7 +3063,7 @@
+ }
+ 
+ /* the following functions are used by the set/get appiebuf functions */
+-static int
++int
+ add_app_ie(unsigned int frame_type_index, struct ieee80211vap *vap,
+ 	struct ieee80211req_getset_appiebuf *iebuf)
+ {
+@@ -3054,7 +3085,7 @@
+ 	return 0;
+ }
+ 
+-static int
++int
+ remove_app_ie(unsigned int frame_type_index, struct ieee80211vap *vap)
+ {
+ 	struct ieee80211_app_ie *app_ie = &vap->app_ie[frame_type_index];
+@@ -3320,7 +3351,7 @@
  
  	kix = dk->idk_keyix;
  
@@ -162,7 +199,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * fixed. */
  	if (dk->idk_keyix == (u_int8_t) IEEE80211_KEYIX_NONE) {
  		struct ieee80211_node *ni;
-@@ -3520,7 +3533,7 @@
+@@ -3520,7 +3551,7 @@
  	if (IEEE80211_ADDR_NULL(vap->wds_mac))
  		return 0;
  
@@ -171,7 +208,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * remove when mac address is known
  	 */
  	if (memcmp(vap->wds_mac, sa->sa_data, IEEE80211_ADDR_LEN) == 0) {
-@@ -4454,14 +4467,14 @@
+@@ -4454,14 +4485,14 @@
  	return ieee80211_ioctl_setparam(dev, NULL, NULL, (char*)args);
  }
  
@@ -191,7 +228,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
   * pointer will be easier to debug than other bad behavior.
   */
  static int
-@@ -4840,7 +4853,7 @@
+@@ -4840,7 +4871,7 @@
  
  	/* TODO This memcmp for the broadcast address seems hackish, but
  	 * mimics what wpa supplicant was doing.  The wpa supplicant comments
@@ -200,7 +237,7 @@ Index: madwifi/net80211/ieee80211_wireless.c
  	 * IEEE80211_IOCTL_SETKEY and static WEP keys.  It might be worth
  	 * figuring out what their trouble was so the rest of this function
  	 * can be implemented in terms of ieee80211_ioctl_setkey */
-@@ -5266,6 +5279,8 @@
+@@ -5266,6 +5297,8 @@
  	  0, IW_PRIV_TYPE_APPIEBUF, "getiebuf" },
  	{ IEEE80211_IOCTL_FILTERFRAME,
  	  IW_PRIV_TYPE_FILTER , 0, "setfilter" },
@@ -229,7 +266,7 @@ Index: madwifi/net80211/ieee80211_linux.c
 Index: madwifi/net80211/ieee80211_linux.h
 ===================================================================
 --- madwifi.orig/net80211/ieee80211_linux.h	2007-09-08 00:45:19.000000000 +0200
-+++ madwifi/net80211/ieee80211_linux.h	2007-09-13 18:12:03.000000000 +0200
++++ madwifi/net80211/ieee80211_linux.h	2007-09-17 20:37:13.000000000 +0200
 @@ -31,6 +31,7 @@
  
  #include <linux/wireless.h>
@@ -276,17 +313,11 @@ Index: madwifi/net80211/ieee80211_linux.h
   */
  typedef spinlock_t ieee80211com_lock_t;
  #define	IEEE80211_LOCK_INIT(_ic, _name)				\
-@@ -576,4 +577,5 @@
- 	struct net_device *);
- struct ieee80211vap *ieee80211_create_vap(struct ieee80211com *, char *,
- 	struct net_device *, int, int);
-+
- #endif /* _NET80211_IEEE80211_LINUX_H_ */
 Index: madwifi/net80211/ieee80211_batman.h
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ madwifi/net80211/ieee80211_batman.h	2007-09-14 17:57:49.000000000 +0200
-@@ -0,0 +1,37 @@
++++ madwifi/net80211/ieee80211_batman.h	2007-09-17 23:11:02.000000000 +0200
+@@ -0,0 +1,41 @@
 +/*-
 + * Copyright (c) 2007 Marek Lindner
 + * All rights reserved.
@@ -318,9 +349,61 @@ Index: madwifi/net80211/ieee80211_batman.h
 +
 +
 +
++#include <linux/netdevice.h>	/* netdevice */
++
++
++
 +struct batman_ops_net80211 {
-+	int (*attach) (void);
-+	int (*detach) (void);
++	int (*attach) (struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
++	int (*detach) (struct net_device *dev);
 +};
 +
 +extern struct batman_ops_net80211 *batman_ops_net80211;
+Index: madwifi/net80211/ieee80211.h
+===================================================================
+--- madwifi.orig/net80211/ieee80211.h	2007-09-17 17:06:16.000000000 +0200
++++ madwifi/net80211/ieee80211.h	2007-09-17 17:06:58.000000000 +0200
+@@ -352,7 +352,7 @@
+ 	CTRY_ZIMBABWE             = 716      /* Zimbabwe */
+ };
+ 
+-/* 
++/*
+  * Generic information element
+  */
+ struct ieee80211_ie {
+@@ -361,7 +361,7 @@
+ 	u_int8_t info[0];
+ } __packed;
+ 
+-/* 
++/*
+  * Country information element.
+  */
+ #define IEEE80211_COUNTRY_MAX_TRIPLETS (83)
+@@ -700,6 +700,7 @@
+ 	IEEE80211_ELEMID_TPC		= 150,
+ 	IEEE80211_ELEMID_CCKM		= 156,
+ 	IEEE80211_ELEMID_VENDOR		= 221,	/* vendor private */
++	IEEE80211_ELEMID_BATMAN		= 233,	/* batman */
+ };
+ 
+ #define IEEE80211_CHANSWITCHANN_BYTES 5
+@@ -919,7 +920,7 @@
+ 
+ #define	IEEE80211_AID(b)	((b) &~ 0xc000)
+ 
+-/* 
++/*
+  * RTS frame length parameters.  The default is specified in
+  * the 802.11 spec.  The max may be wrong for jumbo frames.
+  */
+@@ -927,7 +928,7 @@
+ #define	IEEE80211_RTS_MIN		1
+ #define	IEEE80211_RTS_MAX		2346
+ 
+-/* 
++/*
+  * Regulatory extension identifier for country IE.
+  */
+ #define IEEE80211_REG_EXT_ID		201

@@ -25,37 +25,37 @@
 #include "net80211/ieee80211_batman.h"
 
 
-int batman_attach_net80211(void);
-int batman_detach_net80211(void);
+int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
+int batman_detach_net80211(struct net_device *dev);
 
 
 struct batman_ops_net80211 bops_net80211 = {
-	.attach = &batman_attach_net80211,
-	.detach = &batman_detach_net80211,
+	.attach = batman_attach_net80211,
+	.detach = batman_detach_net80211,
 };
 
 
 
-int init_module( void )
+int init_module(void)
 {
 	batman_ops_net80211 = &bops_net80211;
 	return 0;
 }
 
-void cleanup_module( void )
+void cleanup_module(void)
 {
 	batman_ops_net80211 = NULL;
 }
 
 
 
-int batman_attach_net80211(void)
+int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	int retval;
 
-	retval = batman_attach();
+	retval = batman_attach(dev, ie_buff, ie_buff_len);
 
-	if ( retval == 0 ) {
+	if (retval == 0) {
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 		MOD_INC_USE_COUNT;
@@ -65,16 +65,20 @@ int batman_attach_net80211(void)
 
 	}
 
+	/* retval 1 indicates that the interface is already attached */
+	if (retval == 1)
+		retval = 0;
+
 	return retval;
 }
 
-int batman_detach_net80211(void)
+int batman_detach_net80211(struct net_device *dev)
 {
 	int retval;
 
-	retval = batman_detach();
+	retval = batman_detach(dev);
 
-	if ( retval == 0 ) {
+	if (retval == 0) {
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 		MOD_DEC_USE_COUNT;
@@ -83,6 +87,10 @@ int batman_detach_net80211(void)
 #endif
 
 	}
+
+	/* retval 1 indicates that the interface has not been attached yet */
+	if (retval == 1)
+		retval = 0;
 
 	return retval;
 }

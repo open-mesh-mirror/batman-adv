@@ -21,20 +21,16 @@
 
 
 
-#include <linux/module.h>    /* needed by all modules */
-#include <linux/version.h>   /* LINUX_VERSION_CODE */
+#include "batman-adv-core.h"
+#include "packet.h"		/* batman packet definitions */
 
 
 
-/* Kernel Programming */
-#define LINUX
-
-#define DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>"
-#define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
-#define DRIVER_DEVICE "batman-adv"
-
-
-
-int batman_attach(void);
-int batman_detach(void);
+struct batman_if
+{
+	struct list_head list;
+	struct net_device *net_dev;
+	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
+	struct batman_packet out;
+};
 

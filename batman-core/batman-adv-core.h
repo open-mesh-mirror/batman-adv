@@ -21,8 +21,9 @@
 
 
 
-#include <linux/module.h>    /* needed by all modules */
-#include <linux/version.h>   /* LINUX_VERSION_CODE */
+#include <linux/module.h>	/* needed by all modules */
+#include <linux/version.h>	/* LINUX_VERSION_CODE */
+#include <linux/netdevice.h>	/* netdevice */
 
 
 
@@ -33,8 +34,11 @@
 #define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
 #define DRIVER_DEVICE "batman-adv"
 
+#define COMPAT_VERSION 1
+#define TTL 50                /* Time To Live of broadcast messages */
 
 
-int batman_attach(void);
-int batman_detach(void);
+
+int batman_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
+int batman_detach(struct net_device *dev);
 
