@@ -407,3 +407,17 @@ Index: madwifi/net80211/ieee80211.h
   * Regulatory extension identifier for country IE.
   */
  #define IEEE80211_REG_EXT_ID		201
+Index: madwifi/net80211/ieee80211_var.h
+===================================================================
+--- madwifi.orig/net80211/ieee80211_var.h	2007-09-17 23:40:21.000000000 +0200
++++ madwifi/net80211/ieee80211_var.h	2007-09-17 23:40:33.000000000 +0200
+@@ -592,6 +592,9 @@
+ void ieee80211_build_countryie(struct ieee80211com *);
+ int ieee80211_media_setup(struct ieee80211com *, struct ifmedia *, u_int32_t,
+ 	ifm_change_cb_t, ifm_stat_cb_t);
++int add_app_ie(unsigned int frame_type_index, struct ieee80211vap *vap,
++	       struct ieee80211req_getset_appiebuf *iebuf);
++int remove_app_ie(unsigned int frame_type_index, struct ieee80211vap *vap);
+ 
+ /* Key update synchronization methods.  XXX should not be visible. */
+ static __inline void
