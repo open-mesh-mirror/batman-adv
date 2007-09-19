@@ -39,12 +39,10 @@ void cleanup_module( void )
 {
 }
 
-int batman_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+int batman_attach_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
-
-	printk( "B.A.T.M.A.N. Adv: attaching !\n" );
 
 	list_for_each(list_pos, &if_list) {
 
@@ -59,7 +57,7 @@ int batman_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_l
 
 	if (batman_if == NULL) {
 
-		printk( "B.A.T.M.A.N. Adv: attaching to %s!\n", dev->name);
+		printk( "B.A.T.M.A.N. Adv: attaching to %s\n", dev->name);
 
 		batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
 
@@ -97,7 +95,7 @@ int batman_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_l
 	return 1;
 }
 
-int batman_detach(struct net_device *dev)
+int batman_detach_core(struct net_device *dev)
 {
 	struct list_head *list_pos, *list_pos_tmp;
 	struct batman_if *batman_if;
@@ -108,7 +106,7 @@ int batman_detach(struct net_device *dev)
 
 		if (batman_if->net_dev == dev) {
 
-			printk( "B.A.T.M.A.N. Adv: detaching from %s!\n", batman_if->net_dev->name);
+			printk( "B.A.T.M.A.N. Adv: detaching from %s\n", batman_if->net_dev->name);
 
 			list_del(list_pos);
 			kfree(batman_if);
@@ -128,10 +126,37 @@ int batman_detach(struct net_device *dev)
 	return 1;
 }
 
+void ogm_update_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+{
+	struct list_head *list_pos;
+	struct batman_if *batman_if = NULL;
+
+	list_for_each(list_pos, &if_list) {
+
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		if (batman_if->net_dev == dev)
+			break;
+		else
+			batman_if = NULL;
+
+	}
+
+	if (batman_if != NULL) {
+
+		printk( "B.A.T.M.A.N. Adv: updating ogm to %s\n", batman_if->net_dev->name);
+
+		batman_if->out.seqno++;
+		((struct batman_packet *)ie_buff)->seqno = batman_if->out.seqno;
+
+	}
+}
 
 
-EXPORT_SYMBOL(batman_attach);
-EXPORT_SYMBOL(batman_detach);
+
+EXPORT_SYMBOL(batman_attach_core);
+EXPORT_SYMBOL(batman_detach_core);
+EXPORT_SYMBOL(ogm_update_core);
 
 
 

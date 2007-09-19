@@ -32,6 +32,7 @@ int batman_detach_net80211(struct net_device *dev);
 struct batman_ops_net80211 bops_net80211 = {
 	.attach = batman_attach_net80211,
 	.detach = batman_detach_net80211,
+	.ogm_update = ogm_update_core,
 };
 
 
@@ -53,7 +54,7 @@ int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *
 {
 	int retval;
 
-	retval = batman_attach(dev, ie_buff, ie_buff_len);
+	retval = batman_attach_core(dev, ie_buff, ie_buff_len);
 
 	if (retval == 0) {
 
@@ -76,7 +77,7 @@ int batman_detach_net80211(struct net_device *dev)
 {
 	int retval;
 
-	retval = batman_detach(dev);
+	retval = batman_detach_core(dev);
 
 	if (retval == 0) {
 
