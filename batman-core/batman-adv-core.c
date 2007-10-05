@@ -39,7 +39,7 @@ void cleanup_module( void )
 {
 }
 
-int batman_attach_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
@@ -94,8 +94,9 @@ int batman_attach_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_b
 	/* return 1 to indicate that the interface is already attached */
 	return 1;
 }
+EXPORT_SYMBOL(batman_core_attach);
 
-int batman_detach_core(struct net_device *dev)
+int batman_core_detach(struct net_device *dev)
 {
 	struct list_head *list_pos, *list_pos_tmp;
 	struct batman_if *batman_if;
@@ -125,8 +126,9 @@ int batman_detach_core(struct net_device *dev)
 	/* return 1 to indicate that the interface has not been attached yet */
 	return 1;
 }
+EXPORT_SYMBOL(batman_core_detach);
 
-void ogm_update_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+void batman_core_ogm_update(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
@@ -144,19 +146,14 @@ void ogm_update_core(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buf
 
 	if (batman_if != NULL) {
 
-		printk( "B.A.T.M.A.N. Adv: updating ogm to %s\n", batman_if->net_dev->name);
+		printk( "B.A.T.M.A.N. Adv: updating ogm for %s\n", batman_if->net_dev->name);
 
 		batman_if->out.seqno++;
 		((struct batman_packet *)ie_buff)->seqno = batman_if->out.seqno;
 
 	}
 }
-
-
-
-EXPORT_SYMBOL(batman_attach_core);
-EXPORT_SYMBOL(batman_detach_core);
-EXPORT_SYMBOL(ogm_update_core);
+EXPORT_SYMBOL(batman_core_ogm_update);
 
 
 

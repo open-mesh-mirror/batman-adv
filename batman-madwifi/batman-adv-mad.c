@@ -25,14 +25,14 @@
 #include "net80211/ieee80211_batman.h"
 
 
-int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
-int batman_detach_net80211(struct net_device *dev);
+int batman_net80211_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
+int batman_net80211_detach(struct net_device *dev);
 
 
 struct batman_ops_net80211 bops_net80211 = {
-	.attach = batman_attach_net80211,
-	.detach = batman_detach_net80211,
-	.ogm_update = ogm_update_core,
+	.batman_attach = batman_net80211_attach,
+	.batman_detach = batman_net80211_detach,
+	.batman_ogm_update = batman_core_ogm_update,
 };
 
 
@@ -50,11 +50,11 @@ void cleanup_module(void)
 
 
 
-int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+int batman_net80211_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	int retval;
 
-	retval = batman_attach_core(dev, ie_buff, ie_buff_len);
+	retval = batman_core_attach(dev, ie_buff, ie_buff_len);
 
 	if (retval == 0) {
 
@@ -73,11 +73,11 @@ int batman_attach_net80211(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *
 	return retval;
 }
 
-int batman_detach_net80211(struct net_device *dev)
+int batman_net80211_detach(struct net_device *dev)
 {
 	int retval;
 
-	retval = batman_detach_core(dev);
+	retval = batman_core_detach(dev);
 
 	if (retval == 0) {
 
