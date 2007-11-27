@@ -42,8 +42,8 @@ int init_module( void )
 	proc_interface_file = create_proc_entry(PROC_FILE_INTERFACES, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_interface_file) {
-		proc_file->read_proc = proc_interfaces_read;
-		proc_file->data = NULL;
+		proc_interface_file->read_proc = proc_interfaces_read;
+		proc_interface_file->data = NULL;
 	} else {
 		printk("B.A.T.M.A.N.: Registering the '/proc/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
 		return -ENOMEM;
