@@ -26,20 +26,48 @@
 
 
 struct list_head if_list;
+static struct proc_dir_entry *proc_batman_dir, *proc_interface_file;
 
 
 
 int init_module( void )
 {
+	proc_batman_dir = proc_mkdir(PROC_ROOT_DIR, NULL);
+
+	if (!proc_batman_dir) {
+		printk("B.A.T.M.A.N.: Registering the '/proc/%s' folder failed\n", PROC_ROOT_DIR);
+		return -ENOMEM;
+	}
+
+	proc_interface_file = create_proc_entry(PROC_FILE_INTERFACES, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_interface_file) {
+		proc_file->read_proc = proc_interfaces_read;
+		proc_file->data = NULL;
+	} else {
+		printk("B.A.T.M.A.N.: Registering the '/proc/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
+		return -ENOMEM;
+	}
+
 	INIT_LIST_HEAD(&if_list);
 	return 0;
 }
 
 void cleanup_module( void )
 {
+	if (proc_interface_file)
+		remove_proc_entry(PROC_FILE_INTERFACES, proc_batman_dir);
+
+	if (proc_batman_dir)
+		remove_proc_entry(PROC_ROOT_DIR, NULL);
 }
 
-int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
+
+
+
+
+
+/* int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
@@ -91,7 +119,7 @@ int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_b
 
 	}
 
-	/* return 1 to indicate that the interface is already attached */
+	// return 1 to indicate that the interface is already attached
 	return 1;
 }
 EXPORT_SYMBOL(batman_core_attach);
@@ -123,7 +151,7 @@ int batman_core_detach(struct net_device *dev)
 
 	}
 
-	/* return 1 to indicate that the interface has not been attached yet */
+	// return 1 to indicate that the interface has not been attached yet
 	return 1;
 }
 EXPORT_SYMBOL(batman_core_detach);
@@ -153,7 +181,7 @@ void batman_core_ogm_update(struct net_device *dev, u_int8_t *ie_buff, u_int8_t 
 
 	}
 }
-EXPORT_SYMBOL(batman_core_ogm_update);
+EXPORT_SYMBOL(batman_core_ogm_update); */
 
 
 

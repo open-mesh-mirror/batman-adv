@@ -21,7 +21,7 @@
 
 
 
-#include "batman-adv-core.h"
+#include "batman-adv-main.h"
 #include "packet.h"		/* batman packet definitions */
 
 
