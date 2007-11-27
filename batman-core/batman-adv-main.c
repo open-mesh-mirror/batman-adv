@@ -21,7 +21,7 @@
 
 
 
-#include "types.h"
+#include "batman-adv-main.h"
 
 
 
@@ -32,24 +32,28 @@ static struct proc_dir_entry *proc_batman_dir, *proc_interface_file;
 
 int init_module( void )
 {
+	INIT_LIST_HEAD(&if_list);
+
 	proc_batman_dir = proc_mkdir(PROC_ROOT_DIR, NULL);
 
 	if (!proc_batman_dir) {
 		printk("B.A.T.M.A.N.: Registering the '/proc/%s' folder failed\n", PROC_ROOT_DIR);
-		return -ENOMEM;
+		return -EFAULT;
 	}
 
 	proc_interface_file = create_proc_entry(PROC_FILE_INTERFACES, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_interface_file) {
 		proc_interface_file->read_proc = proc_interfaces_read;
+		proc_interface_file->write_proc = proc_interfaces_write;
 		proc_interface_file->data = NULL;
 	} else {
 		printk("B.A.T.M.A.N.: Registering the '/proc/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
-		return -ENOMEM;
+		return -EFAULT;
 	}
 
-	INIT_LIST_HEAD(&if_list);
+	printk( "B.A.T.M.A.N.: Successfully loaded !\n");
+
 	return 0;
 }
 

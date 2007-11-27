@@ -41,6 +41,10 @@
 
 
 
+extern struct list_head if_list;
+
+
+
 /* int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
 int batman_core_detach(struct net_device *dev);
 void batman_core_ogm_update(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len); */
