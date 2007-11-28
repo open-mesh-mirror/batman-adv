@@ -29,7 +29,10 @@
 struct batman_if
 {
 	struct list_head list;
+	int16_t if_num;
 	struct net_device *net_dev;
+	struct socket *raw_sock;
+	struct timer_list bcast_timer;
 	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
 	struct batman_packet out;
 };

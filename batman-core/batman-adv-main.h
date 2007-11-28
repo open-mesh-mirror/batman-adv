@@ -24,6 +24,9 @@
 #include <linux/module.h>	/* needed by all modules */
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/netdevice.h>	/* netdevice */
+#include <linux/timer.h>	/* timer */
+#include <linux/if_ether.h>	/* ethernet header */
+#include <linux/random.h>	/* get_random_int() */
 
 
 #include "batman-adv-proc.h"
@@ -36,12 +39,29 @@
 #define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
 #define DRIVER_DEVICE "batman-adv"
 
+#define SOURCE_VERSION "0.1-alpha"
 #define COMPAT_VERSION 1
+#define UNIDIRECTIONAL 0x80
+#define DIRECTLINK 0x40
+#define TQ_MAX_VALUE 255
+#define JITTER 100
 #define TTL 50                /* Time To Live of broadcast messages */
+
+#ifndef REVISION_VERSION
+#define REVISION_VERSION "0"
+#endif
 
 
 
 extern struct list_head if_list;
+
+extern int16_t originator_interval;
+
+extern unsigned char broadcastAddr[];
+
+
+
+void send_own_packet(unsigned long data);
 
 
 

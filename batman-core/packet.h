@@ -38,12 +38,14 @@
 struct batman_packet
 {
 	uint8_t  packet_type;
+	uint8_t  version;  /* batman version field */
 	uint8_t  flags;    /* 0x80: UNIDIRECTIONAL link, 0x40: DIRECTLINK flag, ... */
 	uint8_t  ttl;
-	uint8_t  orig[6];
-	uint16_t seqno;
 	uint8_t  gwflags;  /* flags related to gateway functions: gateway class */
-	uint8_t  version;  /* batman version field */
+	uint8_t  tq;
+	uint16_t seqno;
+	uint8_t  orig[6];
+	uint8_t  old_orig[6];
 } __attribute__((packed));
 
 struct icmp_packet

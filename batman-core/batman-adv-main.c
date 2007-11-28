@@ -22,51 +22,36 @@
 
 
 #include "batman-adv-main.h"
+#include "types.h"
 
 
 
 struct list_head if_list;
-static struct proc_dir_entry *proc_batman_dir, *proc_interface_file;
+
+int16_t originator_interval = 1000;
+
+unsigned char broadcastAddr[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 
 
-int init_module( void )
+int init_module(void)
 {
+	int retval;
+
 	INIT_LIST_HEAD(&if_list);
 
-	proc_batman_dir = proc_mkdir(PROC_ROOT_DIR, NULL);
+	if ((retval = setup_procfs() ) < 0 )
+		return retval;
 
-	if (!proc_batman_dir) {
-		printk("B.A.T.M.A.N.: Registering the '/proc/%s' folder failed\n", PROC_ROOT_DIR);
-		return -EFAULT;
-	}
-
-	proc_interface_file = create_proc_entry(PROC_FILE_INTERFACES, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
-
-	if (proc_interface_file) {
-		proc_interface_file->read_proc = proc_interfaces_read;
-		proc_interface_file->write_proc = proc_interfaces_write;
-		proc_interface_file->data = NULL;
-	} else {
-		printk("B.A.T.M.A.N.: Registering the '/proc/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
-		return -EFAULT;
-	}
-
-	printk( "B.A.T.M.A.N.: Successfully loaded !\n");
+	printk("B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, ( strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : "" ), COMPAT_VERSION);
 
 	return 0;
 }
 
 void cleanup_module( void )
 {
-	if (proc_interface_file)
-		remove_proc_entry(PROC_FILE_INTERFACES, proc_batman_dir);
-
-	if (proc_batman_dir)
-		remove_proc_entry(PROC_ROOT_DIR, NULL);
+	cleanup_procfs();
 }
-
-
 
 
 
