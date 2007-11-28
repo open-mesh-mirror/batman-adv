@@ -219,7 +219,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 			init_timer(&batman_if->bcast_timer);
 
-			batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (get_random_int() % 2*JITTER)) * HZ) / 1000);
+			batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
 			batman_if->bcast_timer.data = (unsigned long)batman_if;
 			batman_if->bcast_timer.function = send_own_packet;
 
