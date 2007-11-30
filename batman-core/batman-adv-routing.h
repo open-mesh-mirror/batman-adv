@@ -21,4 +21,6 @@
 
 
 
+void batman_data_ready(struct sock *sk, int len);
 int packet_recv_thread(void *data);
+

@@ -28,6 +28,7 @@
 #include <linux/if_ether.h>	/* ethernet header */
 #include <linux/poll.h>		/* poll_table */
 #include <linux/kthread.h>	/* kernel threads */
+#include <net/sock.h>		/* struct sock */
 
 
 

@@ -170,9 +170,16 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	else if ((cr_ptr = strchr(if_string, '\n')) != NULL)
 		*cr_ptr = 0;
 
-	/* deactivate kernel thread for packet processing if running */
-	if (kthread_task)
+	/* deactivate kernel thread for packet processing (if running) */
+	if (kthread_task) {
 		kthread_stop(kthread_task);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+		MOD_DEC_USE_COUNT;
+#else
+		module_put(THIS_MODULE);
+#endif
+	}
 
 	/* deactivate all timers first to avoid race conditions */
 	list_for_each(list_pos, &if_list) {
@@ -263,6 +270,9 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 				goto end;
 			}
 
+			batman_if->raw_sock->sk->sk_user_data = batman_if->raw_sock->sk->sk_data_ready;
+			batman_if->raw_sock->sk->sk_data_ready = batman_data_ready;
+
 			batman_if->if_num = if_num;
 			batman_if->net_dev = net_dev;
 			debug_log(LOG_TYPE_NOTICE, "batman-adv: Adding interface: %s\n", batman_if->net_dev->name);
@@ -311,6 +321,12 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		debug_log(LOG_TYPE_CRIT, "batman-adv: Unable to start packet receive thread\n");
 
 		kthread_task = NULL;
+	} else {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+		MOD_INC_USE_COUNT;
+#else
+		try_module_get(THIS_MODULE);
+#endif
 	}
 
 
