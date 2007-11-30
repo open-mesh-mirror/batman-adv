@@ -27,6 +27,8 @@
 #include <linux/timer.h>	/* timer */
 #include <linux/if_ether.h>	/* ethernet header */
 #include <linux/poll.h>		/* poll_table */
+#include <linux/kthread.h>	/* kernel threads */
+
 
 
 #include "batman-adv-proc.h"
@@ -49,10 +51,10 @@
 
 #define LOG_BUF_LEN 8192      /* has to be a power of 2 */
 #define ETH_STR_LEN 20
-#define LOG_TYPE_CRIT 0
-#define LOG_TYPE_WARN 1
-#define LOG_TYPE_NOTICE 2
-#define LOG_TYPE_ROUTING 3
+#define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as blocked sockets / failed packet delivery / programming errors */
+#define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
+#define LOG_TYPE_NOTICE 2	/* notice information for new interfaces / changed settings / new originators / etc */
+#define LOG_TYPE_ROUTING 4	/* all messages related to routing / flooding / broadcasting / etc */
 
 #ifndef REVISION_VERSION
 #define REVISION_VERSION "0"

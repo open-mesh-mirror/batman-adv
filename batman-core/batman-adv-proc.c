@@ -24,12 +24,15 @@
 #include "batman-adv-main.h"
 #include "batman-adv-send.h"
 #include "batman-adv-log.h"
+#include "batman-adv-routing.h"
 #include "types.h"
 
 
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL, *proc_gateways_file = NULL;
 static struct proc_dir_entry *proc_log_file = NULL;
+static struct task_struct *kthread_task = NULL;
+
 
 
 
@@ -167,14 +170,18 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	else if ((cr_ptr = strchr(if_string, '\n')) != NULL)
 		*cr_ptr = 0;
 
+	/* deactivate kernel thread for packet processing if running */
+	if (kthread_task)
+		kthread_stop(kthread_task);
+
+	/* deactivate all timers first to avoid race conditions */
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		del_timer_sync(&batman_if->bcast_timer);
+	}
+
 	if (strlen(if_string) == 0) {
-
-		/* deactivate all timers first to avoid race conditions */
-		list_for_each(list_pos, &if_list) {
-			batman_if = list_entry(list_pos, struct batman_if, list);
-
-			del_timer_sync(&batman_if->bcast_timer);
-		}
 
 		/* deactivate all interfaces */
 		list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
@@ -275,14 +282,6 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if->seqno = 1;
 			batman_if->bcast_seqno = 1;
 
-			init_timer(&batman_if->bcast_timer);
-
-			batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
-			batman_if->bcast_timer.data = (unsigned long)batman_if;
-			batman_if->bcast_timer.function = send_own_packet;
-
-			add_timer(&batman_if->bcast_timer);
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 			MOD_INC_USE_COUNT;
 #else
@@ -291,6 +290,29 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		}
 
 	}
+
+	/* (re)activate all timers (if any) */
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		init_timer(&batman_if->bcast_timer);
+
+		batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
+		batman_if->bcast_timer.data = (unsigned long)batman_if;
+		batman_if->bcast_timer.function = send_own_packet;
+
+		add_timer(&batman_if->bcast_timer);
+	}
+
+	/* (re)start kernel thread for packet processing */
+	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
+
+	if (IS_ERR(kthread_task)) {
+		debug_log(LOG_TYPE_CRIT, "batman-adv: Unable to start packet receive thread\n");
+
+		kthread_task = NULL;
+	}
+
 
 end:
 	kfree(if_string);
