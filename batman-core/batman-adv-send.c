@@ -19,11 +19,12 @@
 
 
 
+
+
 #include "batman-adv-main.h"
 #include "batman-adv-send.h"
+#include "batman-adv-log.h"
 #include "types.h"
-
-
 
 
 
@@ -52,7 +53,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *send_
 	msg.msg_namelen = 0;
 
 	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, (struct kvec *)vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0)
-		printk("batman-adv: Can't write to raw socket: %i\n", retval);
+		debug_log(LOG_TYPE_CRIT, "batman-adv: Can't write to raw socket: %i\n", retval);
 }
 
 void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
@@ -60,22 +61,19 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
-
-
-	/* change sequence number to network order */
-	((struct batman_packet *)pack_buff)->seqno = htons(((struct batman_packet *)pack_buff)->seqno);
+	uint8_t orig_str[ETH_STR_LEN];
 
 	if (((struct batman_packet *)pack_buff)->flags & UNIDIRECTIONAL) {
 
 		if (if_outgoing != NULL) {
+			ether_ntoa(orig_str, if_outgoing->net_dev->dev_addr);
 
-// 			debug_output( 4, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs( ((struct bat_packet *)forw_node->pack_buff)->seqno ), ((struct bat_packet *)forw_node->pack_buff)->ttl, forw_node->if_outgoing->dev );
+			debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-
 		} else {
 
-// 			debug_output( 0, "Error - can't forward packet with UDF: outgoing iface not specified \n" );
+			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with UDF: outgoing iface not specified \n");
 
 		}
 
@@ -88,7 +86,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 
 		} else {
 
-// 			debug_output( 0, "Error - can't forward packet with IDF: outgoing iface not specified (multihomed) \n" );
+			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with IDF: outgoing iface not specified (multihomed) \n");
 
 		}
 
@@ -96,21 +94,20 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 
 		if ((directlink) && (if_outgoing == NULL)) {
 
-// 			debug_output( 0, "Error - can't forward packet with IDF: outgoing iface not specified \n" );
+			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with IDF: outgoing iface not specified \n");
 
 		} else {
 
 			/* non-primary interfaces are only broadcasted on their interface */
 			if ((own_packet) && (if_outgoing->if_num > 0)) {
+				ether_ntoa(orig_str, if_outgoing->net_dev->dev_addr);
 
-// 				debug_output( 4, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs( ((struct bat_packet *)forw_node->pack_buff)->seqno ), ((struct bat_packet *)forw_node->pack_buff)->ttl, forw_node->if_outgoing->dev );
+				debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-
 			} else {
 
 				list_for_each(list_pos, &if_list) {
-
 					batman_if = list_entry(list_pos, struct batman_if, list);
 
 					if ((directlink) && (if_outgoing == batman_if))
@@ -118,10 +115,11 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 					else
 						((struct batman_packet *)pack_buff)->flags = 0x00;
 
-// 					debug_output( 4, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs( ((struct bat_packet *)forw_node->pack_buff)->seqno ), ((struct bat_packet *)forw_node->pack_buff)->ttl, batman_if->dev );
+					ether_ntoa(orig_str, batman_if->net_dev->dev_addr);
+
+					debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-
 				}
 
 			}
@@ -136,9 +134,12 @@ void send_own_packet(unsigned long data)
 {
 	struct batman_if *batman_if = (struct batman_if *)data;
 
-	send_packet((unsigned char *)&batman_if->out, sizeof(struct batman_packet), batman_if, 1);
+	/* change sequence number to network order */
+	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);
 
-	batman_if->out.seqno++;
+	batman_if->seqno++;
+
+	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
 	init_timer(&batman_if->bcast_timer);
 

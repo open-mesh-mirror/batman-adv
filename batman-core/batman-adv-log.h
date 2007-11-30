@@ -21,21 +21,13 @@
 
 
 
-#include "batman-adv-main.h"
-#include "packet.h"		/* batman packet definitions */
+extern struct file_operations proc_log_operations;
 
 
-
-struct batman_if
-{
-	struct list_head list;
-	int16_t if_num;
-	struct net_device *net_dev;
-	struct socket *raw_sock;
-	struct timer_list bcast_timer;
-	uint16_t seqno;
-	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
-	unsigned char *pack_buff;
-	int pack_buff_len;
-};
+int debug_log(int type, char *fmt, ...);
+int log_open(struct inode * inode, struct file * file);
+int log_release(struct inode * inode, struct file * file);
+ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos);
+ssize_t log_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
+unsigned int log_poll(struct file *file, poll_table *wait);
 

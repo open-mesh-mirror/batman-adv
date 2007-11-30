@@ -22,6 +22,7 @@
 
 
 #include "batman-adv-main.h"
+#include "batman-adv-log.h"
 #include "types.h"
 
 
@@ -29,8 +30,9 @@
 struct list_head if_list;
 
 int16_t originator_interval = 1000;
+int16_t num_hna = 0;
 
-unsigned char broadcastAddr[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 
 
@@ -40,18 +42,24 @@ int init_module(void)
 
 	INIT_LIST_HEAD(&if_list);
 
-	if ((retval = setup_procfs() ) < 0 )
+	if ((retval = setup_procfs()) < 0)
 		return retval;
 
-	printk("B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, ( strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : "" ), COMPAT_VERSION);
+	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, (strncmp(REVISION_VERSION, "0", 1) != 0 ? REVISION_VERSION : ""), COMPAT_VERSION);
 
 	return 0;
 }
 
-void cleanup_module( void )
+void cleanup_module(void)
 {
 	cleanup_procfs();
 }
+
+int ether_ntoa(char *buff, uint8_t addr[6])
+{
+	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+}
+
 
 
 

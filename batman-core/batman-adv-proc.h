@@ -26,6 +26,11 @@
 #define PROC_ROOT_DIR "batman-adv"
 #define PROC_FILE_INTERFACES "interfaces"
 #define PROC_FILE_ORIG_INTERVAL "orig_interval"
+#define PROC_FILE_ORIGINATORS "originators"
+#define PROC_FILE_GATEWAYS "gateways"
+#define PROC_FILE_LOG "log"
+
+
 
 void cleanup_procfs(void);
 int setup_procfs(void);
@@ -33,3 +38,5 @@ int proc_interfaces_read( char *buf, char **start, off_t offset, int size, int *
 int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
+int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);

@@ -26,7 +26,7 @@
 #include <linux/netdevice.h>	/* netdevice */
 #include <linux/timer.h>	/* timer */
 #include <linux/if_ether.h>	/* ethernet header */
-#include <linux/random.h>	/* get_random_int() */
+#include <linux/poll.h>		/* poll_table */
 
 
 #include "batman-adv-proc.h"
@@ -47,6 +47,13 @@
 #define JITTER 100
 #define TTL 50                /* Time To Live of broadcast messages */
 
+#define LOG_BUF_LEN 8192      /* has to be a power of 2 */
+#define ETH_STR_LEN 20
+#define LOG_TYPE_CRIT 0
+#define LOG_TYPE_WARN 1
+#define LOG_TYPE_NOTICE 2
+#define LOG_TYPE_ROUTING 3
+
 #ifndef REVISION_VERSION
 #define REVISION_VERSION "0"
 #endif
@@ -56,12 +63,14 @@
 extern struct list_head if_list;
 
 extern int16_t originator_interval;
+extern int16_t num_hna;
 
 extern unsigned char broadcastAddr[];
 
 
 
-void send_own_packet(unsigned long data);
+int ether_ntoa(char *buff, uint8_t addr[6]);
+
 
 
 
