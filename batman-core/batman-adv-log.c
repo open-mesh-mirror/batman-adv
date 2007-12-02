@@ -39,7 +39,6 @@ spinlock_t logbuf_lock = SPIN_LOCK_UNLOCKED;
 
 struct file_operations proc_log_operations = {
 	.read           = log_read,
-	.write          = log_write,
 	.poll           = log_poll,
 	.open           = log_open,
 	.release        = log_release,
@@ -97,11 +96,13 @@ int debug_log(int type, char *fmt, ...)
 
 int log_open(struct inode * inode, struct file * file)
 {
+	inc_module_count();
 	return 0;
 }
 
 int log_release(struct inode * inode, struct file * file)
 {
+	dec_module_count();
 	return 0;
 }
 
@@ -150,11 +151,6 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 		return i;
 
 	return error;
-}
-
-ssize_t log_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
-{
-	return count;
 }
 
 unsigned int log_poll(struct file *file, poll_table *wait)

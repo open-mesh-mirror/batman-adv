@@ -21,6 +21,11 @@
 
 
 
+extern wait_queue_head_t thread_wait;
+extern atomic_t exit_cond;
+
+
+
 void batman_data_ready(struct sock *sk, int len);
 int packet_recv_thread(void *data);
 

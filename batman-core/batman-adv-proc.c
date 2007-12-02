@@ -172,13 +172,13 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	/* deactivate kernel thread for packet processing (if running) */
 	if (kthread_task) {
+		atomic_set(&exit_cond, 1);
+		wake_up_interruptible(&thread_wait);
 		kthread_stop(kthread_task);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-		MOD_DEC_USE_COUNT;
-#else
-		module_put(THIS_MODULE);
-#endif
+		kthread_task = NULL;
+
+		dec_module_count();
 	}
 
 	/* deactivate all timers first to avoid race conditions */
@@ -201,11 +201,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			kfree(batman_if->pack_buff);
 			kfree(batman_if);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-			MOD_DEC_USE_COUNT;
-#else
-			module_put(THIS_MODULE);
-#endif
+			dec_module_count();
 		}
 
 	} else {
@@ -275,6 +271,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 			batman_if->if_num = if_num;
 			batman_if->net_dev = net_dev;
+			addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
 			debug_log(LOG_TYPE_NOTICE, "batman-adv: Adding interface: %s\n", batman_if->net_dev->name);
 
 			INIT_LIST_HEAD(&batman_if->list);
@@ -292,14 +289,13 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if->seqno = 1;
 			batman_if->bcast_seqno = 1;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-			MOD_INC_USE_COUNT;
-#else
-			try_module_get(THIS_MODULE);
-#endif
+			inc_module_count();
 		}
 
 	}
+
+	if (list_empty(&if_list))
+		goto end;
 
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
@@ -322,11 +318,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		kthread_task = NULL;
 	} else {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-		MOD_INC_USE_COUNT;
-#else
-		try_module_get(THIS_MODULE);
-#endif
+		inc_module_count();
 	}
 
 

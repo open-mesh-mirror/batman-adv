@@ -55,9 +55,31 @@ void cleanup_module(void)
 	cleanup_procfs();
 }
 
-int ether_ntoa(char *buff, uint8_t addr[6])
+void inc_module_count(void)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+	MOD_INC_USE_COUNT;
+#else
+	try_module_get(THIS_MODULE);
+#endif
+}
+
+void dec_module_count(void)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+	MOD_DEC_USE_COUNT;
+#else
+	module_put(THIS_MODULE);
+#endif
+}
+
+int addr_to_string(char *buff, uint8_t addr[6])
 {
 	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+}
+
+int compare_orig(void *data1, void *data2) {
+	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
 }
 
 

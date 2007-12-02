@@ -28,6 +28,5 @@ int debug_log(int type, char *fmt, ...);
 int log_open(struct inode * inode, struct file * file);
 int log_release(struct inode * inode, struct file * file);
 ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos);
-ssize_t log_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos);
 unsigned int log_poll(struct file *file, poll_table *wait);
 

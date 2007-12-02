@@ -61,14 +61,11 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
-	uint8_t orig_str[ETH_STR_LEN];
 
 	if (((struct batman_packet *)pack_buff)->flags & UNIDIRECTIONAL) {
 
 		if (if_outgoing != NULL) {
-			ether_ntoa(orig_str, if_outgoing->net_dev->dev_addr);
-
-			debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+			debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 		} else {
@@ -78,7 +75,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 		}
 
 		/* multihomed peer assumed */
-	} else if ((directlink) && (((struct batman_packet *)pack_buff)->ttl == 1)) {
+	} else if (directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) {
 
 		if (if_outgoing != NULL) {
 
@@ -92,17 +89,15 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 
 	} else {
 
-		if ((directlink) && (if_outgoing == NULL)) {
+		if (directlink && (if_outgoing == NULL)) {
 
 			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with IDF: outgoing iface not specified \n");
 
 		} else {
 
 			/* non-primary interfaces are only broadcasted on their interface */
-			if ((own_packet) && (if_outgoing->if_num > 0)) {
-				ether_ntoa(orig_str, if_outgoing->net_dev->dev_addr);
-
-				debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+			if (own_packet && (if_outgoing->if_num > 0)) {
+				debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 			} else {
@@ -110,14 +105,12 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 				list_for_each(list_pos, &if_list) {
 					batman_if = list_entry(list_pos, struct batman_if, list);
 
-					if ((directlink) && (if_outgoing == batman_if))
+					if (directlink && (if_outgoing == batman_if))
 						((struct batman_packet *)pack_buff)->flags = DIRECTLINK;
 					else
 						((struct batman_packet *)pack_buff)->flags = 0x00;
 
-					ether_ntoa(orig_str, batman_if->net_dev->dev_addr);
-
-					debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
+					debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
@@ -148,4 +141,50 @@ void send_own_packet(unsigned long data)
 	batman_if->bcast_timer.function = send_own_packet;
 
 	add_timer(&batman_if->bcast_timer);
+}
+
+void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t udf, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
+{
+	char in_tq, in_ttl, tq_avg = 0;
+
+	if (batman_packet->ttl <= 1) {
+		debug_log(LOG_TYPE_ROUTING, "ttl exceeded \n");
+		return;
+	}
+
+	in_tq = batman_packet->tq;
+	in_ttl = batman_packet->ttl;
+
+	batman_packet->ttl--;
+	memcpy(batman_packet->old_orig, ethhdr->h_source, ETH_ALEN);
+
+	/* rebroadcast tq of our best ranking neighbor to ensure the rebroadcast of our best tq value */
+	if ((orig_node->router != NULL) && (orig_node->router->tq_avg != 0)) {
+
+		/* rebroadcast ogm of best ranking neighbor as is */
+		if (compare_orig(orig_node->router->addr, ethhdr->h_source)) {
+
+			batman_packet->tq = orig_node->router->tq_avg;
+			batman_packet->ttl = orig_node->router->last_ttl - 1;
+
+		}
+
+		tq_avg = orig_node->router->tq_avg;
+
+		if ((orig_node->router->orig_node->tq_own > TQ_MAX_VALUE - PERFECT_TQ_PENALTY) && (orig_node->router->orig_node->tq_asym_penality > TQ_MAX_VALUE - PERFECT_TQ_PENALTY))
+			batman_packet->tq -= PERFECT_TQ_PENALTY;
+
+	}
+
+	debug_log(LOG_TYPE_ROUTING, "forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
+
+	if (udf)
+		batman_packet->flags = (UNIDIRECTIONAL | DIRECTLINK);
+	else if (idf)
+		batman_packet->flags = DIRECTLINK;
+	else
+		batman_packet->flags = 0x00;
+
+	send_packet((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0);
+
 }
