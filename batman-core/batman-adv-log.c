@@ -35,7 +35,7 @@ int log_buf_len = LOG_BUF_LEN;
 unsigned long log_start = 0;
 unsigned long log_end = 0;
 
-spinlock_t logbuf_lock = SPIN_LOCK_UNLOCKED;
+DEFINE_SPINLOCK(logbuf_lock);
 
 struct file_operations proc_log_operations = {
 	.read           = log_read,

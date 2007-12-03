@@ -22,10 +22,12 @@
 
 
 #include "batman-adv-main.h"
+#include "batman-adv-proc.h"
 #include "batman-adv-send.h"
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
 #include "types.h"
+#include "hash.h"
 
 
 
@@ -158,6 +160,8 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	if (!if_string)
 		return -ENOMEM;
 
+	spin_lock(&if_list_lock);
+
 	if (count > IFNAMSIZ - 1) {
 		debug_log(LOG_TYPE_WARN, "batman-adv: Can't add interface: device name is too long\n");
 		goto end;
@@ -187,6 +191,11 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		del_timer_sync(&batman_if->bcast_timer);
 	}
+
+	/* reset orig_hash because if num_ifs and orig_node->bcast_own */
+	hash_delete(orig_hash, free_orig_node);
+	orig_hash = hash_new(128, compare_orig, choose_orig);
+	num_ifs = 0;
 
 	if (strlen(if_string) == 0) {
 
@@ -287,6 +296,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 
 			batman_if->seqno = 1;
+			batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 			batman_if->bcast_seqno = 1;
 
 			inc_module_count();
@@ -296,6 +306,8 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	if (list_empty(&if_list))
 		goto end;
+
+	num_ifs = if_num + 1;
 
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
@@ -323,6 +335,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 
 end:
+	spin_unlock(&if_list_lock);
 	kfree(if_string);
 	return count;
 }
@@ -369,21 +382,64 @@ end:
 
 int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
-	int total_bytes = 0, bytes_written = 0;
-// 	struct list_head *list_pos;
-// 	struct batman_if *batman_if;
-//
-// TODO: loop through originators
-// 	list_for_each(list_pos, &if_list) {
-// 		batman_if = list_entry(list_pos, struct batman_if, list);
-//
-// 		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->net_dev->name);
-// 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-// 	}
+	struct hash_it_t *hashit = NULL;
+	struct list_head *list_pos;
+	struct orig_node *orig_node;
+	struct neigh_node *neigh_node;
+	int total_bytes = 0, bytes_written = 0, batman_count = 0;
+	static char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
+	spin_lock(&if_list_lock);
+	if (list_empty(&if_list)) {
+		spin_unlock(&if_list_lock);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Batman disabled - please specify interfaces to enable it \n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		goto end;
+	}
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %16s [%10s]: %20s ... [B.A.T.M.A.N. %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
+	spin_unlock(&if_list_lock);
+	spin_lock(&orig_hash_lock);
+
+	while (NULL != (hashit = hash_iterate( orig_hash, hashit))) {
+
+		orig_node = hashit->bucket->data;
+
+		if ( orig_node->router == NULL )
+			continue;
+
+		batman_count++;
+
+		addr_to_string(orig_str, orig_node->orig);
+		addr_to_string(router_str, orig_node->router->addr);
+
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%-17s (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+		list_for_each(list_pos, &orig_node->neigh_list) {
+			neigh_node = list_entry(list_pos, struct neigh_node, list);
+
+			addr_to_string(orig_str, neigh_node->addr);
+
+			bytes_written = snprintf(buf + total_bytes, (size - total_bytes), " %17s (%3i)", orig_str, neigh_node->tq_avg);
+			total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		}
+
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	}
+
+	spin_unlock(&orig_hash_lock);
+
+	if (batman_count == 0) {
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "No batman nodes in range ... \n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	}
+
+end:
 	*eof = 1;
 	return total_bytes;
 }

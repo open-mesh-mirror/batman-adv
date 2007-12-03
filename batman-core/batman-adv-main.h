@@ -32,7 +32,6 @@
 
 
 
-#include "batman-adv-proc.h"
 
 
 /* Kernel Programming */
@@ -62,7 +61,7 @@
 
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 
-#define LOG_BUF_LEN 8192      /* has to be a power of 2 */
+#define LOG_BUF_LEN 8192	/* has to be a power of 2 */
 #define ETH_STR_LEN 20
 #define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as blocked sockets / failed packet delivery / programming errors */
 #define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
@@ -76,9 +75,14 @@
 
 
 extern struct list_head if_list;
+extern struct hashtable_t *orig_hash;
+
+extern spinlock_t if_list_lock;
+extern spinlock_t orig_hash_lock;
 
 extern int16_t originator_interval;
 extern int16_t num_hna;
+extern int16_t num_ifs;
 
 extern unsigned char broadcastAddr[];
 
@@ -86,8 +90,9 @@ extern unsigned char broadcastAddr[];
 
 void inc_module_count(void);
 void dec_module_count(void);
-int addr_to_string(char *buff, uint8_t addr[6]);
+int addr_to_string(char *buff, uint8_t *addr);
 int compare_orig(void *data1, void *data2);
+int choose_orig(void *data, int32_t size);
 
 
 

@@ -130,7 +130,10 @@ void send_own_packet(unsigned long data)
 	/* change sequence number to network order */
 	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);
 
+	/* could be read by receive_bat_packet() */
+	spin_lock(&batman_if->seqno_lock);
 	batman_if->seqno++;
+	spin_unlock(&batman_if->seqno_lock);
 
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
@@ -162,7 +165,7 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 	if ((orig_node->router != NULL) && (orig_node->router->tq_avg != 0)) {
 
 		/* rebroadcast ogm of best ranking neighbor as is */
-		if (compare_orig(orig_node->router->addr, ethhdr->h_source)) {
+		if (!compare_orig(orig_node->router->addr, ethhdr->h_source)) {
 
 			batman_packet->tq = orig_node->router->tq_avg;
 			batman_packet->ttl = orig_node->router->last_ttl - 1;
@@ -178,6 +181,8 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 
 	debug_log(LOG_TYPE_ROUTING, "forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
 
+	batman_packet->seqno = htons(batman_packet->seqno);
+
 	if (udf)
 		batman_packet->flags = (UNIDIRECTIONAL | DIRECTLINK);
 	else if (idf)
@@ -186,5 +191,4 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 		batman_packet->flags = 0x00;
 
 	send_packet((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0);
-
 }

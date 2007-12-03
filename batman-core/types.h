@@ -39,6 +39,7 @@ struct batman_if
 	struct socket *raw_sock;
 	struct timer_list bcast_timer;
 	uint16_t seqno;
+	spinlock_t seqno_lock;
 	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
 	unsigned char *pack_buff;
 	int pack_buff_len;

@@ -22,15 +22,22 @@
 
 
 #include "batman-adv-main.h"
+#include "batman-adv-proc.h"
 #include "batman-adv-log.h"
 #include "types.h"
+#include "hash.h"
 
 
 
 struct list_head if_list;
+struct hashtable_t *orig_hash;
+
+DEFINE_SPINLOCK(if_list_lock);
+DEFINE_SPINLOCK(orig_hash_lock);
 
 int16_t originator_interval = 1000;
 int16_t num_hna = 0;
+int16_t num_ifs = 0;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -45,6 +52,13 @@ int init_module(void)
 	if ((retval = setup_procfs()) < 0)
 		return retval;
 
+	orig_hash = hash_new(128, compare_orig, choose_orig);
+
+	if (orig_hash == NULL) {
+		cleanup_procfs();
+		return -ENOMEM;
+	}
+
 	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, (strncmp(REVISION_VERSION, "0", 1) != 0 ? REVISION_VERSION : ""), COMPAT_VERSION);
 
 	return 0;
@@ -52,6 +66,7 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+	hash_destroy(orig_hash);
 	cleanup_procfs();
 }
 
@@ -73,7 +88,7 @@ void dec_module_count(void)
 #endif
 }
 
-int addr_to_string(char *buff, uint8_t addr[6])
+int addr_to_string(char *buff, uint8_t *addr)
 {
 	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
@@ -81,6 +96,29 @@ int addr_to_string(char *buff, uint8_t addr[6])
 int compare_orig(void *data1, void *data2) {
 	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
 }
+
+/* hashfunction to choose an entry in a hash table of given size */
+/* hash algorithm from http://en.wikipedia.org/wiki/Hash_table */
+int choose_orig(void *data, int32_t size)
+{
+	unsigned char *key= data;
+	uint32_t hash = 0;
+	size_t i;
+
+	for (i = 0; i < 4; i++) {
+		hash += key[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return (hash%size);
+}
+
+
 
 
 

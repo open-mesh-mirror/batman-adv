@@ -1,6 +1,6 @@
-/*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+/* Copyright (C) 2007 B.A.T.M.A.N. contributors:
  * Marek Lindner
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -21,12 +21,36 @@
 
 
 
-extern wait_queue_head_t thread_wait;
-extern atomic_t exit_cond;
+#include "batman-adv-main.h"
+#include "ring_buffer.h"
 
 
 
-void free_orig_node(void *data);
-void batman_data_ready(struct sock *sk, int len);
-int packet_recv_thread(void *data);
+void ring_buffer_set(uint8_t lq_recv[], uint8_t *lq_index, uint8_t value)
+{
+	lq_recv[*lq_index] = value;
+	*lq_index = (*lq_index + 1) % TQ_TOTAL_WINDOW_SIZE;
+}
 
+uint8_t ring_buffer_avg(uint8_t lq_recv[])
+{
+	uint8_t *ptr;
+	uint16_t count = 0, i = 0, sum = 0;
+
+	ptr = lq_recv;
+
+	while (i < TQ_TOTAL_WINDOW_SIZE) {
+		if (*ptr != 0) {
+			count++;
+			sum += *ptr;
+		}
+
+		i++;
+		ptr++;
+	}
+
+	if (count == 0)
+		return 0;
+
+	return (uint8_t)(sum / count);
+}
