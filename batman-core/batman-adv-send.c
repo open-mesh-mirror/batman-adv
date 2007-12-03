@@ -52,6 +52,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *send_
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 
+	/* minimum packet size is 46 bytes for ethernet */
 	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, (struct kvec *)vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0)
 		debug_log(LOG_TYPE_CRIT, "batman-adv: Can't write to raw socket: %i\n", retval);
 }
@@ -97,7 +98,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 
 			/* non-primary interfaces are only broadcasted on their interface */
 			if (own_packet && (if_outgoing->if_num > 0)) {
-				debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+				debug_log(LOG_TYPE_ROUTING, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 			} else {
@@ -110,7 +111,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 					else
 						((struct batman_packet *)pack_buff)->flags = 0x00;
 
-					debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
+					debug_log(LOG_TYPE_ROUTING, "%s packet (originator %s, seqno %d, TTL %d) on interface %s\n", (own_packet ? "Sending own" : "Forwarding"), batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
@@ -179,7 +180,7 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 
 	}
 
-	debug_log(LOG_TYPE_ROUTING, "forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
+	debug_log(LOG_TYPE_ROUTING, "Forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
 
 	batman_packet->seqno = htons(batman_packet->seqno);
 

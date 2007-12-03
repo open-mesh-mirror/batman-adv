@@ -266,7 +266,7 @@ char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	}
 
 	if (!is_duplicate) {
-		debug_log(LOG_TYPE_ROUTING, "updating last_seqno: old %d, new %d \n", orig_node->last_real_seqno, batman_packet->seqno );
+		debug_log(LOG_TYPE_ROUTING, "updating last_seqno: old %d, new %d \n", orig_node->last_real_seqno, batman_packet->seqno);
 		orig_node->last_real_seqno = batman_packet->seqno;
 	}
 
@@ -297,7 +297,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 
 	is_single_hop_neigh = (compare_orig(ethhdr->h_source, batman_packet->orig) ? 1 : 0);
 
-	debug_log(LOG_TYPE_ROUTING, "Received BATMAN packet via NB: %s, IF: %s %s (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, UDF %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_unidirectional_flag, has_directlink_flag);
+	debug_log(LOG_TYPE_ROUTING, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, UDF %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_unidirectional_flag, has_directlink_flag);
 
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry( list_pos, struct batman_if, list );
@@ -368,7 +368,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 		/* drop packet if sender is not a direct neighbor and if we no route towards it */
 		if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
 
-			debug_log(LOG_TYPE_ROUTING, "Drop packet: OGM via unkown neighbor! \n" );
+			debug_log(LOG_TYPE_ROUTING, "Drop packet: OGM via unkown neighbor! \n");
 
 		} else {
 
@@ -384,7 +384,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 				/* mark direct link on incoming interface */
 				send_forward_packet(orig_node, ethhdr, batman_packet, 0, 1, hna_buff, hna_buff_len, if_incoming);
 
-				debug_log(LOG_TYPE_ROUTING, "Forward packet: rebroadcast neighbour packet with direct link flag \n" );
+				debug_log(LOG_TYPE_ROUTING, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
 
 			/* multihop originator */
 			} else {
@@ -395,17 +395,17 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 
 						send_forward_packet(orig_node, ethhdr, batman_packet, 0, 0, hna_buff, hna_buff_len, if_incoming);
 
-						debug_log(LOG_TYPE_ROUTING, "Forward packet: rebroadcast originator packet \n" );
+						debug_log(LOG_TYPE_ROUTING, "Forwarding packet: rebroadcast originator packet \n");
 
 					} else {
 
-						debug_log(LOG_TYPE_ROUTING, "Drop packet: duplicate packet received\n" );
+						debug_log(LOG_TYPE_ROUTING, "Drop packet: duplicate packet received\n");
 
 					}
 
 				} else {
 
-					debug_log(LOG_TYPE_ROUTING, "Drop packet: not received via bidirectional link\n" );
+					debug_log(LOG_TYPE_ROUTING, "Drop packet: not received via bidirectional link\n");
 
 				}
 
@@ -425,7 +425,7 @@ int packet_recv_thread(void *data)
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
 	unsigned char packet_buff[2000];
-	unsigned int flags = MSG_DONTWAIT | MSG_NOSIGNAL; /* no SIGPIPE & non-blocking */
+	unsigned int flags = MSG_DONTWAIT;	/* non-blocking */
 	int result;
 
 	iov.iov_base = packet_buff;
@@ -493,12 +493,12 @@ int packet_recv_thread(void *data)
 
 			}
 
-			if (result < 0)
+			if ((result < 0) && (result != -EAGAIN))
 				debug_log(LOG_TYPE_CRIT, "batman-adv: Could not receive packet from interface %s: %i\n", batman_if->net_dev->name, result);
 		}
 
-		printk("packet_recv_thread: thread woke up\n");
 		atomic_set(&data_ready_cond, 0);
+
 	}
 
 	return 0;
