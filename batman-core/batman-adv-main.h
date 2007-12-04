@@ -67,6 +67,10 @@
 #define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
 #define LOG_TYPE_NOTICE 2	/* notice information for new interfaces / changed settings / new originators / etc */
 #define LOG_TYPE_ROUTING 4	/* all messages related to routing / flooding / broadcasting / etc */
+#define LOG_TYPE_CRIT_NAME	"critical"
+#define LOG_TYPE_WARN_NAME	"warnings"
+#define LOG_TYPE_NOTICE_NAME	"notices"
+#define LOG_TYPE_ROUTING_NAME	"routing"
 
 #ifndef REVISION_VERSION
 #define REVISION_VERSION "0"

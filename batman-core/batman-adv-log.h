@@ -22,6 +22,7 @@
 
 
 extern struct file_operations proc_log_operations;
+extern int log_level;
 
 
 int debug_log(int type, char *fmt, ...);

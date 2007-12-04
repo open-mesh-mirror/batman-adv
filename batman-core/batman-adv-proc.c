@@ -32,7 +32,7 @@
 
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL, *proc_gateways_file = NULL;
-static struct proc_dir_entry *proc_log_file = NULL;
+static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL;
 static struct task_struct *kthread_task = NULL;
 
 
@@ -42,6 +42,9 @@ void cleanup_procfs(void)
 {
 	if (proc_log_file)
 		remove_proc_entry(PROC_FILE_LOG, proc_batman_dir);
+
+	if (proc_log_level_file)
+		remove_proc_entry(PROC_FILE_LOG_LEVEL, proc_batman_dir);
 
 	if (proc_gateways_file)
 		remove_proc_entry(PROC_FILE_GATEWAYS, proc_batman_dir);
@@ -91,6 +94,19 @@ int setup_procfs(void)
 		cleanup_procfs();
 		return -EFAULT;
 	}
+
+	proc_log_level_file = create_proc_entry(PROC_FILE_LOG_LEVEL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_log_level_file) {
+		proc_log_level_file->read_proc = proc_log_level_read;
+		proc_log_level_file->write_proc = proc_log_level_write;
+		proc_log_level_file->data = NULL;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_LOG_LEVEL);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
 
 	proc_originators_file = create_proc_entry(PROC_FILE_ORIGINATORS, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
@@ -465,4 +481,84 @@ int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof
 	return total_bytes;
 }
 
+int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+{
+	int total_bytes = 0, bytes_written = 0;
+	int tmp_log_level;
+
+	tmp_log_level = log_level;
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[x] %s (%d)\n", 
+				LOG_TYPE_CRIT_NAME, LOG_TYPE_CRIT);
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
+				(tmp_log_level & LOG_TYPE_WARN)?'x':' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN); 
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
+				(tmp_log_level & LOG_TYPE_NOTICE)?'x':' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE); 
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
+				(tmp_log_level & LOG_TYPE_ROUTING)?'x':' ', LOG_TYPE_ROUTING_NAME, LOG_TYPE_ROUTING);
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+
+	*eof = 1;
+	return total_bytes;
+}
+
+int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+{
+	char *log_level_string;
+	int finished, not_copied = 0;
+	int16_t log_level_tmp = 0;
+	char *tokptr, *cp;
+
+	log_level_string = kmalloc(count, GFP_KERNEL);
+
+	if (!log_level_string)
+		return -ENOMEM;
+
+	not_copied = copy_from_user(log_level_string, userbuffer, count);
+	log_level_string[count - not_copied - 1] = 0;
+
+	log_level_tmp = simple_strtol(log_level_string, &cp, 10);
+
+	if (cp == log_level_string) {
+		/* was not (beginning with) a number, doing textual parsing */
+		log_level_tmp = 0;
+		tokptr = log_level_string;
+
+		for (cp = log_level_string, finished = 0; !finished; cp++) {
+			switch (*cp) {
+			case 0:
+				finished = 1;
+			case ' ':
+			case '\n':
+			case '\t':
+				*cp = 0;
+				/* compare */
+				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0) 
+					log_level_tmp |= LOG_TYPE_WARN;
+				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0) 
+					log_level_tmp |= LOG_TYPE_NOTICE;
+				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0) 
+					log_level_tmp |= LOG_TYPE_ROUTING;
+				tokptr = cp + 1;
+				break;
+			default:
+				;
+			}
+		}
+	}
+
+	/*debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);*/
+	debug_log(LOG_TYPE_CRIT, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
+
+	log_level = log_level_tmp;
+
+	kfree(log_level_string);
+	return count;
+}
 

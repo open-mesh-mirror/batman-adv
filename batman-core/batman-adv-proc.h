@@ -29,6 +29,7 @@
 #define PROC_FILE_ORIGINATORS "originators"
 #define PROC_FILE_GATEWAYS "gateways"
 #define PROC_FILE_LOG "log"
+#define PROC_FILE_LOG_LEVEL "log_level"
 
 
 
@@ -40,3 +41,5 @@ int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int
 int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);

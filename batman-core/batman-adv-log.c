@@ -34,6 +34,7 @@ char log_buf[LOG_BUF_LEN];
 int log_buf_len = LOG_BUF_LEN;
 unsigned long log_start = 0;
 unsigned long log_end = 0;
+int log_level = 0;
 
 DEFINE_SPINLOCK(logbuf_lock);
 
@@ -81,7 +82,7 @@ int debug_log(int type, char *fmt, ...)
 	va_list args;
 	int retval;
 
-	if (type == LOG_TYPE_CRIT) {
+	if ((type == LOG_TYPE_CRIT) || (type & log_level)) {
 		va_start(args, fmt);
 		vprintk(fmt, args);
 		va_end(args);
