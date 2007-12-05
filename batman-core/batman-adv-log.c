@@ -57,26 +57,6 @@ static void emit_log_char(char c)
 	if (log_end - log_start > log_buf_len)
 		log_start = log_end - log_buf_len;
 }
-/* TODO: unused now, may be removed.
-int vdebug_log(const char *fmt, va_list args)
-{
-	int printed_len;
-	char *p;
-	static char debug_log_buf[1024];
-
-	spin_lock(&logbuf_lock);
-
-	printed_len = vscnprintf(debug_log_buf, sizeof(debug_log_buf), fmt, args);
-
-	for (p = debug_log_buf; *p != 0; p++)
-		emit_log_char(*p);
-
-	spin_unlock(&logbuf_lock);
-
-	wake_up(&log_wait);
-
-	return printed_len;
-}*/
 
 int fdebug_log(char *fmt, ...)
 {
@@ -109,7 +89,6 @@ int debug_log(int type, char *fmt, ...)
 
 	/* only critical information get into the official kernel log */
 	if (type == LOG_TYPE_CRIT) {
-
 		va_start(args, fmt);
 		vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
 		printk("batman-adv: %s", tmp_log_buf);
@@ -119,7 +98,7 @@ int debug_log(int type, char *fmt, ...)
 	if ((type == LOG_TYPE_CRIT) || test_bit(type, &log_level)) {
 		va_start(args, fmt);
 		vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
-		fdebug_log("[%d] %s", jiffies, tmp_log_buf);
+		fdebug_log("[%10u] %s", jiffies, tmp_log_buf);
 		va_end(args);
 	}
 
