@@ -181,7 +181,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	spin_lock(&if_list_lock);
 
 	if (count > IFNAMSIZ - 1) {
-		debug_log(LOG_TYPE_WARN, "batman-adv: Can't add interface: device name is too long\n");
+		debug_log(LOG_TYPE_WARN, "Can't add interface: device name is too long\n");
 		goto end;
 	}
 
@@ -222,7 +222,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
-			debug_log(LOG_TYPE_NOTICE, "batman-adv: Deleting interface: %s\n", batman_if->net_dev->name);
+			debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->net_dev->name);
 
 			batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data;
 
@@ -238,7 +238,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		/* add interface */
 		if ((net_dev = dev_get_by_name(if_string)) == NULL) {
-			debug_log(LOG_TYPE_WARN, "batman-adv: Could not find interface: %s\n", if_string);
+			debug_log(LOG_TYPE_WARN, "Could not find interface: %s\n", if_string);
 			goto end;
 		}
 
@@ -254,7 +254,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		if (batman_if != NULL) {
 
-			debug_log(LOG_TYPE_WARN, "batman-adv: Given interface is already active: %s\n", if_string);
+			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
 			goto end;
 
 		} else {
@@ -262,12 +262,12 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
 
 			if (!batman_if) {
-				debug_log(LOG_TYPE_WARN, "batman-adv: Can't add interface (%s): out of memory\n", if_string);
+				debug_log(LOG_TYPE_WARN, "Can't add interface (%s): out of memory\n", if_string);
 				goto end;
 			}
 
 			if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
-				debug_log(LOG_TYPE_WARN, "batman-adv: Can't create raw socket: %i\n", retval);
+				debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
 				kfree(batman_if);
 				goto end;
 			}
@@ -276,7 +276,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			bind_addr.sll_ifindex = net_dev->ifindex;
 
 			if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
-				debug_log(LOG_TYPE_WARN, "batman-adv: Can't create bind raw socket: %i\n", retval);
+				debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);
 				sock_release(batman_if->raw_sock);
 				kfree(batman_if);
 				goto end;
@@ -290,7 +290,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
 
 			if (!batman_if->pack_buff) {
-				debug_log(LOG_TYPE_WARN, "batman-adv: Can't add interface packet (%s): out of memory\n", if_string);
+				debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", if_string);
 				sock_release(batman_if->raw_sock);
 				kfree(batman_if);
 				goto end;
@@ -302,7 +302,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if->if_num = if_num;
 			batman_if->net_dev = net_dev;
 			addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
-			debug_log(LOG_TYPE_NOTICE, "batman-adv: Adding interface: %s\n", batman_if->net_dev->name);
+			debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", batman_if->net_dev->name);
 
 			INIT_LIST_HEAD(&batman_if->list);
 			list_add_tail(&batman_if->list, &if_list);
@@ -347,7 +347,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
 
 	if (IS_ERR(kthread_task)) {
-		debug_log(LOG_TYPE_CRIT, "batman-adv: Unable to start packet receive thread\n");
+		debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
 
 		kthread_task = NULL;
 	} else {
@@ -389,11 +389,11 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 	originator_interval_tmp = simple_strtol(interval_string, NULL, 10);
 
 	if (originator_interval_tmp < JITTER * 2) {
-		debug_log(LOG_TYPE_WARN, "batman-adv: New originator interval too small: %i (min: %i)\n", originator_interval_tmp, JITTER * 2);
+		debug_log(LOG_TYPE_WARN, "New originator interval too small: %i (min: %i)\n", originator_interval_tmp, JITTER * 2);
 		goto end;
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing originator interval from: %i to: %i\n", atomic_read(&originator_interval), originator_interval_tmp);
+	debug_log(LOG_TYPE_NOTICE, "Changing originator interval from: %i to: %i\n", atomic_read(&originator_interval), originator_interval_tmp);
 
 	atomic_set(&originator_interval, originator_interval_tmp);
 
@@ -566,7 +566,7 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 		}
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
+	debug_log(LOG_TYPE_NOTICE, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
 
 	set_bit(log_level_tmp, &log_level);
 

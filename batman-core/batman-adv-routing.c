@@ -492,7 +492,7 @@ int packet_recv_thread(void *data)
 			}
 
 			if ((result < 0) && (result != -EAGAIN))
-				debug_log(LOG_TYPE_CRIT, "batman-adv: Could not receive packet from interface %s: %i\n", batman_if->net_dev->name, result);
+				debug_log(LOG_TYPE_CRIT, "Could not receive packet from interface %s: %i\n", batman_if->net_dev->name, result);
 		}
 
 		atomic_set(&data_ready_cond, 0);
