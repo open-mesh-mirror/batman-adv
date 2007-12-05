@@ -395,7 +395,18 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 
 	debug_log(LOG_TYPE_NOTICE, "Changing originator interval from: %i to: %i\n", atomic_read(&originator_interval), originator_interval_tmp);
 
-	atomic_set(&originator_interval, originator_interval_tmp);
+	/* AFAIR: atomic_set is nothing else but an assignment,
+	 * so its not better or worse than writing
+	 * *(&originator_interval) = originator_interval_tmp;
+	 * (except for sparc, parisc, and arm, it seems)
+	 *
+	 * Documentation/atomic_ops.txt or
+	 * include/asm/atomic.h
+	 *
+	 * typedef struct { volatile int counter; } atomic_t;
+	 * #define atomic_set(v, i)    ((v)->counter = (i))
+	 */
+	 atomic_set(&originator_interval, originator_interval_tmp);
 
 end:
 	kfree(interval_string);
