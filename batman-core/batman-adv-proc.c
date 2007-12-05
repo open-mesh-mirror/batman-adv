@@ -112,6 +112,7 @@ int setup_procfs(void)
 
 	if (proc_originators_file) {
 		proc_originators_file->read_proc = proc_originators_read;
+		proc_originators_file->write_proc = proc_originators_write;
 		proc_originators_file->data = NULL;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_ORIGINATORS);
@@ -123,6 +124,7 @@ int setup_procfs(void)
 
 	if (proc_gateways_file) {
 		proc_gateways_file->read_proc = proc_gateways_read;
+		proc_gateways_file->write_proc = proc_gateways_write;
 		proc_gateways_file->data = NULL;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_GATEWAYS);
@@ -184,6 +186,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	}
 
 	not_copied = copy_from_user(if_string, userbuffer, count);
+	if_string[count - not_copied - 1] = 0;
 
 	if ((colon_ptr = strchr(if_string, ':')) != NULL)
 		*colon_ptr = 0;
@@ -220,6 +223,8 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
 			debug_log(LOG_TYPE_NOTICE, "batman-adv: Deleting interface: %s\n", batman_if->net_dev->name);
+
+			batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data;
 
 			list_del(list_pos);
 			sock_release(batman_if->raw_sock);
@@ -331,7 +336,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		init_timer(&batman_if->bcast_timer);
 
-		batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
+		batman_if->bcast_timer.expires = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
 		batman_if->bcast_timer.data = (unsigned long)batman_if;
 		batman_if->bcast_timer.function = send_own_packet;
 
@@ -360,7 +365,7 @@ int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int
 {
 	int total_bytes = 0, bytes_written = 0;
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%i\n", originator_interval);
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%i\n", atomic_read(&originator_interval));
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	*eof = 1;
@@ -379,6 +384,7 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 		return -ENOMEM;
 
 	not_copied = copy_from_user(interval_string, userbuffer, count);
+	interval_string[count - not_copied - 1] = 0;
 
 	originator_interval_tmp = simple_strtol(interval_string, NULL, 10);
 
@@ -387,9 +393,9 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 		goto end;
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing originator interval from: %i to: %i\n", originator_interval, originator_interval_tmp);
+	debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing originator interval from: %i to: %i\n", atomic_read(&originator_interval), originator_interval_tmp);
 
-	originator_interval = originator_interval_tmp;
+	atomic_set(&originator_interval, originator_interval_tmp);
 
 end:
 	kfree(interval_string);
@@ -408,7 +414,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 	spin_lock(&if_list_lock);
 	if (list_empty(&if_list)) {
 		spin_unlock(&if_list_lock);
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Batman disabled - please specify interfaces to enable it \n");
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 		goto end;
 	}
@@ -460,6 +466,11 @@ end:
 	return total_bytes;
 }
 
+int proc_originators_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+{
+	return count;
+}
+
 int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
 	int total_bytes = 0, bytes_written = 0;
@@ -481,28 +492,30 @@ int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof
 	return total_bytes;
 }
 
+int proc_gateways_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+{
+	return count;
+}
+
 int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
 	int total_bytes = 0, bytes_written = 0;
-	int tmp_log_level;
 
-	tmp_log_level = log_level;
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[x] %s (%d)\n", 
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[x] %s (%d)\n",
 				LOG_TYPE_CRIT_NAME, LOG_TYPE_CRIT);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
-				(tmp_log_level & LOG_TYPE_WARN)?'x':' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN); 
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
+				test_bit(LOG_TYPE_WARN, &log_level) ? 'x' : ' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
-				(tmp_log_level & LOG_TYPE_NOTICE)?'x':' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE); 
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
+				 test_bit(LOG_TYPE_NOTICE, &log_level) ? 'x' : ' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n", 
-				(tmp_log_level & LOG_TYPE_ROUTING)?'x':' ', LOG_TYPE_ROUTING_NAME, LOG_TYPE_ROUTING);
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
+				 test_bit(LOG_TYPE_ROUTING, &log_level) ? 'x' : ' ', LOG_TYPE_ROUTING_NAME, LOG_TYPE_ROUTING);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
 
 	*eof = 1;
 	return total_bytes;
@@ -512,7 +525,7 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 {
 	char *log_level_string;
 	int finished, not_copied = 0;
-	int16_t log_level_tmp = 0;
+	unsigned long log_level_tmp = 0;
 	char *tokptr, *cp;
 
 	log_level_string = kmalloc(count, GFP_KERNEL);
@@ -539,11 +552,11 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 			case '\t':
 				*cp = 0;
 				/* compare */
-				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_WARN;
-				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_NOTICE;
-				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_ROUTING;
 				tokptr = cp + 1;
 				break;
@@ -553,10 +566,9 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 		}
 	}
 
-	/*debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);*/
-	debug_log(LOG_TYPE_CRIT, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
+	debug_log(LOG_TYPE_NOTICE, "batman-adv: Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
 
-	log_level = log_level_tmp;
+	set_bit(log_level_tmp, &log_level);
 
 	kfree(log_level_string);
 	return count;

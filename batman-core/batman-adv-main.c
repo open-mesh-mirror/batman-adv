@@ -35,7 +35,7 @@ struct hashtable_t *orig_hash;
 DEFINE_SPINLOCK(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
 
-int16_t originator_interval = 1000;
+atomic_t originator_interval;
 int16_t num_hna = 0;
 int16_t num_ifs = 0;
 
@@ -48,6 +48,7 @@ int init_module(void)
 	int retval;
 
 	INIT_LIST_HEAD(&if_list);
+	atomic_set(&originator_interval, 1000);
 
 	if ((retval = setup_procfs()) < 0)
 		return retval;

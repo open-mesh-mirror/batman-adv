@@ -140,7 +140,7 @@ void send_own_packet(unsigned long data)
 
 	init_timer(&batman_if->bcast_timer);
 
-	batman_if->bcast_timer.expires = jiffies + (((originator_interval - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
+	batman_if->bcast_timer.expires = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
 	batman_if->bcast_timer.data = (unsigned long)batman_if;
 	batman_if->bcast_timer.function = send_own_packet;
 

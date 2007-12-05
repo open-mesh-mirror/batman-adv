@@ -34,15 +34,16 @@ char log_buf[LOG_BUF_LEN];
 int log_buf_len = LOG_BUF_LEN;
 unsigned long log_start = 0;
 unsigned long log_end = 0;
-int log_level = 0;
+unsigned long log_level = 0;
 
 DEFINE_SPINLOCK(logbuf_lock);
 
 struct file_operations proc_log_operations = {
-	.read           = log_read,
-	.poll           = log_poll,
 	.open           = log_open,
 	.release        = log_release,
+	.read           = log_read,
+	.write          = log_write,
+	.poll           = log_poll,
 };
 
 DECLARE_WAIT_QUEUE_HEAD(log_wait);
@@ -80,17 +81,20 @@ int vdebug_log(const char *fmt, va_list args)
 int debug_log(int type, char *fmt, ...)
 {
 	va_list args;
-	int retval;
+	int retval = 0;
 
-	if ((type == LOG_TYPE_CRIT) || (type & log_level)) {
+	/* only critical information get into the official kernel log */
+	if (type == LOG_TYPE_CRIT) {
 		va_start(args, fmt);
 		vprintk(fmt, args);
 		va_end(args);
 	}
 
-	va_start(args, fmt);
-	retval = vdebug_log(fmt, args);
-	va_end(args);
+	if ((type == LOG_TYPE_CRIT) || test_bit(type, &log_level)) {
+		va_start(args, fmt);
+		retval = vdebug_log(fmt, args);
+		va_end(args);
+	}
 
 	return retval;
 }
@@ -152,6 +156,11 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 		return i;
 
 	return error;
+}
+
+ssize_t log_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+{
+	return count;
 }
 
 unsigned int log_poll(struct file *file, poll_table *wait)

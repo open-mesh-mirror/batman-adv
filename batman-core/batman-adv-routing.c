@@ -458,37 +458,35 @@ int packet_recv_thread(void *data)
 
 				/* batman packet */
 				switch (batman_packet->packet_type) {
+				case BAT_PACKET:
 
-					case BAT_PACKET:
+					/* drop packet if it has no batman packet payload */
+					if (result < sizeof(struct ethhdr) + sizeof(struct batman_packet))
+						continue;
 
-						/* drop packet if it has no batman packet payload */
-						if (result < sizeof(struct ethhdr) + sizeof(struct batman_packet))
-							continue;
+					/* network to host order for our 16bit seqno. */
+					batman_packet->seqno = ntohs(batman_packet->seqno);
 
-						/* network to host order for our 16bit seqno. */
-						batman_packet->seqno = ntohs(batman_packet->seqno);
+					spin_lock(&orig_hash_lock);
+					receive_bat_packet(ethhdr, batman_packet, packet_buff + sizeof(struct ethhdr) + sizeof(struct batman_packet), result - sizeof(struct ethhdr) - sizeof(struct batman_packet), batman_if);
+					spin_unlock(&orig_hash_lock);
 
-						spin_lock(&orig_hash_lock);
-						receive_bat_packet(ethhdr, batman_packet, packet_buff + sizeof(struct ethhdr) + sizeof(struct batman_packet), result - sizeof(struct ethhdr) - sizeof(struct batman_packet), batman_if);
-						spin_unlock(&orig_hash_lock);
+					break;
 
-						break;
+				/* unicast packet */
+				case BAT_UNICAST:
 
-					/* unicast packet */
-					case BAT_UNICAST:
+					break;
 
-						break;
+				/* batman icmp packet */
+				case BAT_ICMP:
 
-					/* batman icmp packet */
-					case BAT_ICMP:
+					break;
 
-						break;
+				/* broadcast packet */
+				case BAT_BCAST:
 
-					/* broadcast packet */
-					case BAT_BCAST:
-
-						break;
-
+					break;
 				}
 
 			}
