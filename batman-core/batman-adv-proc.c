@@ -552,34 +552,33 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 			case '\t':
 				*cp = 0;
 				/* compare */
-				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0) {
+				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0) 
 					log_level_tmp |= LOG_TYPE_WARN;
-					set_bit(LOG_TYPE_WARN, &log_level);
-				}
-				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0) {
+				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0) 
 					log_level_tmp |= LOG_TYPE_NOTICE;
-					set_bit(LOG_TYPE_NOTICE, &log_level);
-				}
-				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0) {
+				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0) 
 					log_level_tmp |= LOG_TYPE_ROUTING;
-					set_bit(LOG_TYPE_ROUTING, &log_level);
-				}
 				tokptr = cp + 1;
 				break;
 			default:
 				;
 			}
 		}
-	} else {
-		if (LOG_TYPE_WARN & log_level_tmp)
-			set_bit(LOG_TYPE_WARN, &log_level);
+	} 
+	if (LOG_TYPE_WARN & log_level_tmp)
+		set_bit(LOG_TYPE_WARN, &log_level);
+	else 
+		clear_bit(LOG_TYPE_WARN, &log_level);
 
-		if (LOG_TYPE_NOTICE & log_level_tmp)
-			set_bit(LOG_TYPE_NOTICE, &log_level);
+	if (LOG_TYPE_NOTICE & log_level_tmp)
+		set_bit(LOG_TYPE_NOTICE, &log_level);
+	else
+		clear_bit(LOG_TYPE_NOTICE, &log_level);
 
-		if (LOG_TYPE_ROUTING & log_level_tmp)
-			set_bit(LOG_TYPE_ROUTING, &log_level);
-	}
+	if (LOG_TYPE_ROUTING & log_level_tmp)
+		set_bit(LOG_TYPE_ROUTING, &log_level);
+	else
+		clear_bit(LOG_TYPE_ROUTING, &log_level);
 
 	debug_log(LOG_TYPE_NOTICE, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
 
