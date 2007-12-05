@@ -28,6 +28,17 @@
 
 
 
+void start_bcast_timer(struct batman_if *batman_if)
+{
+	init_timer(&batman_if->bcast_timer);
+
+	batman_if->bcast_timer.expires = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
+	batman_if->bcast_timer.data = (unsigned long)batman_if;
+	batman_if->bcast_timer.function = send_own_packet;
+
+	add_timer(&batman_if->bcast_timer);
+}
+
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *send_addr, uint8_t *recv_addr, struct batman_if *batman_if)
 {
 	struct msghdr msg;
@@ -138,13 +149,7 @@ void send_own_packet(unsigned long data)
 
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
-	init_timer(&batman_if->bcast_timer);
-
-	batman_if->bcast_timer.expires = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
-	batman_if->bcast_timer.data = (unsigned long)batman_if;
-	batman_if->bcast_timer.function = send_own_packet;
-
-	add_timer(&batman_if->bcast_timer);
+	start_bcast_timer(batman_if);
 }
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t udf, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)

@@ -428,8 +428,6 @@ int packet_recv_thread(void *data)
 	unsigned int flags = MSG_DONTWAIT;	/* non-blocking */
 	int result;
 
-	iov.iov_base = packet_buff;
-	iov.iov_len = sizeof(packet_buff);
 	msg.msg_flags = flags;
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
@@ -447,6 +445,10 @@ int packet_recv_thread(void *data)
 
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
+
+			/* has to be done here or we don't get packets - wtf ??? */
+			iov.iov_base = packet_buff;
+			iov.iov_len = sizeof(packet_buff);
 
 			while ((result = kernel_recvmsg(batman_if->raw_sock, &msg, &iov, 1, sizeof(packet_buff), flags)) > 0) {
 

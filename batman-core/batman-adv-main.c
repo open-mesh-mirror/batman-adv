@@ -24,6 +24,7 @@
 #include "batman-adv-main.h"
 #include "batman-adv-proc.h"
 #include "batman-adv-log.h"
+#include "batman-adv-routing.h"
 #include "types.h"
 #include "hash.h"
 
@@ -67,8 +68,124 @@ int init_module(void)
 
 void cleanup_module(void)
 {
+	shutdown_thread_timers();
+	remove_interfaces();
+	hash_delete(orig_hash, free_orig_node);
 	hash_destroy(orig_hash);
 	cleanup_procfs();
+}
+
+void shutdown_thread_timers(void)
+{
+	struct list_head *list_pos;
+	struct batman_if *batman_if = NULL;
+
+	/* deactivate kernel thread for packet processing (if running) */
+	if (kthread_task) {
+		atomic_set(&exit_cond, 1);
+		wake_up_interruptible(&thread_wait);
+		kthread_stop(kthread_task);
+
+		kthread_task = NULL;
+	}
+
+	/* deactivate all timers first to avoid race conditions */
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		del_timer_sync(&batman_if->bcast_timer);
+	}
+}
+
+void remove_interfaces(void)
+{
+	struct list_head *list_pos, *list_pos_tmp;
+	struct batman_if *batman_if = NULL;
+
+	/* deactivate all interfaces */
+	list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->net_dev->name);
+
+		batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data;
+
+		list_del(list_pos);
+		sock_release(batman_if->raw_sock);
+		kfree(batman_if->pack_buff);
+		kfree(batman_if);
+	}
+}
+
+int add_interface(char *if_name, int if_num, struct net_device *net_dev)
+{
+	struct sockaddr_ll bind_addr;
+	struct batman_if *batman_if;
+	int retval;
+
+	batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
+
+	if (!batman_if) {
+		debug_log(LOG_TYPE_WARN, "Can't add interface (%s): out of memory\n", if_name);
+		return -1;
+	}
+
+	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
+		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
+		goto batif_free;
+	}
+
+	bind_addr.sll_family = AF_PACKET;
+	bind_addr.sll_ifindex = net_dev->ifindex;
+
+	if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
+		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);
+		goto sock_rel;
+	}
+
+	if ((if_num == 0) && (num_hna > 0))
+		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * 6;
+	else
+		batman_if->pack_buff_len = sizeof(struct batman_packet);
+
+	batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
+
+	if (!batman_if->pack_buff) {
+		debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", if_name);
+		goto sock_rel;
+	}
+
+	batman_if->raw_sock->sk->sk_user_data = batman_if->raw_sock->sk->sk_data_ready;
+	batman_if->raw_sock->sk->sk_data_ready = batman_data_ready;
+
+	batman_if->if_num = if_num;
+	batman_if->net_dev = net_dev;
+	addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
+	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", batman_if->net_dev->name);
+
+	INIT_LIST_HEAD(&batman_if->list);
+	list_add_tail(&batman_if->list, &if_list);
+
+	((struct batman_packet *)(batman_if->pack_buff))->packet_type = BAT_PACKET;
+	((struct batman_packet *)(batman_if->pack_buff))->version = COMPAT_VERSION;
+	((struct batman_packet *)(batman_if->pack_buff))->flags = 0x00;
+	((struct batman_packet *)(batman_if->pack_buff))->ttl = (batman_if->if_num > 0 ? 2 : TTL);
+	((struct batman_packet *)(batman_if->pack_buff))->gwflags = 0;
+	((struct batman_packet *)(batman_if->pack_buff))->tq = TQ_MAX_VALUE;
+	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+
+	batman_if->seqno = 1;
+	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
+	batman_if->bcast_seqno = 1;
+
+	return 0;
+
+sock_rel:
+	sock_release(batman_if->raw_sock);
+batif_free:
+	kfree(batman_if);
+	return -1;
 }
 
 void inc_module_count(void)

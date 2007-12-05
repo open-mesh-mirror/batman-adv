@@ -92,6 +92,9 @@ extern unsigned char broadcastAddr[];
 
 
 
+void shutdown_thread_timers(void);
+void remove_interfaces(void);
+int add_interface(char *if_name, int if_num, struct net_device *net_dev);
 void inc_module_count(void);
 void dec_module_count(void);
 int addr_to_string(char *buff, uint8_t *addr);

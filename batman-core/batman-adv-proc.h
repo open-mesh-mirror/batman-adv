@@ -33,9 +33,13 @@
 
 
 
+extern struct task_struct *kthread_task;
+
+
+
 void cleanup_procfs(void);
 int setup_procfs(void);
-int proc_interfaces_read( char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
