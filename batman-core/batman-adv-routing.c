@@ -416,6 +416,54 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	}
 }
 
+void purge_orig(unsigned long data)
+{
+	struct list_head *list_pos, *list_pos_tmp;
+	struct hash_it_t *hashit = NULL;
+	struct orig_node *orig_node;
+	struct neigh_node *neigh_node;
+	static char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
+
+	/* for all origins... */
+	while ( NULL != ( hashit = hash_iterate( orig_hash, hashit ) ) ) {
+
+		orig_node = hashit->bucket->data;
+		addr_to_string(orig_str, orig_node->orig);
+
+		if (time_after(jiffies, orig_node->last_valid + ((2 * PURGE_TIMEOUT * HZ) / 1000))) {
+
+			debug_log(LOG_TYPE_ROUTING, "Originator timeout: originator %s, last_valid %u \n", orig_str, (orig_node->last_valid / HZ));
+
+			hash_remove_bucket(orig_hash, hashit);
+			free_orig_node(orig_node);
+
+		} else {
+
+			/* for all neighbours towards this originator ... */
+			list_for_each_safe(list_pos, list_pos_tmp, &orig_node->neigh_list) {
+				neigh_node = list_entry(list_pos, struct neigh_node, list);
+
+				if (time_after(jiffies, neigh_node->last_valid + ((2 * PURGE_TIMEOUT * HZ) / 1000))) {
+
+					addr_to_string(neigh_str, neigh_node->addr);
+					debug_log(LOG_TYPE_ROUTING, "Neighbour timeout: originator %s, neighbour: %s, last_valid %u \n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
+
+					if ( orig_node->router == neigh_node ) {
+						/* we have to delete the route towards this node before it gets purged */
+
+						/* remove old announced network(s) */
+					}
+
+				}
+			}
+
+		}
+
+	}
+
+	start_purge_timer();
+}
+
 int packet_recv_thread(void *data)
 {
 	struct list_head *list_pos;

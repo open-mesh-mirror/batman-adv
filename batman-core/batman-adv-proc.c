@@ -23,9 +23,7 @@
 
 #include "batman-adv-main.h"
 #include "batman-adv-proc.h"
-#include "batman-adv-send.h"
 #include "batman-adv-log.h"
-#include "batman-adv-routing.h"
 #include "types.h"
 #include "hash.h"
 
@@ -33,7 +31,6 @@
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL, *proc_gateways_file = NULL;
 static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL;
-struct task_struct *kthread_task = NULL;
 
 
 
@@ -254,20 +251,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	num_ifs = if_num + 1;
 
-	/* (re)activate all timers (if any) */
-	list_for_each(list_pos, &if_list) {
-		batman_if = list_entry(list_pos, struct batman_if, list);
-
-		start_bcast_timer(batman_if);
-	}
-
-	/* (re)start kernel thread for packet processing */
-	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
-
-	if (IS_ERR(kthread_task)) {
-		debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
-		kthread_task = NULL;
-	}
+	activate_thread_timers();
 
 end:
 	spin_unlock(&if_list_lock);

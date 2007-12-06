@@ -28,5 +28,6 @@ extern atomic_t exit_cond;
 
 void free_orig_node(void *data);
 void batman_data_ready(struct sock *sk, int len);
+void purge_orig(unsigned long data);
 int packet_recv_thread(void *data);
 

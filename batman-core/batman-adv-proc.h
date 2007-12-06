@@ -33,10 +33,6 @@
 
 
 
-extern struct task_struct *kthread_task;
-
-
-
 void cleanup_procfs(void);
 int setup_procfs(void);
 int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);

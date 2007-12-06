@@ -54,7 +54,7 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	uint8_t *bcast_own_sum;
 	uint8_t tq_own;
 	int tq_asym_penality;
-	uint32_t last_valid;        /* when last packet from this node was received */
+	unsigned long last_valid;        /* when last packet from this node was received */
 	uint8_t  gwflags;      /* flags related to gateway functions: gateway class */
 	unsigned char *hna_buff;
 	int16_t  hna_buff_len;
@@ -72,7 +72,7 @@ struct neigh_node
 	uint8_t tq_index;
 	uint8_t tq_avg;
 	uint8_t last_ttl;
-	uint32_t last_valid;            /* when last packet via this neighbour was received */
+	unsigned long last_valid;            /* when last packet via this neighbour was received */
 	TYPE_OF_WORD real_bits[NUM_WORDS];
 	struct orig_node *orig_node;
 	struct batman_if *if_incoming;

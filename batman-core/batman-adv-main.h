@@ -92,6 +92,8 @@ extern unsigned char broadcastAddr[];
 
 
 
+void start_purge_timer(void);
+void activate_thread_timers(void);
 void shutdown_thread_timers(void);
 void remove_interfaces(void);
 int add_interface(char *if_name, int if_num, struct net_device *net_dev);

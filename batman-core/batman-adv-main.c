@@ -25,6 +25,7 @@
 #include "batman-adv-proc.h"
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
+#include "batman-adv-send.h"
 #include "types.h"
 #include "hash.h"
 
@@ -39,6 +40,9 @@ DEFINE_SPINLOCK(orig_hash_lock);
 atomic_t originator_interval;
 int16_t num_hna = 0;
 int16_t num_ifs = 0;
+
+struct task_struct *kthread_task = NULL;
+struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -74,6 +78,40 @@ void cleanup_module(void)
 	cleanup_procfs();
 }
 
+void start_purge_timer(void)
+{
+	init_timer(&purge_timer);
+
+	purge_timer.expires = jiffies + (1 * HZ); /* one second */
+	purge_timer.data = 0;
+	purge_timer.function = purge_orig;
+
+	add_timer(&purge_timer);
+}
+
+void activate_thread_timers(void)
+{
+	struct list_head *list_pos;
+	struct batman_if *batman_if = NULL;
+
+	/* (re)activate all timers (if any) */
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		start_bcast_timer(batman_if);
+	}
+
+	/* (re)start kernel thread for packet processing */
+	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
+
+	if (IS_ERR(kthread_task)) {
+		debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
+		kthread_task = NULL;
+	}
+
+	start_purge_timer();
+}
+
 void shutdown_thread_timers(void)
 {
 	struct list_head *list_pos;
@@ -94,6 +132,8 @@ void shutdown_thread_timers(void)
 
 		del_timer_sync(&batman_if->bcast_timer);
 	}
+
+	del_timer_sync(&purge_timer);
 }
 
 void remove_interfaces(void)
