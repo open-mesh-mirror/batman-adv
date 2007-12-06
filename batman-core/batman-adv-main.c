@@ -71,7 +71,6 @@ void cleanup_module(void)
 	shutdown_thread_timers();
 	remove_interfaces();
 	hash_delete(orig_hash, free_orig_node);
-	hash_destroy(orig_hash);
 	cleanup_procfs();
 }
 
@@ -179,7 +178,7 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 	batman_if->bcast_seqno = 1;
 
-	return 0;
+	return 1;
 
 sock_rel:
 	sock_release(batman_if->raw_sock);

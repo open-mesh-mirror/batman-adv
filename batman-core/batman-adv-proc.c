@@ -166,10 +166,13 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
 {
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
-	int not_copied = 0, if_num = 0;
+	int not_copied = 0, if_num;
+	void *data_ptr;
 	struct net_device *net_dev;
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
+	struct hash_it_t *hashit = NULL;
+	struct orig_node *orig_node;
 
 	if_string = kmalloc(count, GFP_KERNEL);
 
@@ -193,10 +196,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	shutdown_thread_timers();
 
-	/* reset orig_hash because if num_ifs and orig_node->bcast_own */
-	hash_delete(orig_hash, free_orig_node);
-	orig_hash = hash_new(128, compare_orig, choose_orig);
-	num_ifs = 0;
+	num_ifs = if_num = 0;
 
 	if (strlen(if_string) == 0) {
 		remove_interfaces();
@@ -225,8 +225,27 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		} else {
 
-			add_interface(if_string, if_num, net_dev);
+			if (add_interface(if_string, if_num, net_dev)) {
 
+				/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
+				spin_lock(&orig_hash_lock);
+
+				while (NULL != (hashit = hash_iterate( orig_hash, hashit))) {
+					orig_node = hashit->bucket->data;
+
+					data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
+					memcpy(data_ptr, orig_node->bcast_own, if_num * sizeof(TYPE_OF_WORD) * NUM_WORDS);
+					kfree(orig_node->bcast_own);
+					orig_node->bcast_own = data_ptr;
+
+					data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
+					memcpy(data_ptr, orig_node->bcast_own_sum, if_num * sizeof(uint8_t));
+					kfree(orig_node->bcast_own_sum);
+					orig_node->bcast_own_sum = data_ptr;
+				}
+
+				spin_unlock(&orig_hash_lock);
+			}
 		}
 	}
 
@@ -458,11 +477,11 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 			case '\t':
 				*cp = 0;
 				/* compare */
-				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_WARN;
-				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_NOTICE;
-				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0) 
+				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_ROUTING;
 				tokptr = cp + 1;
 				break;
@@ -470,10 +489,13 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 				;
 			}
 		}
-	} 
+	}
+
+	debug_log(LOG_TYPE_NOTICE, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
+
 	if (LOG_TYPE_WARN & log_level_tmp)
 		set_bit(LOG_TYPE_WARN, &log_level);
-	else 
+	else
 		clear_bit(LOG_TYPE_WARN, &log_level);
 
 	if (LOG_TYPE_NOTICE & log_level_tmp)
@@ -485,8 +507,6 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 		set_bit(LOG_TYPE_ROUTING, &log_level);
 	else
 		clear_bit(LOG_TYPE_ROUTING, &log_level);
-
-	debug_log(LOG_TYPE_NOTICE, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
 
 	kfree(log_level_string);
 	return count;
