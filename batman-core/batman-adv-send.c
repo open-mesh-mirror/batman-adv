@@ -147,6 +147,7 @@ void send_own_packet(unsigned long data)
 	batman_if->seqno++;
 	spin_unlock(&batman_if->seqno_lock);
 
+	slide_own_bcast_window(batman_if);
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
 	start_bcast_timer(batman_if);

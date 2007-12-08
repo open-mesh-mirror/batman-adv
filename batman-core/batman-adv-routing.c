@@ -118,6 +118,23 @@ struct orig_node *get_orig_node(uint8_t *addr)
 	return orig_node;
 }
 
+void slide_own_bcast_window(struct batman_if *batman_if)
+{
+	struct hash_it_t *hashit = NULL;
+	struct orig_node *orig_node;
+
+	spin_lock(&orig_hash_lock);
+
+	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+		orig_node = hashit->bucket->data;
+
+		bit_get_packet((TYPE_OF_WORD *)&(orig_node->bcast_own[batman_if->if_num * NUM_WORDS]), 1, 0);
+		orig_node->bcast_own_sum[batman_if->if_num] = bit_packet_count((TYPE_OF_WORD *)&(orig_node->bcast_own[batman_if->if_num * NUM_WORDS]));
+	}
+
+	spin_unlock(&orig_hash_lock);
+}
+
 int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_neigh_node, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
 	struct list_head *list_pos;
@@ -424,8 +441,10 @@ void purge_orig(unsigned long data)
 	struct neigh_node *neigh_node;
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 
+	spin_lock(&orig_hash_lock);
+
 	/* for all origins... */
-	while ( NULL != ( hashit = hash_iterate( orig_hash, hashit ) ) ) {
+	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 
 		orig_node = hashit->bucket->data;
 		addr_to_string(orig_str, orig_node->orig);
@@ -461,6 +480,7 @@ void purge_orig(unsigned long data)
 
 	}
 
+	spin_unlock(&orig_hash_lock);
 	start_purge_timer();
 }
 
