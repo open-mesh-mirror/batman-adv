@@ -494,7 +494,6 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 		set_bit(LOG_TYPE_ROUTES, &log_level);
 	else
 		clear_bit(LOG_TYPE_ROUTES, &log_level);
-	debug_log(LOG_TYPE_CRIT, "set loglevel to %i\n", log_level);
 
 	kfree(log_level_string);
 	return count;
