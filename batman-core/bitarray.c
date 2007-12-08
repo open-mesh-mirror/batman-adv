@@ -153,10 +153,10 @@ char bit_get_packet(TYPE_OF_WORD *seq_bits, int16_t seq_num_diff, int8_t set_mar
 	if ((seq_num_diff > TQ_LOCAL_WINDOW_SIZE ) || (seq_num_diff < -TQ_LOCAL_WINDOW_SIZE)) {
 
 		if (seq_num_diff > TQ_LOCAL_WINDOW_SIZE)
-			debug_log(LOG_TYPE_ROUTING, "It seems we missed a lot of packets (%i) !\n",  seq_num_diff-1);
+			debug_log(LOG_TYPE_BATMAN, "It seems we missed a lot of packets (%i) !\n",  seq_num_diff-1);
 
 		if (-seq_num_diff > TQ_LOCAL_WINDOW_SIZE)
-			debug_log(LOG_TYPE_ROUTING, "Other host probably restarted !\n");
+			debug_log(LOG_TYPE_BATMAN, "Other host probably restarted !\n");
 
 		for (i = 0; i < NUM_WORDS; i++)
 			seq_bits[i] = 0;

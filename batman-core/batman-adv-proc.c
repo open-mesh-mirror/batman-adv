@@ -146,12 +146,16 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 
+	spin_lock(&if_list_lock);
+
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
 		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->net_dev->name);
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 	}
+
+	spin_unlock(&if_list_lock);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
@@ -327,7 +331,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 
 		orig_node = hashit->bucket->data;
 
-		if ( orig_node->router == NULL )
+		if (orig_node->router == NULL)
 			continue;
 
 		batman_count++;
@@ -412,7 +416,11 @@ int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eo
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 test_bit(LOG_TYPE_ROUTING, &log_level) ? 'x' : ' ', LOG_TYPE_ROUTING_NAME, LOG_TYPE_ROUTING);
+				 test_bit(LOG_TYPE_BATMAN, &log_level) ? 'x' : ' ', LOG_TYPE_BATMAN_NAME, LOG_TYPE_BATMAN);
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
+				 test_bit(LOG_TYPE_ROUTES, &log_level) ? 'x' : ' ', LOG_TYPE_ROUTES_NAME, LOG_TYPE_ROUTES);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	*eof = 1;
@@ -421,10 +429,9 @@ int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eo
 
 int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
 {
-	char *log_level_string;
+	char *log_level_string, *tokptr, *cp;
 	int finished, not_copied = 0;
 	unsigned long log_level_tmp = 0;
-	char *tokptr, *cp;
 
 	log_level_string = kmalloc(count, GFP_KERNEL);
 
@@ -454,8 +461,10 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 					log_level_tmp |= LOG_TYPE_WARN;
 				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0)
 					log_level_tmp |= LOG_TYPE_NOTICE;
-				if (strcmp(tokptr, LOG_TYPE_ROUTING_NAME) == 0)
-					log_level_tmp |= LOG_TYPE_ROUTING;
+				if (strcmp(tokptr, LOG_TYPE_BATMAN_NAME) == 0)
+					log_level_tmp |= LOG_TYPE_BATMAN;
+				if (strcmp(tokptr, LOG_TYPE_ROUTES_NAME) == 0)
+					log_level_tmp |= LOG_TYPE_ROUTES;
 				tokptr = cp + 1;
 				break;
 			default:
@@ -476,10 +485,15 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 	else
 		clear_bit(LOG_TYPE_NOTICE, &log_level);
 
-	if (LOG_TYPE_ROUTING & log_level_tmp)
-		set_bit(LOG_TYPE_ROUTING, &log_level);
+	if (LOG_TYPE_BATMAN & log_level_tmp)
+		set_bit(LOG_TYPE_BATMAN, &log_level);
 	else
-		clear_bit(LOG_TYPE_ROUTING, &log_level);
+		clear_bit(LOG_TYPE_BATMAN, &log_level);
+
+	if (LOG_TYPE_ROUTES & log_level_tmp)
+		set_bit(LOG_TYPE_ROUTES, &log_level);
+	else
+		clear_bit(LOG_TYPE_ROUTES, &log_level);
 
 	kfree(log_level_string);
 	return count;

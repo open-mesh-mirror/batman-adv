@@ -63,14 +63,23 @@
 
 #define LOG_BUF_LEN 8192	/* has to be a power of 2 */
 #define ETH_STR_LEN 20
+
+
+/*
+ * Logging
+ */
+
 #define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as blocked sockets / failed packet delivery / programming errors */
 #define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
 #define LOG_TYPE_NOTICE 2	/* notice information for new interfaces / changed settings / new originators / etc */
-#define LOG_TYPE_ROUTING 4	/* all messages related to routing / flooding / broadcasting / etc */
+#define LOG_TYPE_BATMAN 4	/* all messages related to routing / flooding / broadcasting / etc */
+#define LOG_TYPE_ROUTES 8	/* route or hna added / changed / deleted */
 #define LOG_TYPE_CRIT_NAME	"critical"
 #define LOG_TYPE_WARN_NAME	"warnings"
 #define LOG_TYPE_NOTICE_NAME	"notices"
-#define LOG_TYPE_ROUTING_NAME	"routing"
+#define LOG_TYPE_BATMAN_NAME	"batman"
+#define LOG_TYPE_ROUTES_NAME	"routes"
+
 
 #ifndef REVISION_VERSION
 #define REVISION_VERSION "0"

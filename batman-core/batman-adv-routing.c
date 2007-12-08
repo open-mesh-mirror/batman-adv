@@ -42,7 +42,7 @@ struct neigh_node *create_neighbor(struct orig_node *orig_node, struct orig_node
 {
 	struct neigh_node *neigh_node;
 
-	debug_log(LOG_TYPE_ROUTING, "Creating new last-hop neighbour of originator\n");
+	debug_log(LOG_TYPE_BATMAN, "Creating new last-hop neighbour of originator\n");
 
 	neigh_node = kmalloc(sizeof(struct neigh_node), GFP_KERNEL);
 	memset(neigh_node, 0, sizeof(struct neigh_node));
@@ -88,7 +88,7 @@ struct orig_node *get_orig_node(uint8_t *addr)
 		return orig_node;
 
 	addr_to_string(orig_str, addr);
-	debug_log(LOG_TYPE_ROUTING, "Creating new originator: %s \n", orig_str);
+	debug_log(LOG_TYPE_BATMAN, "Creating new originator: %s \n", orig_str);
 
 	orig_node = kmalloc(sizeof(struct orig_node), GFP_KERNEL);
 	memset(orig_node, 0, sizeof(struct orig_node));
@@ -135,12 +135,50 @@ void slide_own_bcast_window(struct batman_if *batman_if)
 	spin_unlock(&orig_hash_lock);
 }
 
+void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node)
+{
+	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
+
+	if ((orig_node != NULL) && (orig_node->router != neigh_node)) {
+		addr_to_string(orig_str, orig_node->orig);
+
+		/* route deleted */
+		if ((orig_node->router != NULL) && (neigh_node == NULL)) {
+
+			debug_log(LOG_TYPE_ROUTES, "Deleting route towards: %s\n", orig_str);
+
+		/* route added */
+		} else if ((orig_node->router == NULL) && (neigh_node != NULL)) {
+
+			addr_to_string(neigh_str, neigh_node->addr);
+			debug_log(LOG_TYPE_ROUTES, "Adding route towards: %s (via %s)\n", orig_str, neigh_str);
+
+		/* route changed */
+		} else {
+
+			addr_to_string(neigh_str, neigh_node->addr);
+			addr_to_string(router_str, orig_node->router->addr);
+			debug_log(LOG_TYPE_ROUTES, "Changing route towards: %s (now via %s - was via %s)\n", orig_str, neigh_str, router_str);
+
+		}
+
+		if (neigh_node != NULL)
+			orig_node->batman_if = neigh_node->if_incoming;
+		else
+			orig_node->batman_if = NULL;
+
+		orig_node->router = neigh_node;
+
+		/* TODO: check for changed hna announcements */
+	}
+}
+
 int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_neigh_node, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
-	uint8_t total_count;
+	unsigned char total_count;
 
 	addr_to_string(orig_str, orig_node->orig);
 	addr_to_string(neigh_str, orig_neigh_node->orig);
@@ -192,7 +230,7 @@ int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_nei
 
 	batman_packet->tq = ((batman_packet->tq * orig_neigh_node->tq_own * orig_neigh_node->tq_asym_penality) / (TQ_MAX_VALUE *  TQ_MAX_VALUE));
 
-	debug_log(LOG_TYPE_ROUTING, "bidirectional: orig = %-15s neigh = %-15s => own_bcast = %2i, real recv = %2i, local tq: %3i, asym_penality: %3i, total tq: %3i \n",
+	debug_log(LOG_TYPE_BATMAN, "bidirectional: orig = %-15s neigh = %-15s => own_bcast = %2i, real recv = %2i, local tq: %3i, asym_penality: %3i, total tq: %3i \n",
 		      orig_str, neigh_str, total_count, neigh_node->real_packet_count, orig_neigh_node->tq_own, orig_neigh_node->tq_asym_penality, batman_packet->tq);
 
 	/* if link has the minimum required transmission quality consider it bidirectional */
@@ -206,9 +244,9 @@ void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batm
 {
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
-	char max_tq = 0, max_bcast_own = 0;
+	unsigned char max_tq = 0, max_bcast_own = 0;
 
-	debug_log(LOG_TYPE_ROUTING, "update_originator(): Searching and updating originator entry of received packet,  \n");
+	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet,  \n");
 
 	list_for_each(list_pos, &orig_node->neigh_list) {
 		tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
@@ -235,7 +273,7 @@ void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batm
 	if (neigh_node == NULL)
 		neigh_node = create_neighbor(orig_node, get_orig_node(ethhdr->h_source), ethhdr->h_source, if_incoming);
 	else
-		debug_log(LOG_TYPE_ROUTING, "Updating existing last-hop neighbour of originator\n");
+		debug_log(LOG_TYPE_BATMAN, "Updating existing last-hop neighbour of originator\n");
 
 	neigh_node->last_valid = jiffies;
 
@@ -255,7 +293,7 @@ void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batm
 
 	}
 
-	/* TODO: check for changed hna announcements */
+	update_routes(orig_node, best_neigh_node);
 }
 
 char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
@@ -283,7 +321,7 @@ char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	}
 
 	if (!is_duplicate) {
-		debug_log(LOG_TYPE_ROUTING, "updating last_seqno: old %d, new %d \n", orig_node->last_real_seqno, batman_packet->seqno);
+		debug_log(LOG_TYPE_BATMAN, "updating last_seqno: old %d, new %d \n", orig_node->last_real_seqno, batman_packet->seqno);
 		orig_node->last_real_seqno = batman_packet->seqno;
 	}
 
@@ -297,8 +335,8 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	struct orig_node *orig_neigh_node, *orig_node;
 	char orig_str[ETH_STR_LEN], old_orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 	char has_unidirectional_flag, has_directlink_flag;
-	int is_my_addr = 0, is_my_orig = 0, is_my_oldorig = 0, is_broadcast = 0, is_bidirectional, is_single_hop_neigh, is_duplicate;
-	uint16_t if_incoming_seqno;
+	char is_my_addr = 0, is_my_orig = 0, is_my_oldorig = 0, is_broadcast = 0, is_bidirectional, is_single_hop_neigh, is_duplicate;
+	unsigned short if_incoming_seqno;
 
 	/* could be changed by send_own_packet() */
 	spin_lock(&if_incoming->seqno_lock);
@@ -314,7 +352,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 
 	is_single_hop_neigh = (compare_orig(ethhdr->h_source, batman_packet->orig) ? 1 : 0);
 
-	debug_log(LOG_TYPE_ROUTING, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, UDF %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_unidirectional_flag, has_directlink_flag);
+	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, UDF %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_unidirectional_flag, has_directlink_flag);
 
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry( list_pos, struct batman_if, list );
@@ -334,15 +372,15 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 
 	if (batman_packet->version != COMPAT_VERSION) {
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: incompatible batman version (%i) \n", batman_packet->version);
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: incompatible batman version (%i) \n", batman_packet->version);
 
 	} else if (is_my_addr) {
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: received my own broadcast (sender: %s) \n", neigh_str);
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: received my own broadcast (sender: %s) \n", neigh_str);
 
 	} else if (is_broadcast) {
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: ignoring all packets with broadcast source addr (sender: %s) \n", neigh_str);
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: ignoring all packets with broadcast source addr (sender: %s) \n", neigh_str);
 
 	} else if (is_my_orig) {
 
@@ -355,23 +393,23 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 			orig_neigh_node->bcast_own_sum[if_incoming->if_num] = bit_packet_count((TYPE_OF_WORD *)&(orig_neigh_node->bcast_own[if_incoming->if_num * NUM_WORDS]));
 		}
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: originator packet from myself (via neighbour) \n");
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: originator packet from myself (via neighbour) \n");
 
 	} else if (has_unidirectional_flag) {
 
 		count_real_packets(ethhdr, batman_packet, if_incoming);
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: originator packet with unidirectional flag \n");
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: originator packet with unidirectional flag \n");
 
 	} else if (batman_packet->tq == 0) {
 
 		count_real_packets(ethhdr, batman_packet, if_incoming);
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: originator packet with tq equal 0 \n");
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: originator packet with tq equal 0 \n");
 
 	} else if (is_my_oldorig) {
 
-		debug_log(LOG_TYPE_ROUTING, "Drop packet: ignoring all rebroadcast echos (sender: %s) \n", neigh_str);
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: ignoring all rebroadcast echos (sender: %s) \n", neigh_str);
 
 	} else {
 
@@ -385,7 +423,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 		/* drop packet if sender is not a direct neighbor and if we no route towards it */
 		if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
 
-			debug_log(LOG_TYPE_ROUTING, "Drop packet: OGM via unkown neighbor! \n");
+			debug_log(LOG_TYPE_BATMAN, "Drop packet: OGM via unkown neighbor! \n");
 
 		} else {
 
@@ -401,7 +439,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 				/* mark direct link on incoming interface */
 				send_forward_packet(orig_node, ethhdr, batman_packet, 0, 1, hna_buff, hna_buff_len, if_incoming);
 
-				debug_log(LOG_TYPE_ROUTING, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
+				debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
 
 			/* multihop originator */
 			} else {
@@ -412,17 +450,17 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 
 						send_forward_packet(orig_node, ethhdr, batman_packet, 0, 0, hna_buff, hna_buff_len, if_incoming);
 
-						debug_log(LOG_TYPE_ROUTING, "Forwarding packet: rebroadcast originator packet \n");
+						debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast originator packet \n");
 
 					} else {
 
-						debug_log(LOG_TYPE_ROUTING, "Drop packet: duplicate packet received\n");
+						debug_log(LOG_TYPE_BATMAN, "Drop packet: duplicate packet received\n");
 
 					}
 
 				} else {
 
-					debug_log(LOG_TYPE_ROUTING, "Drop packet: not received via bidirectional link\n");
+					debug_log(LOG_TYPE_BATMAN, "Drop packet: not received via bidirectional link\n");
 
 				}
 
@@ -438,7 +476,7 @@ void purge_orig(unsigned long data)
 	struct list_head *list_pos, *list_pos_tmp;
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
-	struct neigh_node *neigh_node;
+	struct neigh_node *neigh_node, *best_neigh_node;
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 
 	spin_lock(&orig_hash_lock);
@@ -451,30 +489,40 @@ void purge_orig(unsigned long data)
 
 		if (time_after(jiffies, orig_node->last_valid + ((2 * PURGE_TIMEOUT * HZ) / 1000))) {
 
-			debug_log(LOG_TYPE_ROUTING, "Originator timeout: originator %s, last_valid %u \n", orig_str, (orig_node->last_valid / HZ));
+			debug_log(LOG_TYPE_BATMAN, "Originator timeout: originator %s, last_valid %u \n", orig_str, (orig_node->last_valid / HZ));
 
 			hash_remove_bucket(orig_hash, hashit);
 			free_orig_node(orig_node);
 
 		} else {
 
+			best_neigh_node = NULL;
+
 			/* for all neighbours towards this originator ... */
 			list_for_each_safe(list_pos, list_pos_tmp, &orig_node->neigh_list) {
 				neigh_node = list_entry(list_pos, struct neigh_node, list);
 
-				if (time_after(jiffies, neigh_node->last_valid + ((2 * PURGE_TIMEOUT * HZ) / 1000))) {
+				if (time_after(jiffies, neigh_node->last_valid + ((PURGE_TIMEOUT * HZ) / 1000))) {
 
 					addr_to_string(neigh_str, neigh_node->addr);
-					debug_log(LOG_TYPE_ROUTING, "Neighbour timeout: originator %s, neighbour: %s, last_valid %u \n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
+					debug_log(LOG_TYPE_BATMAN, "Neighbour timeout: originator %s, neighbour: %s, last_valid %u \n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
 
-					if ( orig_node->router == neigh_node ) {
+					if (orig_node->router == neigh_node) {
 						/* we have to delete the route towards this node before it gets purged */
 
 						/* remove old announced network(s) */
 					}
 
+				} else {
+
+					if ((best_neigh_node == NULL) || (neigh_node->tq_avg > best_neigh_node->tq_avg))
+						best_neigh_node = neigh_node;
+
 				}
+
 			}
+
+			update_routes(orig_node, best_neigh_node);
 
 		}
 

@@ -24,6 +24,7 @@
 #include "batman-adv-main.h"
 #include "batman-adv-send.h"
 #include "batman-adv-log.h"
+#include "batman-adv-routing.h"
 #include "types.h"
 
 
@@ -77,7 +78,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 	if (((struct batman_packet *)pack_buff)->flags & UNIDIRECTIONAL) {
 
 		if (if_outgoing != NULL) {
-			debug_log(LOG_TYPE_ROUTING, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+			debug_log(LOG_TYPE_BATMAN, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 		} else {
@@ -109,7 +110,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 
 			/* non-primary interfaces are only broadcasted on their interface */
 			if (own_packet && (if_outgoing->if_num > 0)) {
-				debug_log(LOG_TYPE_ROUTING, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
 
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 			} else {
@@ -122,7 +123,7 @@ void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *
 					else
 						((struct batman_packet *)pack_buff)->flags = 0x00;
 
-					debug_log(LOG_TYPE_ROUTING, "%s packet (originator %s, seqno %d, TTL %d) on interface %s\n", (own_packet ? "Sending own" : "Forwarding"), batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
+					debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s\n", (own_packet ? "Sending own" : "Forwarding"), batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
@@ -155,10 +156,10 @@ void send_own_packet(unsigned long data)
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t udf, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
 {
-	char in_tq, in_ttl, tq_avg = 0;
+	unsigned char in_tq, in_ttl, tq_avg = 0;
 
 	if (batman_packet->ttl <= 1) {
-		debug_log(LOG_TYPE_ROUTING, "ttl exceeded \n");
+		debug_log(LOG_TYPE_BATMAN, "ttl exceeded \n");
 		return;
 	}
 
@@ -186,7 +187,7 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 
 	}
 
-	debug_log(LOG_TYPE_ROUTING, "Forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
+	debug_log(LOG_TYPE_BATMAN, "Forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
 
 	batman_packet->seqno = htons(batman_packet->seqno);
 
