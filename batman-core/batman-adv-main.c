@@ -133,7 +133,8 @@ void shutdown_thread_timers(void)
 		del_timer_sync(&batman_if->bcast_timer);
 	}
 
-	del_timer_sync(&purge_timer);
+	if (!(list_empty(&if_list)))
+		del_timer_sync(&purge_timer);
 }
 
 void remove_interfaces(void)
@@ -176,6 +177,7 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 
 	bind_addr.sll_family = AF_PACKET;
 	bind_addr.sll_ifindex = net_dev->ifindex;
+	bind_addr.sll_protocol = 0;	/* is set by the kernel */
 
 	if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
 		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);

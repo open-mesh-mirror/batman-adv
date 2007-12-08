@@ -227,7 +227,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 				/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
 				spin_lock(&orig_hash_lock);
 
-				while (NULL != (hashit = hash_iterate( orig_hash, hashit))) {
+				while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 					orig_node = hashit->bucket->data;
 
 					data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
@@ -293,18 +293,7 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 
 	debug_log(LOG_TYPE_NOTICE, "Changing originator interval from: %i to: %i\n", atomic_read(&originator_interval), originator_interval_tmp);
 
-	/* AFAIR: atomic_set is nothing else but an assignment,
-	 * so its not better or worse than writing
-	 * *(&originator_interval) = originator_interval_tmp;
-	 * (except for sparc, parisc, and arm, it seems)
-	 *
-	 * Documentation/atomic_ops.txt or
-	 * include/asm/atomic.h
-	 *
-	 * typedef struct { volatile int counter; } atomic_t;
-	 * #define atomic_set(v, i)    ((v)->counter = (i))
-	 */
-	 atomic_set(&originator_interval, originator_interval_tmp);
+	atomic_set(&originator_interval, originator_interval_tmp);
 
 end:
 	kfree(interval_string);
@@ -318,7 +307,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
 	int total_bytes = 0, bytes_written = 0, batman_count = 0;
-	static char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
 	spin_lock(&if_list_lock);
 	if (list_empty(&if_list)) {

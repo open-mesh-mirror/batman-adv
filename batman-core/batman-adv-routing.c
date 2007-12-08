@@ -80,7 +80,7 @@ struct orig_node *get_orig_node(uint8_t *addr)
 {
 	struct orig_node *orig_node;
 	struct hashtable_t *swaphash;
-	static char orig_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN];
 
 	orig_node = ((struct orig_node *)hash_find(orig_hash, addr));
 
@@ -122,7 +122,7 @@ int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_nei
 {
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
-	static char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 	uint8_t total_count;
 
 	addr_to_string(orig_str, orig_node->orig);
@@ -278,7 +278,7 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	struct orig_node *orig_neigh_node, *orig_node;
-	static char orig_str[ETH_STR_LEN], old_orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN], old_orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 	char has_unidirectional_flag, has_directlink_flag;
 	int is_my_addr = 0, is_my_orig = 0, is_my_oldorig = 0, is_broadcast = 0, is_bidirectional, is_single_hop_neigh, is_duplicate;
 	uint16_t if_incoming_seqno;
@@ -422,7 +422,7 @@ void purge_orig(unsigned long data)
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
-	static char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 
 	/* for all origins... */
 	while ( NULL != ( hashit = hash_iterate( orig_hash, hashit ) ) ) {
