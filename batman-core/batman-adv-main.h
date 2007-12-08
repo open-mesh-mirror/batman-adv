@@ -70,10 +70,14 @@
  */
 
 #define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as blocked sockets / failed packet delivery / programming errors */
-#define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
-#define LOG_TYPE_NOTICE 2	/* notice information for new interfaces / changed settings / new originators / etc */
-#define LOG_TYPE_BATMAN 4	/* all messages related to routing / flooding / broadcasting / etc */
-#define LOG_TYPE_ROUTES 8	/* route or hna added / changed / deleted */
+#define LOG_TYPE_WARN 0		/* warnings for  small errors like wrong user input / damaged packets / etc */
+#define LOG_TYPE_WARN_POW2 		1	
+#define LOG_TYPE_NOTICE 		1	/* notice information for new interfaces / changed settings / new originators / etc */
+#define LOG_TYPE_NOTICE_POW2 	2
+#define LOG_TYPE_BATMAN 		2	/* all messages related to routing / flooding / broadcasting / etc */
+#define LOG_TYPE_BATMAN_POW2 	4	
+#define LOG_TYPE_ROUTES 		3	/* route or hna added / changed / deleted */
+#define LOG_TYPE_ROUTES_POW2 	8
 #define LOG_TYPE_CRIT_NAME	"critical"
 #define LOG_TYPE_WARN_NAME	"warnings"
 #define LOG_TYPE_NOTICE_NAME	"notices"

@@ -408,19 +408,19 @@ int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eo
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				test_bit(LOG_TYPE_WARN, &log_level) ? 'x' : ' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN);
+				test_bit(LOG_TYPE_WARN, &log_level) ? 'x' : ' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN_POW2);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 test_bit(LOG_TYPE_NOTICE, &log_level) ? 'x' : ' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE);
+				 test_bit(LOG_TYPE_NOTICE, &log_level) ? 'x' : ' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE_POW2);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 test_bit(LOG_TYPE_BATMAN, &log_level) ? 'x' : ' ', LOG_TYPE_BATMAN_NAME, LOG_TYPE_BATMAN);
+				 test_bit(LOG_TYPE_BATMAN, &log_level) ? 'x' : ' ', LOG_TYPE_BATMAN_NAME, LOG_TYPE_BATMAN_POW2);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 test_bit(LOG_TYPE_ROUTES, &log_level) ? 'x' : ' ', LOG_TYPE_ROUTES_NAME, LOG_TYPE_ROUTES);
+				 test_bit(LOG_TYPE_ROUTES, &log_level) ? 'x' : ' ', LOG_TYPE_ROUTES_NAME, LOG_TYPE_ROUTES_POW2);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	*eof = 1;
@@ -458,13 +458,13 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 				*cp = 0;
 				/* compare */
 				if (strcmp(tokptr, LOG_TYPE_WARN_NAME) == 0)
-					log_level_tmp |= LOG_TYPE_WARN;
+					log_level_tmp |= LOG_TYPE_WARN_POW2;
 				if (strcmp(tokptr, LOG_TYPE_NOTICE_NAME) == 0)
-					log_level_tmp |= LOG_TYPE_NOTICE;
+					log_level_tmp |= LOG_TYPE_NOTICE_POW2;
 				if (strcmp(tokptr, LOG_TYPE_BATMAN_NAME) == 0)
-					log_level_tmp |= LOG_TYPE_BATMAN;
+					log_level_tmp |= LOG_TYPE_BATMAN_POW2;
 				if (strcmp(tokptr, LOG_TYPE_ROUTES_NAME) == 0)
-					log_level_tmp |= LOG_TYPE_ROUTES;
+					log_level_tmp |= LOG_TYPE_ROUTES_POW2;
 				tokptr = cp + 1;
 				break;
 			default:
@@ -473,27 +473,28 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 		}
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
+	debug_log(LOG_TYPE_CRIT, "Changing log_level from: %i to: %i\n", log_level, log_level_tmp);
 
-	if (LOG_TYPE_WARN & log_level_tmp)
+	if (LOG_TYPE_WARN_POW2 & log_level_tmp)
 		set_bit(LOG_TYPE_WARN, &log_level);
 	else
 		clear_bit(LOG_TYPE_WARN, &log_level);
 
-	if (LOG_TYPE_NOTICE & log_level_tmp)
+	if (LOG_TYPE_NOTICE_POW2 & log_level_tmp)
 		set_bit(LOG_TYPE_NOTICE, &log_level);
 	else
 		clear_bit(LOG_TYPE_NOTICE, &log_level);
 
-	if (LOG_TYPE_BATMAN & log_level_tmp)
+	if (LOG_TYPE_BATMAN_POW2 & log_level_tmp)
 		set_bit(LOG_TYPE_BATMAN, &log_level);
 	else
 		clear_bit(LOG_TYPE_BATMAN, &log_level);
 
-	if (LOG_TYPE_ROUTES & log_level_tmp)
+	if (LOG_TYPE_ROUTES_POW2 & log_level_tmp)
 		set_bit(LOG_TYPE_ROUTES, &log_level);
 	else
 		clear_bit(LOG_TYPE_ROUTES, &log_level);
+	debug_log(LOG_TYPE_CRIT, "set loglevel to %i\n", log_level);
 
 	kfree(log_level_string);
 	return count;
