@@ -200,7 +200,11 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	num_ifs = if_num = 0;
 
 	if (strlen(if_string) == 0) {
+
 		remove_interfaces();
+		hash_delete(orig_hash, free_orig_node);
+		orig_hash = hash_new(128, compare_orig, choose_orig);
+
 	} else {
 
 		/* add interface */
@@ -321,7 +325,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 		goto end;
 	}
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %16s [%10s]: %20s ... [B.A.T.M.A.N. %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	spin_unlock(&if_list_lock);
@@ -339,7 +343,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 		addr_to_string(orig_str, orig_node->orig);
 		addr_to_string(router_str, orig_node->router->addr);
 
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%-17s (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%-17s  (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 		list_for_each(list_pos, &orig_node->neigh_list) {

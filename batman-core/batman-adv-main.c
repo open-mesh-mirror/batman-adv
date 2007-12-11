@@ -264,7 +264,7 @@ int choose_orig(void *data, int32_t size)
 	uint32_t hash = 0;
 	size_t i;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 6; i++) {
 		hash += key[i];
 		hash += (hash << 10);
 		hash ^= (hash >> 6);

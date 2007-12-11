@@ -246,7 +246,7 @@ void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batm
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
 	unsigned char max_tq = 0, max_bcast_own = 0;
 
-	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet,  \n");
+	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet \n");
 
 	list_for_each(list_pos, &orig_node->neigh_list) {
 		tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
