@@ -101,13 +101,15 @@ extern atomic_t originator_interval;
 extern int16_t num_hna;
 extern int16_t num_ifs;
 
+extern struct net_device *bat_device;
+
 extern unsigned char broadcastAddr[];
 
 
 
 void start_purge_timer(void);
-void activate_thread_timers(void);
-void shutdown_thread_timers(void);
+void activate_module(void);
+void shutdown_module(void);
 void remove_interfaces(void);
 int add_interface(char *if_name, int if_num, struct net_device *net_dev);
 void inc_module_count(void);

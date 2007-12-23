@@ -78,4 +78,10 @@ struct neigh_node
 	struct batman_if *if_incoming;
 };
 
+struct bat_priv
+{
+	struct net_device_stats stats;
+	spinlock_t lock;
+};
+
 #endif

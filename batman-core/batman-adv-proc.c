@@ -24,6 +24,7 @@
 #include "batman-adv-main.h"
 #include "batman-adv-proc.h"
 #include "batman-adv-log.h"
+#include "batman-adv-routing.h"
 #include "types.h"
 #include "hash.h"
 
@@ -195,7 +196,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	else if ((cr_ptr = strchr(if_string, '\n')) != NULL)
 		*cr_ptr = 0;
 
-	shutdown_thread_timers();
+	shutdown_module();
 
 	num_ifs = if_num = 0;
 
@@ -259,7 +260,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	num_ifs = if_num + 1;
 
-	activate_thread_timers();
+	activate_module();
 
 end:
 	spin_unlock(&if_list_lock);

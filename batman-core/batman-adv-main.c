@@ -26,6 +26,7 @@
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
 #include "batman-adv-send.h"
+#include "batman-adv-interface.h"
 #include "types.h"
 #include "hash.h"
 
@@ -40,6 +41,8 @@ DEFINE_SPINLOCK(orig_hash_lock);
 atomic_t originator_interval;
 int16_t num_hna = 0;
 int16_t num_ifs = 0;
+
+struct net_device *bat_device = NULL;
 
 struct task_struct *kthread_task = NULL;
 struct timer_list purge_timer;
@@ -72,7 +75,7 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-	shutdown_thread_timers();
+	shutdown_module();
 	remove_interfaces();
 	hash_delete(orig_hash, free_orig_node);
 	cleanup_procfs();
@@ -89,10 +92,28 @@ void start_purge_timer(void)
 	add_timer(&purge_timer);
 }
 
-void activate_thread_timers(void)
+void activate_module(void)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
+	int result;
+
+	/* initialize layer 2 interface */
+	bat_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_init);
+
+	if (bat_device == NULL) {
+		debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
+		return;
+	}
+
+	result = register_netdev(bat_device);
+
+	if (result < 0) {
+		debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", result);
+		free_netdev(bat_device);
+		bat_device = NULL;
+		return;
+	}
 
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
@@ -112,10 +133,16 @@ void activate_thread_timers(void)
 	start_purge_timer();
 }
 
-void shutdown_thread_timers(void)
+void shutdown_module(void)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
+
+	if (bat_device != NULL) {
+		unregister_netdev(bat_device);
+		free_netdev(bat_device);
+		bat_device = NULL;
+	}
 
 	/* deactivate kernel thread for packet processing (if running) */
 	if (kthread_task) {
