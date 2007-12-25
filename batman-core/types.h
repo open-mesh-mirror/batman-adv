@@ -60,6 +60,8 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	int16_t  hna_buff_len;
 	uint16_t last_real_seqno;   /* last and best known squence number */
 	uint8_t last_ttl;         /* ttl of last received packet */
+	TYPE_OF_WORD bcast_bits[NUM_WORDS];
+	uint16_t last_bcast_seqno;  /* last broadcast sequence number received by this host */
 	struct list_head neigh_list;
 };
 

@@ -40,25 +40,21 @@ void start_bcast_timer(struct batman_if *batman_if)
 	add_timer(&batman_if->bcast_timer);
 }
 
-void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *send_addr, uint8_t *recv_addr, struct batman_if *batman_if)
+void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
 {
 	struct msghdr msg;
 	struct iovec vector[2];
 	struct ethhdr ethhdr;
 	int retval;
 
-	memcpy(ethhdr.h_dest, recv_addr, ETH_ALEN);
-	memcpy(ethhdr.h_source, send_addr, ETH_ALEN);
+	memcpy(ethhdr.h_dest, dst_addr, ETH_ALEN);
+	memcpy(ethhdr.h_source, src_addr, ETH_ALEN);
 	ethhdr.h_proto = htons(ETH_P_BATMAN);
 
 	vector[0].iov_base = &ethhdr;
 	vector[0].iov_len  = sizeof(struct ethhdr);
 	vector[1].iov_base = pack_buff;
 	vector[1].iov_len  = pack_buff_len;
-
-	memcpy(ethhdr.h_dest, recv_addr, ETH_ALEN);
-	memcpy(ethhdr.h_source, send_addr, ETH_ALEN);
-	ethhdr.h_proto = htons(ETH_P_BATMAN);
 
 	msg.msg_flags = MSG_NOSIGNAL | MSG_DONTWAIT; /* no SIGPIPE & non-blocking */
 	msg.msg_name = NULL;

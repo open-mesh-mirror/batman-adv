@@ -25,6 +25,7 @@
 #include "batman-adv-routing.h"
 #include "batman-adv-log.h"
 #include "batman-adv-send.h"
+#include "batman-adv-interface.h"
 #include "types.h"
 #include "hash.h"
 #include "ring_buffer.h"
@@ -540,7 +541,10 @@ int packet_recv_thread(void *data)
 	struct msghdr msg;
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
-	unsigned char packet_buff[2000];
+	struct unicast_packet *unicast_packet;
+	struct bcast_packet *bcast_packet;
+	struct orig_node *orig_node;
+	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
 	unsigned int flags = MSG_DONTWAIT;	/* non-blocking */
 	int result;
 
@@ -594,6 +598,50 @@ int packet_recv_thread(void *data)
 				/* unicast packet */
 				case BAT_UNICAST:
 
+					/* packet with unicast indication but broadcast recipient */
+					if (compare_orig(ethhdr->h_dest, broadcastAddr))
+						continue;
+
+					/* packet with broadcast sender address */
+					if (compare_orig(ethhdr->h_source, broadcastAddr))
+						continue;
+
+					/* drop packet if it has not neccessary minimum size - 1 byte ttl, 1 byte payload */
+					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
+						continue;
+
+					unicast_packet = (struct unicast_packet *)(packet_buff + sizeof(struct ethhdr));
+
+					/* packet for me */
+					if (is_my_mac(unicast_packet->dest)) {
+
+						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct unicast_packet), result - sizeof(struct ethhdr) - sizeof(struct unicast_packet));
+
+					/* route it */
+					} else {
+						/* TTL exceeded */
+						if (unicast_packet->ttl < 2) {
+							addr_to_string(src_str, unicast_packet->orig);
+							addr_to_string(dst_str, unicast_packet->dest);
+
+							debug_log(LOG_TYPE_WARN, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
+							continue;
+						}
+
+						/* get routing information */
+						spin_lock(&orig_hash_lock);
+						orig_node = ((struct orig_node *)hash_find(orig_hash, unicast_packet->dest));
+
+						if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+							/* decrement ttl */
+							unicast_packet->ttl--;
+
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+						}
+
+						spin_unlock(&orig_hash_lock);
+					}
+
 					break;
 
 				/* batman icmp packet */
@@ -604,6 +652,52 @@ int packet_recv_thread(void *data)
 				/* broadcast packet */
 				case BAT_BCAST:
 
+					/* packet with broadcast sender address */
+					if (compare_orig(ethhdr->h_source, broadcastAddr))
+						continue;
+
+					/* drop packet if it has not neccessary minimum size - orig source mac, 2 byte seqno, 1 byte padding, 1 byte payload */
+					if (result < sizeof(struct ethhdr) + sizeof(struct bcast_packet))
+						continue;
+
+					/* ignore broadcasts sent by myself */
+					if (is_my_mac(ethhdr->h_source))
+						continue;
+
+					bcast_packet = (struct bcast_packet *)(packet_buff + sizeof(struct ethhdr));
+
+					spin_lock(&orig_hash_lock);
+					orig_node = ((struct orig_node *)hash_find(orig_hash, bcast_packet->orig));
+
+					if (orig_node != NULL) {
+
+						/* check flood history */
+						if (get_bit_status(orig_node->bcast_bits, orig_node->last_bcast_seqno, ntohs(bcast_packet->seqno))) {
+							spin_unlock(&orig_hash_lock);
+							continue;
+						}
+
+						/* mark broadcast in flood history */
+						if (bit_get_packet(orig_node->bcast_bits, ntohs(bcast_packet->seqno) - orig_node->last_bcast_seqno, 1))
+							orig_node->last_bcast_seqno = ntohs(bcast_packet->seqno);
+
+						/* broadcast for me */
+						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
+
+						/* rebroadcast packet */
+						spin_lock(&if_list_lock);
+
+						list_for_each(list_pos, &if_list) {
+							batman_if = list_entry(list_pos, struct batman_if, list);
+
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+						}
+
+						spin_unlock(&if_list_lock);
+
+					}
+
+					spin_unlock(&orig_hash_lock);
 					break;
 				}
 

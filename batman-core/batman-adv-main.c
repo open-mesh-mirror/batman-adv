@@ -303,6 +303,28 @@ int choose_orig(void *data, int32_t size)
 	return (hash%size);
 }
 
+int is_my_mac(uint8_t *addr)
+{
+	struct list_head *list_pos;
+	struct batman_if *batman_if;
+	int retval = 0;
+
+	spin_lock(&if_list_lock);
+
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		if (compare_orig(batman_if->net_dev->dev_addr, addr)) {
+			retval = 1;
+			goto end;
+		}
+	}
+
+end:
+	spin_unlock(&if_list_lock);
+	return retval;
+}
+
 
 
 
