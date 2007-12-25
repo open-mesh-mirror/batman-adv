@@ -621,7 +621,7 @@ int packet_recv_thread(void *data)
 					} else {
 						/* TTL exceeded */
 						if (unicast_packet->ttl < 2) {
-							addr_to_string(src_str, unicast_packet->orig);
+							addr_to_string(src_str, ((struct ethhdr *)(unicast_packet + 1))->h_source);
 							addr_to_string(dst_str, unicast_packet->dest);
 
 							debug_log(LOG_TYPE_WARN, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);

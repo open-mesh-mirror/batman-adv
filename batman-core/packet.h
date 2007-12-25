@@ -63,7 +63,6 @@ struct unicast_packet
 {
 	uint8_t  packet_type;
 	uint8_t  ttl;
-	uint8_t  orig[6];
 	uint8_t  dest[6];
 } __attribute__((packed));
 
