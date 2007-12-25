@@ -31,18 +31,20 @@
 
 
 
-void interface_init(struct net_device *dev)
+void interface_setup(struct net_device *dev)
 {
 	struct bat_priv *priv = netdev_priv(dev);
 	char dev_addr[ETH_ALEN];
 
 	ether_setup(dev);
+
 	dev->open = interface_open;
 	dev->stop = interface_release;
 	dev->get_stats = interface_stats;
 	dev->change_mtu = interface_change_mtu;
 	dev->hard_start_xmit = interface_tx;
 	dev->destructor = free_netdev;
+// 	dev->hard_header_cache = NULL;
 
 	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu = BAT_IF_MTU;
@@ -93,21 +95,26 @@ int interface_change_mtu(struct net_device *dev, int new_mtu)
 
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
-	int len;
-	char *data, shortpkt[ETH_ZLEN];
-	struct bat_priv *priv = netdev_priv(dev);
+// 	int len;
+// 	char *data, shortpkt[ETH_ZLEN];
+// 	struct bat_priv *priv = netdev_priv(dev);
+// 	struct ethhdr *ethhdr;
+// 	char src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
+//
+// 	data = skb->data;
+// 	len = skb->len;
+//
+// 	if (len < ETH_ZLEN) {
+// 		memset(shortpkt, 0, ETH_ZLEN);
+// 		memcpy(shortpkt, skb->data, skb->len);
+// 		len = ETH_ZLEN;
+// 		data = shortpkt;
+// 	}
+//
+// 	dev->trans_start = jiffies;
+//
 
-	data = skb->data;
-	len = skb->len;
-
-	if (len < ETH_ZLEN) {
-		memset(shortpkt, 0, ETH_ZLEN);
-		memcpy(shortpkt, skb->data, skb->len);
-		len = ETH_ZLEN;
-		data = shortpkt;
-	}
-
-	dev->trans_start = jiffies; /* save the timestamp */
+	kfree_skb(skb);
 
 	return 0;
 }

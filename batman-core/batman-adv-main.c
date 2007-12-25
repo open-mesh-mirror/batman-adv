@@ -99,7 +99,7 @@ void activate_module(void)
 	int result;
 
 	/* initialize layer 2 interface */
-	bat_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_init);
+	bat_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_setup);
 
 	if (bat_device == NULL) {
 		debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
@@ -140,7 +140,6 @@ void shutdown_module(void)
 
 	if (bat_device != NULL) {
 		unregister_netdev(bat_device);
-		free_netdev(bat_device);
 		bat_device = NULL;
 	}
 

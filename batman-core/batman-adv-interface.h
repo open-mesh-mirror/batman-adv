@@ -21,7 +21,7 @@
 
 
 
-void interface_init(struct net_device *dev);
+void interface_setup(struct net_device *dev);
 int interface_open(struct net_device *dev);
 int interface_release(struct net_device *dev);
 struct net_device_stats *interface_stats(struct net_device *dev);
