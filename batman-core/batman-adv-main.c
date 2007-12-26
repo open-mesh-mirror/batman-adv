@@ -27,6 +27,7 @@
 #include "batman-adv-routing.h"
 #include "batman-adv-send.h"
 #include "batman-adv-interface.h"
+#include "batman-adv-device.h"
 #include "types.h"
 #include "hash.h"
 
@@ -131,6 +132,8 @@ void activate_module(void)
 	}
 
 	start_purge_timer();
+
+	bat_device_setup();
 }
 
 void shutdown_module(void)
@@ -161,6 +164,8 @@ void shutdown_module(void)
 
 	if (!(list_empty(&if_list)))
 		del_timer_sync(&purge_timer);
+
+	bat_device_destroy();
 }
 
 void remove_interfaces(void)

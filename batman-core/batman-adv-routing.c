@@ -685,15 +685,11 @@ int packet_recv_thread(void *data)
 						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
 						/* rebroadcast packet */
-						spin_lock(&if_list_lock);
-
 						list_for_each(list_pos, &if_list) {
 							batman_if = list_entry(list_pos, struct batman_if, list);
 
 							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 						}
-
-						spin_unlock(&if_list_lock);
 
 					}
 
