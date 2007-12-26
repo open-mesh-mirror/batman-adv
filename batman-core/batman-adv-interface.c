@@ -31,7 +31,8 @@
 
 
 
-#define BAT_IF_MTU (1500 - sizeof(struct ethhdr) - (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet)))
+#define BAT_HEADER_LEN sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))
+#define BAT_IF_MTU 1500 - BAT_HEADER_LEN
 
 
 
@@ -69,10 +70,10 @@ void interface_setup(struct net_device *dev)
 	dev->change_mtu = interface_change_mtu;
 	dev->hard_start_xmit = interface_tx;
 	dev->destructor = free_netdev;
-// 	dev->hard_header_cache = NULL;
 
 	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu = BAT_IF_MTU;
+	dev->hard_header_len = ETH_HLEN + BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
 
 	/* generate random address */
 	*(u16 *)dev_addr = htons(0x00FF);
@@ -82,7 +83,6 @@ void interface_setup(struct net_device *dev)
 	SET_ETHTOOL_OPS(dev, &bat_ethtool_ops);
 
 	memset(priv, 0, sizeof(struct bat_priv));
-	spin_lock_init(&priv->lock);
 }
 
 int interface_open(struct net_device *dev)
@@ -105,17 +105,11 @@ struct net_device_stats *interface_stats(struct net_device *dev)
 
 int interface_change_mtu(struct net_device *dev, int new_mtu)
 {
-	unsigned long flags;
-	struct bat_priv *priv = netdev_priv(dev);
-	spinlock_t *lock = &priv->lock;
-
 	/* check ranges */
 	if ((new_mtu < 68) || (new_mtu > BAT_IF_MTU))
 		return -EINVAL;
 
-	spin_lock_irqsave(lock, flags);
 	dev->mtu = new_mtu;
-	spin_unlock_irqrestore(lock, flags);
 
 	return 0;
 }
@@ -128,6 +122,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	struct bcast_packet *bcast_packet;
 	struct orig_node *orig_node;
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
+	struct bat_priv *priv = netdev_priv(dev);
+	int data_len = skb->data_len;
 
 	/* ethernet packet should be broadcasted */
 	if (compare_orig(ethhdr->h_dest, broadcastAddr)) {
@@ -178,17 +174,22 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			memcpy(unicast_packet->dest, ethhdr->h_dest, ETH_ALEN);
 
 			send_raw_packet(skb->data, skb->data_len, orig_node->batman_if->net_dev->dev_addr, ethhdr->h_dest, orig_node->batman_if);
-		}
-// 		else {
-// 			debug_output(4, "found no destination for the MAC %s\n", addr_to_string( dhost ));
-					/*unsigned char *pay_buff = (unsigned char *)packet_buff + sizeof(struct batman_packet);
-			printf( "not found: %s\n", addr_to_string( ((struct ether_header *)payload_ptr)->ether_dhost ) ); */
 
-// 		}
+		} else {
+
+			priv->stats.tx_dropped++;
+			spin_unlock(&orig_hash_lock);
+			goto end;
+
+		}
 
 		spin_unlock(&orig_hash_lock);
 	}
 
+	priv->stats.tx_packets++;
+	priv->stats.tx_bytes += data_len;
+
+end:
 	kfree_skb(skb);
 	return 0;
 }

@@ -83,7 +83,6 @@ struct neigh_node
 struct bat_priv
 {
 	struct net_device_stats stats;
-	spinlock_t lock;
 };
 
 #endif

@@ -339,6 +339,9 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 		if (orig_node->router == NULL)
 			continue;
 
+		if (orig_node->router->tq_avg == 0)
+			continue;
+
 		batman_count++;
 
 		addr_to_string(orig_str, orig_node->orig);

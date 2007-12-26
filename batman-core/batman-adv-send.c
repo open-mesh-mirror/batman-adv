@@ -47,6 +47,11 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	struct ethhdr ethhdr;
 	int retval;
 
+	if (!(batman_if->net_dev->flags & IFF_UP)) {
+		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
+		return;
+	}
+
 	memcpy(ethhdr.h_dest, dst_addr, ETH_ALEN);
 	memcpy(ethhdr.h_source, src_addr, ETH_ALEN);
 	ethhdr.h_proto = htons(ETH_P_BATMAN);
