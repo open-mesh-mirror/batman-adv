@@ -543,6 +543,7 @@ int packet_recv_thread(void *data)
 	struct batman_packet *batman_packet;
 	struct unicast_packet *unicast_packet;
 	struct bcast_packet *bcast_packet;
+	struct icmp_packet *icmp_packet;
 	struct orig_node *orig_node;
 	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
 	unsigned int flags = MSG_DONTWAIT;	/* non-blocking */
@@ -624,7 +625,7 @@ int packet_recv_thread(void *data)
 							addr_to_string(src_str, ((struct ethhdr *)(unicast_packet + 1))->h_source);
 							addr_to_string(dst_str, unicast_packet->dest);
 
-							debug_log(LOG_TYPE_WARN, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
+							debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
 							continue;
 						}
 
@@ -646,6 +647,105 @@ int packet_recv_thread(void *data)
 
 				/* batman icmp packet */
 				case BAT_ICMP:
+
+					/* packet with unicast indication but broadcast recipient */
+					if (compare_orig(ethhdr->h_dest, broadcastAddr))
+						continue;
+
+					/* packet with broadcast sender address */
+					if (compare_orig(ethhdr->h_source, broadcastAddr))
+						continue;
+
+					/* drop packet if it has not neccessary minimum size */
+					if (result < sizeof(struct ethhdr) + sizeof(struct icmp_packet))
+						continue;
+
+					icmp_packet = (struct icmp_packet *)(packet_buff + sizeof(struct ethhdr));
+
+					/* packet for me */
+					if (is_my_mac(icmp_packet->dst)) {
+
+						/* answer ping request (ping) */
+						if (icmp_packet->msg_type == ECHO_REQUEST) {
+
+							/* get routing information */
+							spin_lock(&orig_hash_lock);
+							orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet->orig));
+
+							if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+								memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
+								memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
+								icmp_packet->msg_type = ECHO_REPLY;
+								icmp_packet->ttl = TTL;
+
+								send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+
+							}
+
+							spin_unlock(&orig_hash_lock);
+
+						} else {
+
+							/* give data to unix client */
+// 							if ( unix_packet[((struct icmp_packet *)packet_buff)->uid] != NULL )
+// 								write( ((struct unix_client *)(unix_packet[((struct icmp_packet *)packet_buff)->uid]))->sock, packet_buff, sizeof(struct icmp_packet) );
+
+						}
+
+					/* route it */
+					} else {
+
+						/* TTL exceeded */
+						if (icmp_packet->ttl < 2) {
+
+							addr_to_string(src_str, icmp_packet->orig);
+							addr_to_string(dst_str, icmp_packet->dst);
+
+							debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
+
+							/* send TTL exceed if packet is an echo request (traceroute) */
+							if (icmp_packet->msg_type == ECHO_REQUEST) {
+
+								/* get routing information */
+								spin_lock(&orig_hash_lock);
+								orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet->orig));
+
+								if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+									memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
+									memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
+									icmp_packet->msg_type = TTL_EXCEEDED;
+									icmp_packet->ttl = TTL;
+
+									send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+
+								}
+
+								spin_unlock(&orig_hash_lock);
+
+							}
+
+							continue;
+
+						}
+
+						/* get routing information */
+						spin_lock(&orig_hash_lock);
+						orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet->dst));
+
+						if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+							/* decrement ttl */
+							icmp_packet->ttl--;
+
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+
+						}
+
+						spin_unlock(&orig_hash_lock);
+
+					}
 
 					break;
 
