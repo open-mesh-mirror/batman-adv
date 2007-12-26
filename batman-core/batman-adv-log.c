@@ -95,7 +95,7 @@ int debug_log(int type, char *fmt, ...)
 		va_end(args);
 	}
 
-	if ((type == LOG_TYPE_CRIT) || (log_level & (1<<type))) {
+	if ((type == LOG_TYPE_CRIT) || (log_level & type)) {
 		va_start(args, fmt);
 		vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
 		fdebug_log("[%10u] %s", (jiffies / HZ), tmp_log_buf);
