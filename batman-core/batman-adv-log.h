@@ -22,7 +22,7 @@
 
 
 extern struct file_operations proc_log_operations;
-extern unsigned long log_level;
+extern volatile uint8_t log_level;
 
 
 int debug_log(int type, char *fmt, ...);

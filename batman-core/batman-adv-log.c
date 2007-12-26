@@ -34,7 +34,7 @@ char log_buf[LOG_BUF_LEN];
 int log_buf_len = LOG_BUF_LEN;
 unsigned long log_start = 0;
 unsigned long log_end = 0;
-unsigned long log_level = 0;
+volatile uint8_t log_level = 0;
 
 DEFINE_SPINLOCK(logbuf_lock);
 
@@ -95,7 +95,7 @@ int debug_log(int type, char *fmt, ...)
 		va_end(args);
 	}
 
-	if ((type == LOG_TYPE_CRIT) || test_bit(type, &log_level)) {
+	if ((type == LOG_TYPE_CRIT) || (log_level & (1<<type))) {
 		va_start(args, fmt);
 		vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
 		fdebug_log("[%10u] %s", (jiffies / HZ), tmp_log_buf);
