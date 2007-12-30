@@ -116,7 +116,7 @@ int bat_device_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-ssize_t bat_device_write(struct file *file, const char *buff, size_t len, loff_t *off)
+ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len, loff_t *off)
 {
 // 	int minor_num;
 // 	struct minor *minor = NULL;

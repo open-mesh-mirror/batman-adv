@@ -25,4 +25,4 @@ void bat_device_setup(void);
 void bat_device_destroy(void);
 int bat_device_open(struct inode *inode, struct file *file);
 int bat_device_release(struct inode *inode, struct file *file);
-ssize_t bat_device_write(struct file *file, const char *buff, size_t len, loff_t *off);
+ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len, loff_t *off);

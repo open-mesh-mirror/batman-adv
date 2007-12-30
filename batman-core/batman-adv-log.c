@@ -30,13 +30,13 @@
 
 
 
-char log_buf[LOG_BUF_LEN];
-int log_buf_len = LOG_BUF_LEN;
-unsigned long log_start = 0;
-unsigned long log_end = 0;
+static char log_buf[LOG_BUF_LEN];
+static int log_buf_len = LOG_BUF_LEN;
+static unsigned long log_start = 0;
+static unsigned long log_end = 0;
 volatile uint8_t log_level = 0;
 
-DEFINE_SPINLOCK(logbuf_lock);
+static DEFINE_SPINLOCK(logbuf_lock);
 
 struct file_operations proc_log_operations = {
 	.open           = log_open,
@@ -46,7 +46,7 @@ struct file_operations proc_log_operations = {
 	.poll           = log_poll,
 };
 
-DECLARE_WAIT_QUEUE_HEAD(log_wait);
+static DECLARE_WAIT_QUEUE_HEAD(log_wait);
 
 
 static void emit_log_char(char c)
@@ -58,7 +58,7 @@ static void emit_log_char(char c)
 		log_start = log_end - log_buf_len;
 }
 
-int fdebug_log(char *fmt, ...)
+static int fdebug_log(char *fmt, ...)
 {
 	int printed_len;
 	char *p;

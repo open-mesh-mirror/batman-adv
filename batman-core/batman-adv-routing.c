@@ -34,12 +34,12 @@
 
 DECLARE_WAIT_QUEUE_HEAD(thread_wait);
 
-atomic_t data_ready_cond;
+static atomic_t data_ready_cond;
 atomic_t exit_cond;
 
 
 
-struct neigh_node *create_neighbor(struct orig_node *orig_node, struct orig_node *orig_neigh_node, uint8_t *neigh, struct batman_if *if_incoming)
+static struct neigh_node *create_neighbor(struct orig_node *orig_node, struct orig_node *orig_neigh_node, uint8_t *neigh, struct batman_if *if_incoming)
 {
 	struct neigh_node *neigh_node;
 
@@ -77,7 +77,7 @@ void free_orig_node(void *data)
 }
 
 /* this function finds or creates an originator entry for the given address if it does not exits */
-struct orig_node *get_orig_node(uint8_t *addr)
+static struct orig_node *get_orig_node(uint8_t *addr)
 {
 	struct orig_node *orig_node;
 	struct hashtable_t *swaphash;
@@ -136,7 +136,7 @@ void slide_own_bcast_window(struct batman_if *batman_if)
 	spin_unlock(&orig_hash_lock);
 }
 
-void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node)
+static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node)
 {
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
@@ -174,7 +174,7 @@ void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node)
 	}
 }
 
-int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_neigh_node, struct batman_packet *batman_packet, struct batman_if *if_incoming)
+static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_neigh_node, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
@@ -241,7 +241,7 @@ int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_nei
 	return 0;
 }
 
-void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming, unsigned char *hna_buff, int hna_buff_len, char is_duplicate)
+static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming, unsigned char *hna_buff, int hna_buff_len, char is_duplicate)
 {
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
@@ -297,7 +297,7 @@ void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batm
 	update_routes(orig_node, best_neigh_node);
 }
 
-char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
+static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
 	struct list_head *list_pos;
 	struct orig_node *orig_node;
@@ -329,7 +329,7 @@ char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	return is_duplicate;
 }
 
-void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_packet, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
+static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_packet, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;

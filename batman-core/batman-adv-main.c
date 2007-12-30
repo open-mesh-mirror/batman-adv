@@ -45,8 +45,8 @@ int16_t num_ifs = 0;
 
 struct net_device *bat_device = NULL;
 
-struct task_struct *kthread_task = NULL;
-struct timer_list purge_timer;
+static struct task_struct *kthread_task = NULL;
+static struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 

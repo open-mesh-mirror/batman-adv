@@ -43,7 +43,7 @@ void start_bcast_timer(struct batman_if *batman_if)
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
 {
 	struct msghdr msg;
-	struct iovec vector[2];
+	struct kvec vector[2];
 	struct ethhdr ethhdr;
 	int retval;
 
@@ -66,11 +66,11 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	msg.msg_namelen = 0;
 
 	/* minimum packet size is 46 bytes for ethernet */
-	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, (struct kvec *)vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0)
+	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0)
 		debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
 }
 
-void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
+static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
