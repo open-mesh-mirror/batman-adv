@@ -79,7 +79,7 @@ void bat_device_setup(void)
 
 void bat_device_destroy(void)
 {
-	int result=0;
+	int result = 0;
 
 	if (!Major)
 		return;
@@ -92,7 +92,6 @@ void bat_device_destroy(void)
 #endif
 
 	/* Unregister the device */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,23)
 	result = unregister_chrdev(Major, DRIVER_DEVICE);
 #else
@@ -101,6 +100,7 @@ void bat_device_destroy(void)
 
 	if (result < 0)
 		debug_log(LOG_TYPE_WARN, "Unregistering the character device failed with %d\n", result);
+
 	Major = 0;
 }
 

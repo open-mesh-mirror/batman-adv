@@ -52,8 +52,8 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 		return;
 	}
 
-	memcpy(ethhdr.h_dest, dst_addr, ETH_ALEN);
 	memcpy(ethhdr.h_source, src_addr, ETH_ALEN);
+	memcpy(ethhdr.h_dest, dst_addr, ETH_ALEN);
 	ethhdr.h_proto = htons(ETH_P_BATMAN);
 
 	vector[0].iov_base = &ethhdr;
@@ -74,12 +74,15 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
+	char orig_str[ETH_STR_LEN];
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
+
+	addr_to_string(orig_str, ((struct batman_packet *)pack_buff)->orig);
 
 	if (((struct batman_packet *)pack_buff)->flags & UNIDIRECTIONAL) {
 
 		if (if_outgoing != NULL) {
-			debug_log(LOG_TYPE_BATMAN, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+			debug_log(LOG_TYPE_BATMAN, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
 
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 		} else {
@@ -111,7 +114,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 			/* non-primary interfaces are only broadcasted on their interface */
 			if (own_packet && (if_outgoing->if_num > 0)) {
-				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s\n", if_outgoing->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name);
+				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
 
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 			} else {
@@ -124,9 +127,12 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 					else
 						((struct batman_packet *)pack_buff)->flags = 0x00;
 
-					debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s\n", (own_packet ? "Sending own" : "Forwarding"), batman_if->addr_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name);
+					debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name, batman_if->addr_str);
 
-					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+					if (own_packet)
+						send_own_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+					else
+						send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
 
 			}

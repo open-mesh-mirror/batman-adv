@@ -304,7 +304,6 @@ static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batm
 	struct neigh_node *tmp_neigh_node;
 	char is_duplicate = 0;
 
-
 	orig_node = get_orig_node(batman_packet->orig);
 
 	list_for_each(list_pos, &orig_node->neigh_list) {
@@ -546,10 +545,9 @@ int packet_recv_thread(void *data)
 	struct icmp_packet *icmp_packet;
 	struct orig_node *orig_node;
 	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
-	unsigned int flags = MSG_DONTWAIT;	/* non-blocking */
 	int result;
 
-	msg.msg_flags = flags;
+	msg.msg_flags = MSG_DONTWAIT;	/* non-blocking */
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_control = NULL;
@@ -571,7 +569,7 @@ int packet_recv_thread(void *data)
 			iov.iov_base = packet_buff;
 			iov.iov_len = sizeof(packet_buff);
 
-			while ((result = kernel_recvmsg(batman_if->raw_sock, &msg, &iov, 1, sizeof(packet_buff), flags)) > 0) {
+			while ((result = kernel_recvmsg(batman_if->raw_sock, &msg, &iov, 1, sizeof(packet_buff), MSG_DONTWAIT)) > 0) {
 
 				if (result < sizeof(struct ethhdr) + 1)
 					continue;
@@ -796,6 +794,10 @@ int packet_recv_thread(void *data)
 					spin_unlock(&orig_hash_lock);
 					break;
 				}
+
+				/* has to be done here as well or we might get old packets again - wtf ??? */
+				iov.iov_base = packet_buff;
+				iov.iov_len = sizeof(packet_buff);
 
 			}
 
