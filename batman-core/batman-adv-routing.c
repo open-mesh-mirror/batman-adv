@@ -26,6 +26,7 @@
 #include "batman-adv-log.h"
 #include "batman-adv-send.h"
 #include "batman-adv-interface.h"
+#include "batman-adv-device.h"
 #include "types.h"
 #include "hash.h"
 #include "ring_buffer.h"
@@ -685,9 +686,8 @@ int packet_recv_thread(void *data)
 
 						} else {
 
-							/* give data to unix client */
-// 							if ( unix_packet[((struct icmp_packet *)packet_buff)->uid] != NULL )
-// 								write( ((struct unix_client *)(unix_packet[((struct icmp_packet *)packet_buff)->uid]))->sock, packet_buff, sizeof(struct icmp_packet) );
+							/* add data to device queue */
+							bat_device_receive_packet((struct icmp_packet *)packet_buff);
 
 						}
 

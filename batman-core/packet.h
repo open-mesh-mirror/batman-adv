@@ -55,8 +55,9 @@ struct icmp_packet
 	uint8_t  dst[6];
 	uint8_t  orig[6];
 	uint8_t  ttl;
-	uint8_t  uid;
+	uint8_t  pad;
 	uint16_t seqno;
+	uint32_t uid;
 } __attribute__((packed));
 
 struct unicast_packet

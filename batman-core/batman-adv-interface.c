@@ -125,6 +125,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	struct bat_priv *priv = netdev_priv(dev);
 	int data_len = skb->data_len;
 
+	dev->trans_start = jiffies;
+
 	/* ethernet packet should be broadcasted */
 	if (compare_orig(ethhdr->h_dest, broadcastAddr)) {
 
@@ -211,6 +213,8 @@ void interface_rx(struct net_device *dev, void *packet, int packet_len)
 
 	priv->stats.rx_packets++;
 	priv->stats.rx_bytes += packet_len;
+
+	dev->last_rx = jiffies;
 
 	netif_rx(skb);
 

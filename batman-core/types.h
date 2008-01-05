@@ -85,4 +85,19 @@ struct bat_priv
 	struct net_device_stats stats;
 };
 
+struct device_client
+{
+	struct list_head queue_list;
+	unsigned int queue_len;
+	unsigned int index;
+	spinlock_t lock;
+	wait_queue_head_t queue_wait;
+};
+
+struct device_packet
+{
+	struct list_head list;
+	struct icmp_packet icmp_packet;
+};
+
 #endif
