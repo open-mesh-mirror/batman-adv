@@ -692,7 +692,7 @@ int packet_recv_thread(void *data)
 						} else {
 
 							/* add data to device queue */
-							bat_device_receive_packet((struct icmp_packet *)packet_buff);
+							bat_device_receive_packet(icmp_packet);
 
 						}
 
