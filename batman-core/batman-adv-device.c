@@ -56,9 +56,8 @@ void bat_device_init(void)
 {
 	int i;
 
-	for (i = 0; i < 255; i++) {
+	for (i = 0; i < 255; i++)
 		device_client_hash[i] = NULL;
-	}
 }
 
 void bat_device_setup(void)
@@ -249,6 +248,7 @@ ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len,
 		} else {
 
 			icmp_packet.msg_type = DESTINATION_UNREACHABLE;
+			icmp_packet.uid = device_client->index;
 			bat_device_add_packet(device_client, &icmp_packet);
 
 		}
