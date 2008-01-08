@@ -89,7 +89,7 @@ struct device_client
 {
 	struct list_head queue_list;
 	unsigned int queue_len;
-	unsigned int index;
+	unsigned char index;
 	spinlock_t lock;
 	wait_queue_head_t queue_wait;
 };

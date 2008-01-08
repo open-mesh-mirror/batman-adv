@@ -56,7 +56,7 @@ void bat_device_init(void)
 {
 	int i;
 
-	for ( i = 0; i < 255; i++ ) {
+	for (i = 0; i < 255; i++) {
 		device_client_hash[i] = NULL;
 	}
 }
@@ -203,19 +203,17 @@ ssize_t bat_device_read(struct file *file, char __user *buf, size_t count, loff_
 	spin_lock(&device_client->lock);
 
 	device_packet = list_first_entry(&device_client->queue_list, struct device_packet, list);
-
-	error = __copy_to_user(buf, &device_packet->icmp_packet, sizeof(struct icmp_packet));
-
-	if (error) {
-		spin_unlock(&device_client->lock);
-		return error;
-	}
-
 	list_del(&device_packet->list);
-	kfree(device_packet);
 	device_client->queue_len--;
 
 	spin_unlock(&device_client->lock);
+
+	error = __copy_to_user(buf, &device_packet->icmp_packet, sizeof(struct icmp_packet));
+
+	kfree(device_packet);
+
+	if (error)
+		return error;
 
 	return sizeof(struct icmp_packet);
 }
@@ -285,7 +283,7 @@ void bat_device_add_packet(struct device_client *device_client, struct icmp_pack
 
 	device_packet = kmalloc(sizeof(struct device_packet), GFP_KERNEL);
 
-	if (!device_client)
+	if (!device_packet)
 		return;
 
 	INIT_LIST_HEAD(&device_packet->list);
@@ -295,7 +293,7 @@ void bat_device_add_packet(struct device_client *device_client, struct icmp_pack
 
 	/* while waiting for the lock the device_client could have been deleted */
 	if (device_client_hash[icmp_packet->uid] == NULL) {
-		kfree(device_client);
+		kfree(device_packet);
 		return;
 	}
 

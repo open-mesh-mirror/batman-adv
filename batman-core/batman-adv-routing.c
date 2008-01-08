@@ -533,12 +533,26 @@ void purge_orig(unsigned long data)
 	start_purge_timer();
 }
 
+int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int packet_buff_len)
+{
+	struct kvec iov;
+	struct msghdr msg;
+
+	iov.iov_base = packet_buff;
+	iov.iov_len = packet_buff_len;
+
+	msg.msg_flags = MSG_DONTWAIT;	/* non-blocking */
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_control = NULL;
+
+	return kernel_recvmsg(raw_sock, &msg, &iov, 1, packet_buff_len, MSG_DONTWAIT);
+}
+
 int packet_recv_thread(void *data)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
-	struct kvec iov;
-	struct msghdr msg;
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
 	struct unicast_packet *unicast_packet;
@@ -547,11 +561,6 @@ int packet_recv_thread(void *data)
 	struct orig_node *orig_node;
 	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
 	int result;
-
-	msg.msg_flags = MSG_DONTWAIT;	/* non-blocking */
-	msg.msg_name = NULL;
-	msg.msg_namelen = 0;
-	msg.msg_control = NULL;
 
 	atomic_set(&data_ready_cond, 0);
 	atomic_set(&exit_cond, 0);
@@ -566,11 +575,7 @@ int packet_recv_thread(void *data)
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
-			/* has to be done here or we don't get packets - wtf ??? */
-			iov.iov_base = packet_buff;
-			iov.iov_len = sizeof(packet_buff);
-
-			while ((result = kernel_recvmsg(batman_if->raw_sock, &msg, &iov, 1, sizeof(packet_buff), MSG_DONTWAIT)) > 0) {
+			while ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) > 0) {
 
 				if (result < sizeof(struct ethhdr) + 1)
 					continue;
@@ -794,10 +799,6 @@ int packet_recv_thread(void *data)
 					spin_unlock(&orig_hash_lock);
 					break;
 				}
-
-				/* has to be done here as well or we might get old packets again - wtf ??? */
-				iov.iov_base = packet_buff;
-				iov.iov_len = sizeof(packet_buff);
 
 			}
 
