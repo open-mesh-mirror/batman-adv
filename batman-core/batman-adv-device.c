@@ -56,7 +56,7 @@ void bat_device_init(void)
 {
 	int i;
 
-	for (i = 0; i < 255; i++)
+	for (i = 0; i < 256; i++)
 		device_client_hash[i] = NULL;
 }
 
@@ -129,7 +129,7 @@ int bat_device_open(struct inode *inode, struct file *file)
 	if (!device_client)
 		return -ENOMEM;
 
-	for (i = 0; i < 255; i++) {
+	for (i = 0; i < 256; i++) {
 		if (device_client_hash[i] == NULL) {
 			device_client_hash[i] = device_client;
 			break;

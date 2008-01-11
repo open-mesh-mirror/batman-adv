@@ -32,6 +32,11 @@
 
 
 
+#define BAT_HEADER_LEN sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))
+
+
+static int max_mtu;
+
 
 
 static int bat_get_settings(struct net_device *dev, struct ethtool_cmd *cmd);
@@ -70,8 +75,10 @@ void interface_setup(struct net_device *dev)
 	dev->destructor = free_netdev;
 
 	dev->features |= NETIF_F_NO_CSUM;
-	dev->mtu = BAT_IF_MTU;
+	dev->mtu -= BAT_HEADER_LEN;
 	dev->hard_header_len = ETH_HLEN + BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
+
+	max_mtu = dev->mtu;
 
 	/* generate random address */
 	*(u16 *)dev_addr = htons(0x00FF);
@@ -81,8 +88,6 @@ void interface_setup(struct net_device *dev)
 	SET_ETHTOOL_OPS(dev, &bat_ethtool_ops);
 
 	memset(priv, 0, sizeof(struct bat_priv));
-
-	hna_local_add(dev_addr);
 }
 
 int interface_open(struct net_device *dev)
@@ -106,7 +111,7 @@ struct net_device_stats *interface_stats(struct net_device *dev)
 int interface_change_mtu(struct net_device *dev, int new_mtu)
 {
 	/* check ranges */
-	if ((new_mtu < 68) || (new_mtu > BAT_IF_MTU))
+	if ((new_mtu < 68) || (new_mtu > max_mtu))
 		return -EINVAL;
 
 	dev->mtu = new_mtu;
@@ -123,7 +128,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	struct orig_node *orig_node;
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
 	struct bat_priv *priv = netdev_priv(dev);
-	int data_len = skb->data_len;
+	int data_len = skb->len;
 
 	dev->trans_start = jiffies;
 	hna_local_add(ethhdr->h_source);
@@ -149,7 +154,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
-			send_raw_packet(skb->data, skb->data_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
 
 	/* unicast packet */
@@ -176,7 +181,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			/* copy the destination for faster routing */
 			memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
 
-			send_raw_packet(skb->data, skb->data_len, orig_node->batman_if->net_dev->dev_addr, ethhdr->h_dest, orig_node->batman_if);
+			send_raw_packet(skb->data, skb->len, orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 
 		} else {
 

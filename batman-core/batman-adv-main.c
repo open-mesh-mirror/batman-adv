@@ -136,6 +136,8 @@ void activate_module(void)
 		return;
 	}
 
+	hna_local_add(bat_device->dev_addr);
+
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);

@@ -26,7 +26,7 @@
 
 
 int hna_local_init(void);
-void hna_local_add(char *addr);
+void hna_local_add(uint8_t *addr);
 void hna_local_fill_buffer(unsigned char *buff, int buff_len);
 void hna_local_purge(unsigned long data);
 void hna_local_free(void);

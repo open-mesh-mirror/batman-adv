@@ -63,7 +63,7 @@ int hna_local_init(void)
 	return 1;
 }
 
-void hna_local_add(char *addr)
+void hna_local_add(uint8_t *addr)
 {
 	struct hna_local_entry *hna_local_entry;
 	struct hashtable_t *swaphash;
@@ -82,7 +82,7 @@ void hna_local_add(char *addr)
 
 	/* only announce as many hosts as possible in the batman-packet.
 	   That also should give a limit to MAC-flooding. */
-	if (num_hna + 1 > BAT_IF_MTU / 6) {
+	if (num_hna + 1 > (1500 - sizeof(struct batman_packet)) / 6) {
 		debug_log(LOG_TYPE_ROUTES, "Can't add new local hna entry (%s): number of local hna entries exceeds packet size \n", hna_str);
 		return;
 	}

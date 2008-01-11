@@ -828,7 +828,7 @@ int packet_recv_thread(void *data)
 						list_for_each(list_pos, &if_list) {
 							batman_if = list_entry(list_pos, struct batman_if, list);
 
-							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 						}
 
 					}

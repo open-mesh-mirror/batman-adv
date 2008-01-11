@@ -21,15 +21,6 @@
 
 
 
-#include "types.h"
-
-
-
-#define BAT_HEADER_LEN sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))
-#define BAT_IF_MTU 1500 - BAT_HEADER_LEN
-
-
-
 void interface_setup(struct net_device *dev);
 int interface_open(struct net_device *dev);
 int interface_release(struct net_device *dev);
