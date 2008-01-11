@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -25,6 +25,7 @@
 #include "batman-adv-send.h"
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
+#include "batman-adv-ttable.h"
 #include "types.h"
 
 
@@ -142,7 +143,22 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 void send_own_packet(unsigned long data)
 {
+	unsigned char *buff_ptr;
 	struct batman_if *batman_if = (struct batman_if *)data;
+
+	/* if local hna has changed and interface is a primary interface */
+	if ((hna_local_changed) && (batman_if->if_num == 0)) {
+
+		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
+
+		buff_ptr = batman_if->pack_buff;
+		batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
+
+		memcpy(batman_if->pack_buff, buff_ptr, sizeof(struct batman_packet));
+		hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+
+		kfree(buff_ptr);
+	}
 
 	/* change sequence number to network order */
 	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);

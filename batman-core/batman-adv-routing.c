@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -27,6 +27,7 @@
 #include "batman-adv-send.h"
 #include "batman-adv-interface.h"
 #include "batman-adv-device.h"
+#include "batman-adv-ttable.h"
 #include "types.h"
 #include "hash.h"
 #include "ring_buffer.h"
@@ -72,6 +73,8 @@ void free_orig_node(void *data)
 		kfree(neigh_node);
 	}
 
+	hna_global_del_orig(orig_node);
+
 	kfree(orig_node->bcast_own);
 	kfree(orig_node->bcast_own_sum);
 	kfree(orig_node);
@@ -99,6 +102,7 @@ static struct orig_node *get_orig_node(uint8_t *addr)
 	memcpy(orig_node->orig, addr, ETH_ALEN);
 	orig_node->router = NULL;
 	orig_node->batman_if = NULL;
+	orig_node->hna_buff = NULL;
 
 	orig_node->bcast_own = kmalloc(num_ifs * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
 	memset(orig_node->bcast_own, 0, num_ifs * sizeof(TYPE_OF_WORD) * NUM_WORDS);
@@ -112,7 +116,7 @@ static struct orig_node *get_orig_node(uint8_t *addr)
 		swaphash = hash_resize(orig_hash, orig_hash->size * 2);
 
 		if (swaphash == NULL)
-			debug_log(LOG_TYPE_CRIT, "Couldn't resize hash table \n");
+			debug_log(LOG_TYPE_CRIT, "Couldn't resize orig hash table \n");
 		else
 			orig_hash = swaphash;
 	}
@@ -137,23 +141,28 @@ void slide_own_bcast_window(struct batman_if *batman_if)
 	spin_unlock(&orig_hash_lock);
 }
 
-static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node)
+static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_node, unsigned char *hna_buff, int hna_buff_len)
 {
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	if ((orig_node != NULL) && (orig_node->router != neigh_node)) {
+	if (orig_node == NULL)
+		return;
+
+	if (orig_node->router != neigh_node) {
 		addr_to_string(orig_str, orig_node->orig);
 
 		/* route deleted */
 		if ((orig_node->router != NULL) && (neigh_node == NULL)) {
 
 			debug_log(LOG_TYPE_ROUTES, "Deleting route towards: %s\n", orig_str);
+			hna_global_add_orig(orig_node, hna_buff, hna_buff_len);
 
 		/* route added */
 		} else if ((orig_node->router == NULL) && (neigh_node != NULL)) {
 
 			addr_to_string(neigh_str, neigh_node->addr);
 			debug_log(LOG_TYPE_ROUTES, "Adding route towards: %s (via %s)\n", orig_str, neigh_str);
+			hna_global_del_orig(orig_node);
 
 		/* route changed */
 		} else {
@@ -171,7 +180,19 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 
 		orig_node->router = neigh_node;
 
-		/* TODO: check for changed hna announcements */
+	/* may be just HNA changed */
+	} else {
+
+		if ((hna_buff_len != orig_node->hna_buff_len) || ((hna_buff_len > 0 ) && (orig_node->hna_buff_len > 0) && (memcmp(orig_node->hna_buff, hna_buff, hna_buff_len) != 0))) {
+
+			if (orig_node->hna_buff_len > 0)
+				hna_global_del_orig(orig_node);
+
+			if ((hna_buff_len > 0) && (hna_buff != NULL))
+				hna_global_add_orig(orig_node, hna_buff, hna_buff_len);
+
+		}
+
 	}
 }
 
@@ -295,7 +316,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 
 	}
 
-	update_routes(orig_node, best_neigh_node);
+	update_routes(orig_node, best_neigh_node, hna_buff, hna_buff_len);
 }
 
 static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
@@ -523,7 +544,7 @@ void purge_orig(unsigned long data)
 
 			}
 
-			update_routes(orig_node, best_neigh_node);
+			update_routes(orig_node, best_neigh_node, orig_node->hna_buff, orig_node->hna_buff_len);
 
 		}
 
@@ -587,6 +608,14 @@ int packet_recv_thread(void *data)
 				switch (batman_packet->packet_type) {
 				case BAT_PACKET:
 
+					/* packet with broadcast indication but unicast recipient */
+					if (!is_bcast(ethhdr->h_dest))
+						continue;
+
+					/* packet with broadcast sender address */
+					if (is_bcast(ethhdr->h_source))
+						continue;
+
 					/* drop packet if it has no batman packet payload */
 					if (result < sizeof(struct ethhdr) + sizeof(struct batman_packet))
 						continue;
@@ -600,64 +629,15 @@ int packet_recv_thread(void *data)
 
 					break;
 
-				/* unicast packet */
-				case BAT_UNICAST:
-
-					/* packet with unicast indication but broadcast recipient */
-					if (compare_orig(ethhdr->h_dest, broadcastAddr))
-						continue;
-
-					/* packet with broadcast sender address */
-					if (compare_orig(ethhdr->h_source, broadcastAddr))
-						continue;
-
-					/* drop packet if it has not neccessary minimum size - 1 byte ttl, 1 byte payload */
-					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
-						continue;
-
-					unicast_packet = (struct unicast_packet *)(packet_buff + sizeof(struct ethhdr));
-
-					/* packet for me */
-					if (is_my_mac(unicast_packet->dest)) {
-
-						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct unicast_packet), result - sizeof(struct ethhdr) - sizeof(struct unicast_packet));
-
-					/* route it */
-					} else {
-						/* TTL exceeded */
-						if (unicast_packet->ttl < 2) {
-							addr_to_string(src_str, ((struct ethhdr *)(unicast_packet + 1))->h_source);
-							addr_to_string(dst_str, unicast_packet->dest);
-
-							debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
-							continue;
-						}
-
-						/* get routing information */
-						spin_lock(&orig_hash_lock);
-						orig_node = ((struct orig_node *)hash_find(orig_hash, unicast_packet->dest));
-
-						if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
-							/* decrement ttl */
-							unicast_packet->ttl--;
-
-							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
-						}
-
-						spin_unlock(&orig_hash_lock);
-					}
-
-					break;
-
 				/* batman icmp packet */
 				case BAT_ICMP:
 
 					/* packet with unicast indication but broadcast recipient */
-					if (compare_orig(ethhdr->h_dest, broadcastAddr))
+					if (is_bcast(ethhdr->h_dest))
 						continue;
 
 					/* packet with broadcast sender address */
-					if (compare_orig(ethhdr->h_source, broadcastAddr))
+					if (is_bcast(ethhdr->h_source))
 						continue;
 
 					/* drop packet if it has not neccessary minimum size */
@@ -752,11 +732,64 @@ int packet_recv_thread(void *data)
 
 					break;
 
+				/* unicast packet */
+				case BAT_UNICAST:
+
+					/* packet with unicast indication but broadcast recipient */
+					if (is_bcast(ethhdr->h_dest))
+						continue;
+
+					/* packet with broadcast sender address */
+					if (is_bcast(ethhdr->h_source))
+						continue;
+
+					/* drop packet if it has not neccessary minimum size - 1 byte ttl, 1 byte payload */
+					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
+						continue;
+
+					unicast_packet = (struct unicast_packet *)(packet_buff + sizeof(struct ethhdr));
+
+					/* packet for me */
+					if (is_my_mac(unicast_packet->dest)) {
+
+						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct unicast_packet), result - sizeof(struct ethhdr) - sizeof(struct unicast_packet));
+
+					/* route it */
+					} else {
+						/* TTL exceeded */
+						if (unicast_packet->ttl < 2) {
+							addr_to_string(src_str, ((struct ethhdr *)(unicast_packet + 1))->h_source);
+							addr_to_string(dst_str, unicast_packet->dest);
+
+							debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
+							continue;
+						}
+
+						/* get routing information */
+						spin_lock(&orig_hash_lock);
+						orig_node = ((struct orig_node *)hash_find(orig_hash, unicast_packet->dest));
+
+						if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+							/* decrement ttl */
+							unicast_packet->ttl--;
+
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+						}
+
+						spin_unlock(&orig_hash_lock);
+					}
+
+					break;
+
 				/* broadcast packet */
 				case BAT_BCAST:
 
+					/* packet with broadcast indication but unicast recipient */
+					if (!is_bcast(ethhdr->h_dest))
+						continue;
+
 					/* packet with broadcast sender address */
-					if (compare_orig(ethhdr->h_source, broadcastAddr))
+					if (is_bcast(ethhdr->h_source))
 						continue;
 
 					/* drop packet if it has not neccessary minimum size - orig source mac, 2 byte seqno, 1 byte padding, 1 byte payload */
@@ -768,6 +801,10 @@ int packet_recv_thread(void *data)
 						continue;
 
 					bcast_packet = (struct bcast_packet *)(packet_buff + sizeof(struct ethhdr));
+
+					/* ignore broadcasts originated by myself */
+					if (is_my_mac(bcast_packet->orig))
+						continue;
 
 					spin_lock(&orig_hash_lock);
 					orig_node = ((struct orig_node *)hash_find(orig_hash, bcast_packet->orig));

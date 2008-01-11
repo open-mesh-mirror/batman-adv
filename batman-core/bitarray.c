@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2006-2008 B.A.T.M.A.N. contributors:
  * Simon Wunderlich, Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public

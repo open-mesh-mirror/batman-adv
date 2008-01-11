@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -28,6 +28,7 @@
 #include "batman-adv-send.h"
 #include "batman-adv-interface.h"
 #include "batman-adv-device.h"
+#include "batman-adv-ttable.h"
 #include "types.h"
 #include "hash.h"
 
@@ -49,6 +50,7 @@ static struct task_struct *kthread_task = NULL;
 static struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+char hna_local_changed = 0;
 
 
 
@@ -64,16 +66,30 @@ int init_module(void)
 
 	orig_hash = hash_new(128, compare_orig, choose_orig);
 
-	if (orig_hash == NULL) {
-		cleanup_procfs();
-		return -ENOMEM;
-	}
+	if (orig_hash == NULL)
+		goto clean_proc;
+
+	if (hna_local_init() < 0)
+		goto free_orig_hash;
+
+	if (hna_global_init() < 0)
+		goto free_lhna_hash;
 
 	bat_device_init();
 
 	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, (strncmp(REVISION_VERSION, "0", 1) != 0 ? REVISION_VERSION : ""), COMPAT_VERSION);
 
 	return 0;
+
+free_lhna_hash:
+	hna_local_free();
+
+free_orig_hash:
+	hash_delete(orig_hash, free_orig_node);
+
+clean_proc:
+	cleanup_procfs();
+	return -ENOMEM;
 }
 
 void cleanup_module(void)
@@ -81,6 +97,8 @@ void cleanup_module(void)
 	shutdown_module();
 	remove_interfaces();
 	hash_delete(orig_hash, free_orig_node);
+	hna_local_free();
+	hna_global_free();
 	cleanup_procfs();
 }
 
@@ -218,7 +236,7 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	}
 
 	if ((if_num == 0) && (num_hna > 0))
-		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * 6;
+		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
 	else
 		batman_if->pack_buff_len = sizeof(struct batman_packet);
 
@@ -248,6 +266,9 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	((struct batman_packet *)(batman_if->pack_buff))->tq = TQ_MAX_VALUE;
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+
+	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
+		hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
 
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
@@ -285,7 +306,8 @@ int addr_to_string(char *buff, uint8_t *addr)
 	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
-int compare_orig(void *data1, void *data2) {
+int compare_orig(void *data1, void *data2)
+{
 	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
 }
 
@@ -332,6 +354,15 @@ end:
 	return retval;
 }
 
+int is_bcast(uint8_t *addr)
+{
+	return ((addr[0] == (uint8_t)0xff) && (addr[1] == (uint8_t)0xff));
+}
+
+int is_mcast(uint8_t *addr)
+{
+	return (*addr & 0x01);
+}
 
 
 

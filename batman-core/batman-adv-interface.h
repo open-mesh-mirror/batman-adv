@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -18,6 +18,15 @@
  */
 
 
+
+
+
+#include "types.h"
+
+
+
+#define BAT_HEADER_LEN sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))
+#define BAT_IF_MTU 1500 - BAT_HEADER_LEN
 
 
 

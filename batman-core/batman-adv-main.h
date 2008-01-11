@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -50,6 +50,7 @@
 #define TTL 50                /* Time To Live of broadcast messages */
 
 #define PURGE_TIMEOUT 200000  /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
+#define LOCAL_HNA_TIMEOUT 300000
 
 #define TQ_LOCAL_WINDOW_SIZE 64     /* sliding packet range of received originator messages in squence numbers (should be a multiple of our word size) */
 #define TQ_TOTAL_WINDOW_SIZE 10
@@ -100,6 +101,7 @@ extern int16_t num_ifs;
 extern struct net_device *bat_device;
 
 extern unsigned char broadcastAddr[];
+extern char hna_local_changed;
 
 
 
@@ -114,6 +116,8 @@ int addr_to_string(char *buff, uint8_t *addr);
 int compare_orig(void *data1, void *data2);
 int choose_orig(void *data, int32_t size);
 int is_my_mac(uint8_t *addr);
+int is_bcast(uint8_t *addr);
+int is_mcast(uint8_t *addr);
 
 
 

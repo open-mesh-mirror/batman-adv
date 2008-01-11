@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -25,7 +25,7 @@
 #define TYPES_H
 
 #include "batman-adv-main.h"
-#include "packet.h"		/* batman packet definitions */
+#include "packet.h"
 #include "bitarray.h"
 
 
@@ -98,6 +98,19 @@ struct device_packet
 {
 	struct list_head list;
 	struct icmp_packet icmp_packet;
+};
+
+struct hna_local_entry
+{
+	uint8_t addr[ETH_ALEN];
+	unsigned long last_seen;
+	char never_purge;
+};
+
+struct hna_global_entry
+{
+	uint8_t addr[ETH_ALEN];
+	struct orig_node *orig_node;
 };
 
 #endif

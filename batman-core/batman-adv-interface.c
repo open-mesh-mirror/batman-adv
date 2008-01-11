@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
  * Marek Lindner
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -24,15 +24,13 @@
 #include "batman-adv-main.h"
 #include "batman-adv-interface.h"
 #include "batman-adv-send.h"
+#include "batman-adv-ttable.h"
 #include "types.h"
 #include "hash.h"
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 
 
-
-#define BAT_HEADER_LEN sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))
-#define BAT_IF_MTU 1500 - BAT_HEADER_LEN
 
 
 
@@ -83,6 +81,8 @@ void interface_setup(struct net_device *dev)
 	SET_ETHTOOL_OPS(dev, &bat_ethtool_ops);
 
 	memset(priv, 0, sizeof(struct bat_priv));
+
+	hna_local_add(dev_addr);
 }
 
 int interface_open(struct net_device *dev)
@@ -126,9 +126,10 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	int data_len = skb->data_len;
 
 	dev->trans_start = jiffies;
+	hna_local_add(ethhdr->h_source);
 
 	/* ethernet packet should be broadcasted */
-	if (compare_orig(ethhdr->h_dest, broadcastAddr)) {
+	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest)) {
 
 		skb_push(skb, sizeof(struct bcast_packet));
 
@@ -158,6 +159,10 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		spin_lock(&orig_hash_lock);
 		orig_node = ((struct orig_node *)hash_find(orig_hash, ethhdr->h_dest));
 
+		/* check for hna host */
+		if (orig_node == NULL)
+			orig_node = transtable_search(ethhdr->h_dest);
+
 		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
 
 			skb_push(skb, sizeof(struct unicast_packet));
@@ -169,7 +174,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			/* set unicast ttl */
 			unicast_packet->ttl = TTL;
 			/* copy the destination for faster routing */
-			memcpy(unicast_packet->dest, ethhdr->h_dest, ETH_ALEN);
+			memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
 
 			send_raw_packet(skb->data, skb->data_len, orig_node->batman_if->net_dev->dev_addr, ethhdr->h_dest, orig_node->batman_if);
 
