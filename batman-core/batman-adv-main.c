@@ -268,9 +268,10 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	((struct batman_packet *)(batman_if->pack_buff))->tq = TQ_MAX_VALUE;
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+	((struct batman_packet *)(batman_if->pack_buff))->num_hna = 0;
 
 	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
-		hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+		((struct batman_packet *)(batman_if->pack_buff))->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
 
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);

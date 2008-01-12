@@ -46,6 +46,8 @@ struct batman_packet
 	uint16_t seqno;
 	uint8_t  orig[6];
 	uint8_t  old_orig[6];
+	uint8_t  num_hna;
+	uint8_t  pad;
 } __attribute__((packed));
 
 struct icmp_packet

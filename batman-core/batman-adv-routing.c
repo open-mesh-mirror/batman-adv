@@ -73,7 +73,7 @@ void free_orig_node(void *data)
 		kfree(neigh_node);
 	}
 
-	hna_global_del_orig(orig_node);
+	hna_global_del_orig(orig_node, "originator timeouted");
 
 	kfree(orig_node->bcast_own);
 	kfree(orig_node->bcast_own_sum);
@@ -155,14 +155,14 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 		if ((orig_node->router != NULL) && (neigh_node == NULL)) {
 
 			debug_log(LOG_TYPE_ROUTES, "Deleting route towards: %s\n", orig_str);
-			hna_global_add_orig(orig_node, hna_buff, hna_buff_len);
+			hna_global_del_orig(orig_node, "originator timeouted");
 
 		/* route added */
 		} else if ((orig_node->router == NULL) && (neigh_node != NULL)) {
 
 			addr_to_string(neigh_str, neigh_node->addr);
 			debug_log(LOG_TYPE_ROUTES, "Adding route towards: %s (via %s)\n", orig_str, neigh_str);
-			hna_global_del_orig(orig_node);
+			hna_global_add_orig(orig_node, hna_buff, hna_buff_len);
 
 		/* route changed */
 		} else {
@@ -186,7 +186,7 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 		if ((hna_buff_len != orig_node->hna_buff_len) || ((hna_buff_len > 0 ) && (orig_node->hna_buff_len > 0) && (memcmp(orig_node->hna_buff, hna_buff, hna_buff_len) != 0))) {
 
 			if (orig_node->hna_buff_len > 0)
-				hna_global_del_orig(orig_node);
+				hna_global_del_orig(orig_node, "originator changed hna");
 
 			if ((hna_buff_len > 0) && (hna_buff != NULL))
 				hna_global_add_orig(orig_node, hna_buff, hna_buff_len);
@@ -268,6 +268,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
 	unsigned char max_tq = 0, max_bcast_own = 0;
+	int tmp_hna_buff_len;
 
 	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet \n");
 
@@ -316,7 +317,9 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 
 	}
 
-	update_routes(orig_node, best_neigh_node, hna_buff, hna_buff_len);
+	tmp_hna_buff_len = (hna_buff_len > batman_packet->num_hna * ETH_ALEN ? batman_packet->num_hna * ETH_ALEN : hna_buff_len);
+
+	update_routes(orig_node, best_neigh_node, hna_buff, tmp_hna_buff_len);
 }
 
 static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
@@ -528,12 +531,6 @@ void purge_orig(unsigned long data)
 
 					addr_to_string(neigh_str, neigh_node->addr);
 					debug_log(LOG_TYPE_BATMAN, "Neighbour timeout: originator %s, neighbour: %s, last_valid %u \n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
-
-					if (orig_node->router == neigh_node) {
-						/* we have to delete the route towards this node before it gets purged */
-
-						/* remove old announced network(s) */
-					}
 
 				} else {
 
