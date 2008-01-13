@@ -149,13 +149,13 @@ void send_own_packet(unsigned long data)
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
 
-		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
-
 		buff_ptr = batman_if->pack_buff;
-		batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
 
+		batman_if->pack_buff_len = sizeof(struct batman_packet) + (num_hna * ETH_ALEN);
+		batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
 		memcpy(batman_if->pack_buff, buff_ptr, sizeof(struct batman_packet));
-		hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+
+		((struct batman_packet *)(batman_if->pack_buff))->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
 
 		kfree(buff_ptr);
 	}

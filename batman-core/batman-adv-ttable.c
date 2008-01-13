@@ -148,7 +148,10 @@ int hna_local_fill_buffer(unsigned char *buff, int buff_len)
 		i++;
 	}
 
-	hna_local_changed = 0;
+	/* if we did not get all new local hnas see you next time  ;-) */
+	if (i == num_hna)
+		hna_local_changed = 0;
+
 	spin_unlock(&hna_local_hash_lock);
 
 	return i;
