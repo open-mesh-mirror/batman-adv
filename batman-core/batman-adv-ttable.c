@@ -83,7 +83,7 @@ void hna_local_add(uint8_t *addr)
 
 	/* only announce as many hosts as possible in the batman-packet and space in batman_packet->num_hna
 	   That also should give a limit to MAC-flooding. */
-	if ((num_hna + 1 > (1500 - sizeof(struct batman_packet)) / 6) || (num_hna + 1 > sizeof(uint8_t))) {
+	if ((num_hna + 1 > (1500 - sizeof(struct batman_packet)) / 6) || (num_hna + 1 > 255)) {
 		debug_log(LOG_TYPE_ROUTES, "Can't add new local hna entry (%s): number of local hna entries exceeds packet size \n", hna_str);
 		return;
 	}

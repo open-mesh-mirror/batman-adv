@@ -43,8 +43,8 @@ void cleanup_procfs(void)
 	if (proc_log_level_file)
 		remove_proc_entry(PROC_FILE_LOG_LEVEL, proc_batman_dir);
 
-	if (proc_gateways_file)
-		remove_proc_entry(PROC_FILE_GATEWAYS, proc_batman_dir);
+	/*if (proc_gateways_file)
+		remove_proc_entry(PROC_FILE_GATEWAYS, proc_batman_dir);*/
 
 	if (proc_originators_file)
 		remove_proc_entry(PROC_FILE_ORIGINATORS, proc_batman_dir);
@@ -117,7 +117,7 @@ int setup_procfs(void)
 		return -EFAULT;
 	}
 
-	proc_gateways_file = create_proc_entry(PROC_FILE_GATEWAYS, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+	/*proc_gateways_file = create_proc_entry(PROC_FILE_GATEWAYS, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_gateways_file) {
 		proc_gateways_file->read_proc = proc_gateways_read;
@@ -127,7 +127,7 @@ int setup_procfs(void)
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_GATEWAYS);
 		cleanup_procfs();
 		return -EFAULT;
-	}
+	}*/
 
 	proc_log_file = create_proc_entry(PROC_FILE_LOG, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 	if (proc_log_file) {
