@@ -30,6 +30,8 @@
 #define PROC_FILE_GATEWAYS "gateways"
 #define PROC_FILE_LOG "log"
 #define PROC_FILE_LOG_LEVEL "log_level"
+#define PROC_FILE_TRANSTABLE_LOCAL "transtable_local"
+#define PROC_FILE_TRANSTABLE_GLOBAL "transtable_global"
 
 
 
@@ -40,8 +42,9 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
-int proc_originators_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
-int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
-int proc_gateways_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
+/*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);*/
 int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
+int proc_transtable_local_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_transtable_global_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);

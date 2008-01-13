@@ -25,18 +25,25 @@
 #include "batman-adv-proc.h"
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
+#include "batman-adv-ttable.h"
 #include "types.h"
 #include "hash.h"
 
 
 
-static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL, *proc_gateways_file = NULL;
-static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL;
+static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL/*, *proc_gateways_file = NULL*/;
+static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL;
 
 
 
 void cleanup_procfs(void)
 {
+	if (proc_transtable_global_file)
+		remove_proc_entry(PROC_FILE_TRANSTABLE_GLOBAL, proc_batman_dir);
+
+	if (proc_transtable_local_file)
+		remove_proc_entry(PROC_FILE_TRANSTABLE_LOCAL, proc_batman_dir);
+
 	if (proc_log_file)
 		remove_proc_entry(PROC_FILE_LOG, proc_batman_dir);
 
@@ -109,7 +116,7 @@ int setup_procfs(void)
 
 	if (proc_originators_file) {
 		proc_originators_file->read_proc = proc_originators_read;
-		proc_originators_file->write_proc = proc_originators_write;
+		proc_originators_file->write_proc = proc_dummy_write;
 		proc_originators_file->data = NULL;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_ORIGINATORS);
@@ -121,7 +128,7 @@ int setup_procfs(void)
 
 	if (proc_gateways_file) {
 		proc_gateways_file->read_proc = proc_gateways_read;
-		proc_gateways_file->write_proc = proc_gateways_write;
+		proc_gateways_file->write_proc = proc_dummy_write;
 		proc_gateways_file->data = NULL;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_GATEWAYS);
@@ -134,6 +141,30 @@ int setup_procfs(void)
 		proc_log_file->proc_fops = &proc_log_operations;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_FILE_LOG, PROC_FILE_GATEWAYS);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_transtable_local_file = create_proc_entry(PROC_FILE_TRANSTABLE_LOCAL, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_transtable_local_file) {
+		proc_transtable_local_file->read_proc = proc_transtable_local_read;
+		proc_transtable_local_file->write_proc = proc_dummy_write;
+		proc_transtable_local_file->data = NULL;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_TRANSTABLE_LOCAL);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_transtable_global_file = create_proc_entry(PROC_FILE_TRANSTABLE_GLOBAL, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_transtable_global_file) {
+		proc_transtable_global_file->read_proc = proc_transtable_global_read;
+		proc_transtable_global_file->write_proc = proc_dummy_write;
+		proc_transtable_global_file->data = NULL;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_TRANSTABLE_GLOBAL);
 		cleanup_procfs();
 		return -EFAULT;
 	}
@@ -402,11 +433,6 @@ int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof
 	return total_bytes;
 }
 
-int proc_gateways_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
-{
-	return count;
-}
-
 int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
 	int total_bytes = 0, bytes_written = 0;
@@ -485,6 +511,63 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 	log_level = log_level_tmp;
 
 	kfree(log_level_string);
+	return count;
+}
+
+int proc_transtable_local_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+{
+	int total_bytes = 0, bytes_written = 0;
+
+	spin_lock(&if_list_lock);
+
+	if (list_empty(&if_list)) {
+		spin_unlock(&if_list_lock);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		goto end;
+	}
+
+	spin_unlock(&if_list_lock);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = hna_local_fill_buffer_text(buf + total_bytes, (size - total_bytes));
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+end:
+	*eof = 1;
+	return total_bytes;
+}
+
+int proc_transtable_global_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+{
+	int total_bytes = 0, bytes_written = 0;
+
+	spin_lock(&if_list_lock);
+
+	if (list_empty(&if_list)) {
+		spin_unlock(&if_list_lock);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		goto end;
+	}
+
+	spin_unlock(&if_list_lock);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Globally announced HNAs received via the mesh (translation table):\n");
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	bytes_written = hna_global_fill_buffer_text(buf + total_bytes, (size - total_bytes));
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+end:
+	*eof = 1;
+	return total_bytes;
+}
+
+int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+{
 	return count;
 }
 

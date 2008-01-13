@@ -50,7 +50,7 @@
 #define TTL 50                /* Time To Live of broadcast messages */
 
 #define PURGE_TIMEOUT 200000  /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
-#define LOCAL_HNA_TIMEOUT 300000
+#define LOCAL_HNA_TIMEOUT 3600000
 
 #define TQ_LOCAL_WINDOW_SIZE 64     /* sliding packet range of received originator messages in squence numbers (should be a multiple of our word size) */
 #define TQ_TOTAL_WINDOW_SIZE 10

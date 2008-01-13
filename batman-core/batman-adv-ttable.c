@@ -157,6 +157,31 @@ int hna_local_fill_buffer(unsigned char *buff, int buff_len)
 	return i;
 }
 
+int hna_local_fill_buffer_text(unsigned char *buff, int buff_len)
+{
+	struct hna_local_entry *hna_local_entry;
+	struct hash_it_t *hashit = NULL;
+	int bytes_written = 0;
+
+	spin_lock(&hna_local_hash_lock);
+
+	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
+
+		if (buff_len < bytes_written + ETH_STR_LEN + 4)
+			break;
+
+		hna_local_entry = hashit->bucket->data;
+
+		bytes_written += snprintf(buff + bytes_written, ETH_STR_LEN + 4, " * %02x:%02x:%02x:%02x:%02x:%02x\n",
+					hna_local_entry->addr[0], hna_local_entry->addr[1], hna_local_entry->addr[2],
+					hna_local_entry->addr[3], hna_local_entry->addr[4], hna_local_entry->addr[5]);
+	}
+
+	spin_unlock(&hna_local_hash_lock);
+
+	return bytes_written;
+}
+
 static void _hna_local_del(void *data)
 {
 	kfree(data);
@@ -281,6 +306,35 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 	}
 
 	spin_unlock(&hna_global_hash_lock);
+}
+
+int hna_global_fill_buffer_text(unsigned char *buff, int buff_len)
+{
+	struct hna_global_entry *hna_global_entry;
+	struct hash_it_t *hashit = NULL;
+	int bytes_written = 0;
+
+	spin_lock(&hna_global_hash_lock);
+
+	while (NULL != (hashit = hash_iterate(hna_global_hash, hashit))) {
+
+		if (buff_len < bytes_written + (2 * ETH_STR_LEN) + 10)
+			break;
+
+		hna_global_entry = hashit->bucket->data;
+
+		bytes_written += snprintf(buff + bytes_written, (2 * ETH_STR_LEN) + 10,
+					" * %02x:%02x:%02x:%02x:%02x:%02x via %02x:%02x:%02x:%02x:%02x:%02x \n",
+					hna_global_entry->addr[0], hna_global_entry->addr[1], hna_global_entry->addr[2],
+					hna_global_entry->addr[3], hna_global_entry->addr[4], hna_global_entry->addr[5],
+					hna_global_entry->orig_node->orig[0], hna_global_entry->orig_node->orig[1],
+					hna_global_entry->orig_node->orig[2], hna_global_entry->orig_node->orig[3],
+					hna_global_entry->orig_node->orig[4], hna_global_entry->orig_node->orig[5]);
+	}
+
+	spin_unlock(&hna_global_hash_lock);
+
+	return bytes_written;
 }
 
 void _hna_global_del_orig(struct hna_global_entry *hna_global_entry, char *message)

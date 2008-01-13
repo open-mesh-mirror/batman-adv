@@ -285,7 +285,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 			}
 
 			/* if we got have a better tq value via this neighbour or same tq value if it is currently our best neighbour (to avoid route flipping) */
-			if ((tmp_neigh_node->tq_avg > max_tq) || ((tmp_neigh_node->tq_avg == max_tq) && (tmp_neigh_node->orig_node->bcast_own_sum[if_incoming->if_num] > max_bcast_own)) || (( orig_node->router == tmp_neigh_node) && (tmp_neigh_node->tq_avg == max_tq))) {
+			if ((tmp_neigh_node->tq_avg > max_tq) || ((tmp_neigh_node->tq_avg == max_tq) && (tmp_neigh_node->orig_node->bcast_own_sum[if_incoming->if_num] > max_bcast_own)) || ((orig_node->router == tmp_neigh_node) && (tmp_neigh_node->tq_avg == max_tq))) {
 
 				max_tq = tmp_neigh_node->tq_avg;
 				max_bcast_own = tmp_neigh_node->orig_node->bcast_own_sum[if_incoming->if_num];
