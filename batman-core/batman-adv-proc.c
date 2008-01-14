@@ -407,12 +407,7 @@ end:
 	return total_bytes;
 }
 
-int proc_originators_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
-{
-	return count;
-}
-
-int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+/*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
 	int total_bytes = 0, bytes_written = 0;
 // 	struct list_head *list_pos;
@@ -431,7 +426,7 @@ int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof
 
 	*eof = 1;
 	return total_bytes;
-}
+}*/
 
 int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {

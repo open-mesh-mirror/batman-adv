@@ -502,7 +502,7 @@ void purge_orig(unsigned long data)
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node, *best_neigh_node;
-	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
+	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN], neigh_purged;
 
 	spin_lock(&orig_hash_lock);
 
@@ -522,6 +522,7 @@ void purge_orig(unsigned long data)
 		} else {
 
 			best_neigh_node = NULL;
+			neigh_purged = 0;
 
 			/* for all neighbours towards this originator ... */
 			list_for_each_safe(list_pos, list_pos_tmp, &orig_node->neigh_list) {
@@ -532,6 +533,10 @@ void purge_orig(unsigned long data)
 					addr_to_string(neigh_str, neigh_node->addr);
 					debug_log(LOG_TYPE_BATMAN, "Neighbour timeout: originator %s, neighbour: %s, last_valid %u \n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
 
+					neigh_purged = 1;
+					list_del(list_pos);
+					kfree(neigh_node);
+
 				} else {
 
 					if ((best_neigh_node == NULL) || (neigh_node->tq_avg > best_neigh_node->tq_avg))
@@ -541,7 +546,8 @@ void purge_orig(unsigned long data)
 
 			}
 
-			update_routes(orig_node, best_neigh_node, orig_node->hna_buff, orig_node->hna_buff_len);
+			if (neigh_purged)
+				update_routes(orig_node, best_neigh_node, orig_node->hna_buff, orig_node->hna_buff_len);
 
 		}
 
