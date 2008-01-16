@@ -18,22 +18,12 @@
 
 
 
-
-ifeq ($(wildcard $(KERNELPATH)),)
-KERNELPATH = /lib/modules/$(shell uname -r)/build
-# sanity check: does KERNELPATH exist?
-ifeq ($(shell cd $(KERNELPATH) && pwd),)
-$(error $(KERNELPATH) is missing, please set KERNELPATH)
-endif
-export KERNELPATH
+# openwrt integration
+ifeq ($(MAKING_MODULES),1)
+-include $(TOPDIR)/Rules.make
 endif
 
-REVISION :=	$(shell if [ -d .svn ]; then svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; else if [ -d ~/.svk ]; then echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); fi; fi)
+CFLAGS +=-DREVISION_VERSION=\"\ rv$(REVISION)\"
 
-include $(PWD)/Makefile.kbuild
-
-all:
-	make -C $(KERNELPATH) M=$(PWD) modules
-
-clean:
-	make -C $(KERNELPATH) M=$(PWD) clean
+obj-m += batman-adv-core.o
+batman-adv-core-objs := batman-adv-main.o batman-adv-proc.o batman-adv-send.o batman-adv-log.o batman-adv-routing.o batman-adv-interface.o batman-adv-device.o batman-adv-ttable.o bitarray.o hash.o ring_buffer.o

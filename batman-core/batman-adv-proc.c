@@ -357,7 +357,7 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 		goto end;
 	}
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strncmp( REVISION_VERSION, "0", 1 ) != 0 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	spin_unlock(&if_list_lock);
