@@ -28,12 +28,12 @@ endif
 export KERNELPATH
 endif
 
-REVISION :=	$(shell if [ -d .svn ]; then svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; else if [ -d ~/.svk ]; then echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); fi; fi)
+REVISION := $(shell if [ -d .svn ]; then svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; else if [ -d ~/.svk ]; then echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); fi; fi)
 
 include $(PWD)/Makefile.kbuild
 
 all:
-	make -C $(KERNELPATH) M=$(PWD) modules
+	make -C $(KERNELPATH) REVISION=$(REVISION) M=$(PWD) modules
 
 clean:
 	make -C $(KERNELPATH) M=$(PWD) clean

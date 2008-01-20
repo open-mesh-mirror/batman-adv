@@ -23,7 +23,7 @@ ifeq ($(MAKING_MODULES),1)
 -include $(TOPDIR)/Rules.make
 endif
 
-CFLAGS +=-DREVISION_VERSION=\"\ rv$(REVISION)\"
+CFLAGS += -DREVISION_VERSION=\"\ rv$(REVISION)\"
 
 obj-m += batman-adv-core.o
 batman-adv-core-objs := batman-adv-main.o batman-adv-proc.o batman-adv-send.o batman-adv-log.o batman-adv-routing.o batman-adv-interface.o batman-adv-device.o batman-adv-ttable.o bitarray.o hash.o ring_buffer.o
