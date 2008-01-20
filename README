@@ -1,16 +1,18 @@
-[state: 01-15-2008]
+[state: 01-20-2008]
 
 batman-core
 -----------
 The kernel implementation of batman-advanced. It does not depend on any network
 driver, and can be used on wifi as well as ethernet, vpn, etc ... (anything
 with ethernet-style layer 2).
-This is probably what you want if you want to try out the batman-advanced kernel 
+This is probably what you want if you want to try out the batman-advanced kernel
 implementation. :)
 Just "make" in the batman-core directory to link it against your target kernel,
-and insmod the batman-adv-core.ko in your kernel. 
+and insmod the batman-adv-core.ko in your kernel. We tested it with 2.6.22 and 2.6.23.
+It may also work with older versions but definitely not with 2.4. If you want to work
+on the backport feel free to contact us.  :-)
 
 802.11
 ------
-There was an idea of integrating batman-advanced protocol information into 
+There was an idea of integrating batman-advanced protocol information into
 wifi managment frames. This is currently incomplete.
