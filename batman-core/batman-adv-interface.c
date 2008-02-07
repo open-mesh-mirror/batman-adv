@@ -60,6 +60,21 @@ static const struct ethtool_ops bat_ethtool_ops = {
 
 
 
+int my_skb_push(struct sk_buff *skb, unsigned int len)
+{
+	int result = 0;
+
+	if (skb->data - len < skb->head) {
+		result = pskb_expand_head(skb, len, 0, GFP_ATOMIC);
+
+		if (result < 0)
+			return result;
+	}
+
+	skb_push(skb, len);
+	return 0;
+}
+
 void interface_setup(struct net_device *dev)
 {
 	struct bat_priv *priv = netdev_priv(dev);
@@ -70,6 +85,7 @@ void interface_setup(struct net_device *dev)
 	dev->open = interface_open;
 	dev->stop = interface_release;
 	dev->get_stats = interface_stats;
+	dev->set_mac_address = interface_set_mac_addr;
 	dev->change_mtu = interface_change_mtu;
 	dev->hard_start_xmit = interface_tx;
 	dev->destructor = free_netdev;
@@ -108,6 +124,11 @@ struct net_device_stats *interface_stats(struct net_device *dev)
 	return &priv->stats;
 }
 
+int interface_set_mac_addr(struct net_device *dev, void *addr)
+{
+	return -EBUSY;
+}
+
 int interface_change_mtu(struct net_device *dev, int new_mtu)
 {
 	/* check ranges */
@@ -136,7 +157,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	/* ethernet packet should be broadcasted */
 	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest)) {
 
-		skb_push(skb, sizeof(struct bcast_packet));
+		if (my_skb_push(skb, sizeof(struct bcast_packet)) < 0)
+			goto dropped;
 
 		bcast_packet = (struct bcast_packet *)skb->data;
 
@@ -170,7 +192,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
 
-			skb_push(skb, sizeof(struct unicast_packet));
+			if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
+				goto unlock;
 
 			unicast_packet = (struct unicast_packet *)skb->data;
 
@@ -185,9 +208,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		} else {
 
-			priv->stats.tx_dropped++;
-			spin_unlock(&orig_hash_lock);
-			goto end;
+			goto unlock;
 
 		}
 
@@ -196,6 +217,13 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 	priv->stats.tx_packets++;
 	priv->stats.tx_bytes += data_len;
+	goto end;
+
+unlock:
+	spin_unlock(&orig_hash_lock);
+
+dropped:
+	priv->stats.tx_dropped++;
 
 end:
 	kfree_skb(skb);
