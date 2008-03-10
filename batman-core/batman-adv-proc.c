@@ -63,12 +63,20 @@ void cleanup_procfs(void)
 		remove_proc_entry(PROC_FILE_INTERFACES, proc_batman_dir);
 
 	if (proc_batman_dir)
+#ifdef __NET_NET_NAMESPACE_H
+		remove_proc_entry(PROC_ROOT_DIR, init_net.proc_net);
+#else
 		remove_proc_entry(PROC_ROOT_DIR, proc_net);
+#endif
 }
 
 int setup_procfs(void)
 {
+#ifdef __NET_NET_NAMESPACE_H
+	proc_batman_dir = proc_mkdir(PROC_ROOT_DIR, init_net.proc_net);
+#else
 	proc_batman_dir = proc_mkdir(PROC_ROOT_DIR, proc_net);
+#endif
 
 	if (!proc_batman_dir) {
 		printk("batman-adv: Registering the '/proc/net/%s' folder failed\n", PROC_ROOT_DIR);
@@ -240,7 +248,11 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	} else {
 
 		/* add interface */
+#ifdef __NET_NET_NAMESPACE_H
+		if ((net_dev = dev_get_by_name(&init_net, if_string)) == NULL) {
+#else
 		if ((net_dev = dev_get_by_name(if_string)) == NULL) {
+#endif
 			debug_log(LOG_TYPE_WARN, "Could not find interface: %s\n", if_string);
 			goto end;
 		}
