@@ -25,6 +25,7 @@
 #include "batman-adv-interface.h"
 #include "batman-adv-send.h"
 #include "batman-adv-ttable.h"
+#include "batman-adv-log.h"
 #include "types.h"
 #include "hash.h"
 #include <linux/ethtool.h>
@@ -36,6 +37,9 @@
 
 
 static int max_mtu;
+static int32_t skb_packets = 0;
+static int32_t skb_bad_packets = 0;
+
 
 
 
@@ -59,17 +63,22 @@ static const struct ethtool_ops bat_ethtool_ops = {
 };
 
 
-
 int my_skb_push(struct sk_buff *skb, unsigned int len)
 {
 	int result = 0;
 
+	skb_packets++;
 	if (skb->data - len < skb->head) {
+		skb_bad_packets++;
 		result = pskb_expand_head(skb, len, 0, GFP_ATOMIC);
 
 		if (result < 0)
 			return result;
 	}
+	/* TODO: remove this later. it's just for verification. */
+	if ((skb_packets & 0xFF) == 0) /* report every 256 packets */
+		debug_log(LOG_TYPE_NOTICE, "(%d/%d skbs had to be re-expanded)\n", skb_bad_packets, skb_packets);
+
 
 	skb_push(skb, len);
 	return 0;
