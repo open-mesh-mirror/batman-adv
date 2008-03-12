@@ -237,13 +237,15 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	shutdown_module();
 
-	num_ifs = if_num = 0;
+	if_num = 0;
 
 	if (strlen(if_string) == 0) {
 
 		remove_interfaces();
 		hash_delete(orig_hash, free_orig_node);
 		orig_hash = hash_new(128, compare_orig, choose_orig);
+		num_ifs = 0;
+		goto end;
 
 	} else {
 
@@ -254,7 +256,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		if ((net_dev = dev_get_by_name(if_string)) == NULL) {
 #endif
 			debug_log(LOG_TYPE_WARN, "Could not find interface: %s\n", if_string);
-			goto end;
+			goto end_and_reactivate;
 		}
 
 		list_for_each(list_pos, &if_list) {
@@ -270,7 +272,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		if (batman_if != NULL) {
 
 			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
-			goto end;
+			goto end_and_reactivate;
 
 		} else {
 
@@ -302,7 +304,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		goto end;
 
 	num_ifs = if_num + 1;
-
+end_and_reactivate:
 	activate_module();
 
 end:
