@@ -94,11 +94,15 @@ clean_proc:
 
 void cleanup_module(void)
 {
+	spin_lock(&if_list_lock);
 	shutdown_module();
 	remove_interfaces();
+	spin_unlock(&if_list_lock);
+	spin_lock(&orig_hash_lock);
 	hash_delete(orig_hash, free_orig_node);
 	hna_local_free();
 	hna_global_free();
+	spin_unlock(&orig_hash_lock);
 	cleanup_procfs();
 }
 
