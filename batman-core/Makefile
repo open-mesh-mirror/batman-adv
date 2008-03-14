@@ -29,11 +29,12 @@ export KERNELPATH
 endif
 
 REVISION := $(shell if [ -d .svn ]; then svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; else if [ -d ~/.svk ]; then echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); fi; fi)
+NUM_CPUS = $(shell NUM_CPUS=`cat /proc/cpuinfo | grep -v 'model name' | grep processor | tail -1 | awk -F' ' '{print $$3}'`;echo `expr $$NUM_CPUS + 1`)
 
 include $(PWD)/Makefile.kbuild
 
 all:
-	make -C $(KERNELPATH) REVISION=$(REVISION) M=$(PWD) modules
+	make -C $(KERNELPATH) REVISION=$(REVISION) M=$(PWD) -j $(NUM_CPUS) modules
 
 clean:
 	make -C $(KERNELPATH) M=$(PWD) clean

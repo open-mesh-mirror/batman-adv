@@ -220,8 +220,6 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	if (!if_string)
 		return -ENOMEM;
 
-	spin_lock(&if_list_lock);
-
 	if (count > IFNAMSIZ - 1) {
 		debug_log(LOG_TYPE_WARN, "Can't add interface: device name is too long\n");
 		goto end;
@@ -242,8 +240,10 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	if (strlen(if_string) == 0) {
 
 		remove_interfaces();
+		spin_lock(&orig_hash_lock);
 		hash_delete(orig_hash, free_orig_node);
 		orig_hash = hash_new(128, compare_orig, choose_orig);
+		spin_unlock(&orig_hash_lock);
 		num_ifs = 0;
 		goto end;
 
@@ -259,6 +259,8 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			goto end_and_reactivate;
 		}
 
+		spin_lock(&if_list_lock);
+
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
@@ -268,6 +270,8 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			batman_if = NULL;
 			if_num++;
 		}
+
+		spin_unlock(&if_list_lock);
 
 		if (batman_if != NULL) {
 
@@ -309,7 +313,6 @@ end_and_reactivate:
 	activate_module();
 
 end:
-	spin_unlock(&if_list_lock);
 	kfree(if_string);
 	return count;
 }

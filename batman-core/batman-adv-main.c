@@ -94,15 +94,15 @@ clean_proc:
 
 void cleanup_module(void)
 {
-	spin_lock(&if_list_lock);
 	shutdown_module();
 	remove_interfaces();
-	spin_unlock(&if_list_lock);
+
 	spin_lock(&orig_hash_lock);
 	hash_delete(orig_hash, free_orig_node);
+	spin_unlock(&orig_hash_lock);
+
 	hna_local_free();
 	hna_global_free();
-	spin_unlock(&orig_hash_lock);
 	cleanup_procfs();
 }
 
@@ -181,12 +181,16 @@ void shutdown_module(void)
 		kthread_task = NULL;
 	}
 
+	spin_lock(&if_list_lock);
+
 	/* deactivate all timers first to avoid race conditions */
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
 		del_timer_sync(&batman_if->bcast_timer);
 	}
+
+	spin_unlock(&if_list_lock);
 
 	if (!(list_empty(&if_list)))
 		del_timer_sync(&purge_timer);
@@ -198,6 +202,8 @@ void remove_interfaces(void)
 {
 	struct list_head *list_pos, *list_pos_tmp;
 	struct batman_if *batman_if = NULL;
+
+	spin_lock(&if_list_lock);
 
 	/* deactivate all interfaces */
 	list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
@@ -217,6 +223,8 @@ void remove_interfaces(void)
 		kfree(batman_if->pack_buff);
 		kfree(batman_if);
 	}
+
+	spin_unlock(&if_list_lock);
 }
 
 int add_interface(char *if_name, int if_num, struct net_device *net_dev)
@@ -267,7 +275,10 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", batman_if->net_dev->name);
 
 	INIT_LIST_HEAD(&batman_if->list);
+
+	spin_lock(&if_list_lock);
 	list_add_tail(&batman_if->list, &if_list);
+	spin_unlock(&if_list_lock);
 
 	((struct batman_packet *)(batman_if->pack_buff))->packet_type = BAT_PACKET;
 	((struct batman_packet *)(batman_if->pack_buff))->version = COMPAT_VERSION;
