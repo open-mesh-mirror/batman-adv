@@ -205,6 +205,11 @@ void remove_interfaces(void)
 
 		list_del(list_pos);
 		sock_release(batman_if->raw_sock);
+
+		/* batman_if->net_dev has been acquired by dev_get_by_name() in 
+		 * proc_intefaces_write() and has to be unreferenced. */   
+		dev_put(batman_if->net_dev);	
+
 		kfree(batman_if->pack_buff);
 		kfree(batman_if);
 	}

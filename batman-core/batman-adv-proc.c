@@ -272,6 +272,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		if (batman_if != NULL) {
 
 			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
+			dev_put(net_dev); /* don't double allocate it */
 			goto end_and_reactivate;
 
 		} else {
