@@ -211,7 +211,7 @@ void hna_local_purge(unsigned long data)
 
 		hna_local_entry = hashit->bucket->data;
 
-		if ((!hna_local_entry->never_purge) && (time_after(jiffies, hna_local_entry->last_seen + ((LOCAL_HNA_TIMEOUT * HZ) / 1000))))
+		if ((!hna_local_entry->never_purge) && (time_after(jiffies, hna_local_entry->last_seen + (LOCAL_HNA_TIMEOUT /1000) * HZ)))
 			hna_local_del(hna_local_entry, "address timeouted");
 	}
 
