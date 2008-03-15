@@ -42,8 +42,7 @@
 #define DRIVER_DEVICE "batman-adv"
 
 #define SOURCE_VERSION "0.1-alpha"
-#define COMPAT_VERSION 1
-#define UNIDIRECTIONAL 0x80
+#define COMPAT_VERSION 5
 #define DIRECTLINK 0x40
 #define TQ_MAX_VALUE 255
 #define JITTER 100
@@ -53,12 +52,12 @@
 #define LOCAL_HNA_TIMEOUT 3600000
 
 #define TQ_LOCAL_WINDOW_SIZE 64     /* sliding packet range of received originator messages in squence numbers (should be a multiple of our word size) */
-#define TQ_TOTAL_WINDOW_SIZE 10
-#define TQ_LOCAL_BIDRECT_SEND_MINIMUM TQ_LOCAL_WINDOW_SIZE / 8
-#define TQ_LOCAL_BIDRECT_RECV_MINIMUM TQ_LOCAL_WINDOW_SIZE / 8
-#define TQ_TOTAL_BIDRECT_LIMIT TQ_MAX_VALUE / 10
+#define TQ_GLOBAL_WINDOW_SIZE 10
+#define TQ_LOCAL_BIDRECT_SEND_MINIMUM 1
+#define TQ_LOCAL_BIDRECT_RECV_MINIMUM 1
+#define TQ_TOTAL_BIDRECT_LIMIT 1
 
-#define PERFECT_TQ_PENALTY 5
+#define TQ_HOP_PENALTY 10
 
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 

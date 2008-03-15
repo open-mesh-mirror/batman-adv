@@ -53,7 +53,7 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	TYPE_OF_WORD *bcast_own;
 	uint8_t *bcast_own_sum;
 	uint8_t tq_own;
-	int tq_asym_penality;
+	int tq_asym_penalty;
 	unsigned long last_valid;        /* when last packet from this node was received */
 	uint8_t  gwflags;      /* flags related to gateway functions: gateway class */
 	unsigned char *hna_buff;
@@ -70,7 +70,7 @@ struct neigh_node
 	struct list_head list;
 	uint8_t addr[ETH_ALEN];
 	uint8_t real_packet_count;
-	uint8_t tq_recv[TQ_TOTAL_WINDOW_SIZE];
+	uint8_t tq_recv[TQ_GLOBAL_WINDOW_SIZE];
 	uint8_t tq_index;
 	uint8_t tq_avg;
 	uint8_t last_ttl;

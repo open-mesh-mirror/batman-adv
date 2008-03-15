@@ -80,20 +80,8 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 	addr_to_string(orig_str, ((struct batman_packet *)pack_buff)->orig);
 
-	if (((struct batman_packet *)pack_buff)->flags & UNIDIRECTIONAL) {
-
-		if (if_outgoing != NULL) {
-			debug_log(LOG_TYPE_BATMAN, "Forwarding packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
-
-			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-		} else {
-
-			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with UDF: outgoing iface not specified \n");
-
-		}
-
-		/* multihomed peer assumed */
-	} else if (directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) {
+	/* multihomed peer assumed */
+	if (directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) {
 
 		if (if_outgoing != NULL) {
 
@@ -174,7 +162,7 @@ void send_own_packet(unsigned long data)
 	start_bcast_timer(batman_if);
 }
 
-void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t udf, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
+void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
 {
 	unsigned char in_tq, in_ttl, tq_avg = 0;
 
@@ -202,18 +190,16 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 
 		tq_avg = orig_node->router->tq_avg;
 
-		if ((orig_node->router->orig_node->tq_own > TQ_MAX_VALUE - PERFECT_TQ_PENALTY) && (orig_node->router->orig_node->tq_asym_penality > TQ_MAX_VALUE - PERFECT_TQ_PENALTY))
-			batman_packet->tq -= PERFECT_TQ_PENALTY;
-
 	}
+
+	/* apply hop penalty */
+	batman_packet->tq = (batman_packet->tq * (TQ_MAX_VALUE - TQ_HOP_PENALTY)) / (TQ_MAX_VALUE);
 
 	debug_log(LOG_TYPE_BATMAN, "Forwarding packet: tq_orig: %i, tq_avg: %i, tq_forw: %i, ttl_orig: %i, ttl_forw: %i \n", in_tq, tq_avg, batman_packet->tq, in_ttl - 1, batman_packet->ttl);
 
 	batman_packet->seqno = htons(batman_packet->seqno);
 
-	if (udf)
-		batman_packet->flags = (UNIDIRECTIONAL | DIRECTLINK);
-	else if (idf)
+	if (idf)
 		batman_packet->flags = DIRECTLINK;
 	else
 		batman_packet->flags = 0x00;
