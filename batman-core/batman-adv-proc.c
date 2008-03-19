@@ -207,7 +207,7 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
 {
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
-	int not_copied = 0, if_num;
+	int not_copied = 0, if_num = 0;
 	void *data_ptr;
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
@@ -221,7 +221,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	if (count > IFNAMSIZ - 1) {
 		debug_log(LOG_TYPE_WARN, "Can't add interface: device name is too long\n");
-		goto end_and_free;
+		goto end;
 	}
 
 	not_copied = copy_from_user(if_string, userbuffer, count);
@@ -232,19 +232,16 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	else if ((cr_ptr = strchr(if_string, '\n')) != NULL)
 		*cr_ptr = 0;
 
-	shutdown_module();
-
-	if_num = 0;
-
 	if (strlen(if_string) == 0) {
 
+		shutdown_module(0);
 		remove_interfaces();
 		spin_lock(&orig_hash_lock);
 		hash_delete(orig_hash, free_orig_node);
 		orig_hash = hash_new(128, compare_orig, choose_orig);
 		spin_unlock(&orig_hash_lock);
 		num_ifs = 0;
-		goto end_and_free;
+		goto end;
 
 	} else {
 
@@ -265,8 +262,10 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 		if (batman_if != NULL) {
 			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
-			goto end_and_activate;
+			goto end;
 		}
+
+		shutdown_module(1);
 
 		if (add_interface(if_string, if_num)) {
 
@@ -289,20 +288,17 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 			spin_unlock(&orig_hash_lock);
 		}
+
+		activate_module();
 	}
 
 	if (list_empty(&if_list))
-		goto end_and_free;
+		goto end;
 
 	num_ifs = if_num + 1;
-
-	activate_module();
 	return count;
 
-end_and_activate:
-	activate_module();
-
-end_and_free:
+end:
 	kfree(if_string);
 	return count;
 }

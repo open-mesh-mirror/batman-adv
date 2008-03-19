@@ -130,7 +130,7 @@ struct batman_if
 
 void start_purge_timer(void);
 void activate_module(void);
-void shutdown_module(void);
+void shutdown_module(char keep_bat_if);
 void remove_interfaces(void);
 int add_interface(char *dev, int if_num);
 void deactivate_interface(struct batman_if *batman_if);

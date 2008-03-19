@@ -97,7 +97,7 @@ clean_proc:
 
 void cleanup_module(void)
 {
-	shutdown_module();
+	shutdown_module(0);
 	remove_interfaces();
 
 	spin_lock(&orig_hash_lock);
@@ -127,23 +127,27 @@ void activate_module(void)
 	int result;
 
 	/* initialize layer 2 interface */
-	bat_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_setup);
-
 	if (bat_device == NULL) {
-		debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
-		return;
+
+		bat_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_setup);
+
+		if (bat_device == NULL) {
+			debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
+			return;
+		}
+
+		result = register_netdev(bat_device);
+
+		if (result < 0) {
+			debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", result);
+			free_netdev(bat_device);
+			bat_device = NULL;
+			return;
+		}
+
+		hna_local_add(bat_device->dev_addr);
+
 	}
-
-	result = register_netdev(bat_device);
-
-	if (result < 0) {
-		debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", result);
-		free_netdev(bat_device);
-		bat_device = NULL;
-		return;
-	}
-
-	hna_local_add(bat_device->dev_addr);
 
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
@@ -165,12 +169,12 @@ void activate_module(void)
 	bat_device_setup();
 }
 
-void shutdown_module(void)
+void shutdown_module(char keep_bat_if)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
 
-	if (bat_device != NULL) {
+	if ((!keep_bat_if) && (bat_device != NULL)) {
 		unregister_netdev(bat_device);
 		bat_device = NULL;
 	}
