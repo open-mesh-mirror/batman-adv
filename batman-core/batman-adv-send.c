@@ -48,6 +48,9 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	struct ethhdr ethhdr;
 	int retval;
 
+	if (!batman_if->if_active)
+		return;
+
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
 		return;
@@ -68,8 +71,10 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 
 	/* minimum packet size is 46 bytes for ethernet */
 	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0) {
-		if (retval != -EAGAIN)
+		if (retval != -EAGAIN) {
 			debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
+			deactivate_interface(batman_if);
+		}
 	}
 }
 

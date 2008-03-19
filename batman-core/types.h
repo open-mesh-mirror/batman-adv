@@ -30,21 +30,6 @@
 
 
 
-struct batman_if
-{
-	struct list_head list;
-	int16_t if_num;
-	char addr_str[ETH_STR_LEN];
-	struct net_device *net_dev;
-	struct socket *raw_sock;
-	struct timer_list bcast_timer;
-	uint16_t seqno;
-	spinlock_t seqno_lock;
-	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
-	unsigned char *pack_buff;
-	int pack_buff_len;
-};
-
 struct orig_node                 /* structure for orig_list maintaining nodes of mesh */
 {
 	uint8_t orig[ETH_ALEN];

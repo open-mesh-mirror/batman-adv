@@ -52,6 +52,9 @@ static struct timer_list purge_timer;
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char hna_local_changed = 0;
 
+static char avail_ifs = 0;
+static char active_ifs = 0;
+
 
 
 int init_module(void)
@@ -198,10 +201,103 @@ void shutdown_module(void)
 	bat_device_destroy();
 }
 
+int is_interface_up(char *dev)
+{
+	struct net_device *net_dev;
+
+#ifdef __NET_NET_NAMESPACE_H
+	if ((net_dev = dev_get_by_name(&init_net, dev)) == NULL)
+#else
+	if ((net_dev = dev_get_by_name(dev)) == NULL)
+#endif
+		goto end;
+
+	if (!(net_dev->flags & IFF_UP))
+		goto failure;
+
+	dev_put(net_dev);
+	return 1;
+
+failure:
+	dev_put(net_dev);
+end:
+	return 0;
+}
+
+void deactivate_interface(struct batman_if *batman_if)
+{
+	if (batman_if->raw_sock != NULL)
+		sock_release(batman_if->raw_sock);
+
+	/* batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data; */
+
+	/*
+	 * batman_if->net_dev has been acquired by dev_get_by_name() in
+	 * proc_interfaces_write() and has to be unreferenced.
+	 */
+	if (batman_if->net_dev != NULL)
+		dev_put(batman_if->net_dev);
+
+	batman_if->raw_sock = NULL;
+	batman_if->net_dev = NULL;
+
+	batman_if->if_active = 0;
+	active_ifs--;
+
+	debug_log(LOG_TYPE_NOTICE, "Interface deactivated: %s\n", batman_if->dev);
+}
+
+void activate_interface(struct batman_if *batman_if)
+{
+	struct sockaddr_ll bind_addr;
+	int retval;
+
+#ifdef __NET_NET_NAMESPACE_H
+	if ((batman_if->net_dev = dev_get_by_name(&init_net, batman_if->dev)) == NULL)
+#else
+	if ((batman_if->net_dev = dev_get_by_name(batman_if->dev)) == NULL)
+#endif
+		goto error;
+
+	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
+		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
+		goto error;
+	}
+
+	bind_addr.sll_family = AF_PACKET;
+	bind_addr.sll_ifindex = batman_if->net_dev->ifindex;
+	bind_addr.sll_protocol = 0;	/* is set by the kernel */
+
+	if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
+		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);
+		goto error;
+	}
+
+	batman_if->raw_sock->sk->sk_user_data = batman_if->raw_sock->sk->sk_data_ready;
+	batman_if->raw_sock->sk->sk_data_ready = batman_data_ready;
+
+	addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
+
+	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+
+	batman_if->if_active = 1;
+	active_ifs++;
+
+	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n", batman_if->dev);
+
+	return;
+
+error:
+	deactivate_interface(batman_if);
+}
+
 void remove_interfaces(void)
 {
 	struct list_head *list_pos, *list_pos_tmp;
 	struct batman_if *batman_if = NULL;
+
+	avail_ifs = 0;
 
 	spin_lock(&if_list_lock);
 
@@ -209,50 +305,34 @@ void remove_interfaces(void)
 	list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->net_dev->name);
-
-		batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data;
-
 		list_del(list_pos);
-		sock_release(batman_if->raw_sock);
 
-		/* batman_if->net_dev has been acquired by dev_get_by_name() in
-		 * proc_interfaces_write() and has to be unreferenced. */
-		dev_put(batman_if->net_dev);
+		if (batman_if->if_active)
+			deactivate_interface(batman_if);
+
+		debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->dev);
 
 		kfree(batman_if->pack_buff);
+		kfree(batman_if->dev);
 		kfree(batman_if);
 	}
 
 	spin_unlock(&if_list_lock);
 }
 
-int add_interface(char *if_name, int if_num, struct net_device *net_dev)
+int add_interface(char *dev, int if_num)
 {
-	struct sockaddr_ll bind_addr;
 	struct batman_if *batman_if;
-	int retval;
 
 	batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
 
 	if (!batman_if) {
-		debug_log(LOG_TYPE_WARN, "Can't add interface (%s): out of memory\n", if_name);
+		debug_log(LOG_TYPE_WARN, "Can't add interface (%s): out of memory\n", dev);
 		return -1;
 	}
 
-	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
-		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
-		goto batif_free;
-	}
-
-	bind_addr.sll_family = AF_PACKET;
-	bind_addr.sll_ifindex = net_dev->ifindex;
-	bind_addr.sll_protocol = 0;	/* is set by the kernel */
-
-	if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
-		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);
-		goto sock_rel;
-	}
+	batman_if->raw_sock = NULL;
+	batman_if->net_dev = NULL;
 
 	if ((if_num == 0) && (num_hna > 0))
 		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
@@ -262,23 +342,17 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
 
 	if (!batman_if->pack_buff) {
-		debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", if_name);
-		goto sock_rel;
+		debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", dev);
+		goto out;
 	}
 
-	batman_if->raw_sock->sk->sk_user_data = batman_if->raw_sock->sk->sk_data_ready;
-	batman_if->raw_sock->sk->sk_data_ready = batman_data_ready;
-
 	batman_if->if_num = if_num;
-	batman_if->net_dev = net_dev;
-	addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
-	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", batman_if->net_dev->name);
+	batman_if->dev = dev;
+
+	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", dev);
+	avail_ifs++;
 
 	INIT_LIST_HEAD(&batman_if->list);
-
-	spin_lock(&if_list_lock);
-	list_add_tail(&batman_if->list, &if_list);
-	spin_unlock(&if_list_lock);
 
 	((struct batman_packet *)(batman_if->pack_buff))->packet_type = BAT_PACKET;
 	((struct batman_packet *)(batman_if->pack_buff))->version = COMPAT_VERSION;
@@ -286,8 +360,6 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	((struct batman_packet *)(batman_if->pack_buff))->ttl = (batman_if->if_num > 0 ? 2 : TTL);
 	((struct batman_packet *)(batman_if->pack_buff))->gwflags = 0;
 	((struct batman_packet *)(batman_if->pack_buff))->tq = TQ_MAX_VALUE;
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 	((struct batman_packet *)(batman_if->pack_buff))->num_hna = 0;
 
 	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
@@ -297,13 +369,36 @@ int add_interface(char *if_name, int if_num, struct net_device *net_dev)
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 	batman_if->bcast_seqno = 1;
 
+	if (is_interface_up(batman_if->dev))
+		activate_interface(batman_if);
+	else
+		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", dev);
+
+	spin_lock(&if_list_lock);
+	list_add_tail(&batman_if->list, &if_list);
+	spin_unlock(&if_list_lock);
+
 	return 1;
 
-sock_rel:
-	sock_release(batman_if->raw_sock);
-batif_free:
+out:
 	kfree(batman_if);
 	return -1;
+}
+
+void check_inactive_interfaces(void)
+{
+	struct list_head *list_pos;
+	struct batman_if *batman_if;
+
+	if (avail_ifs == active_ifs)
+		return;
+
+	list_for_each(list_pos, &if_list) {
+		batman_if = list_entry(list_pos, struct batman_if, list);
+
+		if ((!batman_if->if_active) && (is_interface_up(batman_if->dev)))
+			activate_interface(batman_if);
+	}
 }
 
 void inc_module_count(void)
@@ -386,127 +481,6 @@ int is_mcast(uint8_t *addr)
 {
 	return (*addr & 0x01);
 }
-
-
-
-
-
-
-/* int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
-{
-	struct list_head *list_pos;
-	struct batman_if *batman_if = NULL;
-
-	list_for_each(list_pos, &if_list) {
-
-		batman_if = list_entry(list_pos, struct batman_if, list);
-
-		if (batman_if->net_dev == dev)
-			break;
-		else
-			batman_if = NULL;
-
-	}
-
-	if (batman_if == NULL) {
-
-		printk( "B.A.T.M.A.N. Adv: attaching to %s\n", dev->name);
-
-		batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
-
-		if (!batman_if)
-			return -ENOMEM;
-
-		batman_if->net_dev = dev;
-
-		memcpy(batman_if->out.orig, batman_if->net_dev->dev_addr, 6);
-		batman_if->out.packet_type = BAT_PACKET;
-		batman_if->out.flags = 0x00;
-		batman_if->out.ttl = TTL;
-		batman_if->out.seqno = 1;
-		batman_if->out.gwflags = 0;
-		batman_if->out.version = COMPAT_VERSION;
-
-		batman_if->bcast_seqno = 1;
-
-		INIT_LIST_HEAD(&batman_if->list);
-		list_add_tail(&batman_if->list, &if_list);
-
-		memcpy(ie_buff, &batman_if->out, sizeof(struct batman_packet));
-		*ie_buff_len = sizeof(struct batman_packet);
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-		MOD_INC_USE_COUNT;
-#else
-		try_module_get(THIS_MODULE);
-#endif
-		return 0;
-
-	}
-
-	// return 1 to indicate that the interface is already attached
-	return 1;
-}
-EXPORT_SYMBOL(batman_core_attach);
-
-int batman_core_detach(struct net_device *dev)
-{
-	struct list_head *list_pos, *list_pos_tmp;
-	struct batman_if *batman_if;
-
-	list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
-
-		batman_if = list_entry(list_pos, struct batman_if, list);
-
-		if (batman_if->net_dev == dev) {
-
-			printk( "B.A.T.M.A.N. Adv: detaching from %s\n", batman_if->net_dev->name);
-
-			list_del(list_pos);
-			kfree(batman_if);
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-			MOD_DEC_USE_COUNT;
-#else
-			module_put(THIS_MODULE);
-#endif
-			return 0;
-
-		}
-
-	}
-
-	// return 1 to indicate that the interface has not been attached yet
-	return 1;
-}
-EXPORT_SYMBOL(batman_core_detach);
-
-void batman_core_ogm_update(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len)
-{
-	struct list_head *list_pos;
-	struct batman_if *batman_if = NULL;
-
-	list_for_each(list_pos, &if_list) {
-
-		batman_if = list_entry(list_pos, struct batman_if, list);
-
-		if (batman_if->net_dev == dev)
-			break;
-		else
-			batman_if = NULL;
-
-	}
-
-	if (batman_if != NULL) {
-
-		printk( "B.A.T.M.A.N. Adv: updating ogm for %s\n", batman_if->net_dev->name);
-
-		batman_if->out.seqno++;
-		((struct batman_packet *)ie_buff)->seqno = batman_if->out.seqno;
-
-	}
-}
-EXPORT_SYMBOL(batman_core_ogm_update); */
 
 
 

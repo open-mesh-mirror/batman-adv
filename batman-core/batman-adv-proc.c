@@ -209,7 +209,6 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
 	int not_copied = 0, if_num;
 	void *data_ptr;
-	struct net_device *net_dev;
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
 	struct hash_it_t *hashit = NULL;
@@ -222,7 +221,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	if (count > IFNAMSIZ - 1) {
 		debug_log(LOG_TYPE_WARN, "Can't add interface: device name is too long\n");
-		goto end;
+		goto end_and_free;
 	}
 
 	not_copied = copy_from_user(if_string, userbuffer, count);
@@ -245,26 +244,17 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		orig_hash = hash_new(128, compare_orig, choose_orig);
 		spin_unlock(&orig_hash_lock);
 		num_ifs = 0;
-		goto end;
+		goto end_and_free;
 
 	} else {
 
 		/* add interface */
-#ifdef __NET_NET_NAMESPACE_H
-		if ((net_dev = dev_get_by_name(&init_net, if_string)) == NULL) {
-#else
-		if ((net_dev = dev_get_by_name(if_string)) == NULL) {
-#endif
-			debug_log(LOG_TYPE_WARN, "Could not find interface: %s\n", if_string);
-			goto end_and_reactivate;
-		}
-
 		spin_lock(&if_list_lock);
 
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
-			if (batman_if->net_dev == net_dev)
+			if (strncmp(batman_if->dev, if_string, count))
 				break;
 
 			batman_if = NULL;
@@ -274,45 +264,45 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		spin_unlock(&if_list_lock);
 
 		if (batman_if != NULL) {
-
 			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
-			dev_put(net_dev); /* don't double allocate it */
-			goto end_and_reactivate;
+			goto end_and_activate;
+		}
 
-		} else {
+		if (add_interface(if_string, if_num)) {
 
-			if (add_interface(if_string, if_num, net_dev)) {
+			/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
+			spin_lock(&orig_hash_lock);
 
-				/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
-				spin_lock(&orig_hash_lock);
+			while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+				orig_node = hashit->bucket->data;
 
-				while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
-					orig_node = hashit->bucket->data;
+				data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
+				memcpy(data_ptr, orig_node->bcast_own, if_num * sizeof(TYPE_OF_WORD) * NUM_WORDS);
+				kfree(orig_node->bcast_own);
+				orig_node->bcast_own = data_ptr;
 
-					data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
-					memcpy(data_ptr, orig_node->bcast_own, if_num * sizeof(TYPE_OF_WORD) * NUM_WORDS);
-					kfree(orig_node->bcast_own);
-					orig_node->bcast_own = data_ptr;
-
-					data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
-					memcpy(data_ptr, orig_node->bcast_own_sum, if_num * sizeof(uint8_t));
-					kfree(orig_node->bcast_own_sum);
-					orig_node->bcast_own_sum = data_ptr;
-				}
-
-				spin_unlock(&orig_hash_lock);
+				data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
+				memcpy(data_ptr, orig_node->bcast_own_sum, if_num * sizeof(uint8_t));
+				kfree(orig_node->bcast_own_sum);
+				orig_node->bcast_own_sum = data_ptr;
 			}
+
+			spin_unlock(&orig_hash_lock);
 		}
 	}
 
 	if (list_empty(&if_list))
-		goto end;
+		goto end_and_free;
 
 	num_ifs = if_num + 1;
-end_and_reactivate:
+
+	activate_module();
+	return count;
+
+end_and_activate:
 	activate_module();
 
-end:
+end_and_free:
 	kfree(if_string);
 	return count;
 }

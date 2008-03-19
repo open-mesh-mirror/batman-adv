@@ -104,11 +104,37 @@ extern char hna_local_changed;
 
 
 
+#ifndef BATMAN_IF
+#define BATMAN_IF
+
+struct batman_if
+{
+	struct list_head list;
+	int16_t if_num;
+	char *dev;
+	char if_active;
+	char addr_str[ETH_STR_LEN];
+	struct net_device *net_dev;
+	struct socket *raw_sock;
+	struct timer_list bcast_timer;
+	uint16_t seqno;
+	spinlock_t seqno_lock;
+	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
+	unsigned char *pack_buff;
+	int pack_buff_len;
+};
+
+#endif
+
+
+
 void start_purge_timer(void);
 void activate_module(void);
 void shutdown_module(void);
 void remove_interfaces(void);
-int add_interface(char *if_name, int if_num, struct net_device *net_dev);
+int add_interface(char *dev, int if_num);
+void deactivate_interface(struct batman_if *batman_if);
+void check_inactive_interfaces(void);
 void inc_module_count(void);
 void dec_module_count(void);
 int addr_to_string(char *buff, uint8_t *addr);
