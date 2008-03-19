@@ -327,6 +327,7 @@ void remove_interfaces(void)
 int add_interface(char *dev, int if_num)
 {
 	struct batman_if *batman_if;
+	struct batman_packet *batman_packet;
 
 	batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
 
@@ -358,16 +359,17 @@ int add_interface(char *dev, int if_num)
 
 	INIT_LIST_HEAD(&batman_if->list);
 
-	((struct batman_packet *)(batman_if->pack_buff))->packet_type = BAT_PACKET;
-	((struct batman_packet *)(batman_if->pack_buff))->version = COMPAT_VERSION;
-	((struct batman_packet *)(batman_if->pack_buff))->flags = 0x00;
-	((struct batman_packet *)(batman_if->pack_buff))->ttl = (batman_if->if_num > 0 ? 2 : TTL);
-	((struct batman_packet *)(batman_if->pack_buff))->gwflags = 0;
-	((struct batman_packet *)(batman_if->pack_buff))->tq = TQ_MAX_VALUE;
-	((struct batman_packet *)(batman_if->pack_buff))->num_hna = 0;
+	batman_packet = (struct batman_packet *)(batman_if->pack_buff);
+	batman_packet->packet_type = BAT_PACKET;
+	batman_packet->version = COMPAT_VERSION;
+	batman_packet->flags = 0x00;
+	batman_packet->ttl = (batman_if->if_num > 0 ? 2 : TTL);
+	batman_packet->gwflags = 0;
+	batman_packet->tq = TQ_MAX_VALUE;
+	batman_packet->num_hna = 0;
 
 	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
-		((struct batman_packet *)(batman_if->pack_buff))->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+		batman_packet->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
 
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
