@@ -174,6 +174,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		/* batman packet type: broadcast */
 		bcast_packet->packet_type = BAT_BCAST;
 
+		spin_lock(&if_list_lock);
 		/* hw address of first interface is the orig mac because only this mac is known throughout the mesh */
 		memcpy(bcast_packet->orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
 		/* set broadcast sequence number */
@@ -187,6 +188,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
+		spin_unlock(&if_list_lock);
 
 	/* unicast packet */
 	} else {
