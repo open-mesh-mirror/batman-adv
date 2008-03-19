@@ -24,9 +24,25 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include "batman-adv-main.h"
 #include "packet.h"
 #include "bitarray.h"
+
+struct batman_if
+{
+	struct list_head list;
+	int16_t if_num;
+	char *dev;
+	char if_active;
+	char addr_str[ETH_STR_LEN];
+	struct net_device *net_dev;
+	struct socket *raw_sock;
+	struct timer_list bcast_timer;
+	uint16_t seqno;
+	spinlock_t seqno_lock;
+	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
+	unsigned char *pack_buff;
+	int pack_buff_len;
+};
 
 
 

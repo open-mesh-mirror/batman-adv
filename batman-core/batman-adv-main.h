@@ -17,23 +17,6 @@
  *
  */
 
-
-
-
-
-#include <linux/module.h>	/* needed by all modules */
-#include <linux/version.h>	/* LINUX_VERSION_CODE */
-#include <linux/netdevice.h>	/* netdevice */
-#include <linux/timer.h>	/* timer */
-#include <linux/if_ether.h>	/* ethernet header */
-#include <linux/poll.h>		/* poll_table */
-#include <linux/kthread.h>	/* kernel threads */
-#include <net/sock.h>		/* struct sock */
-
-
-
-
-
 /* Kernel Programming */
 #define LINUX
 
@@ -86,6 +69,15 @@
 #endif
 
 
+#include <linux/module.h>	/* needed by all modules */
+#include <linux/version.h>	/* LINUX_VERSION_CODE */
+#include <linux/netdevice.h>	/* netdevice */
+#include <linux/timer.h>	/* timer */
+#include <linux/if_ether.h>	/* ethernet header */
+#include <linux/poll.h>		/* poll_table */
+#include <linux/kthread.h>	/* kernel threads */
+#include <net/sock.h>		/* struct sock */
+#include "types.h"
 
 extern struct list_head if_list;
 extern struct hashtable_t *orig_hash;
@@ -103,28 +95,6 @@ extern unsigned char broadcastAddr[];
 extern char hna_local_changed;
 
 
-
-#ifndef BATMAN_IF
-#define BATMAN_IF
-
-struct batman_if
-{
-	struct list_head list;
-	int16_t if_num;
-	char *dev;
-	char if_active;
-	char addr_str[ETH_STR_LEN];
-	struct net_device *net_dev;
-	struct socket *raw_sock;
-	struct timer_list bcast_timer;
-	uint16_t seqno;
-	spinlock_t seqno_lock;
-	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
-	unsigned char *pack_buff;
-	int pack_buff_len;
-};
-
-#endif
 
 
 
