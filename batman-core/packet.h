@@ -25,6 +25,7 @@
 #define BAT_ICMP      0x02
 #define BAT_UNICAST   0x03
 #define BAT_BCAST     0x04
+#define BAT_VIS       0x05
 
 
 
@@ -76,3 +77,16 @@ struct bcast_packet
 	uint16_t seqno;
 } __attribute__((packed));
 
+struct vis_packet
+{
+	uint8_t  packet_type;
+	uint8_t  vis_type;			/* which type of vis-participant sent this? */
+	uint8_t  seqno;				/* sequence number */
+	uint8_t  entries;			/* number of entries behind this struct */
+	uint8_t  vis_orig[6];		/* originator that informs about its neighbours */
+	uint8_t  target_orig[6];	/* who should receive this packet */
+	uint8_t  sender_orig[6];	/* who sent or rebroadcasted this packet */
+} __attribute__((packed));
+
+#define VIS_TYPE_SERVER_SYNC		0
+#define VIS_TYPE_CLIENT_UPDATE		1

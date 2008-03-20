@@ -29,6 +29,7 @@
 #include "batman-adv-interface.h"
 #include "batman-adv-device.h"
 #include "batman-adv-ttable.h"
+#include "batman-adv-vis.h"
 #include "types.h"
 #include "hash.h"
 
@@ -41,6 +42,7 @@ DEFINE_SPINLOCK(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
 
 atomic_t originator_interval;
+atomic_t vis_interval;
 int16_t num_hna = 0;
 int16_t num_ifs = 0;
 
@@ -63,6 +65,7 @@ int init_module(void)
 
 	INIT_LIST_HEAD(&if_list);
 	atomic_set(&originator_interval, 1000);
+	atomic_set(&vis_interval, 1000);		/* TODO: raise this later, this is only for debugging now. */
 
 	if ((retval = setup_procfs()) < 0)
 		return retval;
@@ -167,6 +170,8 @@ void activate_module(void)
 	start_purge_timer();
 
 	bat_device_setup();
+
+	vis_init();
 }
 
 void shutdown_module(char keep_bat_if)

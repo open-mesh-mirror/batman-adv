@@ -26,13 +26,14 @@
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
 #include "batman-adv-ttable.h"
+#include "batman-adv-vis.h"
 #include "types.h"
 #include "hash.h"
 
 
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL/*, *proc_gateways_file = NULL*/;
-static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL;
+static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL, *proc_vis_file = NULL;
 
 
 
@@ -61,6 +62,11 @@ void cleanup_procfs(void)
 
 	if (proc_interface_file)
 		remove_proc_entry(PROC_FILE_INTERFACES, proc_batman_dir);
+
+	if (proc_vis_file)
+		remove_proc_entry(PROC_FILE_VIS, proc_batman_dir);
+
+
 
 	if (proc_batman_dir)
 #ifdef __NET_NET_NAMESPACE_H
@@ -176,6 +182,19 @@ int setup_procfs(void)
 		cleanup_procfs();
 		return -EFAULT;
 	}
+
+	proc_vis_file = create_proc_entry(PROC_FILE_VIS, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_vis_file) {
+		proc_vis_file->read_proc = proc_vis_read;
+		proc_vis_file->write_proc = proc_dummy_write;
+		proc_vis_file->data = NULL;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_VIS);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
 
 	return 0;
 }
@@ -565,6 +584,50 @@ end:
 	return total_bytes;
 }
 
+int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+{
+	int total_bytes = 0, bytes_written = 0;
+	struct hash_it_t *hashit = NULL;
+	struct vis_info *info;
+	struct vis_info_entry *entries;
+	char from[40], to[40];
+	int i;
+
+	spin_lock(&if_list_lock);
+
+	if (list_empty(&if_list)) {
+		spin_unlock(&if_list_lock);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
+		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		goto end;
+	}
+
+	spin_unlock(&if_list_lock);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "digraph {\n" );
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+	spin_lock(&vis_hash_lock);
+	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+		info = hashit->bucket->data;
+		entries = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info));
+		addr_to_string(from, info->packet.vis_orig);
+		for (i = 0; i < info->packet.entries; i++) {
+			addr_to_string(to, entries[i].dest);
+			bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [%d]", from, to, entries[i].quality);
+			total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		}
+	}
+
+	spin_unlock(&vis_hash_lock);
+
+	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "}\n");
+	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
+end:
+	*eof = 1;
+	return total_bytes;
+}
 int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
 {
 	return count;

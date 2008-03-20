@@ -32,6 +32,7 @@
 #define PROC_FILE_LOG_LEVEL "log_level"
 #define PROC_FILE_TRANSTABLE_LOCAL "transtable_local"
 #define PROC_FILE_TRANSTABLE_GLOBAL "transtable_global"
+#define PROC_FILE_VIS "vis"
 
 
 
@@ -47,4 +48,5 @@ int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eo
 int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_transtable_local_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_transtable_global_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);

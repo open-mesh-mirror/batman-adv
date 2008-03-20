@@ -86,6 +86,7 @@ extern spinlock_t if_list_lock;
 extern spinlock_t orig_hash_lock;
 
 extern atomic_t originator_interval;
+extern atomic_t vis_interval;
 extern int16_t num_hna;
 extern int16_t num_ifs;
 

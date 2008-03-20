@@ -31,6 +31,7 @@
 #include "types.h"
 #include "hash.h"
 #include "ring_buffer.h"
+#include "batman-adv-vis.h"
 
 
 
@@ -836,6 +837,14 @@ int packet_recv_thread(void *data)
 
 					spin_unlock(&orig_hash_lock);
 					break;
+				case BAT_VIS:
+					/* drop if too short. */
+					if (result < sizeof(struct ethhdr) + sizeof(struct vis_packet))
+						continue;
+
+					receive_vis_packet(ethhdr, (struct vis_packet *)batman_packet, result  - sizeof(struct ethhdr) - sizeof(struct vis_packet));
+					break;
+
 				}
 
 			}
