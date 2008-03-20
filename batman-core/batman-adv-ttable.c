@@ -30,7 +30,7 @@
 
 
 
-static struct hashtable_t *hna_local_hash = NULL;
+struct hashtable_t *hna_local_hash = NULL;
 static struct hashtable_t *hna_global_hash = NULL;
 
 DEFINE_SPINLOCK(hna_local_hash_lock);

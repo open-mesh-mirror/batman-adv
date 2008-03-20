@@ -19,6 +19,7 @@
 
 #include "batman-adv-main.h"
 #include "batman-adv-send.h"
+#include "batman-adv-ttable.h"
 #include "batman-adv-vis.h"
 #include "batman-adv-log.h"
 #include "hash.h"
@@ -37,7 +38,7 @@ int vis_info_cmp(void *data1, void *data2) {
 	struct vis_info *d1, *d2;
 	d1 = data1;
 	d2 = data2;
-	return(memcmp(d1->packet.vis_orig, d2->packet.vis_orig, ETH_ALEN));
+	return(memcmp(d1->packet.vis_orig, d2->packet.vis_orig, ETH_ALEN) == 0);
 }
 
 /* hashfunction to choose an entry in a hash table of given size */
@@ -100,7 +101,7 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 	}
 
 	/* repair if entries is longer than packet. */
-	if (info->packet.entries * sizeof(struct vis_info) > vis_info_len) 
+	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len) 
 		info->packet.entries = vis_info_len / sizeof(struct vis_info);
 
 	/* LATER: fill the list with vis_orig. */
@@ -130,6 +131,7 @@ static void generate_vis_packet(void)
 	struct orig_node *orig_node;
 	struct vis_info *info = (struct vis_info *)my_vis_info;
 	struct vis_info_entry *entry;
+	struct hna_local_entry *hna_local_entry;
 
 	info->last_seen = jiffies;
 
@@ -142,19 +144,58 @@ static void generate_vis_packet(void)
 		if (orig_node->router != NULL
 			&& memcmp(orig_node->router->addr, orig_node->orig, ETH_ALEN) == 0
 			&& orig_node->router->tq_avg > 0) {
+			char addr[40];
 
 			/* fill one entry into buffer. */
-			entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info_entry) * info->packet.entries);
+			entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info) + sizeof(struct vis_info_entry) * info->packet.entries);
+			addr_to_string(addr, orig_node->orig);
+
 			memcpy(entry->dest, orig_node->orig, ETH_ALEN);
 			entry->quality = orig_node->router->tq_avg;
 			info->packet.entries++;
 			/* don't fill more than 1000 bytes */
-			if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) 
-				break;
+			if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) {
+				spin_unlock(&orig_hash_lock);
+				return;
+			}
 		}
 	}
 
 	spin_unlock(&orig_hash_lock);
+
+	hashit = NULL;
+	spin_lock(&hna_local_hash_lock);
+	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
+		hna_local_entry = hashit->bucket->data;
+		entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info) + sizeof(struct vis_info_entry) * info->packet.entries);
+
+		memcpy(entry->dest, hna_local_entry->addr, ETH_ALEN);
+		entry->quality = 0; /* 0 means HNA */
+		info->packet.entries++;
+
+		/* don't fill more than 1000 bytes */
+		if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) {
+			spin_unlock(&hna_local_hash_lock);
+			return;
+		}
+	}
+	spin_unlock(&hna_local_hash_lock);
+
+}
+void purge_vis_packets(void)
+{
+	struct hash_it_t *hashit = NULL;
+	struct vis_info *info;
+
+	spin_lock(&vis_hash_lock);
+	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
+		info = hashit->bucket->data;
+		if (time_after(jiffies, info->last_seen + (VIS_TIMEOUT/1000)*HZ)) {
+			hash_remove_bucket(vis_hash, hashit);
+			free_info(info);
+		}
+	}
+	spin_unlock(&vis_hash_lock);
 }
 
 /* called from timer; send (and maybe generate) vis packet. */
@@ -163,6 +204,7 @@ void send_own_vis_packet(unsigned long arg)
 
 	spin_lock(&vis_own_packet_lock);
 
+	purge_vis_packets();
 	generate_vis_packet();
 	send_vis_packet((unsigned long) my_vis_info);
 	start_vis_timer();

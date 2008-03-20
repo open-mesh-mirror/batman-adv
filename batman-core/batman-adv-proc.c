@@ -608,14 +608,20 @@ int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, voi
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 
 	spin_lock(&vis_hash_lock);
-	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
 		info = hashit->bucket->data;
 		entries = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info));
 		addr_to_string(from, info->packet.vis_orig);
 		for (i = 0; i < info->packet.entries; i++) {
 			addr_to_string(to, entries[i].dest);
-			bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [%d]", from, to, entries[i].quality);
+			if (entries[i].quality == 0)
+				bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
+			else
+				bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [label=\"%d\"]\n", from, to, 255/entries[i].quality);
+			/* TODO: kernel has no printf-support for %f? it'd be better to return this in float. */
+
 			total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+
 		}
 	}
 

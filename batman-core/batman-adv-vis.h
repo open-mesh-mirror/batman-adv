@@ -17,6 +17,8 @@
  *
  */
 
+#define VIS_TIMEOUT		200000
+
 struct vis_info {
 	unsigned long       last_seen;
 	struct timer_list   vis_timer;
