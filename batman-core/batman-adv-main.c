@@ -129,6 +129,15 @@ void activate_module(void)
 	struct batman_if *batman_if = NULL;
 	int result;
 
+
+	spin_lock(&if_list_lock);
+	if (!((struct batman_if *)if_list.next)->if_active) {
+		spin_unlock(&if_list_lock);
+		/* main interface is down, jump out again. */
+		return;
+	} else 
+		spin_unlock(&if_list_lock);
+
 	/* initialize layer 2 interface */
 	if (bat_device == NULL) {
 
@@ -151,13 +160,14 @@ void activate_module(void)
 		hna_local_add(bat_device->dev_addr);
 
 	}
-
+	spin_lock(&if_list_lock);
 	/* (re)activate all timers (if any) */
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
 		start_bcast_timer(batman_if);
 	}
+	spin_unlock(&if_list_lock);
 
 	/* (re)start kernel thread for packet processing */
 	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
@@ -254,6 +264,12 @@ void deactivate_interface(struct batman_if *batman_if)
 	active_ifs--;
 
 	debug_log(LOG_TYPE_NOTICE, "Interface deactivated: %s\n", batman_if->dev);
+	if (batman_if->if_num == 0) {
+		debug_log(LOG_TYPE_CRIT, "Main Interface deactivated, shutting down module.\n", batman_if->dev);
+		shutdown_module(0);
+	}
+
+
 }
 
 void activate_interface(struct batman_if *batman_if)
