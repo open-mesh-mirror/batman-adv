@@ -211,7 +211,7 @@ void send_own_vis_packet(unsigned long arg)
 	send_vis_packet((unsigned long) my_vis_info);
 	start_vis_timer();
 
-	spin_lock(&vis_own_packet_lock);
+	spin_unlock(&vis_own_packet_lock);
 }
 
 /* only send vis packet. called from timers and send_own_vis_packet() */
