@@ -189,6 +189,8 @@ void shutdown_module(char keep_bat_if)
 	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
 
+	vis_quit();
+
 	if ((!keep_bat_if) && (bat_device != NULL)) {
 		unregister_netdev(bat_device);
 		bat_device = NULL;
