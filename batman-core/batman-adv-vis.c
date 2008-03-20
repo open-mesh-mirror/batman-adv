@@ -190,6 +190,8 @@ void purge_vis_packets(void)
 	spin_lock(&vis_hash_lock);
 	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
 		info = hashit->bucket->data;
+		if (info == my_vis_info)	/* never purge own data. */
+			continue;
 		if (time_after(jiffies, info->last_seen + (VIS_TIMEOUT/1000)*HZ)) {
 			hash_remove_bucket(vis_hash, hashit);
 			free_info(info);
