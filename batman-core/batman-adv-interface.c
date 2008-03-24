@@ -37,8 +37,12 @@
 
 
 static int max_mtu;
+static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid broadcast storms */
 static int32_t skb_packets = 0;
 static int32_t skb_bad_packets = 0;
+
+static unsigned char mainIfAddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static unsigned char mainIfAddr_default[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 
 
@@ -62,6 +66,16 @@ static const struct ethtool_ops bat_ethtool_ops = {
 	.set_rx_csum = bat_set_rx_csum
 };
 
+
+void set_main_if_addr(uint8_t *addr)
+{
+	memcpy(mainIfAddr, addr, ETH_ALEN);
+}
+
+int main_if_was_up(void)
+{
+	return (memcmp(mainIfAddr, mainIfAddr_default, ETH_ALEN) != 0 ? 1 : 0);
+}
 
 int my_skb_push(struct sk_buff *skb, unsigned int len)
 {
@@ -176,11 +190,11 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		spin_lock(&if_list_lock);
 		/* hw address of first interface is the orig mac because only this mac is known throughout the mesh */
-		memcpy(bcast_packet->orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
+		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 		/* set broadcast sequence number */
-		bcast_packet->seqno = htons(((struct batman_if *)if_list.next)->bcast_seqno);
+		bcast_packet->seqno = htons(bcast_seqno);
 
-		((struct batman_if *)if_list.next)->bcast_seqno++;
+		bcast_seqno++;
 
 		/* broadcast packet */
 		list_for_each(list_pos, &if_list) {

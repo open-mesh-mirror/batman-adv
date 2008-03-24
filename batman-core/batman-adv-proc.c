@@ -270,7 +270,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 
-			if (strncmp(batman_if->dev, if_string, count))
+			if (strncmp(batman_if->dev, if_string, count) == 0)
 				break;
 
 			batman_if = NULL;
@@ -308,7 +308,10 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			spin_unlock(&orig_hash_lock);
 		}
 
-		activate_module();
+		if (get_active_if_num() > 0)
+			activate_module();
+		else if (num_ifs > 0)
+			debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
 	}
 
 	if (list_empty(&if_list))

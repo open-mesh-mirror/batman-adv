@@ -21,6 +21,8 @@
 
 
 
+void set_main_if_addr(uint8_t *addr);
+int main_if_was_up(void);
 void interface_setup(struct net_device *dev);
 int interface_open(struct net_device *dev);
 int interface_release(struct net_device *dev);

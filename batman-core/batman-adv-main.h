@@ -106,6 +106,7 @@ void remove_interfaces(void);
 int add_interface(char *dev, int if_num);
 void deactivate_interface(struct batman_if *batman_if);
 void check_inactive_interfaces(void);
+char get_active_if_num(void);
 void inc_module_count(void);
 void dec_module_count(void);
 int addr_to_string(char *buff, uint8_t *addr);
@@ -115,10 +116,4 @@ int is_my_mac(uint8_t *addr);
 int is_bcast(uint8_t *addr);
 int is_mcast(uint8_t *addr);
 
-
-
-
-/* int batman_core_attach(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len);
-int batman_core_detach(struct net_device *dev);
-void batman_core_ogm_update(struct net_device *dev, u_int8_t *ie_buff, u_int8_t *ie_buff_len); */
 

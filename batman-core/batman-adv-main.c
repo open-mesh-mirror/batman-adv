@@ -129,15 +129,6 @@ void activate_module(void)
 	struct batman_if *batman_if = NULL;
 	int result;
 
-
-	spin_lock(&if_list_lock);
-	if (!((struct batman_if *)if_list.next)->if_active) {
-		spin_unlock(&if_list_lock);
-		/* main interface is down, jump out again. */
-		return;
-	} else 
-		spin_unlock(&if_list_lock);
-
 	/* initialize layer 2 interface */
 	if (bat_device == NULL) {
 
@@ -211,7 +202,8 @@ void shutdown_module(char keep_bat_if)
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		del_timer_sync(&batman_if->bcast_timer);
+		if (batman_if->if_active)
+			del_timer_sync(&batman_if->bcast_timer);
 	}
 
 	spin_unlock(&if_list_lock);
@@ -225,6 +217,27 @@ void shutdown_module(char keep_bat_if)
 int is_interface_up(char *dev)
 {
 	struct net_device *net_dev;
+
+	/*
+	 * if we already have an interface in our interface list and
+	 * the current interface is not the primary interface and
+	 * the primary interface is not up and
+	 * the primary interface has never been up - don't activate any secondary interface !
+	 */
+
+	spin_lock(&if_list_lock);
+
+	if ((!list_empty(&if_list)) &&
+		(strncmp(((struct batman_if *)if_list.next)->dev, dev, IFNAMSIZ) != 0) &&
+		!(((struct batman_if *)if_list.next)->if_active) &&
+		(!main_if_was_up())) {
+
+		spin_unlock(&if_list_lock);
+		goto end;
+
+	}
+
+	spin_unlock(&if_list_lock);
 
 #ifdef __NET_NET_NAMESPACE_H
 	if ((net_dev = dev_get_by_name(&init_net, dev)) == NULL)
@@ -311,6 +324,10 @@ void activate_interface(struct batman_if *batman_if)
 	batman_if->if_active = 1;
 	active_ifs++;
 
+	/* save the mac address if it is out primary interface */
+	if (batman_if->if_num == 0)
+		set_main_if_addr(batman_if->net_dev->dev_addr);
+
 	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n", batman_if->dev);
 
 	return;
@@ -396,7 +413,6 @@ int add_interface(char *dev, int if_num)
 
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
-	batman_if->bcast_seqno = 1;
 
 	if (is_interface_up(batman_if->dev))
 		activate_interface(batman_if);
@@ -428,6 +444,11 @@ void check_inactive_interfaces(void)
 		if ((!batman_if->if_active) && (is_interface_up(batman_if->dev)))
 			activate_interface(batman_if);
 	}
+}
+
+char get_active_if_num(void)
+{
+	return active_ifs;
 }
 
 void inc_module_count(void)

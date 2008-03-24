@@ -92,6 +92,9 @@ void hna_local_add(uint8_t *addr)
 
 	hna_local_entry = kmalloc(sizeof(struct hna_local_entry), GFP_KERNEL);
 
+	if (!hna_local_entry)
+		return;
+
 	memcpy(hna_local_entry->addr, addr, ETH_ALEN);
 	hna_local_entry->last_seen = jiffies;
 
@@ -258,6 +261,9 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 			spin_unlock(&hna_global_hash_lock);
 
 			hna_global_entry = kmalloc(sizeof(struct hna_global_entry), GFP_KERNEL);
+
+			if (!hna_global_entry)
+				break;
 
 			memcpy(hna_global_entry->addr, hna_buff + (hna_buff_count * ETH_ALEN), ETH_ALEN);
 

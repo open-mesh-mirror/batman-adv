@@ -27,6 +27,8 @@
 #include "packet.h"
 #include "bitarray.h"
 
+
+
 struct batman_if
 {
 	struct list_head list;
@@ -39,12 +41,9 @@ struct batman_if
 	struct timer_list bcast_timer;
 	uint16_t seqno;
 	spinlock_t seqno_lock;
-	uint16_t bcast_seqno;	/* give own bcast messages seq numbers to avoid broadcast storms */
 	unsigned char *pack_buff;
 	int pack_buff_len;
 };
-
-
 
 struct orig_node                 /* structure for orig_list maintaining nodes of mesh */
 {
@@ -112,6 +111,15 @@ struct hna_global_entry
 {
 	uint8_t addr[ETH_ALEN];
 	struct orig_node *orig_node;
+};
+
+struct source_queue_entry
+{
+	uint8_t addr[ETH_ALEN];
+	float max_share;
+	float fair_share;
+	float occupied_share;
+	float arrival_rate;
 };
 
 #endif
