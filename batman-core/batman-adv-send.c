@@ -38,7 +38,8 @@ void start_bcast_timer(struct batman_if *batman_if)
 	batman_if->bcast_timer.data = (unsigned long)batman_if;
 	batman_if->bcast_timer.function = send_own_packet;
 
-	add_timer(&batman_if->bcast_timer);
+	if (batman_if->if_active)
+		add_timer(&batman_if->bcast_timer);
 }
 
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
