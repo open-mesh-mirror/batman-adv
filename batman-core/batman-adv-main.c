@@ -393,6 +393,7 @@ int add_interface(char *dev, int if_num)
 
 	batman_if->if_num = if_num;
 	batman_if->dev = dev;
+	batman_if->if_active = 0;
 
 	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", dev);
 	avail_ifs++;
