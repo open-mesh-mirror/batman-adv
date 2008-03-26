@@ -40,7 +40,7 @@ struct batman_packet
 {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  flags;    /* 0x80: UNIDIRECTIONAL link, 0x40: DIRECTLINK flag, ... */
+	uint8_t  flags;    /* 0x40: DIRECTLINK flag, 0x20 VIS_SERVER flag... */
 	uint8_t  ttl;
 	uint8_t  gwflags;  /* flags related to gateway functions: gateway class */
 	uint8_t  tq;
@@ -83,6 +83,7 @@ struct vis_packet
 	uint8_t  vis_type;			/* which type of vis-participant sent this? */
 	uint8_t  seqno;				/* sequence number */
 	uint8_t  entries;			/* number of entries behind this struct */
+	uint8_t  ttl;				/* TTL */
 	uint8_t  vis_orig[6];		/* originator that informs about its neighbours */
 	uint8_t  target_orig[6];	/* who should receive this packet */
 	uint8_t  sender_orig[6];	/* who sent or rebroadcasted this packet */

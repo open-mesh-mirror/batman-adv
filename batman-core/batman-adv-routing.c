@@ -305,6 +305,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 	else
 		debug_log(LOG_TYPE_BATMAN, "Updating existing last-hop neighbour of originator\n");
 
+	orig_node->flags = batman_packet->flags;
 	neigh_node->last_valid = jiffies;
 
 	ring_buffer_set(neigh_node->tq_recv, &neigh_node->tq_index, batman_packet->tq);

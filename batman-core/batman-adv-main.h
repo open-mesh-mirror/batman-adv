@@ -27,6 +27,7 @@
 #define SOURCE_VERSION "0.1-alpha"
 #define COMPAT_VERSION 5
 #define DIRECTLINK 0x40
+#define VIS_SERVER 0x20
 #define TQ_MAX_VALUE 255
 #define JITTER 100
 #define TTL 50                /* Time To Live of broadcast messages */

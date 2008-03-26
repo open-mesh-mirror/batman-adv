@@ -55,7 +55,8 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	uint8_t tq_own;
 	int tq_asym_penalty;
 	unsigned long last_valid;        /* when last packet from this node was received */
-	uint8_t  gwflags;      /* flags related to gateway functions: gateway class */
+/*	uint8_t  gwflags;      * flags related to gateway functions: gateway class */
+	uint8_t  flags;    		/* for now only VIS_SERVER flag. */ 
 	unsigned char *hna_buff;
 	int16_t  hna_buff_len;
 	uint16_t last_real_seqno;   /* last and best known squence number */

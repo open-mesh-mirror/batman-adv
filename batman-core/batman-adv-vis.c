@@ -63,42 +63,46 @@ int vis_info_choose(void *data, int size) {
 	return (hash%size);
 }
 
+/* try to add the packet to the vis_hash. return NULL if invalid (e.g. too old, broken.. ).
+ * vis hash must be locked outside. 
+ * is_new is set when the packet is newer than old entries in the hash. */
 
-/* handle the server sync packet, add into the hash if new. */
-void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len) 
-{
+struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new) {
 	struct vis_info *info, *old_info;
-	/* ignore own packets */
-	if (is_my_mac(vis_packet->vis_orig))
-		return;
+
+	*is_new = 0;
 	/* sanity check */
 	if (vis_hash == NULL)
-		return;
+		return NULL;
 	info = kmalloc(sizeof(struct vis_info) + vis_info_len,GFP_KERNEL);
 	if (info == NULL) 
-		return;
+		return NULL;
 
 	init_timer(&info->vis_timer);
 	info->last_seen = jiffies;
 	memcpy(&info->packet, vis_packet, sizeof(struct vis_packet) + vis_info_len);
 
 	/* see if the packet is already in vis_hash */
-	spin_lock(&vis_hash_lock);
 	old_info = hash_find(vis_hash, info);
 
 	if (old_info != NULL) {
 		if (info->packet.seqno - old_info->packet.seqno <= 0) {
-			if (info->packet.seqno == info->packet.seqno) {
+			if (old_info->packet.seqno == info->packet.seqno) {
 				/* LATER: add to receive_from_list */
+				free_info(info);
+				return(old_info);
 			}
 			/* same or newer packet is already in hash. */
 			free_info(info);
-			goto end;
+			return(NULL);
 		} 
 		/* remove old entry */
 		hash_remove(vis_hash, old_info);
 		free_info(old_info);
 	}
+
+	/* initialize and add new packet. */
+	*is_new = 1;
 
 	/* repair if entries is longer than packet. */
 	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len) 
@@ -111,18 +115,78 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 	if (hash_add(vis_hash, info)< 0) {
 		/* did not work (for some reason) */
 		free_info(info);
-		goto end;
+		info = NULL;
 	}	
-	/* activate timer */
-	info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
-	info->vis_timer.data = (unsigned long)info;
-	info->vis_timer.function = send_vis_packet;
-	add_timer(&info->vis_timer);
+	return info;
+}
+
+/* handle the server sync packet, forward if needed. */
+void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len) 
+{
+	struct vis_info *info;
+	int is_new;
+
+	spin_lock(&vis_hash_lock);
+	info = add_packet(vis_packet, vis_info_len, &is_new);
+	if (info == NULL)
+		goto end;
+
+	/* only if we are server ourselves and packet is newer than the one in hash.*/
+	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
+		/* activate timer */
+		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
+		info->vis_timer.data = (unsigned long)info;
+		info->vis_timer.function = send_vis_packet;
+		add_timer(&info->vis_timer);
+	}
 
 end:
 	spin_unlock(&vis_hash_lock);
 
 }
+
+/* handle an incoming client update packet and schedule forward if needed. */
+void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len) 
+{
+	struct vis_info *info;
+	int is_new;
+	int need_send;
+	/* clients shall not broadcast. */
+	if (is_bcast(vis_packet->target_orig)) 
+		return;
+
+	spin_lock(&vis_hash_lock);
+	info = add_packet(vis_packet, vis_info_len, &is_new);
+	if (info == NULL)
+		goto end;
+
+	need_send = 0;
+
+	/* send only if we're the target server or ... */
+	if (my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC
+		&& is_my_mac(info->packet.target_orig)
+		&& is_new) {
+
+		need_send = 1;
+		info->packet.vis_type = VIS_TYPE_SERVER_SYNC;	/* upgrade! */
+
+	}
+
+	 /* ... we're not the recipient (and thus need to forward). */
+	if (!is_my_mac(info->packet.target_orig))
+		need_send = 1;
+
+	if (need_send) {
+		/* activate timer */
+		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
+		info->vis_timer.data = (unsigned long)info;
+		info->vis_timer.function = send_vis_packet;
+		add_timer(&info->vis_timer);
+	}
+end:
+	spin_unlock(&vis_hash_lock);
+}
+
 
 /* send own vis data */
 static void generate_vis_packet(void) 
@@ -130,14 +194,38 @@ static void generate_vis_packet(void)
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
 	struct vis_info *info = (struct vis_info *)my_vis_info;
-	struct vis_info_entry *entry;
+	struct vis_info_entry *entry, *entry_array;
 	struct hna_local_entry *hna_local_entry;
+	int best_tq = -1;
 
 	info->last_seen = jiffies;
 
 	spin_lock(&orig_hash_lock);
+	memcpy(info->packet.target_orig, broadcastAddr, 6);
+	info->packet.ttl = TTL;
 	info->packet.seqno++;
 	info->packet.entries = 0;
+
+	if (my_vis_info->packet.vis_type == VIS_TYPE_CLIENT_UPDATE) {
+		/* find vis-server to receive. */
+		while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+			orig_node = hashit->bucket->data;
+			if ((orig_node != NULL) && (orig_node->router == NULL)) {
+				if ((orig_node->flags & VIS_SERVER) && orig_node->router->tq_avg > best_tq) {
+					best_tq = orig_node->router->tq_avg;
+					memcpy(info->packet.target_orig, orig_node->orig,6);
+				}
+			}
+		}
+		if (best_tq < 0) {
+			info->packet.ttl = 0;	/* don't send */
+			spin_unlock(&orig_hash_lock);
+			return;
+		}
+	}
+	hashit = NULL;
+
+	entry_array = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info));
 
 	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 		orig_node = hashit->bucket->data;
@@ -146,7 +234,7 @@ static void generate_vis_packet(void)
 			&& orig_node->router->tq_avg > 0) {
 
 			/* fill one entry into buffer. */
-			entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info) + sizeof(struct vis_info_entry) * info->packet.entries);
+			entry = &entry_array[info->packet.entries];
 
 			memcpy(entry->dest, orig_node->orig, ETH_ALEN);
 			entry->quality = orig_node->router->tq_avg;
@@ -165,7 +253,8 @@ static void generate_vis_packet(void)
 	spin_lock(&hna_local_hash_lock);
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 		hna_local_entry = hashit->bucket->data;
-		entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info) + sizeof(struct vis_info_entry) * info->packet.entries);
+
+		entry = &entry_array[info->packet.entries];
 
 		memcpy(entry->dest, hna_local_entry->addr, ETH_ALEN);
 		entry->quality = 0; /* 0 means HNA */
@@ -217,30 +306,69 @@ void send_vis_packet(unsigned long arg) {
 	struct batman_if *batman_if;
 	struct vis_info *info = (struct vis_info *)arg;
 	struct list_head *list_pos;
+	struct orig_node *orig_node;
+	int packet_length;
+
+
+	if (info->packet.ttl < 2) {
+		debug_log(LOG_TYPE_NOTICE, "Error - can't send vis packet: ttl exceeded\n");
+		return;
+	}
 
 	/* LATER: change this to send only to vis "neighbours" */
+	if (info->packet.vis_type == VIS_TYPE_SERVER_SYNC)
+		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
+
 	spin_lock(&if_list_lock);
-	memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
 	memcpy(info->packet.sender_orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
-	/* broadcast packet */
-	list_for_each(list_pos, &if_list) {
-		batman_if = list_entry(list_pos, struct batman_if, list);
-		send_raw_packet((unsigned char *)&info->packet, 
-				sizeof(struct vis_packet) + info->packet.entries * sizeof(struct vis_info_entry), 
-				batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-	}
 	spin_unlock(&if_list_lock);
+
+	info->packet.ttl--;
+
+	packet_length = sizeof(struct vis_packet) + info->packet.entries * sizeof(struct vis_info_entry);
+
+	if (is_bcast(info->packet.target_orig)) {
+		/* broadcast packet */
+		spin_lock(&if_list_lock);
+		list_for_each(list_pos, &if_list) {
+			batman_if = list_entry(list_pos, struct batman_if, list);
+			send_raw_packet((unsigned char *)&info->packet, packet_length, 
+					batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+		}
+		spin_unlock(&if_list_lock);
+	} else {
+		/* unicast packet */
+		spin_lock(&orig_hash_lock);
+		orig_node = ((struct orig_node *) hash_find(orig_hash, info->packet.target_orig));
+
+		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+			send_raw_packet((unsigned char *) &info->packet, packet_length, 
+					orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+		}
+		spin_unlock(&orig_hash_lock);
+		
+	}
+	info->packet.ttl++; /* restore TTL */
 }
 
 /* receive and handle a vis packet */
 void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, int vis_info_len)
 {
+	/* ignore own packets */
+	if (is_my_mac(vis_packet->vis_orig))
+		return;
+	if (is_my_mac(vis_packet->sender_orig))
+		return;
+
 	switch (vis_packet->vis_type) {
 	case VIS_TYPE_SERVER_SYNC:
 		receive_server_sync_packet(vis_packet, vis_info_len);
 		break;
+
 	case VIS_TYPE_CLIENT_UPDATE:
-		/* LATER */
+		receive_client_update_packet(vis_packet, vis_info_len);
+		break;
+
 	default:	/* ignore unknown packet */
 		break;
 	}
@@ -267,6 +395,7 @@ int vis_init(void)
 	my_vis_info->receive_from_list = NULL; /* LATER */
 	my_vis_info->packet.packet_type = BAT_VIS;
 	my_vis_info->packet.vis_type = VIS_TYPE_SERVER_SYNC;
+	my_vis_info->packet.ttl = TTL;
 	my_vis_info->packet.seqno = 0;
 	my_vis_info->packet.entries = 0;
 
