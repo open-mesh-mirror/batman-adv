@@ -35,6 +35,41 @@
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL/*, *proc_gateways_file = NULL*/;
 static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL, *proc_vis_file = NULL;
 
+static const struct file_operations proc_vis_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_vis_open,
+	.read		= seq_read,
+	.write		= proc_dummy_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+static const struct file_operations proc_originators_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_originators_open,
+	.read		= seq_read,
+	.write		= proc_dummy_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+static const struct file_operations proc_transtable_local_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_transtable_local_open,
+	.read		= seq_read,
+	.write		= proc_dummy_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+static const struct file_operations proc_transtable_global_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_transtable_global_open,
+	.read		= seq_read,
+	.write		= proc_dummy_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+
+
 
 
 void cleanup_procfs(void)
@@ -129,9 +164,7 @@ int setup_procfs(void)
 	proc_originators_file = create_proc_entry(PROC_FILE_ORIGINATORS, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_originators_file) {
-		proc_originators_file->read_proc = proc_originators_read;
-		proc_originators_file->write_proc = proc_dummy_write;
-		proc_originators_file->data = NULL;
+		proc_originators_file->proc_fops = &proc_originators_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_ORIGINATORS);
 		cleanup_procfs();
@@ -162,9 +195,7 @@ int setup_procfs(void)
 	proc_transtable_local_file = create_proc_entry(PROC_FILE_TRANSTABLE_LOCAL, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_transtable_local_file) {
-		proc_transtable_local_file->read_proc = proc_transtable_local_read;
-		proc_transtable_local_file->write_proc = proc_dummy_write;
-		proc_transtable_local_file->data = NULL;
+		proc_transtable_local_file->proc_fops = &proc_transtable_local_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_TRANSTABLE_LOCAL);
 		cleanup_procfs();
@@ -174,9 +205,7 @@ int setup_procfs(void)
 	proc_transtable_global_file = create_proc_entry(PROC_FILE_TRANSTABLE_GLOBAL, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_transtable_global_file) {
-		proc_transtable_global_file->read_proc = proc_transtable_global_read;
-		proc_transtable_global_file->write_proc = proc_dummy_write;
-		proc_transtable_global_file->data = NULL;
+		proc_transtable_global_file->proc_fops = &proc_transtable_global_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_TRANSTABLE_GLOBAL);
 		cleanup_procfs();
@@ -186,9 +215,7 @@ int setup_procfs(void)
 	proc_vis_file = create_proc_entry(PROC_FILE_VIS, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_vis_file) {
-		proc_vis_file->read_proc = proc_vis_read;
-		proc_vis_file->write_proc = proc_dummy_write;
-		proc_vis_file->data = NULL;
+		proc_vis_file->proc_fops = &proc_vis_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_VIS);
 		cleanup_procfs();
@@ -366,25 +393,23 @@ end:
 	return count;
 }
 
-int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_originators_read(struct seq_file *seq, void *offset)
 {
 	struct hash_it_t *hashit = NULL;
 	struct list_head *list_pos;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
-	int total_bytes = 0, bytes_written = 0, batman_count = 0;
+	int batman_count = 0;
 	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
 	spin_lock(&if_list_lock);
 	if (list_empty(&if_list)) {
 		spin_unlock(&if_list_lock);
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	seq_printf(seq, "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
 
 	spin_unlock(&if_list_lock);
 	spin_lock(&orig_hash_lock);
@@ -404,34 +429,34 @@ int proc_originators_read(char *buf, char **start, off_t offset, int size, int *
 		addr_to_string(orig_str, orig_node->orig);
 		addr_to_string(router_str, orig_node->router->addr);
 
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%-17s  (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "%-17s  (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
 
 		list_for_each(list_pos, &orig_node->neigh_list) {
 			neigh_node = list_entry(list_pos, struct neigh_node, list);
 
 			addr_to_string(orig_str, neigh_node->addr);
 
-			bytes_written = snprintf(buf + total_bytes, (size - total_bytes), " %17s (%3i)", orig_str, neigh_node->tq_avg);
-			total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+			seq_printf(seq, " %17s (%3i)", orig_str, neigh_node->tq_avg);
 		}
 
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "\n");
 
 	}
 
 	spin_unlock(&orig_hash_lock);
 
-	if (batman_count == 0) {
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "No batman nodes in range ... \n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-	}
+	if (batman_count == 0) 
+		seq_printf(seq, "No batman nodes in range ... \n");
 
 end:
-	*eof = 1;
-	return total_bytes;
+	return 0;
 }
+
+int proc_originators_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_originators_read, NULL);
+}
+
 
 /*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
@@ -535,80 +560,80 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 	return count;
 }
 
-int proc_transtable_local_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_transtable_local_read(struct seq_file *seq, void *offset)
 {
-	int total_bytes = 0, bytes_written = 0;
-
+	char buf[4096];
 	spin_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
 		spin_unlock(&if_list_lock);
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
 	spin_unlock(&if_list_lock);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	seq_printf(seq, "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
 
-	bytes_written = hna_local_fill_buffer_text(buf + total_bytes, (size - total_bytes));
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	hna_local_fill_buffer_text(buf, 4096);
+	seq_printf(seq, "%s", buf);
 
 end:
-	*eof = 1;
-	return total_bytes;
+	return 0;
 }
 
-int proc_transtable_global_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_transtable_local_open(struct inode *inode, struct file *file)
 {
-	int total_bytes = 0, bytes_written = 0;
+	return single_open(file, proc_transtable_local_read, NULL);
+}
 
+
+int proc_transtable_global_read(struct seq_file *seq, void *offset)
+{
+	char buf[4096];
 	spin_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
 		spin_unlock(&if_list_lock);
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
 	spin_unlock(&if_list_lock);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "Globally announced HNAs received via the mesh (translation table):\n");
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	seq_printf(seq, "Globally announced HNAs received via the mesh (translation table):\n");
 
-	bytes_written = hna_global_fill_buffer_text(buf + total_bytes, (size - total_bytes));
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	hna_global_fill_buffer_text(buf, 4096);
+	seq_printf(seq, "%s", buf);
 
 end:
-	*eof = 1;
-	return total_bytes;
+	return 0;
+}
+int proc_transtable_global_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_transtable_global_read, NULL);
 }
 
-int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+
+int proc_vis_read(struct seq_file *seq, void *offset)
 {
-	int total_bytes = 0, bytes_written = 0;
 	struct hash_it_t *hashit = NULL;
 	struct vis_info *info;
 	struct vis_info_entry *entries;
 	char from[40], to[40];
-	int i;
+	int i, int_part, frac_part;
 
 	spin_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
 		spin_unlock(&if_list_lock);
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "BATMAN disabled - please specify interfaces to enable it \n");
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "digraph {\n}\n" );
 		goto end;
 	}
 
 	spin_unlock(&if_list_lock);
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "digraph {\n" );
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	seq_printf(seq, "digraph {\n" );
 
 	spin_lock(&vis_hash_lock);
 	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
@@ -618,26 +643,30 @@ int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, voi
 		for (i = 0; i < info->packet.entries; i++) {
 			addr_to_string(to, entries[i].dest);
 			if (entries[i].quality == 0)
-				bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
-			else
-				bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\t\"%s\" -> \"%s\" [label=\"%d\"]\n", from, to, 255/entries[i].quality);
-			/* TODO: kernel has no printf-support for %f? it'd be better to return this in float. */
-
-			total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
+				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
+			else {
+				/* TODO: kernel has no printf-support for %f? it'd be better to return this in float. */
+				int_part = 255/entries[i].quality;
+				frac_part = 1000 * 255/entries[i].quality - int_part * 1000;
+				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"%d.%d\"]\n", from, to, int_part, frac_part);
+			}
 		}
 	}
 
 	spin_unlock(&vis_hash_lock);
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "}\n");
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
+	seq_printf(seq, "}\n");
 end:
-	*eof = 1;
-	return total_bytes;
+	return 0;
 }
-int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+
+int proc_vis_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_vis_read, NULL);
+}
+
+
+/* satisfying different prototypes ... */
+ssize_t proc_dummy_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
 {
 	return count;
 }

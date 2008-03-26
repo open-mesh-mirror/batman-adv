@@ -144,11 +144,9 @@ static void generate_vis_packet(void)
 		if (orig_node->router != NULL
 			&& memcmp(orig_node->router->addr, orig_node->orig, ETH_ALEN) == 0
 			&& orig_node->router->tq_avg > 0) {
-			char addr[40];
 
 			/* fill one entry into buffer. */
 			entry = (struct vis_info_entry *)((char *)info + sizeof(struct vis_info) + sizeof(struct vis_info_entry) * info->packet.entries);
-			addr_to_string(addr, orig_node->orig);
 
 			memcpy(entry->dest, orig_node->orig, ETH_ALEN);
 			entry->quality = orig_node->router->tq_avg;

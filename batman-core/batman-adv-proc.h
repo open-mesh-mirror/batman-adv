@@ -22,6 +22,7 @@
 
 
 #include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 
 #define PROC_ROOT_DIR "batman-adv"
 #define PROC_FILE_INTERFACES "interfaces"
@@ -42,11 +43,15 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
 int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
-int proc_originators_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
+int proc_originators_open(struct inode *inode, struct file *file);
+int proc_originators_read(struct seq_file *seq, void *offset);
 /*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);*/
 int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
 int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
-int proc_transtable_local_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
-int proc_transtable_global_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
-int proc_vis_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);
-int proc_dummy_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data);
+int proc_transtable_local_open(struct inode *inode, struct file *file);
+int proc_transtable_local_read(struct seq_file *seq, void *offset);
+int proc_transtable_global_open(struct inode *inode, struct file *file);
+int proc_transtable_global_read(struct seq_file *seq, void *offset);
+int proc_vis_open(struct inode *inode, struct file *file);
+int proc_vis_read(struct seq_file *seq, void *offset);
+ssize_t proc_dummy_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos);
