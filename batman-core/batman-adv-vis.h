@@ -20,7 +20,7 @@
 #define VIS_TIMEOUT		200000
 
 struct vis_info {
-	unsigned long       last_seen;
+	unsigned long       first_seen;
 	struct timer_list   vis_timer;
 	struct list_head   *receive_from_list;	
 			/* list of server-neighbors we received a vis-packet from. 

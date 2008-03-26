@@ -79,7 +79,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 		return NULL;
 
 	init_timer(&info->vis_timer);
-	info->last_seen = jiffies;
+	info->first_seen = jiffies;
 	memcpy(&info->packet, vis_packet, sizeof(struct vis_packet) + vis_info_len);
 
 	/* see if the packet is already in vis_hash */
@@ -133,6 +133,8 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
 	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
+		/* remove if still active */
+		del_timer_sync(&info->vis_timer);
 		/* activate timer */
 		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
 		info->vis_timer.data = (unsigned long)info;
@@ -177,6 +179,9 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 		need_send = 1;
 
 	if (need_send) {
+		/* remove if still active */
+		del_timer_sync(&info->vis_timer);
+
 		/* activate timer */
 		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
 		info->vis_timer.data = (unsigned long)info;
@@ -198,7 +203,7 @@ static void generate_vis_packet(void)
 	struct hna_local_entry *hna_local_entry;
 	int best_tq = -1;
 
-	info->last_seen = jiffies;
+	info->first_seen = jiffies;
 
 	spin_lock(&orig_hash_lock);
 	memcpy(info->packet.target_orig, broadcastAddr, 6);
@@ -279,7 +284,7 @@ void purge_vis_packets(void)
 		info = hashit->bucket->data;
 		if (info == my_vis_info)	/* never purge own data. */
 			continue;
-		if (time_after(jiffies, info->last_seen + (VIS_TIMEOUT/1000)*HZ)) {
+		if (time_after(jiffies, info->first_seen + (VIS_TIMEOUT/1000)*HZ)) {
 			hash_remove_bucket(vis_hash, hashit);
 			free_info(info);
 		}
@@ -391,7 +396,7 @@ int vis_init(void)
 		return(-1);
 	}
 	/* prefill the vis info */
-	my_vis_info->last_seen = jiffies - atomic_read(&vis_interval);
+	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
 	my_vis_info->receive_from_list = NULL; /* LATER */
 	my_vis_info->packet.packet_type = BAT_VIS;
 	my_vis_info->packet.vis_type = VIS_TYPE_SERVER_SYNC;
