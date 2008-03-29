@@ -120,6 +120,8 @@ void start_purge_timer(void)
 	purge_timer.data = 0;
 	purge_timer.function = purge_orig;
 
+	check_inactive_interfaces();
+
 	add_timer(&purge_timer);
 }
 
@@ -151,13 +153,17 @@ void activate_module(void)
 		hna_local_add(bat_device->dev_addr);
 
 	}
-	spin_lock(&if_list_lock);
+
 	/* (re)activate all timers (if any) */
+	spin_lock(&if_list_lock);
+
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		start_bcast_timer(batman_if);
+		if (batman_if->if_active)
+			start_bcast_timer(batman_if);
 	}
+
 	spin_unlock(&if_list_lock);
 
 	/* (re)start kernel thread for packet processing */
@@ -196,6 +202,9 @@ void shutdown_module(char keep_bat_if)
 		kthread_task = NULL;
 	}
 
+	if (!(list_empty(&if_list)))
+		del_timer_sync(&purge_timer);
+
 	spin_lock(&if_list_lock);
 
 	/* deactivate all timers first to avoid race conditions */
@@ -207,9 +216,6 @@ void shutdown_module(char keep_bat_if)
 	}
 
 	spin_unlock(&if_list_lock);
-
-	if (!(list_empty(&if_list)))
-		del_timer_sync(&purge_timer);
 
 	bat_device_destroy();
 }
@@ -275,6 +281,9 @@ void deactivate_interface(struct batman_if *batman_if)
 	batman_if->raw_sock = NULL;
 	batman_if->net_dev = NULL;
 
+	if (batman_if->if_active)
+		del_timer_sync(&batman_if->bcast_timer);
+
 	batman_if->if_active = 0;
 	active_ifs--;
 
@@ -323,6 +332,9 @@ void activate_interface(struct batman_if *batman_if)
 
 	batman_if->if_active = 1;
 	active_ifs++;
+
+	/* must be done after setting batman_if active because deactivate_interface() relies on it */
+	start_bcast_timer(batman_if);
 
 	/* save the mac address if it is out primary interface */
 	if (batman_if->if_num == 0)
@@ -416,9 +428,7 @@ int add_interface(char *dev, int if_num)
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 
-	if (is_interface_up(batman_if->dev))
-		activate_interface(batman_if);
-	else
+	if (!is_interface_up(batman_if->dev))
 		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", dev);
 
 	spin_lock(&if_list_lock);

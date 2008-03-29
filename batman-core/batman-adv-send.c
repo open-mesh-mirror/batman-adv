@@ -38,8 +38,7 @@ void start_bcast_timer(struct batman_if *batman_if)
 	batman_if->bcast_timer.data = (unsigned long)batman_if;
 	batman_if->bcast_timer.function = send_own_packet;
 
-	if (batman_if->if_active)
-		add_timer(&batman_if->bcast_timer);
+	add_timer(&batman_if->bcast_timer);
 }
 
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
@@ -54,6 +53,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
+		deactivate_interface(batman_if);
 		return;
 	}
 
@@ -85,6 +85,9 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 	struct batman_if *batman_if;
 	char orig_str[ETH_STR_LEN];
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
+
+	if (!if_outgoing->if_active)
+		return;
 
 	addr_to_string(orig_str, ((struct batman_packet *)pack_buff)->orig);
 
