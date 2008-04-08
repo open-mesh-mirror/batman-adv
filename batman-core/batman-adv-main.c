@@ -428,9 +428,11 @@ int add_interface(char *dev, int if_num)
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 
-	if (!is_interface_up(batman_if->dev))
+	if (is_interface_up(batman_if->dev))
+		activate_interface(batman_if);
+	else
 		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", dev);
-
+	
 	spin_lock(&if_list_lock);
 	list_add_tail(&batman_if->list, &if_list);
 	spin_unlock(&if_list_lock);
@@ -442,6 +444,7 @@ out:
 	return -1;
 }
 
+/* sets up inactive devices. if_list_lock must be locked outside. */
 void check_inactive_interfaces(void)
 {
 	struct list_head *list_pos;

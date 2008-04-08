@@ -237,7 +237,7 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->net_dev->name);
+		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->dev);
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 	}
 
