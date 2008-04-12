@@ -31,3 +31,5 @@ int interface_set_mac_addr(struct net_device *dev, void *addr);
 int interface_change_mtu(struct net_device *dev, int new_mtu);
 int interface_tx(struct sk_buff *skb, struct net_device *dev);
 void interface_rx(struct net_device *dev, void *packet, int packet_len);
+
+extern unsigned char mainIfAddr[];

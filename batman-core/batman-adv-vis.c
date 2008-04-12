@@ -22,11 +22,12 @@
 #include "batman-adv-ttable.h"
 #include "batman-adv-vis.h"
 #include "batman-adv-log.h"
+#include "batman-adv-interface.h"
 #include "hash.h"
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
-static DEFINE_SPINLOCK(vis_own_packet_lock);
+static DEFINE_MUTEX(vis_own_packet_lock);
 static struct vis_info *my_vis_info;
 
 void free_info(void *data);
@@ -296,14 +297,14 @@ void purge_vis_packets(void)
 void send_own_vis_packet(unsigned long arg) 
 {
 
-	spin_lock(&vis_own_packet_lock);
+	mutex_lock(&vis_own_packet_lock);
 
 	purge_vis_packets();
 	generate_vis_packet();
 	send_vis_packet((unsigned long) my_vis_info);
 	start_vis_timer();
 
-	spin_unlock(&vis_own_packet_lock);
+	mutex_unlock(&vis_own_packet_lock);
 }
 
 /* only send vis packet. called from timers and send_own_vis_packet() */
@@ -324,9 +325,7 @@ void send_vis_packet(unsigned long arg) {
 	if (info->packet.vis_type == VIS_TYPE_SERVER_SYNC)
 		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
 
-	spin_lock(&if_list_lock);
-	memcpy(info->packet.sender_orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
-	spin_unlock(&if_list_lock);
+	memcpy(info->packet.sender_orig, mainIfAddr, ETH_ALEN);
 
 	info->packet.ttl--;
 
@@ -334,13 +333,13 @@ void send_vis_packet(unsigned long arg) {
 
 	if (is_bcast(info->packet.target_orig)) {
 		/* broadcast packet */
-		spin_lock(&if_list_lock);
+		mutex_lock(&if_list_lock);
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
 			send_raw_packet((unsigned char *)&info->packet, packet_length, 
 					batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 	} else {
 		/* unicast packet */
 		spin_lock(&orig_hash_lock);
@@ -404,10 +403,8 @@ int vis_init(void)
 	my_vis_info->packet.seqno = 0;
 	my_vis_info->packet.entries = 0;
 
-	spin_lock(&if_list_lock);
-	memcpy(my_vis_info->packet.vis_orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
-	memcpy(my_vis_info->packet.sender_orig, ((struct batman_if *)if_list.next)->net_dev->dev_addr, ETH_ALEN);
-	spin_unlock(&if_list_lock);
+	memcpy(my_vis_info->packet.vis_orig, mainIfAddr, ETH_ALEN);
+	memcpy(my_vis_info->packet.sender_orig, mainIfAddr, ETH_ALEN);
 
 	if (hash_add(vis_hash, my_vis_info) < 0) {
 		debug_log(LOG_TYPE_CRIT, "Can't add own vis packet into hash\n");

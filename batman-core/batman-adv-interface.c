@@ -41,7 +41,7 @@ static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
 static int32_t skb_packets = 0;
 static int32_t skb_bad_packets = 0;
 
-static unsigned char mainIfAddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+unsigned char mainIfAddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static unsigned char mainIfAddr_default[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 
@@ -188,10 +188,11 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		/* batman packet type: broadcast */
 		bcast_packet->packet_type = BAT_BCAST;
 
-		spin_lock(&if_list_lock);
 		/* hw address of first interface is the orig mac because only this mac is known throughout the mesh */
 		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 		/* set broadcast sequence number */
+
+		mutex_lock(&if_list_lock);
 		bcast_packet->seqno = htons(bcast_seqno);
 
 		bcast_seqno++;
@@ -202,7 +203,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 
 	/* unicast packet */
 	} else {

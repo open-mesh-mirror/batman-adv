@@ -18,9 +18,6 @@
  */
 
 
-
-
-
 #include "batman-adv-main.h"
 #include "batman-adv-proc.h"
 #include "batman-adv-log.h"
@@ -32,14 +29,18 @@
 #include "batman-adv-vis.h"
 #include "types.h"
 #include "hash.h"
+#include <linux/workqueue.h>
 
 
 
 struct list_head if_list;
 struct hashtable_t *orig_hash;
 
-DEFINE_SPINLOCK(if_list_lock);
+DEFINE_MUTEX(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
+
+static struct workqueue_struct *check_interfaces_wq;
+static DECLARE_WORK(check_interfaces_work, check_inactive_interfaces);
 
 atomic_t originator_interval;
 atomic_t vis_interval;
@@ -52,11 +53,14 @@ static struct task_struct *kthread_task = NULL;
 static struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+static uint8_t my_addresses[MAX_ADDR][ETH_ALEN];
+static int     my_addresses_n = 0;
 char hna_local_changed = 0;
 
 static char avail_ifs = 0;
 static char active_ifs = 0;
 
+static void rewrite_my_adresses(void);
 
 
 int init_module(void)
@@ -66,6 +70,10 @@ int init_module(void)
 	INIT_LIST_HEAD(&if_list);
 	atomic_set(&originator_interval, 1000);
 	atomic_set(&vis_interval, 1000);		/* TODO: raise this later, this is only for debugging now. */
+	check_interfaces_wq = create_singlethread_workqueue("check_interfaces_wq");
+
+	if (!check_interfaces_wq) 
+		return -ENOMEM;
 
 	if ((retval = setup_procfs()) < 0)
 		return retval;
@@ -100,8 +108,10 @@ clean_proc:
 
 void cleanup_module(void)
 {
+	mutex_lock(&if_list_lock);
 	shutdown_module(0);
 	remove_interfaces();
+	mutex_unlock(&if_list_lock);
 
 	spin_lock(&orig_hash_lock);
 	hash_delete(orig_hash, free_orig_node);
@@ -110,6 +120,7 @@ void cleanup_module(void)
 	hna_local_free();
 	hna_global_free();
 	cleanup_procfs();
+	destroy_workqueue(check_interfaces_wq);
 }
 
 void start_purge_timer(void)
@@ -120,11 +131,14 @@ void start_purge_timer(void)
 	purge_timer.data = 0;
 	purge_timer.function = purge_orig;
 
-	check_inactive_interfaces();
+	/* scheduled, because (de)activate_interface might sleep. */
+	queue_work(check_interfaces_wq, &check_interfaces_work);
 
 	add_timer(&purge_timer);
 }
 
+/* activates the module, creates bat device, starts timer ... 
+ * if_list_lock must NOT be acquired outside. */
 void activate_module(void)
 {
 	struct list_head *list_pos;
@@ -153,18 +167,17 @@ void activate_module(void)
 		hna_local_add(bat_device->dev_addr);
 
 	}
-
 	/* (re)activate all timers (if any) */
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		if (batman_if->if_active)
+		if (batman_if->if_active == IF_ACTIVE)
 			start_bcast_timer(batman_if);
 	}
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	/* (re)start kernel thread for packet processing */
 	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
@@ -180,7 +193,8 @@ void activate_module(void)
 
 	vis_init();
 }
-
+/* shuts down the whole module.
+ * if_list_lock must be acquired outside. */
 void shutdown_module(char keep_bat_if)
 {
 	struct list_head *list_pos;
@@ -204,22 +218,20 @@ void shutdown_module(char keep_bat_if)
 
 	if (!(list_empty(&if_list)))
 		del_timer_sync(&purge_timer);
-
-	spin_lock(&if_list_lock);
+	flush_workqueue(check_interfaces_wq);
 
 	/* deactivate all timers first to avoid race conditions */
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		if (batman_if->if_active)
+		if (batman_if->if_active != IF_ACTIVE)
 			del_timer_sync(&batman_if->bcast_timer);
 	}
 
-	spin_unlock(&if_list_lock);
-
 	bat_device_destroy();
 }
-
+/* checks if the interface is up. (returns 1 if it is) 
+ * if_list_lock must be acquired outside. */
 int is_interface_up(char *dev)
 {
 	struct net_device *net_dev;
@@ -231,19 +243,16 @@ int is_interface_up(char *dev)
 	 * the primary interface has never been up - don't activate any secondary interface !
 	 */
 
-	spin_lock(&if_list_lock);
 
 	if ((!list_empty(&if_list)) &&
 		(strncmp(((struct batman_if *)if_list.next)->dev, dev, IFNAMSIZ) != 0) &&
-		!(((struct batman_if *)if_list.next)->if_active) &&
+		!(((struct batman_if *)if_list.next)->if_active == IF_ACTIVE) &&
 		(!main_if_was_up())) {
 
-		spin_unlock(&if_list_lock);
 		goto end;
 
 	}
 
-	spin_unlock(&if_list_lock);
 
 #ifdef __NET_NET_NAMESPACE_H
 	if ((net_dev = dev_get_by_name(&init_net, dev)) == NULL)
@@ -263,7 +272,8 @@ failure:
 end:
 	return 0;
 }
-
+/* deactivates the interface. 
+ * if_list_lock must be acquired outside. */
 void deactivate_interface(struct batman_if *batman_if)
 {
 	if (batman_if->raw_sock != NULL)
@@ -281,21 +291,32 @@ void deactivate_interface(struct batman_if *batman_if)
 	batman_if->raw_sock = NULL;
 	batman_if->net_dev = NULL;
 
-	if (batman_if->if_active)
+	if (batman_if->if_active != IF_INACTIVE)
 		del_timer_sync(&batman_if->bcast_timer);
 
-	batman_if->if_active = 0;
+	batman_if->if_active = IF_INACTIVE;
 	active_ifs--;
 
 	debug_log(LOG_TYPE_NOTICE, "Interface deactivated: %s\n", batman_if->dev);
+	/*
+	 * TODO: shutdown_module() kills a lot of datastructures which might one of the parent functions,
+	 * e.g. free the batman_if which is used in the parent function after deactivate_interface ...
+	 *
+	 * shutdown_module() should be called from a more safe place.
+	 *
+	 * another problem would be that purge_timer() would be deactivated too, and the module won't come
+	 * up again (for the case that the main device just have been deactivated for a short moment).
+	 *
 	if (batman_if->if_num == 0) {
 		debug_log(LOG_TYPE_CRIT, "Main Interface deactivated, shutting down module.\n", batman_if->dev);
 		shutdown_module(0);
 	}
+	*/
 
 
 }
-
+/* (re)activate given interface. 
+ * if_list_lock must be locked outside.  */
 void activate_interface(struct batman_if *batman_if)
 {
 	struct sockaddr_ll bind_addr;
@@ -330,7 +351,7 @@ void activate_interface(struct batman_if *batman_if)
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 
-	batman_if->if_active = 1;
+	batman_if->if_active = IF_ACTIVE;
 	active_ifs++;
 
 	/* must be done after setting batman_if active because deactivate_interface() relies on it */
@@ -341,13 +362,15 @@ void activate_interface(struct batman_if *batman_if)
 		set_main_if_addr(batman_if->net_dev->dev_addr);
 
 	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n", batman_if->dev);
+	rewrite_my_adresses();
 
 	return;
 
 error:
 	deactivate_interface(batman_if);
 }
-
+/* removes and frees all interfaces. 
+ * if_list_lock must be acquired outside. */
 void remove_interfaces(void)
 {
 	struct list_head *list_pos, *list_pos_tmp;
@@ -355,7 +378,6 @@ void remove_interfaces(void)
 
 	avail_ifs = 0;
 
-	spin_lock(&if_list_lock);
 
 	/* deactivate all interfaces */
 	list_for_each_safe(list_pos, list_pos_tmp, &if_list) {
@@ -363,7 +385,7 @@ void remove_interfaces(void)
 
 		list_del(list_pos);
 
-		if (batman_if->if_active)
+		if (batman_if->if_active != IF_INACTIVE)
 			deactivate_interface(batman_if);
 
 		debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->dev);
@@ -372,10 +394,9 @@ void remove_interfaces(void)
 		kfree(batman_if->dev);
 		kfree(batman_if);
 	}
-
-	spin_unlock(&if_list_lock);
 }
-
+/* adds an interface the interface list and activate it, if possible. 
+ * if_list_lock must NOT be acquired. */
 int add_interface(char *dev, int if_num)
 {
 	struct batman_if *batman_if;
@@ -405,7 +426,7 @@ int add_interface(char *dev, int if_num)
 
 	batman_if->if_num = if_num;
 	batman_if->dev = dev;
-	batman_if->if_active = 0;
+	batman_if->if_active = IF_INACTIVE;
 
 	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", dev);
 	avail_ifs++;
@@ -428,14 +449,15 @@ int add_interface(char *dev, int if_num)
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
 
+	mutex_lock(&if_list_lock);
+	debug_log(LOG_TYPE_WARN, "Activating interface \n", dev);
 	if (is_interface_up(batman_if->dev))
 		activate_interface(batman_if);
 	else
-		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", dev);
+		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", batman_if->dev);
 	
-	spin_lock(&if_list_lock);
 	list_add_tail(&batman_if->list, &if_list);
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	return 1;
 
@@ -444,21 +466,26 @@ out:
 	return -1;
 }
 
-/* sets up inactive devices. if_list_lock must be locked outside. */
-void check_inactive_interfaces(void)
+/* sets up inactive devices. if_list_lock must NOT be locked outside. */
+void check_inactive_interfaces(struct work_struct *work)
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 
-	if (avail_ifs == active_ifs)
-		return;
+	debug_log(LOG_TYPE_NOTICE, "check inactive interfaces .....\n");
 
+	mutex_lock(&if_list_lock);
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		if ((!batman_if->if_active) && (is_interface_up(batman_if->dev)))
+		if (batman_if->if_active == IF_TO_BE_REMOVED)
+			deactivate_interface(batman_if);
+
+		debug_log(LOG_TYPE_NOTICE, "checking batman_if->dev = %s, if_active = %d\n", batman_if->dev, batman_if->if_active );
+		if ((batman_if->if_active == IF_INACTIVE) && (is_interface_up(batman_if->dev)))
 			activate_interface(batman_if);
 	}
+	mutex_unlock(&if_list_lock);
 }
 
 char get_active_if_num(void)
@@ -515,26 +542,35 @@ int choose_orig(void *data, int32_t size)
 	return (hash%size);
 }
 
-int is_my_mac(uint8_t *addr)
+/* rewriting my adresses.
+ * if_list_lock must be acquired outside. */
+static void rewrite_my_adresses(void) 
 {
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
-	int retval = 0;
-
-	spin_lock(&if_list_lock);
+	int i = 0;
 
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
 
-		if (compare_orig(batman_if->net_dev->dev_addr, addr)) {
-			retval = 1;
-			goto end;
+		if ((batman_if->net_dev != NULL) && (i < MAX_ADDR)) {
+			memcpy(my_addresses[i], batman_if->net_dev->dev_addr, ETH_ALEN);
+			i++;
 		}
 	}
+	my_addresses_n = i;
+}
 
-end:
-	spin_unlock(&if_list_lock);
-	return retval;
+int is_my_mac(uint8_t *addr)
+{
+	int i;
+
+	for (i=0; i < my_addresses_n; i++) 
+		if (compare_orig(my_addresses[i], addr))
+			return 1;
+
+	return 0;
+		 
 }
 
 int is_bcast(uint8_t *addr)

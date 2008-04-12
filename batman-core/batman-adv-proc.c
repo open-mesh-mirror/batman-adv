@@ -232,7 +232,7 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 	struct list_head *list_pos;
 	struct batman_if *batman_if;
 
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 
 	list_for_each(list_pos, &if_list) {
 		batman_if = list_entry(list_pos, struct batman_if, list);
@@ -241,7 +241,7 @@ int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *e
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 	}
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
@@ -292,7 +292,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	} else {
 
 		/* add interface */
-		spin_lock(&if_list_lock);
+		mutex_lock(&if_list_lock);
 
 		list_for_each(list_pos, &if_list) {
 			batman_if = list_entry(list_pos, struct batman_if, list);
@@ -304,7 +304,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			if_num++;
 		}
 
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 
 		if (batman_if != NULL) {
 			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
@@ -402,16 +402,16 @@ int proc_originators_read(struct seq_file *seq, void *offset)
 	int batman_count = 0;
 	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 	if (list_empty(&if_list)) {
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
-	seq_printf(seq, "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->net_dev->name, ((struct batman_if *)if_list.next)->addr_str);
+	seq_printf(seq, "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->dev, ((struct batman_if *)if_list.next)->addr_str);
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 	spin_lock(&orig_hash_lock);
 
 	while (NULL != (hashit = hash_iterate( orig_hash, hashit))) {
@@ -563,15 +563,15 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 int proc_transtable_local_read(struct seq_file *seq, void *offset)
 {
 	char buf[4096];
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	seq_printf(seq, "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
 
@@ -591,15 +591,15 @@ int proc_transtable_local_open(struct inode *inode, struct file *file)
 int proc_transtable_global_read(struct seq_file *seq, void *offset)
 {
 	char buf[4096];
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	seq_printf(seq, "Globally announced HNAs received via the mesh (translation table):\n");
 
@@ -623,15 +623,15 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 	char from[40], to[40];
 	int i, int_part, frac_part;
 
-	spin_lock(&if_list_lock);
+	mutex_lock(&if_list_lock);
 
 	if (list_empty(&if_list)) {
-		spin_unlock(&if_list_lock);
+		mutex_unlock(&if_list_lock);
 		seq_printf(seq, "digraph {\n}\n" );
 		goto end;
 	}
 
-	spin_unlock(&if_list_lock);
+	mutex_unlock(&if_list_lock);
 
 	seq_printf(seq, "digraph {\n" );
 

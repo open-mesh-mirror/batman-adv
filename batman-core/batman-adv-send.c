@@ -40,7 +40,8 @@ void start_bcast_timer(struct batman_if *batman_if)
 
 	add_timer(&batman_if->bcast_timer);
 }
-
+/* sends a raw packet. 
+ * if_list_lock must be required outside.  */
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
 {
 	struct msghdr msg;
@@ -48,12 +49,13 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	struct ethhdr ethhdr;
 	int retval;
 
-	if (!batman_if->if_active)
+	if (batman_if->if_active != IF_ACTIVE)
 		return;
 
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
-		deactivate_interface(batman_if);
+		batman_if->if_active = IF_TO_BE_REMOVED;
+/*		deactivate_interface(batman_if);*/
 		return;
 	}
 
@@ -74,11 +76,14 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0) {
 		if (retval != -EAGAIN) {
 			debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
-			deactivate_interface(batman_if);
+			batman_if->if_active = IF_TO_BE_REMOVED;
+/*			deactivate_interface(batman_if);*/
 		}
 	}
 }
 
+/* send a batman packet.
+ * if_list_lock must NOT be acquired outside. */
 static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
 {
 	struct list_head *list_pos;
@@ -86,7 +91,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 	char orig_str[ETH_STR_LEN];
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
 
-	if (!if_outgoing->if_active)
+	if (if_outgoing->if_active != IF_ACTIVE)
 		return;
 
 	addr_to_string(orig_str, ((struct batman_packet *)pack_buff)->orig);
@@ -96,7 +101,9 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 		if (if_outgoing != NULL) {
 
+			mutex_lock(&if_list_lock);
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
+			mutex_unlock(&if_list_lock);
 
 		} else {
 
@@ -115,10 +122,11 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 			/* non-primary interfaces are only broadcasted on their interface */
 			if (own_packet && (if_outgoing->if_num > 0)) {
 				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
-
+				mutex_lock(&if_list_lock);
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
+				mutex_unlock(&if_list_lock);
 			} else {
-
+				mutex_lock(&if_list_lock);
 				list_for_each(list_pos, &if_list) {
 					batman_if = list_entry(list_pos, struct batman_if, list);
 
@@ -131,6 +139,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
+				mutex_unlock(&if_list_lock);
 
 			}
 

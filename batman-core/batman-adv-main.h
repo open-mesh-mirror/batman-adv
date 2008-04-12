@@ -31,6 +31,11 @@
 #define TQ_MAX_VALUE 255
 #define JITTER 100
 #define TTL 50                /* Time To Live of broadcast messages */
+#define MAX_ADDR	16		  /* number of interfaces which can be added to batman. */
+#define IF_INACTIVE 0
+#define IF_ACTIVE	1
+#define IF_TO_BE_REMOVED 2
+
 
 #define PURGE_TIMEOUT 200000  /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
 #define LOCAL_HNA_TIMEOUT 3600000
@@ -69,7 +74,7 @@
 #define REVISION_VERSION "0"
 #endif
 
-
+#include <linux/mutex.h>	/* mutex */
 #include <linux/module.h>	/* needed by all modules */
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/netdevice.h>	/* netdevice */
@@ -83,7 +88,7 @@
 extern struct list_head if_list;
 extern struct hashtable_t *orig_hash;
 
-extern spinlock_t if_list_lock;
+extern struct mutex if_list_lock;
 extern spinlock_t orig_hash_lock;
 
 extern atomic_t originator_interval;
@@ -106,7 +111,7 @@ void shutdown_module(char keep_bat_if);
 void remove_interfaces(void);
 int add_interface(char *dev, int if_num);
 void deactivate_interface(struct batman_if *batman_if);
-void check_inactive_interfaces(void);
+void check_inactive_interfaces(struct work_struct *work);
 char get_active_if_num(void);
 void inc_module_count(void);
 void dec_module_count(void);
