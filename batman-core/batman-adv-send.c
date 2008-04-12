@@ -40,8 +40,7 @@ void start_bcast_timer(struct batman_if *batman_if)
 
 	add_timer(&batman_if->bcast_timer);
 }
-/* sends a raw packet. 
- * if_list_lock must be required outside.  */
+/* sends a raw packet. */
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
 {
 	struct msghdr msg;
@@ -55,6 +54,8 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
 		batman_if->if_active = IF_TO_BE_REMOVED;
+		/* NOTE: if deactivate_interface() is used here, if_list_lock must be acquired. 
+		 * (this function is called with and without lock.*/
 /*		deactivate_interface(batman_if);*/
 		return;
 	}
@@ -77,6 +78,8 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 		if (retval != -EAGAIN) {
 			debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
 			batman_if->if_active = IF_TO_BE_REMOVED;
+		/* NOTE: if deactivate_interface() is used here, if_list_lock must be acquired. 
+		 * (this function is called with and without lock.*/
 /*			deactivate_interface(batman_if);*/
 		}
 	}
@@ -101,9 +104,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 		if (if_outgoing != NULL) {
 
-			mutex_lock(&if_list_lock);
 			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-			mutex_unlock(&if_list_lock);
 
 		} else {
 
@@ -122,9 +123,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 			/* non-primary interfaces are only broadcasted on their interface */
 			if (own_packet && (if_outgoing->if_num > 0)) {
 				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
-				mutex_lock(&if_list_lock);
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-				mutex_unlock(&if_list_lock);
 			} else {
 				mutex_lock(&if_list_lock);
 				list_for_each(list_pos, &if_list) {
