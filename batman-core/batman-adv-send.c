@@ -89,7 +89,6 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
  * if_list_lock must NOT be acquired outside. */
 static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
 {
-	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	char orig_str[ETH_STR_LEN];
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
@@ -125,9 +124,8 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->net_dev->name, if_outgoing->addr_str);
 				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 			} else {
-				mutex_lock(&if_list_lock);
-				list_for_each(list_pos, &if_list) {
-					batman_if = list_entry(list_pos, struct batman_if, list);
+				rcu_read_lock();
+				list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 					if (directlink && (if_outgoing == batman_if))
 						((struct batman_packet *)pack_buff)->flags = DIRECTLINK;
@@ -138,7 +136,7 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 				}
-				mutex_unlock(&if_list_lock);
+				rcu_read_unlock();
 
 			}
 
@@ -152,6 +150,7 @@ void send_own_packet(unsigned long data)
 {
 	unsigned char *buff_ptr;
 	struct batman_if *batman_if = (struct batman_if *)data;
+	debug_log(LOG_TYPE_CRIT, "send_own_packet()\n");
 
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
@@ -179,6 +178,7 @@ void send_own_packet(unsigned long data)
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
 	start_bcast_timer(batman_if);
+	debug_log(LOG_TYPE_CRIT, "send_own_packet() done\n");
 }
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)

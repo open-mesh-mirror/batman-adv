@@ -199,7 +199,6 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 
 static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *orig_neigh_node, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
-	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
 	char orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
 	unsigned char total_count;
@@ -208,8 +207,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 	addr_to_string(neigh_str, orig_neigh_node->orig);
 
 	if (orig_node == orig_neigh_node) {
-		list_for_each(list_pos, &orig_node->neigh_list) {
-			tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
+		list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
 
 			if (compare_orig(tmp_neigh_node->addr, orig_neigh_node->orig) && (tmp_neigh_node->if_incoming == if_incoming))
 				neigh_node = tmp_neigh_node;
@@ -221,8 +219,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 		neigh_node->last_valid = jiffies;
 	} else {
 		/* find packet count of corresponding one hop neighbor */
-		list_for_each(list_pos, &orig_neigh_node->neigh_list) {
-			tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
+		list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
 
 			if (compare_orig(tmp_neigh_node->addr, orig_neigh_node->orig) && (tmp_neigh_node->if_incoming == if_incoming))
 				neigh_node = tmp_neigh_node;
@@ -271,15 +268,13 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 
 static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming, unsigned char *hna_buff, int hna_buff_len, char is_duplicate)
 {
-	struct list_head *list_pos;
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
 	unsigned char max_tq = 0, max_bcast_own = 0;
 	int tmp_hna_buff_len;
 
 	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet \n");
 
-	list_for_each(list_pos, &orig_node->neigh_list) {
-		tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
+	list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
 
 		if (compare_orig(tmp_neigh_node->addr, ethhdr->h_source) && (tmp_neigh_node->if_incoming == if_incoming)) {
 			neigh_node = tmp_neigh_node;
@@ -331,15 +326,13 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 
 static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
 {
-	struct list_head *list_pos;
 	struct orig_node *orig_node;
 	struct neigh_node *tmp_neigh_node;
 	char is_duplicate = 0;
 
 	orig_node = get_orig_node(batman_packet->orig);
 
-	list_for_each(list_pos, &orig_node->neigh_list) {
-		tmp_neigh_node = list_entry(list_pos, struct neigh_node, list);
+	list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
 
 		if (!is_duplicate)
 			is_duplicate = get_bit_status(tmp_neigh_node->real_bits, orig_node->last_real_seqno, batman_packet->seqno);
@@ -362,7 +355,6 @@ static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batm
 
 static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_packet, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
 {
-	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	struct orig_node *orig_neigh_node, *orig_node;
 	char orig_str[ETH_STR_LEN], old_orig_str[ETH_STR_LEN], neigh_str[ETH_STR_LEN];
@@ -385,8 +377,9 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 
 	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_directlink_flag);
 
-	list_for_each(list_pos, &if_list) {
-		batman_if = list_entry( list_pos, struct batman_if, list );
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		rcu_read_unlock();
 
 		if (compare_orig(ethhdr->h_source, batman_if->net_dev->dev_addr))
 			is_my_addr = 1;
@@ -575,7 +568,6 @@ int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int 
 
 int packet_recv_thread(void *data)
 {
-	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
@@ -596,8 +588,7 @@ int packet_recv_thread(void *data)
 		if (kthread_should_stop() || atomic_read(&exit_cond))
 			break;
 
-		list_for_each(list_pos, &if_list) {
-			batman_if = list_entry(list_pos, struct batman_if, list);
+		list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 			while ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) > 0) {
 
@@ -828,8 +819,7 @@ int packet_recv_thread(void *data)
 						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
 						/* rebroadcast packet */
-						list_for_each(list_pos, &if_list) {
-							batman_if = list_entry(list_pos, struct batman_if, list);
+						list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 						}

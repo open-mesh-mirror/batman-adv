@@ -208,6 +208,7 @@ void hna_local_purge(unsigned long data)
 	struct hna_local_entry *hna_local_entry;
 	struct hash_it_t *hashit = NULL;
 
+	debug_log(LOG_TYPE_CRIT, "hna_local_purge()\n");
 	spin_lock(&hna_local_hash_lock);
 
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
@@ -220,6 +221,7 @@ void hna_local_purge(unsigned long data)
 
 	spin_unlock(&hna_local_hash_lock);
 	hna_local_start_timer();
+	debug_log(LOG_TYPE_CRIT, "hna_local_purge() done\n");
 }
 
 void hna_local_free(void)

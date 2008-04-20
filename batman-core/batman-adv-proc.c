@@ -229,19 +229,17 @@ int setup_procfs(void)
 int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
 {
 	int total_bytes = 0, bytes_written = 0;
-	struct list_head *list_pos;
 	struct batman_if *batman_if;
 
-	mutex_lock(&if_list_lock);
 
-	list_for_each(list_pos, &if_list) {
-		batman_if = list_entry(list_pos, struct batman_if, list);
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->dev);
 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
 	}
+	rcu_read_unlock();
 
-	mutex_unlock(&if_list_lock);
 
 	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
 	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
@@ -255,7 +253,6 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
 	int not_copied = 0, if_num = 0;
 	void *data_ptr;
-	struct list_head *list_pos;
 	struct batman_if *batman_if = NULL;
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
@@ -292,24 +289,20 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 	} else {
 
 		/* add interface */
-		mutex_lock(&if_list_lock);
 
-		list_for_each(list_pos, &if_list) {
-			batman_if = list_entry(list_pos, struct batman_if, list);
+		rcu_read_lock();
+		list_for_each_entry_rcu(batman_if, &if_list, list) {
 
-			if (strncmp(batman_if->dev, if_string, count) == 0)
-				break;
+			if (strncmp(batman_if->dev, if_string, count) == 0) {
+				debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
+				rcu_read_unlock();
+				goto end;
 
-			batman_if = NULL;
+			}
+
 			if_num++;
 		}
-
-		mutex_unlock(&if_list_lock);
-
-		if (batman_if != NULL) {
-			debug_log(LOG_TYPE_WARN, "Given interface is already active: %s\n", if_string);
-			goto end;
-		}
+		rcu_read_unlock();
 
 		shutdown_module(1);
 
@@ -341,8 +334,12 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
 	}
 
-	if (list_empty(&if_list))
+	rcu_read_lock();
+	if (list_empty(&if_list)) {
+		rcu_read_unlock();
 		goto end;
+	}
+	rcu_read_unlock();
 
 	num_ifs = if_num + 1;
 	return count;
@@ -396,22 +393,21 @@ end:
 int proc_originators_read(struct seq_file *seq, void *offset)
 {
 	struct hash_it_t *hashit = NULL;
-	struct list_head *list_pos;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
 	int batman_count = 0;
 	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	mutex_lock(&if_list_lock);
+	rcu_read_lock();
 	if (list_empty(&if_list)) {
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
 	seq_printf(seq, "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. Adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->dev, ((struct batman_if *)if_list.next)->addr_str);
 
-	mutex_unlock(&if_list_lock);
+	rcu_read_unlock();
 	spin_lock(&orig_hash_lock);
 
 	while (NULL != (hashit = hash_iterate( orig_hash, hashit))) {
@@ -431,11 +427,8 @@ int proc_originators_read(struct seq_file *seq, void *offset)
 
 		seq_printf(seq, "%-17s  (%3i) %17s [%10s]:", orig_str, orig_node->router->tq_avg, router_str, orig_node->router->if_incoming->net_dev->name);
 
-		list_for_each(list_pos, &orig_node->neigh_list) {
-			neigh_node = list_entry(list_pos, struct neigh_node, list);
-
+		list_for_each_entry(neigh_node, &orig_node->neigh_list, list) {
 			addr_to_string(orig_str, neigh_node->addr);
-
 			seq_printf(seq, " %17s (%3i)", orig_str, neigh_node->tq_avg);
 		}
 
@@ -563,15 +556,15 @@ int proc_log_level_write(struct file *instance, const char __user *userbuffer, u
 int proc_transtable_local_read(struct seq_file *seq, void *offset)
 {
 	char buf[4096];
-	mutex_lock(&if_list_lock);
 
+	rcu_read_lock();
 	if (list_empty(&if_list)) {
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
 
-	mutex_unlock(&if_list_lock);
+	rcu_read_unlock();
 
 	seq_printf(seq, "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
 
@@ -591,15 +584,15 @@ int proc_transtable_local_open(struct inode *inode, struct file *file)
 int proc_transtable_global_read(struct seq_file *seq, void *offset)
 {
 	char buf[4096];
-	mutex_lock(&if_list_lock);
 
+	rcu_read_lock();
 	if (list_empty(&if_list)) {
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
 		goto end;
 	}
+	rcu_read_unlock();
 
-	mutex_unlock(&if_list_lock);
 
 	seq_printf(seq, "Globally announced HNAs received via the mesh (translation table):\n");
 
@@ -623,15 +616,15 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 	char from[40], to[40];
 	int i, int_part, frac_part;
 
-	mutex_lock(&if_list_lock);
 
+	rcu_read_lock();
 	if (list_empty(&if_list)) {
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 		seq_printf(seq, "digraph {\n}\n" );
 		goto end;
 	}
 
-	mutex_unlock(&if_list_lock);
+	rcu_read_unlock();
 
 	seq_printf(seq, "digraph {\n" );
 

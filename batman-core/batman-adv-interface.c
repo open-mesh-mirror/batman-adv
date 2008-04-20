@@ -165,7 +165,6 @@ int interface_change_mtu(struct net_device *dev, int new_mtu)
 
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
-	struct list_head *list_pos;
 	struct batman_if *batman_if;
 	struct unicast_packet *unicast_packet;
 	struct bcast_packet *bcast_packet;
@@ -192,18 +191,17 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 		/* set broadcast sequence number */
 
-		mutex_lock(&if_list_lock);
 		bcast_packet->seqno = htons(bcast_seqno);
 
 		bcast_seqno++;
 
 		/* broadcast packet */
-		list_for_each(list_pos, &if_list) {
-			batman_if = list_entry(list_pos, struct batman_if, list);
+		rcu_read_lock();
+		list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 
 	/* unicast packet */
 	} else {

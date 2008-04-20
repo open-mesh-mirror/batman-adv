@@ -27,7 +27,7 @@
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
-static DEFINE_MUTEX(vis_own_packet_lock);
+static DEFINE_SPINLOCK(vis_own_packet_lock);
 static struct vis_info *my_vis_info;
 
 void free_info(void *data);
@@ -296,22 +296,22 @@ void purge_vis_packets(void)
 /* called from timer; send (and maybe generate) vis packet. */
 void send_own_vis_packet(unsigned long arg) 
 {
-
-	mutex_lock(&vis_own_packet_lock);
+	debug_log(LOG_TYPE_CRIT, "Sending own vis packet...\n");
+	spin_lock(&vis_own_packet_lock);
 
 	purge_vis_packets();
 	generate_vis_packet();
 	send_vis_packet((unsigned long) my_vis_info);
 	start_vis_timer();
 
-	mutex_unlock(&vis_own_packet_lock);
+	spin_unlock(&vis_own_packet_lock);
+	debug_log(LOG_TYPE_CRIT, "Sending own vis packet done...\n");
 }
 
 /* only send vis packet. called from timers and send_own_vis_packet() */
 void send_vis_packet(unsigned long arg) {
 	struct batman_if *batman_if;
 	struct vis_info *info = (struct vis_info *)arg;
-	struct list_head *list_pos;
 	struct orig_node *orig_node;
 	int packet_length;
 
@@ -333,13 +333,12 @@ void send_vis_packet(unsigned long arg) {
 
 	if (is_bcast(info->packet.target_orig)) {
 		/* broadcast packet */
-		mutex_lock(&if_list_lock);
-		list_for_each(list_pos, &if_list) {
-			batman_if = list_entry(list_pos, struct batman_if, list);
+		rcu_read_lock();
+		list_for_each_entry_rcu(batman_if, &if_list, list) {
 			send_raw_packet((unsigned char *)&info->packet, packet_length, 
 					batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
-		mutex_unlock(&if_list_lock);
+		rcu_read_unlock();
 	} else {
 		/* unicast packet */
 		spin_lock(&orig_hash_lock);

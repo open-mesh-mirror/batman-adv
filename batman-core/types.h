@@ -43,6 +43,8 @@ struct batman_if
 	spinlock_t seqno_lock;
 	unsigned char *pack_buff;
 	int pack_buff_len;
+	struct rcu_head rcu;
+
 };
 
 struct orig_node                 /* structure for orig_list maintaining nodes of mesh */
