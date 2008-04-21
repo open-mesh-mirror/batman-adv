@@ -136,8 +136,9 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
 	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
-		/* TODO: remove it first? */
-		list_add_tail(&info->send_list, &send_list);
+		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
+		if (!list_empty(&info->send_list))
+			list_add_tail(&info->send_list, &send_list);
 	}
 
 end:
@@ -158,6 +159,7 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 	info = add_packet(vis_packet, vis_info_len, &is_new);
 	if (info == NULL)
 		goto end;
+	/* note that outdated packets will be dropped at this point. */
 
 
 	/* send only if we're the target server or ... */
@@ -166,11 +168,16 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 		&& is_new) {
 
 		info->packet.vis_type = VIS_TYPE_SERVER_SYNC;	/* upgrade! */
-		list_add_tail(&info->send_list, &send_list);
+		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
+		if (!list_empty(&info->send_list))
+			list_add_tail(&info->send_list, &send_list);
 
 	 /* ... we're not the recipient (and thus need to forward). */
-	} else if (!is_my_mac(info->packet.target_orig))
-		list_add_tail(&info->send_list, &send_list);
+	} else if (!is_my_mac(info->packet.target_orig)) {
+
+		if (!list_empty(&info->send_list))
+			list_add_tail(&info->send_list, &send_list);
+	}
 
 end:
 	spin_unlock(&vis_hash_lock);
@@ -300,8 +307,9 @@ void send_vis_packets(unsigned long arg)
 }
 
 /* only send one vis packet. called from send_vis_packets() */
-void send_vis_packet(struct vis_info *info) {
-	struct batman_if *batman_if;
+void send_vis_packet(struct vis_info *info) 
+{
+	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
 	int packet_length;
 
@@ -311,10 +319,6 @@ void send_vis_packet(struct vis_info *info) {
 		return;
 	}
 
-	/* LATER: change this to send only to vis "neighbours" */
-	if (info->packet.vis_type == VIS_TYPE_SERVER_SYNC)
-		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
-
 	memcpy(info->packet.sender_orig, mainIfAddr, ETH_ALEN);
 
 	info->packet.ttl--;
@@ -323,12 +327,24 @@ void send_vis_packet(struct vis_info *info) {
 
 	if (is_bcast(info->packet.target_orig)) {
 		/* broadcast packet */
-		rcu_read_lock();
-		list_for_each_entry_rcu(batman_if, &if_list, list) {
-			send_raw_packet((unsigned char *)&info->packet, packet_length, 
-					batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+		spin_lock(&orig_hash_lock);
+
+		/* send to all routers in range. */
+		while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
+			orig_node = hashit->bucket->data;
+
+			/* if it's a vis server and reachable, send it. */
+			/* LATER: only send to vis servers from which we did not receive this packet yet. */
+			if ((orig_node != NULL) && (orig_node->flags & VIS_SERVER) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+				memcpy(info->packet.target_orig, orig_node->orig, ETH_ALEN);
+				send_raw_packet((unsigned char *) &info->packet, packet_length, 
+						orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+			}
 		}
-		rcu_read_unlock();
+		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
+
+		spin_unlock(&orig_hash_lock);
 	} else {
 		/* unicast packet */
 		spin_lock(&orig_hash_lock);
