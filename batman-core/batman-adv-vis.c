@@ -27,11 +27,12 @@
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
-static DEFINE_SPINLOCK(vis_own_packet_lock);
 static struct vis_info *my_vis_info;
+static struct list_head send_list;	/* always locked with vis_hash_lock ... */
+static struct timer_list vis_timer;
 
 void free_info(void *data);
-void send_vis_packet(unsigned long data);
+void send_vis_packet(struct vis_info *info);
 void start_vis_timer(void);
 
 
@@ -68,7 +69,8 @@ int vis_info_choose(void *data, int size) {
  * vis hash must be locked outside. 
  * is_new is set when the packet is newer than old entries in the hash. */
 
-struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new) {
+struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new) 
+{
 	struct vis_info *info, *old_info;
 
 	*is_new = 0;
@@ -79,7 +81,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	if (info == NULL) 
 		return NULL;
 
-	init_timer(&info->vis_timer);
+	INIT_LIST_HEAD(&info->send_list);
 	info->first_seen = jiffies;
 	memcpy(&info->packet, vis_packet, sizeof(struct vis_packet) + vis_info_len);
 
@@ -134,13 +136,8 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
 	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
-		/* remove if still active */
-		del_timer_sync(&info->vis_timer);
-		/* activate timer */
-		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
-		info->vis_timer.data = (unsigned long)info;
-		info->vis_timer.function = send_vis_packet;
-		add_timer(&info->vis_timer);
+		/* TODO: remove it first? */
+		list_add_tail(&info->send_list, &send_list);
 	}
 
 end:
@@ -153,7 +150,6 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 {
 	struct vis_info *info;
 	int is_new;
-	int need_send;
 	/* clients shall not broadcast. */
 	if (is_bcast(vis_packet->target_orig)) 
 		return;
@@ -163,32 +159,19 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 	if (info == NULL)
 		goto end;
 
-	need_send = 0;
 
 	/* send only if we're the target server or ... */
 	if (my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC
 		&& is_my_mac(info->packet.target_orig)
 		&& is_new) {
 
-		need_send = 1;
 		info->packet.vis_type = VIS_TYPE_SERVER_SYNC;	/* upgrade! */
-
-	}
+		list_add_tail(&info->send_list, &send_list);
 
 	 /* ... we're not the recipient (and thus need to forward). */
-	if (!is_my_mac(info->packet.target_orig))
-		need_send = 1;
+	} else if (!is_my_mac(info->packet.target_orig))
+		list_add_tail(&info->send_list, &send_list);
 
-	if (need_send) {
-		/* remove if still active */
-		del_timer_sync(&info->vis_timer);
-
-		/* activate timer */
-		info->vis_timer.expires = jiffies + ((random32()%100) * HZ)/1000;
-		info->vis_timer.data = (unsigned long)info;
-		info->vis_timer.function = send_vis_packet;
-		add_timer(&info->vis_timer);
-	}
 end:
 	spin_unlock(&vis_hash_lock);
 }
@@ -294,24 +277,31 @@ void purge_vis_packets(void)
 }
 
 /* called from timer; send (and maybe generate) vis packet. */
-void send_own_vis_packet(unsigned long arg) 
+void send_vis_packets(unsigned long arg) 
 {
-	debug_log(LOG_TYPE_CRIT, "Sending own vis packet...\n");
-	spin_lock(&vis_own_packet_lock);
+	struct vis_info *info, *temp;
+	debug_log(LOG_TYPE_NOTICE, "Sending vis packets...\n");
 
 	purge_vis_packets();
+	spin_lock(&vis_hash_lock);
 	generate_vis_packet();
-	send_vis_packet((unsigned long) my_vis_info);
-	start_vis_timer();
+	
+	list_add_tail(&my_vis_info->send_list, &send_list);
 
-	spin_unlock(&vis_own_packet_lock);
-	debug_log(LOG_TYPE_CRIT, "Sending own vis packet done...\n");
+	list_for_each_entry_safe(info, temp, &send_list, send_list) {
+		list_del_init(&info->send_list);
+		send_vis_packet(info);
+	}
+	spin_unlock(&vis_hash_lock);
+	start_vis_timer();
+	
+
+	debug_log(LOG_TYPE_NOTICE, "Sending vis packets done...\n");
 }
 
-/* only send vis packet. called from timers and send_own_vis_packet() */
-void send_vis_packet(unsigned long arg) {
+/* only send one vis packet. called from send_vis_packets() */
+void send_vis_packet(struct vis_info *info) {
 	struct batman_if *batman_if;
-	struct vis_info *info = (struct vis_info *)arg;
 	struct orig_node *orig_node;
 	int packet_length;
 
@@ -402,6 +392,8 @@ int vis_init(void)
 	my_vis_info->packet.seqno = 0;
 	my_vis_info->packet.entries = 0;
 
+	INIT_LIST_HEAD(&send_list);
+
 	memcpy(my_vis_info->packet.vis_orig, mainIfAddr, ETH_ALEN);
 	memcpy(my_vis_info->packet.sender_orig, mainIfAddr, ETH_ALEN);
 
@@ -420,7 +412,7 @@ int vis_init(void)
 void free_info(void *data)
 {
 	struct vis_info *info = data;
-	del_timer_sync(&info->vis_timer);
+	list_del_init(&info->send_list);
 	kfree(info);
 }
 
@@ -428,6 +420,7 @@ void free_info(void *data)
 int vis_quit(void) 
 {
 	spin_lock(&vis_hash_lock);
+	del_timer_sync(&vis_timer);
 	if (vis_hash != NULL)
 		hash_delete(vis_hash, free_info);	/* properly remove, kill timers ... */
 	vis_hash = NULL;
@@ -439,12 +432,12 @@ int vis_quit(void)
 /* schedule own packet for (re)transmission */
 void start_vis_timer(void)
 {
-	init_timer(&my_vis_info->vis_timer);
+	init_timer(&vis_timer);
 
-	my_vis_info->vis_timer.expires = jiffies + (atomic_read(&vis_interval)/1000) * HZ;
-	my_vis_info->vis_timer.data = 0;
-	my_vis_info->vis_timer.function = send_own_vis_packet;
+	vis_timer.expires = jiffies + (atomic_read(&vis_interval)/1000) * HZ;
+	vis_timer.data = 0;
+	vis_timer.function = send_vis_packets;
 
-	add_timer(&my_vis_info->vis_timer);
+	add_timer(&vis_timer);
 }
 

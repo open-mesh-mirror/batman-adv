@@ -21,11 +21,11 @@
 
 struct vis_info {
 	unsigned long       first_seen;
-	struct timer_list   vis_timer;
 	struct list_head   *receive_from_list;	
 			/* list of server-neighbors we received a vis-packet from. 
 			 * we should not reply to them. */
 	struct vis_packet packet;
+	struct list_head send_list;
 	/* vis_info may follow here*/
 } __attribute__((packed));
 
