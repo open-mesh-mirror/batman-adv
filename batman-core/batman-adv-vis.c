@@ -65,6 +65,32 @@ int vis_info_choose(void *data, int size) {
 	return (hash%size);
 }
 
+/* tries to add one entry to the receive list. */
+void recv_list_add(struct list_head *recv_list, char *mac) 
+{
+	struct recvlist_node *entry;
+	entry = kmalloc(sizeof(struct recvlist_node), GFP_KERNEL);
+	if (!entry)
+		return;
+
+	memcpy(entry->mac, mac, ETH_ALEN);
+	list_add_tail(&entry->list, recv_list);
+}
+
+/* returns 1 if this mac is in the recv_list */
+int recv_list_is_in(struct list_head *recv_list, char *mac)  
+{
+	struct recvlist_node *entry;
+
+	list_for_each_entry(entry, recv_list, list) {
+
+		if (memcmp(entry->mac, mac, ETH_ALEN) == 0) 
+			return 1;
+	}
+
+	return 0;
+}
+
 /* try to add the packet to the vis_hash. return NULL if invalid (e.g. too old, broken.. ).
  * vis hash must be locked outside. 
  * is_new is set when the packet is newer than old entries in the hash. */
@@ -82,6 +108,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 		return NULL;
 
 	INIT_LIST_HEAD(&info->send_list);
+	INIT_LIST_HEAD(&info->recv_list);
 	info->first_seen = jiffies;
 	memcpy(&info->packet, vis_packet, sizeof(struct vis_packet) + vis_info_len);
 
@@ -91,13 +118,16 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	if (old_info != NULL) {
 		if (info->packet.seqno - old_info->packet.seqno <= 0) {
 			if (old_info->packet.seqno == info->packet.seqno) {
-				/* LATER: add to receive_from_list */
+
+				recv_list_add(&old_info->recv_list, info->packet.sender_orig);
 				free_info(info);
+
 				return(old_info);
+			} else {
+				/* newer packet is already in hash. */
+				free_info(info);
+				return(NULL);
 			}
-			/* same or newer packet is already in hash. */
-			free_info(info);
-			return(NULL);
 		} 
 		/* remove old entry */
 		hash_remove(vis_hash, old_info);
@@ -111,8 +141,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len) 
 		info->packet.entries = vis_info_len / sizeof(struct vis_info);
 
-	/* LATER: fill the list with vis_orig. */
-	info->receive_from_list = NULL;
+	recv_list_add(&old_info->recv_list, info->packet.sender_orig);
 
 	/* try to add it */
 	if (hash_add(vis_hash, info)< 0) {
@@ -334,8 +363,12 @@ void send_vis_packet(struct vis_info *info)
 			orig_node = hashit->bucket->data;
 
 			/* if it's a vis server and reachable, send it. */
-			/* LATER: only send to vis servers from which we did not receive this packet yet. */
 			if ((orig_node != NULL) && (orig_node->flags & VIS_SERVER) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+				/* don't send it if we already received the packet from this node. */
+				if (recv_list_is_in(&info->recv_list, orig_node->orig))
+					continue;
+
 
 				memcpy(info->packet.target_orig, orig_node->orig, ETH_ALEN);
 				send_raw_packet((unsigned char *) &info->packet, packet_length, 
@@ -401,7 +434,7 @@ int vis_init(void)
 	}
 	/* prefill the vis info */
 	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
-	my_vis_info->receive_from_list = NULL; /* LATER */
+	INIT_LIST_HEAD(&my_vis_info->recv_list);
 	my_vis_info->packet.packet_type = BAT_VIS;
 	my_vis_info->packet.vis_type = VIS_TYPE_SERVER_SYNC;
 	my_vis_info->packet.ttl = TTL;
@@ -428,7 +461,13 @@ int vis_init(void)
 void free_info(void *data)
 {
 	struct vis_info *info = data;
+	struct recvlist_node *entry, *tmp;
+
 	list_del_init(&info->send_list);
+	list_for_each_entry_safe(entry, tmp, &info->recv_list, list) {
+		list_del(&entry->list);
+		kfree(entry);
+	}
 	kfree(info);
 }
 

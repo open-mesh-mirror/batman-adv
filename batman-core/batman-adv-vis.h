@@ -21,11 +21,11 @@
 
 struct vis_info {
 	unsigned long       first_seen;
-	struct list_head   *receive_from_list;	
+	struct list_head    recv_list;
 			/* list of server-neighbors we received a vis-packet from. 
 			 * we should not reply to them. */
 	struct vis_packet packet;
-	struct list_head send_list;
+	struct list_head send_list;			/* this packet might be part of the vis send queue. */
 	/* vis_info may follow here*/
 } __attribute__((packed));
 
@@ -33,6 +33,11 @@ struct vis_info_entry {
 	uint8_t  dest[ETH_ALEN];
 	uint8_t  quality;	/* quality = 0 means HNA */
 } __attribute__((packed));
+
+struct recvlist_node {
+	struct list_head list;
+	uint8_t mac[6];
+};
 
 extern struct hashtable_t *vis_hash;
 extern spinlock_t vis_hash_lock;
