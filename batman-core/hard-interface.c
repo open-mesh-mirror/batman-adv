@@ -37,6 +37,7 @@ static char avail_ifs = 0;
 static char active_ifs = 0;
 
 static struct timer_list hardif_check_timer;
+static void hardif_free_interface(struct rcu_head *rcu);
 
 
 
@@ -52,14 +53,17 @@ int hardif_is_interface_up(char *dev)
 	 * the primary interface has never been up - don't activate any secondary interface !
 	 */
 
+	rcu_read_lock();
 	if ((!list_empty(&if_list)) &&
 		     (strncmp(((struct batman_if *)if_list.next)->dev, dev, IFNAMSIZ) != 0) &&
 		     !(((struct batman_if *)if_list.next)->if_active == IF_ACTIVE) &&
 		     (!main_if_was_up())) {
 
+		rcu_read_unlock();
 		goto end;
 
 	}
+	rcu_read_unlock();
 
 #ifdef __NET_NET_NAMESPACE_H
 	if ((net_dev = dev_get_by_name(&init_net, dev)) == NULL)
@@ -147,23 +151,19 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	if (batman_if->if_num == 0)
 		set_main_if_addr(batman_if->net_dev->dev_addr);
 
-	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n", batman_if->dev);
-
 	return;
 
 error:
 	hardif_deactivate_interface(batman_if);
 }
 
-void hardif_free_interface(struct rcu_head *rcu)
+static void hardif_free_interface(struct rcu_head *rcu)
 {
 	struct batman_if *batman_if = container_of(rcu, struct batman_if, rcu);
 
-	debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->dev);
-
 	kfree(batman_if->pack_buff);
 	kfree(batman_if->dev);
-	kfree(batman_if);
+	kfree(batman_if); 
 }
 
 /**
@@ -273,8 +273,12 @@ void hardif_check_interfaces_status(struct work_struct *work)
 
 	if (module_state == MODULE_UNLOADING)
 		return;
+	/* wait for readers of the the interfaces, so update won't be a problem. 
+	 *
+	 * this function is not time critical and can wait a bit ....*/
+	synchronize_rcu();
 
-	/* TODO: spinlock for the write here */
+	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
 		if ((batman_if->if_active == IF_INACTIVE) && (hardif_is_interface_up(batman_if->dev)))
 			hardif_activate_interface(batman_if);
@@ -282,6 +286,7 @@ void hardif_check_interfaces_status(struct work_struct *work)
 		if (batman_if->if_active == IF_TO_BE_DEACTIVATED)
 			hardif_deactivate_interface(batman_if);
 	}
+	rcu_read_unlock();
 
 	start_hardif_check_timer();
 }

@@ -206,9 +206,13 @@ void shutdown_module(void)
 		rcu_read_unlock();
 	}
 
-	hardif_remove_interfaces();
-
+	synchronize_net();
 	bat_device_destroy();
+
+	hardif_remove_interfaces();
+	synchronize_rcu();
+
+
 }
 
 void inc_module_count(void)
