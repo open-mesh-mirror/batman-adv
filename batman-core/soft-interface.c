@@ -21,11 +21,11 @@
 
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-interface.h"
-#include "batman-adv-send.h"
-#include "batman-adv-ttable.h"
-#include "batman-adv-log.h"
+#include "main.h"
+#include "soft-interface.h"
+#include "send.h"
+#include "translation-table.h"
+#include "log.h"
 #include "types.h"
 #include "hash.h"
 #include <linux/ethtool.h>

@@ -18,16 +18,16 @@
  */
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-proc.h"
-#include "batman-adv-log.h"
-#include "batman-adv-routing.h"
-#include "batman-adv-send.h"
-#include "batman-adv-interface.h"
-#include "batman-adv-device.h"
-#include "batman-adv-ttable.h"
+#include "main.h"
+#include "proc.h"
+#include "log.h"
+#include "routing.h"
+#include "send.h"
+#include "soft-interface.h"
+#include "device.h"
+#include "translation-table.h"
 #include "hard-interface.h"
-#include "batman-adv-vis.h"
+#include "vis.h"
 #include "types.h"
 #include "hash.h"
 

@@ -21,10 +21,10 @@
 
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-ttable.h"
-#include "batman-adv-log.h"
-#include "batman-adv-interface.h"
+#include "main.h"
+#include "translation-table.h"
+#include "log.h"
+#include "soft-interface.h"
 #include "types.h"
 #include "hash.h"
 

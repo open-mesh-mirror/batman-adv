@@ -21,10 +21,10 @@
 
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-device.h"
-#include "batman-adv-log.h"
-#include "batman-adv-send.h"
+#include "main.h"
+#include "device.h"
+#include "log.h"
+#include "send.h"
 #include "types.h"
 #include "hash.h"
 

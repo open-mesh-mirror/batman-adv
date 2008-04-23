@@ -21,13 +21,13 @@
 
 
 
-#include "batman-adv-main.h"
+#include "main.h"
 #include "hard-interface.h"
-#include "batman-adv-log.h"
-#include "batman-adv-interface.h"
-#include "batman-adv-send.h"
-#include "batman-adv-ttable.h"
-#include "batman-adv-routing.h"
+#include "log.h"
+#include "soft-interface.h"
+#include "send.h"
+#include "translation-table.h"
+#include "routing.h"
 
 
 
@@ -163,7 +163,7 @@ static void hardif_free_interface(struct rcu_head *rcu)
 
 	kfree(batman_if->pack_buff);
 	kfree(batman_if->dev);
-	kfree(batman_if); 
+	kfree(batman_if);
 }
 
 /**
@@ -273,7 +273,7 @@ void hardif_check_interfaces_status(struct work_struct *work)
 
 	if (module_state == MODULE_UNLOADING)
 		return;
-	/* wait for readers of the the interfaces, so update won't be a problem. 
+	/* wait for readers of the the interfaces, so update won't be a problem.
 	 *
 	 * this function is not time critical and can wait a bit ....*/
 	synchronize_rcu();

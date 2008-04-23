@@ -17,13 +17,19 @@
  *
  */
 
-#include "batman-adv-main.h"
-#include "batman-adv-send.h"
-#include "batman-adv-ttable.h"
-#include "batman-adv-vis.h"
-#include "batman-adv-log.h"
-#include "batman-adv-interface.h"
+
+
+
+
+#include "main.h"
+#include "send.h"
+#include "translation-table.h"
+#include "vis.h"
+#include "log.h"
+#include "soft-interface.h"
 #include "hash.h"
+
+
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
@@ -66,7 +72,7 @@ int vis_info_choose(void *data, int size) {
 }
 
 /* tries to add one entry to the receive list. */
-void recv_list_add(struct list_head *recv_list, char *mac) 
+void recv_list_add(struct list_head *recv_list, char *mac)
 {
 	struct recvlist_node *entry;
 	entry = kmalloc(sizeof(struct recvlist_node), GFP_KERNEL);
@@ -78,13 +84,13 @@ void recv_list_add(struct list_head *recv_list, char *mac)
 }
 
 /* returns 1 if this mac is in the recv_list */
-int recv_list_is_in(struct list_head *recv_list, char *mac)  
+int recv_list_is_in(struct list_head *recv_list, char *mac)
 {
 	struct recvlist_node *entry;
 
 	list_for_each_entry(entry, recv_list, list) {
 
-		if (memcmp(entry->mac, mac, ETH_ALEN) == 0) 
+		if (memcmp(entry->mac, mac, ETH_ALEN) == 0)
 			return 1;
 	}
 
@@ -92,10 +98,10 @@ int recv_list_is_in(struct list_head *recv_list, char *mac)
 }
 
 /* try to add the packet to the vis_hash. return NULL if invalid (e.g. too old, broken.. ).
- * vis hash must be locked outside. 
+ * vis hash must be locked outside.
  * is_new is set when the packet is newer than old entries in the hash. */
 
-struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new) 
+struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new)
 {
 	struct vis_info *info, *old_info;
 
@@ -104,7 +110,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	if (vis_hash == NULL)
 		return NULL;
 	info = kmalloc(sizeof(struct vis_info) + vis_info_len,GFP_KERNEL);
-	if (info == NULL) 
+	if (info == NULL)
 		return NULL;
 
 	INIT_LIST_HEAD(&info->send_list);
@@ -128,7 +134,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 				free_info(info);
 				return(NULL);
 			}
-		} 
+		}
 		/* remove old entry */
 		hash_remove(vis_hash, old_info);
 		free_info(old_info);
@@ -138,7 +144,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	*is_new = 1;
 
 	/* repair if entries is longer than packet. */
-	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len) 
+	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len)
 		info->packet.entries = vis_info_len / sizeof(struct vis_info);
 
 	recv_list_add(&old_info->recv_list, info->packet.sender_orig);
@@ -148,12 +154,12 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 		/* did not work (for some reason) */
 		free_info(info);
 		info = NULL;
-	}	
+	}
 	return info;
 }
 
 /* handle the server sync packet, forward if needed. */
-void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len) 
+void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 {
 	struct vis_info *info;
 	int is_new;
@@ -176,12 +182,12 @@ end:
 }
 
 /* handle an incoming client update packet and schedule forward if needed. */
-void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len) 
+void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len)
 {
 	struct vis_info *info;
 	int is_new;
 	/* clients shall not broadcast. */
-	if (is_bcast(vis_packet->target_orig)) 
+	if (is_bcast(vis_packet->target_orig))
 		return;
 
 	spin_lock(&vis_hash_lock);
@@ -214,7 +220,7 @@ end:
 
 
 /* send own vis data */
-static void generate_vis_packet(void) 
+static void generate_vis_packet(void)
 {
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
@@ -313,7 +319,7 @@ void purge_vis_packets(void)
 }
 
 /* called from timer; send (and maybe generate) vis packet. */
-void send_vis_packets(unsigned long arg) 
+void send_vis_packets(unsigned long arg)
 {
 	struct vis_info *info, *temp;
 	debug_log(LOG_TYPE_NOTICE, "Sending vis packets...\n");
@@ -321,7 +327,7 @@ void send_vis_packets(unsigned long arg)
 	purge_vis_packets();
 	spin_lock(&vis_hash_lock);
 	generate_vis_packet();
-	
+
 	list_add_tail(&my_vis_info->send_list, &send_list);
 
 	list_for_each_entry_safe(info, temp, &send_list, send_list) {
@@ -330,13 +336,13 @@ void send_vis_packets(unsigned long arg)
 	}
 	spin_unlock(&vis_hash_lock);
 	start_vis_timer();
-	
+
 
 	debug_log(LOG_TYPE_NOTICE, "Sending vis packets done...\n");
 }
 
 /* only send one vis packet. called from send_vis_packets() */
-void send_vis_packet(struct vis_info *info) 
+void send_vis_packet(struct vis_info *info)
 {
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
@@ -371,7 +377,7 @@ void send_vis_packet(struct vis_info *info)
 
 
 				memcpy(info->packet.target_orig, orig_node->orig, ETH_ALEN);
-				send_raw_packet((unsigned char *) &info->packet, packet_length, 
+				send_raw_packet((unsigned char *) &info->packet, packet_length,
 						orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 			}
 		}
@@ -384,11 +390,11 @@ void send_vis_packet(struct vis_info *info)
 		orig_node = ((struct orig_node *) hash_find(orig_hash, info->packet.target_orig));
 
 		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
-			send_raw_packet((unsigned char *) &info->packet, packet_length, 
+			send_raw_packet((unsigned char *) &info->packet, packet_length,
 					orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 		}
 		spin_unlock(&orig_hash_lock);
-		
+
 	}
 	info->packet.ttl++; /* restore TTL */
 }
@@ -418,7 +424,7 @@ void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, in
 
 /* init the vis server. this may only be called when if_list is already initialized
  * (e.g. bat0 is initialized, interfaces have been added) */
-int vis_init(void) 
+int vis_init(void)
 {
 	vis_hash = hash_new(256, vis_info_cmp, vis_info_choose);
 	if (vis_hash == NULL) {
@@ -472,7 +478,7 @@ void free_info(void *data)
 }
 
 /* shutdown vis-server */
-int vis_quit(void) 
+int vis_quit(void)
 {
 	spin_lock(&vis_hash_lock);
 	del_timer_sync(&vis_timer);

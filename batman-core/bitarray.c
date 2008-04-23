@@ -21,9 +21,9 @@
 
 
 
-#include "batman-adv-main.h"
+#include "main.h"
 #include "bitarray.h"
-#include "batman-adv-log.h"
+#include "log.h"
 
 
 

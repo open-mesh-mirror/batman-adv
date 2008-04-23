@@ -21,11 +21,11 @@
 
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-send.h"
-#include "batman-adv-log.h"
-#include "batman-adv-routing.h"
-#include "batman-adv-ttable.h"
+#include "main.h"
+#include "send.h"
+#include "log.h"
+#include "routing.h"
+#include "translation-table.h"
 #include "hard-interface.h"
 #include "types.h"
 

@@ -21,8 +21,8 @@
 
 
 
-#include "batman-adv-main.h"
-#include "batman-adv-log.h"
+#include "main.h"
+#include "log.h"
 
 
 #define LOG_BUF_MASK (log_buf_len-1)
