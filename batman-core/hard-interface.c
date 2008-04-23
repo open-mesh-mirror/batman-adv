@@ -167,7 +167,7 @@ static void hardif_free_interface(struct rcu_head *rcu)
 }
 
 /**
- *called by
+ * called by
  *  - echo '' > /proc/.../interfaces
  *  - modprobe -r batman-adv-core
  */
