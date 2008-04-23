@@ -26,10 +26,10 @@
 #include "batman-adv-interface.h"
 #include "batman-adv-device.h"
 #include "batman-adv-ttable.h"
+#include "hard-interface.h"
 #include "batman-adv-vis.h"
 #include "types.h"
 #include "hash.h"
-#include <linux/workqueue.h>
 
 
 
@@ -38,9 +38,6 @@ struct hashtable_t *orig_hash;
 
 DEFINE_MUTEX(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
-
-static struct workqueue_struct *check_interfaces_wq;
-static DECLARE_WORK(check_interfaces_work, check_inactive_interfaces);
 
 atomic_t originator_interval;
 atomic_t vis_interval;
@@ -54,9 +51,9 @@ static struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char hna_local_changed = 0;
+char module_state = MODULE_INACTIVE;
 
-static char avail_ifs = 0;
-static char active_ifs = 0;
+struct workqueue_struct *bat_event_workqueue;
 
 
 
@@ -66,10 +63,11 @@ int init_module(void)
 
 	INIT_LIST_HEAD(&if_list);
 	atomic_set(&originator_interval, 1000);
-	atomic_set(&vis_interval, 1000);		/* TODO: raise this later, this is only for debugging now. */
-	check_interfaces_wq = create_singlethread_workqueue("check_interfaces_wq");
+	atomic_set(&vis_interval, 1000);	/* TODO: raise this later, this is only for debugging now. */
 
-	if (!check_interfaces_wq) 
+	bat_event_workqueue = create_singlethread_workqueue("bat_event_workqueue");
+
+	if (!bat_event_workqueue)
 		return -ENOMEM;
 
 	if ((retval = setup_procfs()) < 0)
@@ -86,6 +84,7 @@ int init_module(void)
 	if (hna_global_init() < 0)
 		goto free_lhna_hash;
 
+	start_hardif_check_timer();
 	bat_device_init();
 
 	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. Advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), COMPAT_VERSION);
@@ -105,8 +104,10 @@ clean_proc:
 
 void cleanup_module(void)
 {
-	shutdown_module(0);
-	remove_interfaces();
+	module_state = MODULE_UNLOADING;
+
+	shutdown_module();
+	destroy_hardif_check_timer();
 
 	spin_lock(&orig_hash_lock);
 	hash_delete(orig_hash, free_orig_node);
@@ -115,30 +116,26 @@ void cleanup_module(void)
 	hna_local_free();
 	hna_global_free();
 	cleanup_procfs();
-	destroy_workqueue(check_interfaces_wq);
+	destroy_workqueue(bat_event_workqueue);
 }
 
 void start_purge_timer(void)
 {
-	debug_log(LOG_TYPE_CRIT, "start_purge_timer()\n");
 	init_timer(&purge_timer);
 
 	purge_timer.expires = jiffies + (1 * HZ); /* one second */
 	purge_timer.data = 0;
 	purge_timer.function = purge_orig;
 
-	/* scheduled, because (de)activate_interface might sleep. */
-	queue_work(check_interfaces_wq, &check_interfaces_work);
-
 	add_timer(&purge_timer);
-	debug_log(LOG_TYPE_CRIT, "start_purge_timer() done\n");
 }
 
 /* activates the module, creates bat device, starts timer ... */
 void activate_module(void)
 {
-	struct batman_if *batman_if = NULL;
 	int result;
+
+	module_state = MODULE_ACTIVE;
 
 	/* initialize layer 2 interface */
 	if (bat_device == NULL) {
@@ -162,14 +159,6 @@ void activate_module(void)
 		hna_local_add(bat_device->dev_addr);
 
 	}
-	/* (re)activate all timers (if any) */
-	rcu_read_lock();
-	list_for_each_entry_rcu(batman_if, &if_list, list) {
-
-		if (batman_if->if_active == IF_ACTIVE)
-			start_bcast_timer(batman_if);
-	}
-	rcu_read_unlock();
 
 	/* (re)start kernel thread for packet processing */
 	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
@@ -186,13 +175,16 @@ void activate_module(void)
 	vis_init();
 }
 /* shuts down the whole module.*/
-void shutdown_module(char keep_bat_if)
+void shutdown_module(void)
 {
-	struct batman_if *batman_if = NULL;
+	if (module_state == MODULE_ACTIVE)
+		module_state = MODULE_INACTIVE;
+
+	flush_workqueue(bat_event_workqueue);
 
 	vis_quit();
 
-	if ((!keep_bat_if) && (bat_device != NULL)) {
+	if (bat_device != NULL) {
 		unregister_netdev(bat_device);
 		bat_device = NULL;
 	}
@@ -205,295 +197,18 @@ void shutdown_module(char keep_bat_if)
 
 		kthread_task = NULL;
 	}
+
 	rcu_read_lock();
 	if (!(list_empty(&if_list))) {
 		rcu_read_unlock();
 		del_timer_sync(&purge_timer);
-	} else
+	} else {
 		rcu_read_unlock();
-	flush_workqueue(check_interfaces_wq);
-
-	/* deactivate all timers first to avoid race conditions */
-	rcu_read_lock();
-	list_for_each_entry_rcu(batman_if, &if_list, list) {
-
-		if (batman_if->if_active != IF_ACTIVE) {
-			rcu_read_unlock();
-			/* don't block within rcu lock ... */
-			del_timer_sync(&batman_if->bcast_timer);
-			rcu_read_lock();
-		}
 	}
-	rcu_read_unlock();
+
+	hardif_remove_interfaces();
 
 	bat_device_destroy();
-}
-/* checks if the interface is up. (returns 1 if it is) */
-int is_interface_up(char *dev)
-{
-	struct net_device *net_dev;
-
-	/*
-	 * if we already have an interface in our interface list and
-	 * the current interface is not the primary interface and
-	 * the primary interface is not up and
-	 * the primary interface has never been up - don't activate any secondary interface !
-	 */
-
-
-	if ((!list_empty(&if_list)) &&
-		(strncmp(((struct batman_if *)if_list.next)->dev, dev, IFNAMSIZ) != 0) &&
-		!(((struct batman_if *)if_list.next)->if_active == IF_ACTIVE) &&
-		(!main_if_was_up())) {
-
-		goto end;
-
-	}
-
-
-#ifdef __NET_NET_NAMESPACE_H
-	if ((net_dev = dev_get_by_name(&init_net, dev)) == NULL)
-#else
-	if ((net_dev = dev_get_by_name(dev)) == NULL)
-#endif
-		goto end;
-
-	if (!(net_dev->flags & IFF_UP))
-		goto failure;
-
-	dev_put(net_dev);
-	return 1;
-
-failure:
-	dev_put(net_dev);
-end:
-	return 0;
-}
-/* deactivates the interface. */
-void deactivate_interface(struct batman_if *batman_if)
-{
-	if (batman_if->raw_sock != NULL)
-		sock_release(batman_if->raw_sock);
-
-	/* batman_if->raw_sock->sk->sk_data_ready = batman_if->raw_sock->sk->sk_user_data; */
-
-	/*
-	 * batman_if->net_dev has been acquired by dev_get_by_name() in
-	 * proc_interfaces_write() and has to be unreferenced.
-	 */
-	if (batman_if->net_dev != NULL)
-		dev_put(batman_if->net_dev);
-
-	batman_if->raw_sock = NULL;
-	batman_if->net_dev = NULL;
-
-	if (batman_if->if_active != IF_INACTIVE)
-		del_timer_sync(&batman_if->bcast_timer);
-
-	batman_if->if_active = IF_INACTIVE;
-	active_ifs--;
-
-	debug_log(LOG_TYPE_NOTICE, "Interface deactivated: %s\n", batman_if->dev);
-	/*
-	 * TODO: shutdown_module() kills a lot of datastructures which might one of the parent functions,
-	 * e.g. free the batman_if which is used in the parent function after deactivate_interface ...
-	 *
-	 * shutdown_module() should be called from a more safe place.
-	 *
-	 * another problem would be that purge_timer() would be deactivated too, and the module won't come
-	 * up again (for the case that the main device just have been deactivated for a short moment).
-	 *
-	if (batman_if->if_num == 0) {
-		debug_log(LOG_TYPE_CRIT, "Main Interface deactivated, shutting down module.\n", batman_if->dev);
-		shutdown_module(0);
-	}
-	*/
-
-
-}
-/* (re)activate given interface. */
-void activate_interface(struct batman_if *batman_if)
-{
-	struct sockaddr_ll bind_addr;
-	int retval;
-
-#ifdef __NET_NET_NAMESPACE_H
-	if ((batman_if->net_dev = dev_get_by_name(&init_net, batman_if->dev)) == NULL)
-#else
-	if ((batman_if->net_dev = dev_get_by_name(batman_if->dev)) == NULL)
-#endif
-		goto error;
-
-	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
-		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
-		goto error;
-	}
-
-	bind_addr.sll_family = AF_PACKET;
-	bind_addr.sll_ifindex = batman_if->net_dev->ifindex;
-	bind_addr.sll_protocol = 0;	/* is set by the kernel */
-
-	if ((retval = kernel_bind(batman_if->raw_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr))) < 0) {
-		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n", retval);
-		goto error;
-	}
-
-	batman_if->raw_sock->sk->sk_user_data = batman_if->raw_sock->sk->sk_data_ready;
-	batman_if->raw_sock->sk->sk_data_ready = batman_data_ready;
-
-	addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
-
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
-
-	batman_if->if_active = IF_ACTIVE;
-	active_ifs++;
-
-	/* must be done after setting batman_if active because deactivate_interface() relies on it */
-	start_bcast_timer(batman_if);
-
-	/* save the mac address if it is out primary interface */
-	if (batman_if->if_num == 0)
-		set_main_if_addr(batman_if->net_dev->dev_addr);
-
-	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n", batman_if->dev);
-
-	return;
-
-error:
-	deactivate_interface(batman_if);
-}
-
-void free_interface(struct rcu_head *rcu) 
-{
-	struct batman_if *batman_if = container_of(rcu, struct batman_if, rcu);
-
-
-	debug_log(LOG_TYPE_NOTICE, "Deleting interface: %s\n", batman_if->dev);
-
-	kfree(batman_if->pack_buff);
-	kfree(batman_if->dev);
-	kfree(batman_if);
-
-}
-/* removes and frees all interfaces. */
-void remove_interfaces(void)
-{
-	struct batman_if *batman_if = NULL;
-
-	avail_ifs = 0;
-
-
-	/* deactivate all interfaces */
-
-	/* TODO: spinlock for the write here. */
-
-	list_for_each_entry(batman_if, &if_list, list) {
-
-		list_del_rcu(&batman_if->list);
-
-		/* first deactivate interface */
-		if (batman_if->if_active != IF_INACTIVE)
-			deactivate_interface(batman_if);
-
-
-		call_rcu(&batman_if->rcu, free_interface);
-
-	}
-}
-/* adds an interface the interface list and activate it, if possible. */
-int add_interface(char *dev, int if_num)
-{
-	struct batman_if *batman_if;
-	struct batman_packet *batman_packet;
-
-	batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
-
-	if (!batman_if) {
-		debug_log(LOG_TYPE_WARN, "Can't add interface (%s): out of memory\n", dev);
-		return -1;
-	}
-
-	batman_if->raw_sock = NULL;
-	batman_if->net_dev = NULL;
-
-	if ((if_num == 0) && (num_hna > 0))
-		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
-	else
-		batman_if->pack_buff_len = sizeof(struct batman_packet);
-
-	batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
-
-	if (!batman_if->pack_buff) {
-		debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", dev);
-		goto out;
-	}
-
-	batman_if->if_num = if_num;
-	batman_if->dev = dev;
-	batman_if->if_active = IF_INACTIVE;
-	INIT_RCU_HEAD(&batman_if->rcu);
-
-	debug_log(LOG_TYPE_NOTICE, "Adding interface: %s\n", dev);
-	avail_ifs++;
-
-	INIT_LIST_HEAD(&batman_if->list);
-
-	batman_packet = (struct batman_packet *)(batman_if->pack_buff);
-	batman_packet->packet_type = BAT_PACKET;
-	batman_packet->version = COMPAT_VERSION;
-	batman_packet->flags = 0x00;
-	batman_packet->ttl = (batman_if->if_num > 0 ? 2 : TTL);
-	batman_packet->gwflags = 0;
-	batman_packet->flags = 0;
-	batman_packet->tq = TQ_MAX_VALUE;
-	batman_packet->num_hna = 0;
-
-	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
-		batman_packet->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
-
-	batman_if->seqno = 1;
-	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
-
-	debug_log(LOG_TYPE_WARN, "Activating interface \n", dev);
-	if (is_interface_up(batman_if->dev))
-		activate_interface(batman_if);
-	else
-		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", batman_if->dev);
-	
-	list_add_tail_rcu(&batman_if->list, &if_list);
-
-	return 1;
-
-out:
-	kfree(batman_if);
-	return -1;
-}
-
-/* sets up inactive devices. */
-void check_inactive_interfaces(struct work_struct *work)
-{
-	struct batman_if *batman_if;
-
-	debug_log(LOG_TYPE_NOTICE, "check inactive interfaces .....\n");
-	/* TODO: spinlock for the write here */
-	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		/* TODO: inplace change, use copy/update here. */
-		/* TODO: move this in a workqueue, (de)activate_interface is blocking code
-		 * and should not be called from a timer. */
-		if (batman_if->if_active == IF_TO_BE_REMOVED)
-			deactivate_interface(batman_if);
-
-		debug_log(LOG_TYPE_NOTICE, "checking batman_if->dev = %s, if_active = %d\n", batman_if->dev, batman_if->if_active );
-		if ((batman_if->if_active == IF_INACTIVE) && (is_interface_up(batman_if->dev)))
-			activate_interface(batman_if);
-	}
-	debug_log(LOG_TYPE_NOTICE, "check inactive interfaces ..... done\n");
-}
-
-char get_active_if_num(void)
-{
-	return active_ifs;
 }
 
 void inc_module_count(void)
@@ -559,7 +274,7 @@ int is_my_mac(uint8_t *addr)
 	}
 	rcu_read_unlock();
 	return 0;
-		 
+
 }
 
 int is_bcast(uint8_t *addr)

@@ -26,6 +26,7 @@
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
 #include "batman-adv-ttable.h"
+#include "hard-interface.h"
 #include "types.h"
 
 
@@ -53,10 +54,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN, "Interface %s is not up - can't send packet via that interface !\n", batman_if->net_dev->name);
-		batman_if->if_active = IF_TO_BE_REMOVED;
-		/* NOTE: if deactivate_interface() is used here, if_list_lock must be acquired. 
-		 * (this function is called with and without lock.*/
-/*		deactivate_interface(batman_if);*/
+		batman_if->if_active = IF_TO_BE_DEACTIVATED;
 		return;
 	}
 
@@ -77,10 +75,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0) {
 		if (retval != -EAGAIN) {
 			debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
-			batman_if->if_active = IF_TO_BE_REMOVED;
-		/* NOTE: if deactivate_interface() is used here, if_list_lock must be acquired. 
-		 * (this function is called with and without lock.*/
-/*			deactivate_interface(batman_if);*/
+			batman_if->if_active = IF_TO_BE_DEACTIVATED;
 		}
 	}
 }
@@ -150,7 +145,6 @@ void send_own_packet(unsigned long data)
 {
 	unsigned char *buff_ptr;
 	struct batman_if *batman_if = (struct batman_if *)data;
-	debug_log(LOG_TYPE_CRIT, "send_own_packet()\n");
 
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
@@ -178,7 +172,6 @@ void send_own_packet(unsigned long data)
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
 	start_bcast_timer(batman_if);
-	debug_log(LOG_TYPE_CRIT, "send_own_packet() done\n");
 }
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)

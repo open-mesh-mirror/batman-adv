@@ -30,11 +30,8 @@
 #define VIS_SERVER 0x20
 #define TQ_MAX_VALUE 255
 #define JITTER 100
-#define TTL 50                /* Time To Live of broadcast messages */
-#define MAX_ADDR	16		  /* number of interfaces which can be added to batman. */
-#define IF_INACTIVE 0
-#define IF_ACTIVE	1
-#define IF_TO_BE_REMOVED 2
+#define TTL 50		/* Time To Live of broadcast messages */
+#define MAX_ADDR 16	/* number of interfaces which can be added to batman. */
 
 
 #define PURGE_TIMEOUT 200000  /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
@@ -52,6 +49,10 @@
 
 #define LOG_BUF_LEN 8192	/* has to be a power of 2 */
 #define ETH_STR_LEN 20
+
+#define MODULE_INACTIVE 0
+#define MODULE_ACTIVE 1
+#define MODULE_UNLOADING 2
 
 
 /*
@@ -100,6 +101,8 @@ extern struct net_device *bat_device;
 
 extern unsigned char broadcastAddr[];
 extern char hna_local_changed;
+extern char module_state;
+extern struct workqueue_struct *bat_event_workqueue;
 
 
 
@@ -107,12 +110,7 @@ extern char hna_local_changed;
 
 void start_purge_timer(void);
 void activate_module(void);
-void shutdown_module(char keep_bat_if);
-void remove_interfaces(void);
-int add_interface(char *dev, int if_num);
-void deactivate_interface(struct batman_if *batman_if);
-void check_inactive_interfaces(struct work_struct *work);
-char get_active_if_num(void);
+void shutdown_module(void);
 void inc_module_count(void);
 void dec_module_count(void);
 int addr_to_string(char *buff, uint8_t *addr);

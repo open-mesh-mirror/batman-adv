@@ -26,6 +26,7 @@
 #include "batman-adv-log.h"
 #include "batman-adv-routing.h"
 #include "batman-adv-ttable.h"
+#include "hard-interface.h"
 #include "batman-adv-vis.h"
 #include "types.h"
 #include "hash.h"
@@ -277,19 +278,19 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 
 	if (strlen(if_string) == 0) {
 
-		shutdown_module(0);
-		remove_interfaces();
+		shutdown_module();
+
 		spin_lock(&orig_hash_lock);
 		hash_delete(orig_hash, free_orig_node);
 		orig_hash = hash_new(128, compare_orig, choose_orig);
 		spin_unlock(&orig_hash_lock);
+
 		num_ifs = 0;
 		goto end;
 
 	} else {
 
 		/* add interface */
-
 		rcu_read_lock();
 		list_for_each_entry_rcu(batman_if, &if_list, list) {
 
@@ -304,9 +305,7 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 		}
 		rcu_read_unlock();
 
-		shutdown_module(1);
-
-		if (add_interface(if_string, if_num)) {
+		if (hardif_add_interface(if_string, if_num)) {
 
 			/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
 			spin_lock(&orig_hash_lock);
@@ -328,9 +327,9 @@ int proc_interfaces_write(struct file *instance, const char __user *userbuffer, 
 			spin_unlock(&orig_hash_lock);
 		}
 
-		if (get_active_if_num() > 0)
+		if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
 			activate_module();
-		else if (num_ifs > 0)
+		else if ((module_state == MODULE_INACTIVE) && (num_ifs > 0))
 			debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
 	}
 
@@ -438,7 +437,7 @@ int proc_originators_read(struct seq_file *seq, void *offset)
 
 	spin_unlock(&orig_hash_lock);
 
-	if (batman_count == 0) 
+	if (batman_count == 0)
 		seq_printf(seq, "No batman nodes in range ... \n");
 
 end:
