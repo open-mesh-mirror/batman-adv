@@ -322,7 +322,6 @@ void purge_vis_packets(void)
 void send_vis_packets(unsigned long arg)
 {
 	struct vis_info *info, *temp;
-	debug_log(LOG_TYPE_NOTICE, "Sending vis packets...\n");
 
 	purge_vis_packets();
 	spin_lock(&vis_hash_lock);
@@ -337,8 +336,6 @@ void send_vis_packets(unsigned long arg)
 	spin_unlock(&vis_hash_lock);
 	start_vis_timer();
 
-
-	debug_log(LOG_TYPE_NOTICE, "Sending vis packets done...\n");
 }
 
 /* only send one vis packet. called from send_vis_packets() */

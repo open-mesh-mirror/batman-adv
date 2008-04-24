@@ -288,6 +288,9 @@ void hardif_check_interfaces_status(struct work_struct *work)
 	}
 	rcu_read_unlock();
 
+	if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
+		activate_module();
+
 	start_hardif_check_timer();
 }
 
