@@ -39,15 +39,14 @@
 
 void cleanup_procfs(void);
 int setup_procfs(void);
-int proc_interfaces_read(struct seq_file *seq, void *offset);
 int proc_interfaces_open(struct inode *inode, struct file *file);
+int proc_interfaces_read(struct seq_file *seq, void *offset);
 ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuffer, size_t count, loff_t *data);
-int proc_orig_interval_read(struct seq_file *seq, void *offset);
 int proc_orig_interval_open(struct inode *inode, struct file *file);
+int proc_orig_interval_read(struct seq_file *seq, void *offset);
 ssize_t proc_orig_interval_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos);
 int proc_originators_open(struct inode *inode, struct file *file);
 int proc_originators_read(struct seq_file *seq, void *offset);
-/*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data);*/
 int proc_log_level_open(struct inode *inode, struct file *file);
 int proc_log_level_read(struct seq_file *seq, void *offset);
 ssize_t proc_log_level_write(struct file *instance, const char __user *userbuffer, size_t count, loff_t *data);
