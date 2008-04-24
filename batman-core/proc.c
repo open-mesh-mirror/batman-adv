@@ -33,7 +33,7 @@
 
 
 
-static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL/*, *proc_gateways_file = NULL*/;
+static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL;
 static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL, *proc_vis_file = NULL;
 
 static const struct file_operations proc_vis_fops = {
@@ -69,7 +69,32 @@ static const struct file_operations proc_transtable_global_fops = {
 	.release	= single_release,
 };
 
+static const struct file_operations proc_log_level_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_log_level_open,
+	.read		= seq_read,
+	.write		= proc_log_level_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 
+static const struct file_operations proc_interfaces_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_interfaces_open,
+	.read		= seq_read,
+	.write		= proc_interfaces_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static const struct file_operations proc_orig_interval_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_orig_interval_open,
+	.read		= seq_read,
+	.write		= proc_orig_interval_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 
 
 
@@ -86,9 +111,6 @@ void cleanup_procfs(void)
 
 	if (proc_log_level_file)
 		remove_proc_entry(PROC_FILE_LOG_LEVEL, proc_batman_dir);
-
-	/*if (proc_gateways_file)
-		remove_proc_entry(PROC_FILE_GATEWAYS, proc_batman_dir);*/
 
 	if (proc_originators_file)
 		remove_proc_entry(PROC_FILE_ORIGINATORS, proc_batman_dir);
@@ -128,9 +150,7 @@ int setup_procfs(void)
 	proc_interface_file = create_proc_entry(PROC_FILE_INTERFACES, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_interface_file) {
-		proc_interface_file->read_proc = proc_interfaces_read;
-		proc_interface_file->write_proc = proc_interfaces_write;
-		proc_interface_file->data = NULL;
+		proc_interface_file->proc_fops = &proc_interfaces_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
 		cleanup_procfs();
@@ -140,9 +160,7 @@ int setup_procfs(void)
 	proc_orig_interval_file = create_proc_entry(PROC_FILE_ORIG_INTERVAL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_orig_interval_file) {
-		proc_orig_interval_file->read_proc = proc_orig_interval_read;
-		proc_orig_interval_file->write_proc = proc_orig_interval_write;
-		proc_orig_interval_file->data = NULL;
+		proc_orig_interval_file->proc_fops = &proc_orig_interval_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_ORIG_INTERVAL);
 		cleanup_procfs();
@@ -152,9 +170,8 @@ int setup_procfs(void)
 	proc_log_level_file = create_proc_entry(PROC_FILE_LOG_LEVEL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 
 	if (proc_log_level_file) {
-		proc_log_level_file->read_proc = proc_log_level_read;
-		proc_log_level_file->write_proc = proc_log_level_write;
-		proc_log_level_file->data = NULL;
+
+		proc_log_level_file->proc_fops = &proc_log_level_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_LOG_LEVEL);
 		cleanup_procfs();
@@ -171,18 +188,6 @@ int setup_procfs(void)
 		cleanup_procfs();
 		return -EFAULT;
 	}
-
-	/*proc_gateways_file = create_proc_entry(PROC_FILE_GATEWAYS, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
-
-	if (proc_gateways_file) {
-		proc_gateways_file->read_proc = proc_gateways_read;
-		proc_gateways_file->write_proc = proc_dummy_write;
-		proc_gateways_file->data = NULL;
-	} else {
-		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_GATEWAYS);
-		cleanup_procfs();
-		return -EFAULT;
-	}*/
 
 	proc_log_file = create_proc_entry(PROC_FILE_LOG, S_IRUSR | S_IRGRP | S_IROTH, proc_batman_dir);
 	if (proc_log_file) {
@@ -227,29 +232,26 @@ int setup_procfs(void)
 	return 0;
 }
 
-int proc_interfaces_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_interfaces_read(struct seq_file *seq, void *offset)
 {
-	int total_bytes = 0, bytes_written = 0;
 	struct batman_if *batman_if;
-
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-
-		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->dev);
-		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+		seq_printf(seq, "%s ", batman_if->dev);
 	}
 	rcu_read_unlock();
 
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	*eof = 1;
-	return total_bytes;
+	seq_printf(seq, "\n");
+	return 0;
 }
 
-int proc_interfaces_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+int proc_interfaces_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_interfaces_read, NULL);
+}
+
+ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuffer, size_t count, loff_t *data)
 {
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
 	int not_copied = 0, if_num = 0;
@@ -348,18 +350,14 @@ end:
 	return count;
 }
 
-int proc_orig_interval_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_orig_interval_read(struct seq_file *seq, void *offset)
 {
-	int total_bytes = 0, bytes_written = 0;
+	seq_printf(seq, "%i\n", atomic_read(&originator_interval));
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%i\n", atomic_read(&originator_interval));
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	*eof = 1;
-	return total_bytes;
+	return 0;
 }
 
-int proc_orig_interval_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+ssize_t proc_orig_interval_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
 {
 	char *interval_string;
 	int not_copied = 0;
@@ -370,7 +368,7 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 	if (!interval_string)
 		return -ENOMEM;
 
-	not_copied = copy_from_user(interval_string, userbuffer, count);
+	not_copied = copy_from_user(interval_string, buffer, count);
 	interval_string[count - not_copied - 1] = 0;
 
 	originator_interval_tmp = simple_strtol(interval_string, NULL, 10);
@@ -387,6 +385,11 @@ int proc_orig_interval_write(struct file *instance, const char __user *userbuffe
 end:
 	kfree(interval_string);
 	return count;
+}
+
+int proc_orig_interval_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_orig_interval_read, NULL);
 }
 
 int proc_originators_read(struct seq_file *seq, void *offset)
@@ -449,57 +452,25 @@ int proc_originators_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_originators_read, NULL);
 }
 
-
-/*int proc_gateways_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
+int proc_log_level_read(struct seq_file *seq, void *offset)
 {
-	int total_bytes = 0, bytes_written = 0;
-// 	struct list_head *list_pos;
-// 	struct batman_if *batman_if;
-//
-// TODO: loop through gateways
-// 	list_for_each(list_pos, &if_list) {
-// 		batman_if = list_entry(list_pos, struct batman_if, list);
-	//
-// 		bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "%s ", batman_if->net_dev->name);
-// 		total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-// 	}
 
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "\n");
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
+	seq_printf(seq, "[x] %s (%d)\n", LOG_TYPE_CRIT_NAME, LOG_TYPE_CRIT);
+	seq_printf(seq, "[%c] %s (%d)\n", (LOG_TYPE_WARN & log_level) ? 'x' : ' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN);
+	seq_printf(seq, "[%c] %s (%d)\n", (LOG_TYPE_NOTICE & log_level) ? 'x' : ' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE);
+	seq_printf(seq, "[%c] %s (%d)\n", (LOG_TYPE_BATMAN & log_level) ? 'x' : ' ', LOG_TYPE_BATMAN_NAME, LOG_TYPE_BATMAN);
+	seq_printf(seq, "[%c] %s (%d)\n", (LOG_TYPE_ROUTES & log_level) ? 'x' : ' ', LOG_TYPE_ROUTES_NAME, LOG_TYPE_ROUTES);
 
-	*eof = 1;
-	return total_bytes;
-}*/
-
-int proc_log_level_read(char *buf, char **start, off_t offset, int size, int *eof, void *data)
-{
-	int total_bytes = 0, bytes_written = 0;
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[x] %s (%d)\n",
-				LOG_TYPE_CRIT_NAME, LOG_TYPE_CRIT);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				(LOG_TYPE_WARN & log_level) ? 'x' : ' ', LOG_TYPE_WARN_NAME, LOG_TYPE_WARN);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 (LOG_TYPE_NOTICE & log_level) ? 'x' : ' ', LOG_TYPE_NOTICE_NAME, LOG_TYPE_NOTICE);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				 (LOG_TYPE_BATMAN & log_level) ? 'x' : ' ', LOG_TYPE_BATMAN_NAME, LOG_TYPE_BATMAN);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	bytes_written = snprintf(buf + total_bytes, (size - total_bytes), "[%c] %s (%d)\n",
-				(LOG_TYPE_ROUTES & log_level) ? 'x' : ' ', LOG_TYPE_ROUTES_NAME, LOG_TYPE_ROUTES);
-	total_bytes += (bytes_written > (size - total_bytes) ? size - total_bytes : bytes_written);
-
-	*eof = 1;
-	return total_bytes;
+	return 0;
 }
 
-int proc_log_level_write(struct file *instance, const char __user *userbuffer, unsigned long count, void *data)
+int proc_log_level_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_log_level_read, NULL);
+}
+
+
+ssize_t proc_log_level_write(struct file *instance, const char __user *userbuffer, size_t count, loff_t *data)
 {
 	char *log_level_string, *tokptr, *cp;
 	int finished, not_copied = 0;
@@ -637,7 +608,7 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 			if (entries[i].quality == 0)
 				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
 			else {
-				/* TODO: kernel has no printf-support for %f? it'd be better to return this in float. */
+				/* kernel has no printf-support for %f? it'd be better to return this in float. */
 				int_part = 255/entries[i].quality;
 				frac_part = 1000 * 255/entries[i].quality - int_part * 1000;
 				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"%d.%d\"]\n", from, to, int_part, frac_part);
