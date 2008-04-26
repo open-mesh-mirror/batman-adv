@@ -81,8 +81,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	}
 }
 
-/* send a batman packet.
- * if_list_lock must NOT be acquired outside. */
+/* send a batman packet. */
 static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batman_if *if_outgoing, char own_packet)
 {
 	struct batman_if *batman_if;
@@ -124,9 +123,9 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 				list_for_each_entry_rcu(batman_if, &if_list, list) {
 
 					if (directlink && (if_outgoing == batman_if))
-						((struct batman_packet *)pack_buff)->flags = DIRECTLINK;
+						((struct batman_packet *)pack_buff)->flags |= DIRECTLINK;
 					else
-						((struct batman_packet *)pack_buff)->flags = 0x00;
+						((struct batman_packet *)pack_buff)->flags &= ~DIRECTLINK;
 
 					debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->net_dev->name, batman_if->addr_str);
 
@@ -163,6 +162,7 @@ void send_own_packet(unsigned long data)
 
 	/* change sequence number to network order */
 	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);
+	((struct batman_packet *)batman_if->pack_buff)->flags = VIS_SERVER;		/* TODO: only send when server */
 
 	/* could be read by receive_bat_packet() */
 	spin_lock(&batman_if->seqno_lock);
@@ -213,9 +213,9 @@ void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, str
 	batman_packet->seqno = htons(batman_packet->seqno);
 
 	if (idf)
-		batman_packet->flags = DIRECTLINK;
+		batman_packet->flags |= DIRECTLINK;
 	else
-		batman_packet->flags = 0x00;
+		batman_packet->flags &= ~DIRECTLINK;
 
 	send_packet((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0);
 }

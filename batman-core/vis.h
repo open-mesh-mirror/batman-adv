@@ -24,8 +24,9 @@ struct vis_info {
 	struct list_head    recv_list;
 			/* list of server-neighbors we received a vis-packet from. 
 			 * we should not reply to them. */
+	struct list_head send_list;			
+			/* this packet might be part of the vis send queue. */
 	struct vis_packet packet;
-	struct list_head send_list;			/* this packet might be part of the vis send queue. */
 	/* vis_info may follow here*/
 } __attribute__((packed));
 

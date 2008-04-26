@@ -27,6 +27,7 @@
 #include "vis.h"
 #include "log.h"
 #include "soft-interface.h"
+#include "hard-interface.h"
 #include "hash.h"
 
 
@@ -147,7 +148,7 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len)
 		info->packet.entries = vis_info_len / sizeof(struct vis_info);
 
-	recv_list_add(&old_info->recv_list, info->packet.sender_orig);
+	recv_list_add(&info->recv_list, info->packet.sender_orig);
 
 	/* try to add it */
 	if (hash_add(vis_hash, info)< 0) {
@@ -172,7 +173,7 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
 	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
 		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
-		if (!list_empty(&info->send_list))
+		if (list_empty(&info->send_list)) 
 			list_add_tail(&info->send_list, &send_list);
 	}
 
@@ -204,13 +205,13 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 
 		info->packet.vis_type = VIS_TYPE_SERVER_SYNC;	/* upgrade! */
 		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
-		if (!list_empty(&info->send_list))
+		if (list_empty(&info->send_list))
 			list_add_tail(&info->send_list, &send_list);
 
 	 /* ... we're not the recipient (and thus need to forward). */
 	} else if (!is_my_mac(info->packet.target_orig)) {
 
-		if (!list_empty(&info->send_list))
+		if (list_empty(&info->send_list))
 			list_add_tail(&info->send_list, &send_list);
 	}
 
@@ -362,7 +363,8 @@ void send_vis_packet(struct vis_info *info)
 		spin_lock(&orig_hash_lock);
 
 		/* send to all routers in range. */
-		while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
+		while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+
 			orig_node = hashit->bucket->data;
 
 			/* if it's a vis server and reachable, send it. */
