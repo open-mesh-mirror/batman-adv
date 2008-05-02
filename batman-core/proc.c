@@ -40,7 +40,7 @@ static const struct file_operations proc_vis_fops = {
 	.owner		= THIS_MODULE,
 	.open		= proc_vis_open,
 	.read		= seq_read,
-	.write		= proc_dummy_write,
+	.write		= proc_vis_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
@@ -588,7 +588,7 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 
 
 	rcu_read_lock();
-	if (list_empty(&if_list)) {
+	if (list_empty(&if_list) || (vis_get_mode() == VIS_TYPE_CLIENT_UPDATE)) {
 		rcu_read_unlock();
 		seq_printf(seq, "digraph {\n}\n" );
 		goto end;
@@ -620,6 +620,37 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 	seq_printf(seq, "}\n");
 end:
 	return 0;
+}
+
+/* setting the mode of the vis server by the user */
+ssize_t proc_vis_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
+{
+	char *vis_mode_string;
+	int not_copied = 0;
+
+	vis_mode_string = kmalloc(count, GFP_KERNEL);
+
+	if (!vis_mode_string)
+		return -ENOMEM;
+
+	not_copied = copy_from_user(vis_mode_string, buffer, count);
+	vis_mode_string[count - not_copied - 1] = 0;
+
+	if (strcmp(vis_mode_string, "client") == 0) {
+		debug_log(LOG_TYPE_NOTICE, "Setting VIS mode to client\n");
+		vis_set_mode(VIS_TYPE_CLIENT_UPDATE);
+	}
+	else if (strcmp(vis_mode_string, "server") == 0) {
+		debug_log(LOG_TYPE_NOTICE, "Setting VIS mode to server\n");
+		vis_set_mode(VIS_TYPE_SERVER_SYNC);
+	} else 
+		debug_log(LOG_TYPE_WARN, "unknown vis-server mode: %s\n", vis_mode_string);
+	
+
+
+
+	kfree(vis_mode_string);
+	return count;
 }
 
 int proc_vis_open(struct inode *inode, struct file *file)

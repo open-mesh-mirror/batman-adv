@@ -44,5 +44,7 @@ extern struct hashtable_t *vis_hash;
 extern spinlock_t vis_hash_lock;
 
 void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, int vis_info_len);
+void vis_set_mode(int mode);
+int vis_get_mode(void);
 int vis_init(void);
 int vis_quit(void);

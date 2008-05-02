@@ -28,6 +28,7 @@
 #include "translation-table.h"
 #include "hard-interface.h"
 #include "types.h"
+#include "vis.h"
 
 
 
@@ -162,7 +163,10 @@ void send_own_packet(unsigned long data)
 
 	/* change sequence number to network order */
 	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);
-	((struct batman_packet *)batman_if->pack_buff)->flags = VIS_SERVER;		/* TODO: only send when server */
+	if (vis_get_mode() == VIS_TYPE_SERVER_SYNC)
+		((struct batman_packet *)batman_if->pack_buff)->flags = VIS_SERVER;		
+	else
+		((struct batman_packet *)batman_if->pack_buff)->flags = 0;		
 
 	/* could be read by receive_bat_packet() */
 	spin_lock(&batman_if->seqno_lock);

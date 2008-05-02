@@ -34,7 +34,7 @@
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
-static struct vis_info *my_vis_info;
+static struct vis_info *my_vis_info = NULL;
 static struct list_head send_list;	/* always locked with vis_hash_lock ... */
 static struct timer_list vis_timer;
 
@@ -219,6 +219,30 @@ end:
 	spin_unlock(&vis_hash_lock);
 }
 
+/* set the mode of the visualization to client or server */
+void vis_set_mode(int mode) 
+{
+	spin_lock(&vis_hash_lock);
+
+	if (my_vis_info != NULL) 
+		my_vis_info->packet.vis_type = mode;
+
+	spin_unlock(&vis_hash_lock);
+
+}
+
+/* get the current set mode */
+int vis_get_mode(void) 
+{
+	int ret = VIS_TYPE_CLIENT_UPDATE;
+
+	spin_lock(&vis_hash_lock);
+	if (my_vis_info != NULL) 
+		ret = my_vis_info->packet.vis_type;
+	spin_unlock(&vis_hash_lock);
+
+	return ret;
+}
 
 /* send own vis data */
 static void generate_vis_packet(void)
@@ -242,7 +266,7 @@ static void generate_vis_packet(void)
 		/* find vis-server to receive. */
 		while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 			orig_node = hashit->bucket->data;
-			if ((orig_node != NULL) && (orig_node->router == NULL)) {
+			if ((orig_node != NULL) && (orig_node->router != NULL)) {
 				if ((orig_node->flags & VIS_SERVER) && orig_node->router->tq_avg > best_tq) {
 					best_tq = orig_node->router->tq_avg;
 					memcpy(info->packet.target_orig, orig_node->orig,6);
@@ -328,7 +352,8 @@ void send_vis_packets(unsigned long arg)
 	spin_lock(&vis_hash_lock);
 	generate_vis_packet();
 
-	list_add_tail(&my_vis_info->send_list, &send_list);
+	if (my_vis_info->packet.ttl > 0) /* only schedule with valid TTL. */
+		list_add_tail(&my_vis_info->send_list, &send_list);
 
 	list_for_each_entry_safe(info, temp, &send_list, send_list) {
 		list_del_init(&info->send_list);
@@ -441,7 +466,7 @@ int vis_init(void)
 	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
 	INIT_LIST_HEAD(&my_vis_info->recv_list);
 	my_vis_info->packet.packet_type = BAT_VIS;
-	my_vis_info->packet.vis_type = VIS_TYPE_SERVER_SYNC;
+	my_vis_info->packet.vis_type = VIS_TYPE_CLIENT_UPDATE;
 	my_vis_info->packet.ttl = TTL;
 	my_vis_info->packet.seqno = 0;
 	my_vis_info->packet.entries = 0;

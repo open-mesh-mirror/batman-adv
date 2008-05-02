@@ -18,7 +18,7 @@
 
 
 
-
+PWD:=$(shell pwd)
 ifeq ($(wildcard $(KERNELPATH)),)
 KERNELPATH = /lib/modules/$(shell uname -r)/build
 # sanity check: does KERNELPATH exist?
