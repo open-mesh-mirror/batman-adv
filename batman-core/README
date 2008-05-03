@@ -1,4 +1,4 @@
-[state: 03-28-2008]
+[state: 05-03-2008]
 
 BATMAN-CORE
 -----------
@@ -47,7 +47,12 @@ regular interface:
 # ping 192.168.0.2
 ...
 
-To get a topology snapshot of your mesh, use:
+If you want topology visualization, your meshnode must be configured 
+as VIS-server:
+
+# echo "server" > /proc/net/batman-adv/vis
+
+When configured as server, you can get a topology snapshot of your mesh:
 
 # cat /proc/net/batman-adv/vis
 
