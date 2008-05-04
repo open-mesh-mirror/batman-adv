@@ -105,11 +105,33 @@ int recv_list_is_in(struct list_head *recv_list, char *mac)
 struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int *is_new)
 {
 	struct vis_info *info, *old_info;
+	struct vis_info search_elem;
 
 	*is_new = 0;
 	/* sanity check */
 	if (vis_hash == NULL)
 		return NULL;
+
+	/* see if the packet is already in vis_hash */
+	memcpy(search_elem.packet.vis_orig, vis_packet->vis_orig, ETH_ALEN);
+	old_info = hash_find(vis_hash, &search_elem);
+
+	if (old_info != NULL) {
+		if (vis_packet->seqno - old_info->packet.seqno <= 0) {
+			if (old_info->packet.seqno == vis_packet->seqno) {
+
+				recv_list_add(&old_info->recv_list, vis_packet->sender_orig);
+				return(old_info);
+			} else {
+				/* newer packet is already in hash. */
+				return(NULL);
+			}
+		}
+		/* remove old entry */
+		hash_remove(vis_hash, old_info);
+		free_info(old_info);
+	}
+
 	info = kmalloc(sizeof(struct vis_info) + vis_info_len,GFP_KERNEL);
 	if (info == NULL)
 		return NULL;
@@ -118,28 +140,6 @@ struct vis_info *add_packet(struct vis_packet *vis_packet, int vis_info_len, int
 	INIT_LIST_HEAD(&info->recv_list);
 	info->first_seen = jiffies;
 	memcpy(&info->packet, vis_packet, sizeof(struct vis_packet) + vis_info_len);
-
-	/* see if the packet is already in vis_hash */
-	old_info = hash_find(vis_hash, info);
-
-	if (old_info != NULL) {
-		if (info->packet.seqno - old_info->packet.seqno <= 0) {
-			if (old_info->packet.seqno == info->packet.seqno) {
-
-				recv_list_add(&old_info->recv_list, info->packet.sender_orig);
-				free_info(info);
-
-				return(old_info);
-			} else {
-				/* newer packet is already in hash. */
-				free_info(info);
-				return(NULL);
-			}
-		}
-		/* remove old entry */
-		hash_remove(vis_hash, old_info);
-		free_info(old_info);
-	}
 
 	/* initialize and add new packet. */
 	*is_new = 1;
@@ -171,7 +171,7 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 		goto end;
 
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
-	if ((my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC) && is_new) {
+	if (is_vis_server_locked() && is_new) {
 		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
 		if (list_empty(&info->send_list)) 
 			list_add_tail(&info->send_list, &send_list);
@@ -199,7 +199,7 @@ void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_le
 
 
 	/* send only if we're the target server or ... */
-	if (my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC
+	if (is_vis_server_locked()
 		&& is_my_mac(info->packet.target_orig)
 		&& is_new) {
 
@@ -231,21 +231,31 @@ void vis_set_mode(int mode)
 
 }
 
-/* get the current set mode */
-int vis_get_mode(void) 
+/* is_vis_server(), locked outside */
+int is_vis_server_locked(void) 
 {
-	int ret = VIS_TYPE_CLIENT_UPDATE;
+	if (my_vis_info != NULL) 
+		if (my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC)
+			return 1;
+
+	return 0;
+}
+/* get the current set mode */
+int is_vis_server(void) 
+{
+	int ret = 0;
 
 	spin_lock(&vis_hash_lock);
-	if (my_vis_info != NULL) 
-		ret = my_vis_info->packet.vis_type;
+	ret = is_vis_server_locked();
 	spin_unlock(&vis_hash_lock);
 
 	return ret;
 }
 
-/* send own vis data */
-static void generate_vis_packet(void)
+/* generates a packet of own vis data,
+ * returns 0 on success, -1 if no packet could be generated */
+
+static int generate_vis_packet(void)
 {
 	struct hash_it_t *hashit = NULL;
 	struct orig_node *orig_node;
@@ -262,7 +272,7 @@ static void generate_vis_packet(void)
 	info->packet.seqno++;
 	info->packet.entries = 0;
 
-	if (my_vis_info->packet.vis_type == VIS_TYPE_CLIENT_UPDATE) {
+	if (!is_vis_server_locked()) {
 		/* find vis-server to receive. */
 		while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 			orig_node = hashit->bucket->data;
@@ -274,9 +284,8 @@ static void generate_vis_packet(void)
 			}
 		}
 		if (best_tq < 0) {
-			info->packet.ttl = 0;	/* don't send */
 			spin_unlock(&orig_hash_lock);
-			return;
+			return -1;
 		}
 	}
 	hashit = NULL;
@@ -298,7 +307,7 @@ static void generate_vis_packet(void)
 			/* don't fill more than 1000 bytes */
 			if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) {
 				spin_unlock(&orig_hash_lock);
-				return;
+				return 0;
 			}
 		}
 	}
@@ -319,10 +328,11 @@ static void generate_vis_packet(void)
 		/* don't fill more than 1000 bytes */
 		if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) {
 			spin_unlock(&hna_local_hash_lock);
-			return;
+			return 0;
 		}
 	}
 	spin_unlock(&hna_local_hash_lock);
+	return 0;
 
 }
 void purge_vis_packets(void)
@@ -350,9 +360,8 @@ void send_vis_packets(unsigned long arg)
 
 	purge_vis_packets();
 	spin_lock(&vis_hash_lock);
-	generate_vis_packet();
-
-	if (my_vis_info->packet.ttl > 0) /* only schedule with valid TTL. */
+	if (generate_vis_packet() == 0)
+		/* schedule if generation was successful */
 		list_add_tail(&my_vis_info->send_list, &send_list);
 
 	list_for_each_entry_safe(info, temp, &send_list, send_list) {

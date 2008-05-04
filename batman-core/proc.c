@@ -588,7 +588,7 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 
 
 	rcu_read_lock();
-	if (list_empty(&if_list) || (vis_get_mode() == VIS_TYPE_CLIENT_UPDATE)) {
+	if (list_empty(&if_list) || (!is_vis_server())) {
 		rcu_read_unlock();
 		seq_printf(seq, "digraph {\n}\n" );
 		goto end;
