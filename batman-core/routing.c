@@ -26,6 +26,7 @@
 #include "log.h"
 #include "send.h"
 #include "soft-interface.h"
+#include "hard-interface.h"
 #include "device.h"
 #include "translation-table.h"
 #include "types.h"
@@ -375,7 +376,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 
 	is_single_hop_neigh = (compare_orig(ethhdr->h_source, batman_packet->orig) ? 1 : 0);
 
-	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, IDF %d) \n", neigh_str, if_incoming->net_dev->name, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_directlink_flag);
+	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, IDF %d) \n", neigh_str, if_incoming->dev, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_directlink_flag);
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
@@ -589,8 +590,17 @@ int packet_recv_thread(void *data)
 			break;
 
 		list_for_each_entry_rcu(batman_if, &if_list, list) {
+			result = -1;
 
-			while ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) > 0) {
+			while (1) {
+				if (batman_if->if_active != IF_ACTIVE) {
+					debug_log(LOG_TYPE_NOTICE, "Could not read from deactivated interface %s!\n", batman_if->dev);
+					result = 0;
+					break;
+				}
+
+				if ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) <= 0)
+					break;
 
 				if (result < sizeof(struct ethhdr) + 1)
 					continue;
@@ -841,7 +851,7 @@ int packet_recv_thread(void *data)
 			}
 
 			if ((result < 0) && (result != -EAGAIN))
-				debug_log(LOG_TYPE_CRIT, "Could not receive packet from interface %s: %i\n", batman_if->net_dev->name, result);
+				debug_log(LOG_TYPE_CRIT, "Could not receive packet from interface %s: %i\n", batman_if->dev, result);
 		}
 
 		atomic_set(&data_ready_cond, 0);
