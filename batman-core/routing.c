@@ -602,11 +602,16 @@ int packet_recv_thread(void *data)
 				if ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) <= 0)
 					break;
 
-				if (result < sizeof(struct ethhdr) + 1)
+				if (result < sizeof(struct ethhdr) + 2)
 					continue;
 
 				ethhdr = (struct ethhdr *)packet_buff;
 				batman_packet = (struct batman_packet *)(packet_buff + sizeof(struct ethhdr));
+
+				if (batman_packet->version != COMPAT_VERSION) {
+					debug_log(LOG_TYPE_BATMAN, "Drop packet: incompatible batman version (%i) \n", batman_packet->version);
+					continue;
+				}
 
 				/* batman packet */
 				switch (batman_packet->packet_type) {

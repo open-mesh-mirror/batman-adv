@@ -184,6 +184,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		bcast_packet = (struct bcast_packet *)skb->data;
 
+		bcast_packet->version = COMPAT_VERSION;
+
 		/* batman packet type: broadcast */
 		bcast_packet->packet_type = BAT_BCAST;
 
@@ -221,6 +223,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 			unicast_packet = (struct unicast_packet *)skb->data;
 
+			unicast_packet->version = COMPAT_VERSION;
 			/* batman packet type: unicast */
 			unicast_packet->packet_type = BAT_UNICAST;
 			/* set unicast ttl */

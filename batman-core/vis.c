@@ -475,6 +475,7 @@ int vis_init(void)
 	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
 	INIT_LIST_HEAD(&my_vis_info->recv_list);
 	INIT_LIST_HEAD(&my_vis_info->send_list);
+	my_vis_info->packet.version = COMPAT_VERSION;
 	my_vis_info->packet.packet_type = BAT_VIS;
 	my_vis_info->packet.vis_type = VIS_TYPE_CLIENT_UPDATE;
 	my_vis_info->packet.ttl = TTL;

@@ -54,6 +54,7 @@ struct batman_packet
 struct icmp_packet
 {
 	uint8_t  packet_type;
+	uint8_t  version;  /* batman version field */
 	uint8_t  msg_type;   /* 0 = ECHO REPLY, 3 = DESTINATION_UNREACHABLE, 8 = ECHO_REQUEST, 11 = TTL exceeded */
 	uint8_t  dst[6];
 	uint8_t  orig[6];
@@ -65,14 +66,15 @@ struct icmp_packet
 struct unicast_packet
 {
 	uint8_t  packet_type;
-	uint8_t  ttl;
+	uint8_t  version;  /* batman version field */
 	uint8_t  dest[6];
+	uint8_t  ttl;
 } __attribute__((packed));
 
 struct bcast_packet
 {
 	uint8_t  packet_type;
-	uint8_t  padding;
+	uint8_t  version;  /* batman version field */
 	uint8_t  orig[6];
 	uint16_t seqno;
 } __attribute__((packed));
@@ -80,6 +82,7 @@ struct bcast_packet
 struct vis_packet
 {
 	uint8_t  packet_type;
+	uint8_t  version;  			/* batman version field */
 	uint8_t  vis_type;			/* which type of vis-participant sent this? */
 	uint8_t  seqno;				/* sequence number */
 	uint8_t  entries;			/* number of entries behind this struct */

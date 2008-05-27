@@ -28,7 +28,22 @@ endif
 export KERNELPATH
 endif
 
-REVISION := $(shell if [ -d .svn ]; then svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; else if [ -d ~/.svk ]; then echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); fi; fi)
+REVISION=	$(shell if [ -d .svn ]; then \
+						if [ -x $$(which svn) ]; then \
+							svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; \
+						else \
+							echo "[unknown]"; \
+						fi ; \
+					else \
+						if [ -d ~/.svk ]; then \
+							if [ -x $$(which svn) ]; then \
+								echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); \
+							else \
+								echo "[unknown]"; \
+							fi; \
+						fi; \
+					fi)
+
 NUM_CPUS = $(shell NUM_CPUS=`cat /proc/cpuinfo | grep -v 'model name' | grep processor | tail -1 | awk -F' ' '{print $$3}'`;echo `expr $$NUM_CPUS + 1`)
 
 include $(PWD)/Makefile.kbuild
