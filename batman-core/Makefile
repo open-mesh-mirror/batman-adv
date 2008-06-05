@@ -29,14 +29,14 @@ export KERNELPATH
 endif
 
 REVISION=	$(shell if [ -d .svn ]; then \
-						if [ -x $$(which svn) ]; then \
+						if which svn > /dev/null; then \
 							svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; \
 						else \
 							echo "[unknown]"; \
 						fi ; \
 					else \
 						if [ -d ~/.svk ]; then \
-							if [ -x $$(which svn) ]; then \
+							if which svk > /dev/null; then \
 								echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); \
 							else \
 								echo "[unknown]"; \

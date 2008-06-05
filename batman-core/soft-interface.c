@@ -33,7 +33,7 @@
 
 
 
-#define BAT_HEADER_LEN (sizeof(struct ethhdr) + (sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet)))
+#define BAT_HEADER_LEN (sizeof(struct ethhdr) + ((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))))
 
 
 static int max_mtu;
@@ -115,7 +115,7 @@ void interface_setup(struct net_device *dev)
 
 	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu -= BAT_HEADER_LEN;
-	dev->hard_header_len = ETH_HLEN + BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
+	dev->hard_header_len = BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
 
 	max_mtu = dev->mtu;
 
