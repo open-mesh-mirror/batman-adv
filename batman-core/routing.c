@@ -220,7 +220,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 		neigh_node->last_valid = jiffies;
 	} else {
 		/* find packet count of corresponding one hop neighbor */
-		list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
+		list_for_each_entry(tmp_neigh_node, &orig_neigh_node->neigh_list, list) {
 
 			if (compare_orig(tmp_neigh_node->addr, orig_neigh_node->orig) && (tmp_neigh_node->if_incoming == if_incoming))
 				neigh_node = tmp_neigh_node;
