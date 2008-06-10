@@ -281,7 +281,9 @@ void interface_rx(struct net_device *dev, void *packet, int packet_len)
 
 	dev->last_rx = jiffies;
 
+	rtnl_lock();
 	netif_rx(skb);
+	rtnl_unlock();
 
 out:
 	return;
