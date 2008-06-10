@@ -575,8 +575,10 @@ int packet_recv_thread(void *data)
 	struct unicast_packet *unicast_packet;
 	struct bcast_packet *bcast_packet;
 	struct icmp_packet *icmp_packet;
+	struct vis_packet *vis_packet;
 	struct orig_node *orig_node;
 	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
+	int vis_info_len;
 	int result;
 
 	atomic_set(&data_ready_cond, 0);
@@ -640,13 +642,16 @@ int packet_recv_thread(void *data)
 
 				/* batman icmp packet */
 				case BAT_ICMP:
-
 					/* packet with unicast indication but broadcast recipient */
 					if (is_bcast(ethhdr->h_dest))
 						continue;
 
 					/* packet with broadcast sender address */
 					if (is_bcast(ethhdr->h_source))
+						continue;
+
+					/* not for me */
+					if (!is_my_mac(ethhdr->h_dest))
 						continue;
 
 					/* drop packet if it has not neccessary minimum size */
@@ -752,6 +757,10 @@ int packet_recv_thread(void *data)
 					if (is_bcast(ethhdr->h_source))
 						continue;
 
+					/* not for me */
+					if (!is_my_mac(ethhdr->h_dest))
+						continue;
+
 					/* drop packet if it has not neccessary minimum size - 1 byte ttl, 1 byte payload */
 					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
 						continue;
@@ -847,8 +856,32 @@ int packet_recv_thread(void *data)
 					/* drop if too short. */
 					if (result < sizeof(struct ethhdr) + sizeof(struct vis_packet))
 						continue;
+					/* not for me */
+					if (!is_my_mac(ethhdr->h_dest))
+						continue;
 
-					receive_vis_packet(ethhdr, (struct vis_packet *)batman_packet, result  - sizeof(struct ethhdr) - sizeof(struct vis_packet));
+					vis_packet = (struct vis_packet *)(packet_buff + sizeof(struct ethhdr));
+					vis_info_len = result  - sizeof(struct ethhdr) - sizeof(struct vis_packet);
+
+					/* ignore own packets */
+					if (is_my_mac(vis_packet->vis_orig))
+						continue;
+					if (is_my_mac(vis_packet->sender_orig))
+						continue;
+
+
+					switch (vis_packet->vis_type) {
+					case VIS_TYPE_SERVER_SYNC:
+						receive_server_sync_packet(vis_packet, vis_info_len);
+						break;
+	
+					case VIS_TYPE_CLIENT_UPDATE:
+						receive_client_update_packet(vis_packet, vis_info_len);
+						break;
+
+					default:	/* ignore unknown packet */
+						break;
+					}
 					break;
 
 				}

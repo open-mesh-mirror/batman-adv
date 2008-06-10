@@ -47,5 +47,7 @@ void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, in
 void vis_set_mode(int mode);
 int is_vis_server(void);
 int is_vis_server_locked(void);
+void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len);
+void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len);
 int vis_init(void);
 int vis_quit(void);

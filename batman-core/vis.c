@@ -432,29 +432,6 @@ void send_vis_packet(struct vis_info *info)
 	info->packet.ttl++; /* restore TTL */
 }
 
-/* receive and handle a vis packet */
-void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, int vis_info_len)
-{
-	/* ignore own packets */
-	if (is_my_mac(vis_packet->vis_orig))
-		return;
-	if (is_my_mac(vis_packet->sender_orig))
-		return;
-
-	switch (vis_packet->vis_type) {
-	case VIS_TYPE_SERVER_SYNC:
-		receive_server_sync_packet(vis_packet, vis_info_len);
-		break;
-
-	case VIS_TYPE_CLIENT_UPDATE:
-		receive_client_update_packet(vis_packet, vis_info_len);
-		break;
-
-	default:	/* ignore unknown packet */
-		break;
-	}
-}
-
 /* init the vis server. this may only be called when if_list is already initialized
  * (e.g. bat0 is initialized, interfaces have been added) */
 int vis_init(void)
