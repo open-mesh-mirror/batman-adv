@@ -839,6 +839,7 @@ int packet_recv_thread(void *data)
 						if (bit_get_packet(orig_node->bcast_bits, ntohs(bcast_packet->seqno) - orig_node->last_bcast_seqno, 1))
 							orig_node->last_bcast_seqno = ntohs(bcast_packet->seqno);
 
+						spin_unlock(&orig_hash_lock);
 						/* broadcast for me */
 						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
@@ -848,9 +849,10 @@ int packet_recv_thread(void *data)
 							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 						}
 
+					} else {
+						spin_unlock(&orig_hash_lock);
 					}
 
-					spin_unlock(&orig_hash_lock);
 					break;
 				case BAT_VIS:
 					/* drop if too short. */

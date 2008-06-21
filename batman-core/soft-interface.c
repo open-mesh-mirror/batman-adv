@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -281,9 +281,7 @@ void interface_rx(struct net_device *dev, void *packet, int packet_len)
 
 	dev->last_rx = jiffies;
 
-	rtnl_lock();
 	netif_rx(skb);
-	rtnl_unlock();
 
 out:
 	return;
