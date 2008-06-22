@@ -83,6 +83,7 @@
 #include <linux/if_ether.h>	/* ethernet header */
 #include <linux/poll.h>		/* poll_table */
 #include <linux/kthread.h>	/* kernel threads */
+#include <linux/pkt_sched.h>/* schedule types */
 #include <net/sock.h>		/* struct sock */
 #include "types.h"
 

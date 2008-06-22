@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -16,7 +16,6 @@
  * 02110-1301, USA
  *
  */
-
 
 
 
@@ -46,10 +45,10 @@ void start_bcast_timer(struct batman_if *batman_if)
 /* sends a raw packet. */
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if)
 {
-	struct msghdr msg;
-	struct kvec vector[2];
-	struct ethhdr ethhdr;
+	struct ethhdr *ethhdr;
+	struct sk_buff *skb;
 	int retval;
+	char *data;
 
 	if (batman_if->if_active != IF_ACTIVE)
 		return;
@@ -60,26 +59,29 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 		return;
 	}
 
-	memcpy(ethhdr.h_source, src_addr, ETH_ALEN);
-	memcpy(ethhdr.h_dest, dst_addr, ETH_ALEN);
-	ethhdr.h_proto = htons(ETH_P_BATMAN);
+	skb = dev_alloc_skb(pack_buff_len + sizeof(struct ethhdr));
+	if (!skb) 
+		return;
+	data = skb_put(skb, pack_buff_len + sizeof(struct ethhdr));
 
-	vector[0].iov_base = &ethhdr;
-	vector[0].iov_len  = sizeof(struct ethhdr);
-	vector[1].iov_base = pack_buff;
-	vector[1].iov_len  = pack_buff_len;
+	memcpy(data + sizeof(struct ethhdr), pack_buff, pack_buff_len);
 
-	msg.msg_flags = MSG_NOSIGNAL | MSG_DONTWAIT; /* no SIGPIPE & non-blocking */
-	msg.msg_name = NULL;
-	msg.msg_namelen = 0;
+	ethhdr = (struct ethhdr *) data;
+	memcpy(ethhdr->h_source, batman_if->net_dev->dev_addr, ETH_ALEN);
+	memcpy(ethhdr->h_dest, dst_addr, ETH_ALEN);
+	ethhdr->h_proto = htons(ETH_P_BATMAN);
 
-	/* minimum packet size is 46 bytes for ethernet */
-	if ((retval = kernel_sendmsg(batman_if->raw_sock, &msg, vector, 2, pack_buff_len + sizeof(struct ethhdr))) < 0) {
-		if (retval != -EAGAIN) {
-			debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
-			batman_if->if_active = IF_TO_BE_DEACTIVATED;
-		}
-	}
+	skb_reset_mac_header(skb);
+	skb->network_header = skb->mac_header + ETH_HLEN;
+	skb->priority = TC_PRIO_CONTROL;
+	skb->protocol = __constant_htons(ETH_P_BATMAN);
+	skb->dev = batman_if->net_dev;
+
+	retval = dev_queue_xmit(skb);
+	if (retval < 0) {
+		debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
+		batman_if->if_active = IF_TO_BE_DEACTIVATED;
+	}       
 }
 
 /* send a batman packet. */
