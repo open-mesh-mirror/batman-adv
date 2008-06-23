@@ -19,7 +19,7 @@
 
 
 
-#define ETH_P_BATMAN  0x0842
+#define ETH_P_BATMAN  0x4305	/* unofficial/not registered Ethertype */
 
 #define BAT_PACKET    0x01
 #define BAT_ICMP      0x02
