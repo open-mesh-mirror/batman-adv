@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -28,6 +28,7 @@
 #include "send.h"
 #include "translation-table.h"
 #include "routing.h"
+#include "hash.h"
 
 
 
@@ -198,6 +199,9 @@ int hardif_add_interface(char *dev, int if_num)
 {
 	struct batman_if *batman_if;
 	struct batman_packet *batman_packet;
+	void *data_ptr;
+	struct orig_node *orig_node;
+	struct hash_it_t *hashit = NULL;
 
 	batman_if = kmalloc(sizeof(struct batman_if), GFP_KERNEL);
 
@@ -246,6 +250,27 @@ int hardif_add_interface(char *dev, int if_num)
 
 	batman_if->seqno = 1;
 	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
+
+
+	/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
+	spin_lock(&orig_hash_lock);
+
+	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
+		orig_node = hashit->bucket->data;
+
+		data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
+		memcpy(data_ptr, orig_node->bcast_own, if_num * sizeof(TYPE_OF_WORD) * NUM_WORDS);
+		kfree(orig_node->bcast_own);
+		orig_node->bcast_own = data_ptr;
+
+		data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
+		memcpy(data_ptr, orig_node->bcast_own_sum, if_num * sizeof(uint8_t));
+		kfree(orig_node->bcast_own_sum);
+		orig_node->bcast_own_sum = data_ptr;
+	}
+
+	spin_unlock(&orig_hash_lock);
+
 
 	start_bcast_timer(batman_if);
 

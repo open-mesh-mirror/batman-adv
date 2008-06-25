@@ -378,9 +378,9 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 
 	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, IDF %d) \n", neigh_str, if_incoming->dev, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_directlink_flag);
 
-	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		rcu_read_unlock();
+		if (batman_if->if_active != IF_ACTIVE) 
+			continue;
 
 		if (compare_orig(ethhdr->h_source, batman_if->net_dev->dev_addr))
 			is_my_addr = 1;
@@ -591,6 +591,7 @@ int packet_recv_thread(void *data)
 		if (kthread_should_stop() || atomic_read(&exit_cond))
 			break;
 
+		rcu_read_lock();
 		list_for_each_entry_rcu(batman_if, &if_list, list) {
 			result = -1;
 
@@ -893,6 +894,7 @@ int packet_recv_thread(void *data)
 			if ((result < 0) && (result != -EAGAIN))
 				debug_log(LOG_TYPE_CRIT, "Could not receive packet from interface %s: %i\n", batman_if->dev, result);
 		}
+		rcu_read_unlock();
 
 		atomic_set(&data_ready_cond, 0);
 

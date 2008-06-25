@@ -255,10 +255,7 @@ ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuff
 {
 	char *if_string, *colon_ptr = NULL, *cr_ptr = NULL;
 	int not_copied = 0, if_num = 0;
-	void *data_ptr;
 	struct batman_if *batman_if = NULL;
-	struct hash_it_t *hashit = NULL;
-	struct orig_node *orig_node;
 
 	if_string = kmalloc(count, GFP_KERNEL);
 
@@ -307,27 +304,7 @@ ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuff
 		}
 		rcu_read_unlock();
 
-		if (hardif_add_interface(if_string, if_num)) {
-
-			/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */
-			spin_lock(&orig_hash_lock);
-
-			while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
-				orig_node = hashit->bucket->data;
-
-				data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
-				memcpy(data_ptr, orig_node->bcast_own, if_num * sizeof(TYPE_OF_WORD) * NUM_WORDS);
-				kfree(orig_node->bcast_own);
-				orig_node->bcast_own = data_ptr;
-
-				data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
-				memcpy(data_ptr, orig_node->bcast_own_sum, if_num * sizeof(uint8_t));
-				kfree(orig_node->bcast_own_sum);
-				orig_node->bcast_own_sum = data_ptr;
-			}
-
-			spin_unlock(&orig_hash_lock);
-		}
+		hardif_add_interface(if_string, if_num);
 
 		if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
 			activate_module();

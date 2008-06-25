@@ -53,7 +53,7 @@ unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char hna_local_changed = 0;
 char module_state = MODULE_INACTIVE;
 
-struct workqueue_struct *bat_event_workqueue;
+struct workqueue_struct *bat_event_workqueue = NULL;
 
 
 
@@ -117,6 +117,7 @@ void cleanup_module(void)
 	hna_global_free();
 	cleanup_procfs();
 	destroy_workqueue(bat_event_workqueue);
+	bat_event_workqueue = NULL;
 }
 
 void start_purge_timer(void)
