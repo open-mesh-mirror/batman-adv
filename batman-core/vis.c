@@ -492,13 +492,14 @@ void free_info(void *data)
 /* shutdown vis-server */
 int vis_quit(void)
 {
-	spin_lock(&vis_hash_lock);
-	del_timer_sync(&vis_timer);
-	if (vis_hash != NULL)
+	if (vis_hash != NULL) {
+		del_timer_sync(&vis_timer);
+		spin_lock(&vis_hash_lock);
 		hash_delete(vis_hash, free_info);	/* properly remove, kill timers ... */
-	vis_hash = NULL;
-	my_vis_info = NULL;
-	spin_unlock(&vis_hash_lock);
+		vis_hash = NULL;
+		my_vis_info = NULL;
+		spin_unlock(&vis_hash_lock);
+	}
 	return(0);
 }
 
