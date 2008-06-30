@@ -77,6 +77,9 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	skb->protocol = __constant_htons(ETH_P_BATMAN);
 	skb->dev = batman_if->net_dev;
 
+	/* dev_queue_xmit() returns a negative result on error.
+	 * However on congestion and traffic shaping, it drops and returns 
+	 * NET_XMIT_DROP (which is > 0). This will not be treated as an error. */
 	retval = dev_queue_xmit(skb);
 	if (retval < 0) {
 		debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
@@ -91,6 +94,11 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 	char orig_str[ETH_STR_LEN];
 	char directlink = (((struct batman_packet *)pack_buff)->flags & DIRECTLINK ? 1 : 0);
 
+	/* according to calltree, outgoing iface should always be specified. */
+	if (if_outgoing == NULL) {
+		debug_log(LOG_TYPE_CRIT, "Error - can't forward packet: outgoing iface not specified\n");
+		return;
+	}
 	if (if_outgoing->if_active != IF_ACTIVE)
 		return;
 
@@ -98,50 +106,32 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 
 	/* multihomed peer assumed */
 	if (directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) {
-
-		if (if_outgoing != NULL) {
-
-			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-
-		} else {
-
-			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with IDF: outgoing iface not specified (multihomed) \n");
-
-		}
-
+		send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 	} else {
 
-		if (directlink && (if_outgoing == NULL)) {
-
-			debug_log(LOG_TYPE_CRIT, "Error - can't forward packet with IDF: outgoing iface not specified \n");
-
+		/* non-primary OGMs are only broadcasted on their interface */
+		if (own_packet && (if_outgoing->if_num > 0)) {
+			debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->dev, if_outgoing->addr_str);
+			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
 		} else {
+			rcu_read_lock();
+			list_for_each_entry_rcu(batman_if, &if_list, list) {
+				if (batman_if->if_active != IF_ACTIVE)
+					continue;
 
-			/* non-primary interfaces are only broadcasted on their interface */
-			if (own_packet && (if_outgoing->if_num > 0)) {
-				debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->dev, if_outgoing->addr_str);
-				send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-			} else {
-				rcu_read_lock();
-				list_for_each_entry_rcu(batman_if, &if_list, list) {
+				if (directlink && (if_outgoing == batman_if))
+					((struct batman_packet *)pack_buff)->flags |= DIRECTLINK;
+				else
+					((struct batman_packet *)pack_buff)->flags &= ~DIRECTLINK;
 
-					if (directlink && (if_outgoing == batman_if))
-						((struct batman_packet *)pack_buff)->flags |= DIRECTLINK;
-					else
-						((struct batman_packet *)pack_buff)->flags &= ~DIRECTLINK;
+				debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->dev, batman_if->addr_str);
 
-					debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->dev, batman_if->addr_str);
-
-					send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-				}
-				rcu_read_unlock();
-
+				send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 			}
+			rcu_read_unlock();
 
 		}
-
 	}
-
 }
 
 void send_own_packet(unsigned long data)
