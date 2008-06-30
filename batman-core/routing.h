@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -33,6 +33,6 @@ extern atomic_t exit_cond;
 void free_orig_node(void *data);
 void slide_own_bcast_window(struct batman_if *batman_if);
 void batman_data_ready(struct sock *sk, int len);
-void purge_orig(unsigned long data);
+void purge_orig(struct work_struct *work);
 int packet_recv_thread(void *data);
 

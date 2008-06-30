@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -28,7 +28,6 @@
 void hardif_remove_interfaces(void);
 int hardif_add_interface(char *dev, int if_num);
 void hardif_deactivate_interface(struct batman_if *batman_if);
-void hardif_check_inactive_interfaces(struct work_struct *work);
 char hardif_get_active_if_num(void);
 void hardif_check_interfaces_status(struct work_struct *work);
 void start_hardif_check_timer(void);

@@ -49,5 +49,6 @@ int is_vis_server(void);
 int is_vis_server_locked(void);
 void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len);
 void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len);
+void send_vis_packets(struct work_struct *work);
 int vis_init(void);
 int vis_quit(void);

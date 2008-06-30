@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -36,19 +36,12 @@ static struct hashtable_t *hna_global_hash = NULL;
 DEFINE_SPINLOCK(hna_local_hash_lock);
 DEFINE_SPINLOCK(hna_global_hash_lock);
 
-static struct timer_list hna_local_timer;
-
+static DECLARE_DELAYED_WORK(hna_local_purge_wq, hna_local_purge);
 
 
 static void hna_local_start_timer(void)
 {
-	init_timer(&hna_local_timer);
-
-	hna_local_timer.expires = jiffies + (10 * HZ); /* 10 seconds */
-	hna_local_timer.data = 0;
-	hna_local_timer.function = hna_local_purge;
-
-	add_timer(&hna_local_timer);
+	queue_delayed_work(bat_event_workqueue, &hna_local_purge_wq, 10 * HZ);
 }
 
 int hna_local_init(void)
@@ -203,7 +196,7 @@ static void hna_local_del(struct hna_local_entry *hna_local_entry, char *message
 	_hna_local_del(hna_local_entry);
 }
 
-void hna_local_purge(unsigned long data)
+void hna_local_purge(struct work_struct *work)
 {
 	struct hna_local_entry *hna_local_entry;
 	struct hash_it_t *hashit = NULL;
@@ -225,7 +218,8 @@ void hna_local_purge(unsigned long data)
 void hna_local_free(void)
 {
 	if (hna_local_hash != NULL) {
-		del_timer_sync(&hna_local_timer);
+
+		cancel_rearming_delayed_work(&hna_local_purge_wq);
 		hash_delete(hna_local_hash, _hna_local_del);
 	}
 }

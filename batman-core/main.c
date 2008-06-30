@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -38,6 +38,7 @@ struct hashtable_t *orig_hash;
 
 DEFINE_MUTEX(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
+static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
 atomic_t originator_interval;
 atomic_t vis_interval;
@@ -47,7 +48,6 @@ int16_t num_ifs = 0;
 struct net_device *bat_device = NULL;
 
 static struct task_struct *kthread_task = NULL;
-static struct timer_list purge_timer;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 char hna_local_changed = 0;
@@ -122,13 +122,7 @@ void cleanup_module(void)
 
 void start_purge_timer(void)
 {
-	init_timer(&purge_timer);
-
-	purge_timer.expires = jiffies + (1 * HZ); /* one second */
-	purge_timer.data = 0;
-	purge_timer.function = purge_orig;
-
-	add_timer(&purge_timer);
+	queue_delayed_work(bat_event_workqueue, &purge_orig_wq, 1 * HZ);
 }
 
 /* activates the module, creates bat device, starts timer ... */
@@ -174,6 +168,7 @@ void activate_module(void)
 	bat_device_setup();
 
 	vis_init();
+	start_bcast_timer();
 }
 /* shuts down the whole module.*/
 void shutdown_module(void)
@@ -181,6 +176,7 @@ void shutdown_module(void)
 	if (module_state == MODULE_ACTIVE)
 		module_state = MODULE_INACTIVE;
 
+	stop_bcast_timer();
 	flush_workqueue(bat_event_workqueue);
 
 	vis_quit();
@@ -202,7 +198,7 @@ void shutdown_module(void)
 	rcu_read_lock();
 	if (!(list_empty(&if_list))) {
 		rcu_read_unlock();
-		del_timer_sync(&purge_timer);
+		cancel_rearming_delayed_work(&purge_orig_wq);
 	} else {
 		rcu_read_unlock();
 	}

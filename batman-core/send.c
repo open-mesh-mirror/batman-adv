@@ -31,15 +31,16 @@
 
 
 
-void start_bcast_timer(struct batman_if *batman_if)
+static DECLARE_DELAYED_WORK(send_own_packet_wq, send_own_packet_work);
+
+void start_bcast_timer(void)
 {
-	init_timer(&batman_if->bcast_timer);
+	queue_delayed_work(bat_event_workqueue, &send_own_packet_wq, (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000));
+}
 
-	batman_if->bcast_timer.expires = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
-	batman_if->bcast_timer.data = (unsigned long)batman_if;
-	batman_if->bcast_timer.function = send_own_packet;
-
-	add_timer(&batman_if->bcast_timer);
+void stop_bcast_timer(void)
+{
+	cancel_rearming_delayed_work(&send_own_packet_wq);
 }
 
 /* sends a raw packet. */
@@ -133,11 +134,21 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 		}
 	}
 }
+void send_own_packet_work(struct work_struct *work)
+{
+	struct batman_if *batman_if;
 
-void send_own_packet(unsigned long data)
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) 
+		send_own_packet(batman_if);
+	rcu_read_unlock();
+
+	start_bcast_timer();
+}
+
+void send_own_packet(struct batman_if *batman_if)
 {
 	unsigned char *buff_ptr;
-	struct batman_if *batman_if = (struct batman_if *)data;
 
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
@@ -168,7 +179,6 @@ void send_own_packet(unsigned long data)
 	slide_own_bcast_window(batman_if);
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
 
-	start_bcast_timer(batman_if);
 }
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)

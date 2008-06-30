@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -29,7 +29,7 @@ int hna_local_init(void);
 void hna_local_add(uint8_t *addr);
 int hna_local_fill_buffer(unsigned char *buff, int buff_len);
 int hna_local_fill_buffer_text(unsigned char *buff, int buff_len);
-void hna_local_purge(unsigned long data);
+void hna_local_purge(struct work_struct *work);
 void hna_local_free(void);
 int hna_global_init(void);
 void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, int hna_buff_len);

@@ -84,6 +84,7 @@
 #include <linux/poll.h>		/* poll_table */
 #include <linux/kthread.h>	/* kernel threads */
 #include <linux/pkt_sched.h>/* schedule types */
+#include <linux/workqueue.h>/* workqueue */
 #include <net/sock.h>		/* struct sock */
 #include "types.h"
 

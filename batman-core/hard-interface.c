@@ -32,12 +32,11 @@
 
 
 
-static DECLARE_WORK(hardif_check_interfaces_wq, hardif_check_interfaces_status);
+static DECLARE_DELAYED_WORK(hardif_check_interfaces_wq, hardif_check_interfaces_status);
 
 static char avail_ifs = 0;
 static char active_ifs = 0;
 
-static struct timer_list hardif_check_timer;
 static void hardif_free_interface(struct rcu_head *rcu);
 
 
@@ -184,8 +183,6 @@ void hardif_remove_interfaces(void)
 
 		list_del_rcu(&batman_if->list);
 
-		del_timer_sync(&batman_if->bcast_timer);
-
 		/* first deactivate interface */
 		if (batman_if->if_active != IF_INACTIVE)
 			hardif_deactivate_interface(batman_if);
@@ -272,7 +269,6 @@ int hardif_add_interface(char *dev, int if_num)
 	spin_unlock(&orig_hash_lock);
 
 
-	start_bcast_timer(batman_if);
 
 	if (!hardif_is_interface_up(batman_if->dev))
 		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", batman_if->dev);
@@ -319,24 +315,13 @@ void hardif_check_interfaces_status(struct work_struct *work)
 	start_hardif_check_timer();
 }
 
-void hardif_check_interfaces_status_timer(unsigned long data)
-{
-	queue_work(bat_event_workqueue, &hardif_check_interfaces_wq);
-}
-
 void start_hardif_check_timer(void)
 {
-	init_timer(&hardif_check_timer);
-
-	hardif_check_timer.expires = jiffies + (1 * HZ); /* one second */
-	hardif_check_timer.data = 0;
-	hardif_check_timer.function = hardif_check_interfaces_status_timer;
-
-	add_timer(&hardif_check_timer);
+	queue_delayed_work(bat_event_workqueue, &hardif_check_interfaces_wq, 1 * HZ);
 }
 
 void destroy_hardif_check_timer(void)
 {
-	del_timer_sync(&hardif_check_timer);
+	cancel_rearming_delayed_work(&hardif_check_interfaces_wq);
 }
 

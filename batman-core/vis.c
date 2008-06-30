@@ -31,12 +31,12 @@
 #include "hash.h"
 
 
+static DECLARE_DELAYED_WORK(vis_timer_wq, send_vis_packets);
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
 static struct vis_info *my_vis_info = NULL;
 static struct list_head send_list;	/* always locked with vis_hash_lock ... */
-static struct timer_list vis_timer;
 
 void free_info(void *data);
 void send_vis_packet(struct vis_info *info);
@@ -354,7 +354,7 @@ void purge_vis_packets(void)
 }
 
 /* called from timer; send (and maybe generate) vis packet. */
-void send_vis_packets(unsigned long arg)
+void send_vis_packets(struct work_struct *work)
 {
 	struct vis_info *info, *temp;
 
@@ -493,7 +493,7 @@ void free_info(void *data)
 int vis_quit(void)
 {
 	if (vis_hash != NULL) {
-		del_timer_sync(&vis_timer);
+		cancel_rearming_delayed_work(&vis_timer_wq);
 		spin_lock(&vis_hash_lock);
 		hash_delete(vis_hash, free_info);	/* properly remove, kill timers ... */
 		vis_hash = NULL;
@@ -503,15 +503,9 @@ int vis_quit(void)
 	return(0);
 }
 
-/* schedule own packet for (re)transmission */
+/* schedule packets for (re)transmission */
 void start_vis_timer(void)
 {
-	init_timer(&vis_timer);
-
-	vis_timer.expires = jiffies + (atomic_read(&vis_interval)/1000) * HZ;
-	vis_timer.data = 0;
-	vis_timer.function = send_vis_packets;
-
-	add_timer(&vis_timer);
+	queue_delayed_work(bat_event_workqueue, &vis_timer_wq,  (atomic_read(&vis_interval)/1000) * HZ);
 }
 

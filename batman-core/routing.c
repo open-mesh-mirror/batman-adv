@@ -331,7 +331,11 @@ static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batm
 	struct neigh_node *tmp_neigh_node;
 	char is_duplicate = 0;
 
+
 	orig_node = get_orig_node(batman_packet->orig);
+	if (orig_node == NULL) 
+		return 0;
+
 
 	list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
 
@@ -435,9 +439,15 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 		is_duplicate = count_real_packets(ethhdr, batman_packet, if_incoming);
 
 		orig_node = get_orig_node(batman_packet->orig);
+		if (orig_node == NULL) 
+			return;
+
 
 		/* if sender is a direct neighbor the sender mac equals originator mac */
 		orig_neigh_node = (is_single_hop_neigh ? orig_node : get_orig_node(ethhdr->h_source));
+		if (orig_neigh_node == NULL) 
+			return;
+
 
 		/* drop packet if sender is not a direct neighbor and if we no route towards it */
 		if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
@@ -490,7 +500,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	}
 }
 
-void purge_orig(unsigned long data)
+void purge_orig(struct work_struct *work)
 {
 	struct list_head *list_pos, *list_pos_tmp;
 	struct hash_it_t *hashit = NULL;
