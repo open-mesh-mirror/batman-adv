@@ -47,6 +47,7 @@
 
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 
+#define PACKBUFF_SIZE 2000
 #define LOG_BUF_LEN 8192	/* has to be a power of 2 */
 #define ETH_STR_LEN 20
 

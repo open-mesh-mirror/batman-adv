@@ -587,14 +587,20 @@ int packet_recv_thread(void *data)
 	struct icmp_packet *icmp_packet;
 	struct vis_packet *vis_packet;
 	struct orig_node *orig_node;
-	unsigned char packet_buff[2000], src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
+	unsigned char *packet_buff, src_str[ETH_STR_LEN], dst_str[ETH_STR_LEN];
 	int vis_info_len;
 	int result;
 
 	atomic_set(&data_ready_cond, 0);
 	atomic_set(&exit_cond, 0);
+	packet_buff = kmalloc(PACKBUFF_SIZE, GFP_KERNEL);
+	if (!packet_buff) {
+		debug_log(LOG_TYPE_CRIT, "Could allocate memory for the packet buffer. :(\n");
+		return -1;
+	}
 
 	while ((!kthread_should_stop()) && (!atomic_read(&exit_cond))) {
+
 
 		wait_event_interruptible(thread_wait, (atomic_read(&data_ready_cond) || atomic_read(&exit_cond)));
 
@@ -612,7 +618,7 @@ int packet_recv_thread(void *data)
 					break;
 				}
 
-				if ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, sizeof(packet_buff))) <= 0)
+				if ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, PACKBUFF_SIZE)) <= 0)
 					break;
 
 				if (result < sizeof(struct ethhdr) + 2)
@@ -909,6 +915,7 @@ int packet_recv_thread(void *data)
 		atomic_set(&data_ready_cond, 0);
 
 	}
+	kfree(packet_buff);
 
 	return 0;
 }

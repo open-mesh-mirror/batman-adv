@@ -63,7 +63,7 @@ static int fdebug_log(char *fmt, ...)
 	int printed_len;
 	char *p;
 	va_list args;
-	static char debug_log_buf[1024];
+	static char debug_log_buf[256];
 
 	spin_lock(&logbuf_lock);
 	va_start(args, fmt);
@@ -85,7 +85,7 @@ int debug_log(int type, char *fmt, ...)
 {
 	va_list args;
 	int retval = 0;
-	char tmp_log_buf[1024];
+	char tmp_log_buf[256];
 
 	/* only critical information get into the official kernel log */
 	if (type == LOG_TYPE_CRIT) {
