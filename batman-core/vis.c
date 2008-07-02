@@ -263,6 +263,7 @@ static int generate_vis_packet(void)
 	struct vis_info_entry *entry, *entry_array;
 	struct hna_local_entry *hna_local_entry;
 	int best_tq = -1;
+	unsigned long flags;
 
 	info->first_seen = jiffies;
 
@@ -315,7 +316,7 @@ static int generate_vis_packet(void)
 	spin_unlock(&orig_hash_lock);
 
 	hashit = NULL;
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 		hna_local_entry = hashit->bucket->data;
 
@@ -327,11 +328,11 @@ static int generate_vis_packet(void)
 
 		/* don't fill more than 1000 bytes */
 		if (info->packet.entries + 1 > (1000 - sizeof(struct vis_info)) / sizeof(struct vis_info_entry)) {
-			spin_unlock(&hna_local_hash_lock);
+			spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 			return 0;
 		}
 	}
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 	return 0;
 
 }

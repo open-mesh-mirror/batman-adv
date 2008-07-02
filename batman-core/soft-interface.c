@@ -23,6 +23,7 @@
 
 #include "main.h"
 #include "soft-interface.h"
+#include "hard-interface.h"
 #include "send.h"
 #include "translation-table.h"
 #include "log.h"
@@ -40,6 +41,7 @@ static int max_mtu;
 static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid broadcast storms */
 static int32_t skb_packets = 0;
 static int32_t skb_bad_packets = 0;
+static int32_t lock_dropped = 0;
 
 unsigned char mainIfAddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 static unsigned char mainIfAddr_default[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -174,6 +176,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	int data_len = skb->len;
 
 	dev->trans_start = jiffies;
+	/* TODO: check this for locks */
 	hna_local_add(ethhdr->h_source);
 
 	/* ethernet packet should be broadcasted */
@@ -200,7 +203,9 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		/* broadcast packet */
 		rcu_read_lock();
 		list_for_each_entry_rcu(batman_if, &if_list, list) {
-
+			if (batman_if->if_active != IF_ACTIVE)
+				continue;
+			
 			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 		}
 		rcu_read_unlock();
@@ -208,8 +213,15 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	/* unicast packet */
 	} else {
 
+		/* simply spin_lock()ing can deadlock when the lock is already hold. */
+		/* TODO: defer the work in a working queue instead of dropping */
+		if (!spin_trylock(&orig_hash_lock)) {
+			lock_dropped++;
+			debug_log(LOG_TYPE_NOTICE, "%d packets dropped because lock was hold\n", lock_dropped);
+			goto dropped;
+		}
+
 		/* get routing information */
-		spin_lock(&orig_hash_lock);
 		orig_node = ((struct orig_node *)hash_find(orig_hash, ethhdr->h_dest));
 
 		/* check for hna host */
@@ -230,6 +242,10 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			unicast_packet->ttl = TTL;
 			/* copy the destination for faster routing */
 			memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
+
+			/* net_dev won't be available when not active */
+			if (orig_node->batman_if->if_active != IF_ACTIVE)
+				goto unlock;
 
 			send_raw_packet(skb->data, skb->len, orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 

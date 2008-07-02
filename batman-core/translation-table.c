@@ -62,10 +62,11 @@ void hna_local_add(uint8_t *addr)
 	struct hna_global_entry *hna_global_entry;
 	struct hashtable_t *swaphash;
 	char hna_str[ETH_STR_LEN];
+	unsigned long flags;
 
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 	hna_local_entry = ((struct hna_local_entry *)hash_find(hna_local_hash, addr));
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
 	if (hna_local_entry != NULL) {
 		hna_local_entry->last_seen = jiffies;
@@ -97,7 +98,7 @@ void hna_local_add(uint8_t *addr)
 	else
 		hna_local_entry->never_purge = 0;
 
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 
 	hash_add(hna_local_hash, hna_local_entry);
 	num_hna++;
@@ -112,17 +113,17 @@ void hna_local_add(uint8_t *addr)
 			hna_local_hash = swaphash;
 	}
 
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
 	/* remove address from global hash if present */
-	spin_lock(&hna_global_hash_lock);
+	spin_lock_irqsave(&hna_global_hash_lock, flags);
 
 	hna_global_entry = ((struct hna_global_entry *)hash_find(hna_global_hash, addr));
 
 	if (hna_global_entry != NULL)
 		_hna_global_del_orig(hna_global_entry, "local hna received");
 
-	spin_unlock(&hna_global_hash_lock);
+	spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 }
 
 int hna_local_fill_buffer(unsigned char *buff, int buff_len)
@@ -130,8 +131,9 @@ int hna_local_fill_buffer(unsigned char *buff, int buff_len)
 	struct hna_local_entry *hna_local_entry;
 	struct hash_it_t *hashit = NULL;
 	int i = 0;
+	unsigned long flags;
 
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 
@@ -148,7 +150,7 @@ int hna_local_fill_buffer(unsigned char *buff, int buff_len)
 	if (i == num_hna)
 		hna_local_changed = 0;
 
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
 	return i;
 }
@@ -158,8 +160,9 @@ int hna_local_fill_buffer_text(unsigned char *buff, int buff_len)
 	struct hna_local_entry *hna_local_entry;
 	struct hash_it_t *hashit = NULL;
 	int bytes_written = 0;
+	unsigned long flags;
 
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 
@@ -173,7 +176,7 @@ int hna_local_fill_buffer_text(unsigned char *buff, int buff_len)
 					hna_local_entry->addr[3], hna_local_entry->addr[4], hna_local_entry->addr[5]);
 	}
 
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
 	return bytes_written;
 }
@@ -200,8 +203,9 @@ void hna_local_purge(struct work_struct *work)
 {
 	struct hna_local_entry *hna_local_entry;
 	struct hash_it_t *hashit = NULL;
+	unsigned long flags;
 
-	spin_lock(&hna_local_hash_lock);
+	spin_lock_irqsave(&hna_local_hash_lock, flags);
 
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 
@@ -211,7 +215,7 @@ void hna_local_purge(struct work_struct *work)
 			hna_local_del(hna_local_entry, "address timeouted");
 	}
 
-	spin_unlock(&hna_local_hash_lock);
+	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 	hna_local_start_timer();
 }
 
@@ -241,18 +245,19 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 	struct hashtable_t *swaphash;
 	char hna_str[ETH_STR_LEN], orig_str[ETH_STR_LEN];
 	int hna_buff_count = 0;
+	unsigned long flags;
 
 	addr_to_string(orig_str, orig_node->orig);
 
 	while ((hna_buff_count + 1) * ETH_ALEN <= hna_buff_len) {
 
-		spin_lock(&hna_global_hash_lock);
+		spin_lock_irqsave(&hna_global_hash_lock, flags);
 
 		hna_global_entry = ((struct hna_global_entry *)hash_find(hna_global_hash, hna_buff + (hna_buff_count * ETH_ALEN)));
 
 		if (hna_global_entry == NULL) {
 
-			spin_unlock(&hna_global_hash_lock);
+			spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 
 			hna_global_entry = kmalloc(sizeof(struct hna_global_entry), GFP_KERNEL);
 
@@ -264,23 +269,23 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 			addr_to_string(hna_str, hna_global_entry->addr);
 			debug_log(LOG_TYPE_ROUTES, "Creating new global hna entry: %s (via %s)\n", hna_str, orig_str);
 
-			spin_lock(&hna_global_hash_lock);
+			spin_lock_irqsave(&hna_global_hash_lock, flags);
 			hash_add(hna_global_hash, hna_global_entry);
 
 		}
 
 		hna_global_entry->orig_node = orig_node;
-		spin_unlock(&hna_global_hash_lock);
+		spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 
 		/* remove address from local hash if present */
-		spin_lock(&hna_local_hash_lock);
+		spin_lock_irqsave(&hna_local_hash_lock, flags);
 
 		hna_local_entry = ((struct hna_local_entry *)hash_find(hna_local_hash, hna_buff + (hna_buff_count * ETH_ALEN)));
 
 		if (hna_local_entry != NULL)
 			hna_local_del(hna_local_entry, "global hna received");
 
-		spin_unlock(&hna_local_hash_lock);
+		spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
 		hna_buff_count++;
 	}
@@ -294,7 +299,7 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 		orig_node->hna_buff = NULL;
 	}
 
-	spin_lock(&hna_global_hash_lock);
+	spin_lock_irqsave(&hna_global_hash_lock, flags);
 
 	if (hna_global_hash->elements * 4 > hna_global_hash->size) {
 		swaphash = hash_resize(hna_global_hash, hna_global_hash->size * 2);
@@ -305,7 +310,7 @@ void hna_global_add_orig(struct orig_node *orig_node, unsigned char *hna_buff, i
 			hna_global_hash = swaphash;
 	}
 
-	spin_unlock(&hna_global_hash_lock);
+	spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 }
 
 int hna_global_fill_buffer_text(unsigned char *buff, int buff_len)
@@ -313,8 +318,9 @@ int hna_global_fill_buffer_text(unsigned char *buff, int buff_len)
 	struct hna_global_entry *hna_global_entry;
 	struct hash_it_t *hashit = NULL;
 	int bytes_written = 0;
+	unsigned long flags;
 
-	spin_lock(&hna_global_hash_lock);
+	spin_lock_irqsave(&hna_global_hash_lock, flags);
 
 	while (NULL != (hashit = hash_iterate(hna_global_hash, hashit))) {
 
@@ -332,7 +338,7 @@ int hna_global_fill_buffer_text(unsigned char *buff, int buff_len)
 					hna_global_entry->orig_node->orig[4], hna_global_entry->orig_node->orig[5]);
 	}
 
-	spin_unlock(&hna_global_hash_lock);
+	spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 
 	return bytes_written;
 }
@@ -354,11 +360,12 @@ void hna_global_del_orig(struct orig_node *orig_node, char *message)
 {
 	struct hna_global_entry *hna_global_entry;
 	int hna_buff_count = 0;
+	unsigned long flags;
 
 	if (orig_node->hna_buff_len == 0)
 		return;
 
-	spin_lock(&hna_global_hash_lock);
+	spin_lock_irqsave(&hna_global_hash_lock, flags);
 
 	while ((hna_buff_count + 1) * ETH_ALEN <= orig_node->hna_buff_len) {
 
@@ -370,7 +377,7 @@ void hna_global_del_orig(struct orig_node *orig_node, char *message)
 		hna_buff_count++;
 	}
 
-	spin_unlock(&hna_global_hash_lock);
+	spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 
 	orig_node->hna_buff_len = 0;
 	kfree(orig_node->hna_buff);
@@ -391,10 +398,11 @@ void hna_global_free(void)
 struct orig_node *transtable_search(uint8_t *addr)
 {
 	struct hna_global_entry *hna_global_entry;
+	unsigned long flags;
 
-	spin_lock(&hna_global_hash_lock);
+	spin_lock_irqsave(&hna_global_hash_lock, flags);
 	hna_global_entry = ((struct hna_global_entry *)hash_find(hna_global_hash, addr));
-	spin_unlock(&hna_global_hash_lock);
+	spin_unlock_irqrestore(&hna_global_hash_lock, flags);
 
 	if (hna_global_entry == NULL)
 		return NULL;

@@ -64,8 +64,9 @@ static int fdebug_log(char *fmt, ...)
 	char *p;
 	va_list args;
 	static char debug_log_buf[256];
+	unsigned long flags;
 
-	spin_lock(&logbuf_lock);
+	spin_lock_irqsave(&logbuf_lock, flags);
 	va_start(args, fmt);
 	printed_len = vscnprintf(debug_log_buf, sizeof(debug_log_buf), fmt, args);
 	va_end(args);
@@ -73,7 +74,7 @@ static int fdebug_log(char *fmt, ...)
 	for (p = debug_log_buf; *p != 0; p++)
 		emit_log_char(*p);
 
-	spin_unlock(&logbuf_lock);
+	spin_unlock_irqrestore(&logbuf_lock, flags);
 
 	wake_up(&log_wait);
 
@@ -121,6 +122,7 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 {
 	int error, i = 0;
 	char c;
+	unsigned long flags;
 
 	if ((file->f_flags & O_NONBLOCK) && !(log_end - log_start))
 		return -EAGAIN;
@@ -139,7 +141,7 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 	if (error)
 		return error;
 
-	spin_lock(&logbuf_lock);
+	spin_lock_irqsave(&logbuf_lock, flags);
 
 	while ((!error) && (log_start != log_end) && (i < count)) {
 		c = LOG_BUF(log_start);
@@ -156,7 +158,7 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 		spin_lock(&logbuf_lock);
 	}
 
-	spin_unlock(&logbuf_lock);
+	spin_unlock_irqrestore(&logbuf_lock, flags);
 
 	if (!error)
 		return i;
