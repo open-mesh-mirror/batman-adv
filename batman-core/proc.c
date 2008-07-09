@@ -502,7 +502,11 @@ ssize_t proc_log_level_write(struct file *instance, const char __user *userbuffe
 
 int proc_transtable_local_read(struct seq_file *seq, void *offset)
 {
-	char buf[4096];
+	char *buf;
+
+	buf = kmalloc(4096, GFP_KERNEL);
+	if (!buf)
+		return 0;
 
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
@@ -519,6 +523,7 @@ int proc_transtable_local_read(struct seq_file *seq, void *offset)
 	seq_printf(seq, "%s", buf);
 
 end:
+	kfree(buf);
 	return 0;
 }
 
@@ -530,7 +535,11 @@ int proc_transtable_local_open(struct inode *inode, struct file *file)
 
 int proc_transtable_global_read(struct seq_file *seq, void *offset)
 {
-	char buf[4096];
+	char *buf;
+
+	buf = kmalloc(4096, GFP_KERNEL);
+	if (!buf)
+		return 0;
 
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
@@ -547,6 +556,7 @@ int proc_transtable_global_read(struct seq_file *seq, void *offset)
 	seq_printf(seq, "%s", buf);
 
 end:
+	kfree(buf);
 	return 0;
 }
 int proc_transtable_global_open(struct inode *inode, struct file *file)
