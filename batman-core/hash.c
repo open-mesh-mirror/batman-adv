@@ -76,7 +76,7 @@ struct hash_it_t *hash_iterate(struct hashtable_t *hash, struct hash_it_t *iter_
 	struct hash_it_t *iter;
 
 	if (iter_in == NULL) {
-		iter = kmalloc(sizeof(struct hash_it_t), GFP_KERNEL);
+		iter = kmalloc(sizeof(struct hash_it_t), GFP_ATOMIC);
 		iter->index = -1;
 		iter->bucket = NULL;
 		iter->prev_bucket = NULL;
