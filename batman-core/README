@@ -1,4 +1,4 @@
-[state: 05-03-2008]
+[state: 11-07-2008]
 
 BATMAN-CORE
 -----------
@@ -6,7 +6,7 @@ BATMAN-CORE
 The kernel implementation of batman-advanced. It does not depend on any network
 driver, and can be used on wifi as well as ethernet, vpn, etc ... (anything
 with ethernet-style layer 2).
-We tested it with 2.6.22 - 2.6.24. It may also work with older versions but 
+We tested it with 2.6.22 - 2.6.26. It may also work with older versions but 
 definitely not with 2.4. If you want to work on the backport feel free to contact us.  :-)
 
 COMPILE
