@@ -85,7 +85,11 @@ void bat_device_setup(void)
 		debug_log(LOG_TYPE_WARN, "Could not register class 'batman-adv' \n");
 		return;
 	} else {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,25)
+		device_create_drvdata(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
+#else
 		class_device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
+#endif
 	}
 #endif
 
@@ -102,7 +106,11 @@ void bat_device_destroy(void)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 	devfs_remove("batman-adv", 0);
 #else
+#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,25)
+	device_destroy(batman_class, MKDEV(Major, 0));
+#else
 	class_device_destroy(batman_class, MKDEV(Major, 0));
+#endif
 	class_destroy(batman_class);
 #endif
 
