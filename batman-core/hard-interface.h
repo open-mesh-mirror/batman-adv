@@ -32,3 +32,4 @@ char hardif_get_active_if_num(void);
 void hardif_check_interfaces_status(struct work_struct *work);
 void start_hardif_check_timer(void);
 void destroy_hardif_check_timer(void);
+int hardif_min_mtu(void);

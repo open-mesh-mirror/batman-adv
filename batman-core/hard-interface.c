@@ -30,6 +30,8 @@
 #include "routing.h"
 #include "hash.h"
 
+#define MIN(x,y) ((x) < (y) ? (x):(y))
+
 
 
 static DECLARE_DELAYED_WORK(hardif_check_interfaces_wq, hardif_check_interfaces_status);
@@ -39,7 +41,20 @@ static char active_ifs = 0;
 
 static void hardif_free_interface(struct rcu_head *rcu);
 
-
+int hardif_min_mtu(void) 
+{
+	struct batman_if *batman_if;
+	/* allow big frames if all devices are capable to do so 
+	 * (have MTU > 1500 + BAT_HEADER_LEN) */
+	int min_mtu = 1500;	
+	rcu_read_lock();
+	list_for_each_entry(batman_if, &if_list, list) {
+		if (batman_if->if_active == IF_ACTIVE) 
+			min_mtu = MIN(batman_if->net_dev->mtu - BAT_HEADER_LEN, min_mtu);
+	}
+	rcu_read_unlock();
+	return min_mtu;
+}
 
 /* checks if the interface is up. (returns 1 if it is) */
 int hardif_is_interface_up(char *dev)
@@ -311,6 +326,10 @@ void hardif_check_interfaces_status(struct work_struct *work)
 
 	if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
 		activate_module();
+
+	/* decrease the MTU if a new interface with a smaller MTU appeared. */
+	if (bat_device && bat_device->mtu > hardif_min_mtu()) 
+		bat_device->mtu = hardif_min_mtu();
 
 	start_hardif_check_timer();
 }

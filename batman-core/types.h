@@ -27,6 +27,7 @@
 #include "packet.h"
 #include "bitarray.h"
 
+#define BAT_HEADER_LEN (sizeof(struct ethhdr) + ((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))))
 
 
 struct batman_if
