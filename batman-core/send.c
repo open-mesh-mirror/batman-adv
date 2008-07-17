@@ -29,6 +29,7 @@
 #include "types.h"
 #include "vis.h"
 
+#include "compat.h"
 
 
 static DECLARE_DELAYED_WORK(send_own_packet_wq, send_own_packet_work);
@@ -73,7 +74,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	ethhdr->h_proto = htons(ETH_P_BATMAN);
 
 	skb_reset_mac_header(skb);
-	skb->network_header = skb->mac_header + ETH_HLEN;
+	skb_set_network_header(skb, ETH_HLEN);
 	skb->priority = TC_PRIO_CONTROL;
 	skb->protocol = __constant_htons(ETH_P_BATMAN);
 	skb->dev = batman_if->net_dev;
