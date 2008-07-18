@@ -229,7 +229,9 @@ ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len,
 	if (!access_ok(VERIFY_READ, buff, sizeof(struct icmp_packet)))
 		return -EFAULT;
 
-	__copy_from_user(&icmp_packet, buff, sizeof(icmp_packet));
+	if (__copy_from_user(&icmp_packet, buff, sizeof(icmp_packet))) {
+		return -EFAULT;
+	}
 
 	if ((icmp_packet.packet_type == BAT_ICMP) && (icmp_packet.msg_type == ECHO_REQUEST)) {
 
