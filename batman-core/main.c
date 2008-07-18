@@ -30,6 +30,7 @@
 #include "vis.h"
 #include "types.h"
 #include "hash.h"
+#include "compat.h"
 
 
 

@@ -78,7 +78,6 @@
 
 #include <linux/mutex.h>	/* mutex */
 #include <linux/module.h>	/* needed by all modules */
-#include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/netdevice.h>	/* netdevice */
 #include <linux/timer.h>	/* timer */
 #include <linux/if_ether.h>	/* ethernet header */
