@@ -144,13 +144,13 @@ struct hashtable_t *hash_new(int size, hashdata_compare_cb compare, hashdata_cho
 {
 	struct hashtable_t *hash;
 
-	hash = kmalloc(sizeof(struct hashtable_t) , GFP_KERNEL);
+	hash = kmalloc(sizeof(struct hashtable_t) , GFP_ATOMIC);
 
 	if (hash == NULL)
 		return NULL;
 
 	hash->size = size;
-	hash->table = kmalloc(sizeof(struct element_t *) * size, GFP_KERNEL);
+	hash->table = kmalloc(sizeof(struct element_t *) * size, GFP_ATOMIC);
 
 	if (hash->table == NULL) {
 		kfree(hash);
@@ -183,7 +183,7 @@ int hash_add(struct hashtable_t *hash, void *data)
 	}
 
 	/* found the tail of the list, add new element */
-	bucket = kmalloc(sizeof(struct element_t),GFP_KERNEL);
+	bucket = kmalloc(sizeof(struct element_t),GFP_ATOMIC);
 
 	if (bucket == NULL)
 		return -1;

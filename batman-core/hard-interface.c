@@ -260,8 +260,7 @@ int hardif_add_interface(char *dev, int if_num)
 	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
 		batman_packet->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
 
-	batman_if->seqno = 1;
-	batman_if->seqno_lock = __SPIN_LOCK_UNLOCKED(batman_if->seqno_lock);
+	atomic_set(&batman_if->seqno, 1);
 
 
 	/* resize all orig nodes because orig_node->bcast_own(_sum) depend on if_num */

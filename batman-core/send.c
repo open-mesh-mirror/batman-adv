@@ -149,33 +149,43 @@ void send_own_packet_work(struct work_struct *work)
 
 void send_own_packet(struct batman_if *batman_if)
 {
-	unsigned char *buff_ptr;
+	unsigned char *new_buf;
+	struct batman_packet *batman_packet;
+	int new_len;
+
+	batman_packet = (struct batman_packet *)batman_if->pack_buff;
 
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
 
-		buff_ptr = batman_if->pack_buff;
+		new_len = sizeof(struct batman_packet) + (num_hna * ETH_ALEN);
+		new_buf = kmalloc(batman_if->pack_buff_len, GFP_ATOMIC);
 
-		batman_if->pack_buff_len = sizeof(struct batman_packet) + (num_hna * ETH_ALEN);
-		batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
-		memcpy(batman_if->pack_buff, buff_ptr, sizeof(struct batman_packet));
+		/* keep old buffer if kmalloc should fail */
+		if (new_buf) {
+			memcpy(new_buf, batman_if->pack_buff, sizeof(struct batman_packet));
+			batman_packet = (struct batman_packet *) new_buf;
 
-		((struct batman_packet *)(batman_if->pack_buff))->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+			batman_packet->num_hna = hna_local_fill_buffer(
+						new_buf + sizeof(struct batman_packet), 
+						new_len - sizeof(struct batman_packet));
 
-		kfree(buff_ptr);
+			kfree(batman_if->pack_buff);
+			batman_if->pack_buff = new_buf;
+			batman_if->pack_buff_len = new_len;
+
+		}
 	}
 
 	/* change sequence number to network order */
-	((struct batman_packet *)batman_if->pack_buff)->seqno = htons(batman_if->seqno);
+	batman_packet->seqno = htons((uint16_t) atomic_read(&batman_if->seqno));
 	if (is_vis_server())
-		((struct batman_packet *)batman_if->pack_buff)->flags = VIS_SERVER;		
+		batman_packet->flags = VIS_SERVER;		
 	else
-		((struct batman_packet *)batman_if->pack_buff)->flags = 0;		
+		batman_packet->flags = 0;		
 
 	/* could be read by receive_bat_packet() */
-	spin_lock(&batman_if->seqno_lock);
-	batman_if->seqno++;
-	spin_unlock(&batman_if->seqno_lock);
+	atomic_inc(&batman_if->seqno);
 
 	slide_own_bcast_window(batman_if);
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);

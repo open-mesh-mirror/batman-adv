@@ -368,9 +368,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	unsigned short if_incoming_seqno;
 
 	/* could be changed by send_own_packet() */
-	spin_lock(&if_incoming->seqno_lock);
-	if_incoming_seqno = if_incoming->seqno;
-	spin_unlock(&if_incoming->seqno_lock);
+	if_incoming_seqno = atomic_read(&if_incoming->seqno);
 
 	addr_to_string(orig_str, batman_packet->orig);
 	addr_to_string(old_orig_str, batman_packet->old_orig);

@@ -39,8 +39,7 @@ struct batman_if
 	char addr_str[ETH_STR_LEN];
 	struct net_device *net_dev;
 	struct socket *raw_sock;
-	uint16_t seqno;
-	spinlock_t seqno_lock;
+	atomic_t seqno;
 	unsigned char *pack_buff;
 	int pack_buff_len;
 	struct rcu_head rcu;
