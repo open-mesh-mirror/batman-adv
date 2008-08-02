@@ -304,12 +304,17 @@ ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuff
 		}
 		rcu_read_unlock();
 
+		if (module_state == MODULE_INACTIVE)
+			module_state = MODULE_WAITING;
+
 		hardif_add_interface(if_string, if_num);
 
-		if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
-			activate_module();
-		else if ((module_state == MODULE_INACTIVE) && (num_ifs > 0))
-			debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
+		if (module_state == MODULE_WAITING) {
+			if (hardif_get_active_if_num() > 0)
+				activate_module();
+			else 
+				debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
+		}
 	}
 
 	rcu_read_lock();

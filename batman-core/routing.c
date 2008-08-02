@@ -915,6 +915,11 @@ int packet_recv_thread(void *data)
 	}
 	kfree(packet_buff);
 
+	/* do not exit until kthread_stop() is actually called, otherwise it will wait for us
+	 * forever. */
+	while (!kthread_should_stop())
+		schedule();
+
 	return 0;
 }
 

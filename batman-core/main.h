@@ -53,7 +53,7 @@
 
 #define MODULE_INACTIVE 0
 #define MODULE_ACTIVE 1
-#define MODULE_UNLOADING 2
+#define MODULE_WAITING 2
 
 
 /*

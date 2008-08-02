@@ -105,8 +105,6 @@ clean_proc:
 
 void cleanup_module(void)
 {
-	module_state = MODULE_UNLOADING;
-
 	shutdown_module();
 	destroy_hardif_check_timer();
 
@@ -174,8 +172,7 @@ void activate_module(void)
 /* shuts down the whole module.*/
 void shutdown_module(void)
 {
-	if (module_state == MODULE_ACTIVE)
-		module_state = MODULE_INACTIVE;
+	module_state = MODULE_INACTIVE;
 
 	stop_bcast_timer();
 	flush_workqueue(bat_event_workqueue);

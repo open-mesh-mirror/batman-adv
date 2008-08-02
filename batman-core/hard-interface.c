@@ -306,8 +306,9 @@ void hardif_check_interfaces_status(struct work_struct *work)
 {
 	struct batman_if *batman_if;
 
-	if (module_state == MODULE_UNLOADING)
-		return;
+	if (module_state == MODULE_INACTIVE)
+		goto start_timer;
+
 	/* wait for readers of the the interfaces, so update won't be a problem.
 	 *
 	 * this function is not time critical and can wait a bit ....*/
@@ -323,13 +324,14 @@ void hardif_check_interfaces_status(struct work_struct *work)
 	}
 	rcu_read_unlock();
 
-	if ((module_state == MODULE_INACTIVE) && (hardif_get_active_if_num() > 0))
+	/* waiting for activation? if interfaces are available now, we can activate. */
+	if ((module_state == MODULE_WAITING) && (hardif_get_active_if_num() > 0))
 		activate_module();
 
 	/* decrease the MTU if a new interface with a smaller MTU appeared. */
 	if (bat_device && bat_device->mtu > hardif_min_mtu()) 
 		bat_device->mtu = hardif_min_mtu();
-
+start_timer:
 	start_hardif_check_timer();
 }
 
