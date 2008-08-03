@@ -99,7 +99,7 @@ extern atomic_t vis_interval;
 extern int16_t num_hna;
 extern int16_t num_ifs;
 
-extern struct net_device *bat_device;
+extern struct net_device *soft_device;
 
 extern unsigned char broadcastAddr[];
 extern char hna_local_changed;

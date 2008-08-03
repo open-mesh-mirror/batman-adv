@@ -522,7 +522,7 @@ int proc_transtable_local_read(struct seq_file *seq, void *offset)
 
 	rcu_read_unlock();
 
-	seq_printf(seq, "Locally retrieved addresses (from %s) announced via HNA:\n", bat_device->name);
+	seq_printf(seq, "Locally retrieved addresses (from %s) announced via HNA:\n", soft_device->name);
 
 	hna_local_fill_buffer_text(buf, 4096);
 	seq_printf(seq, "%s", buf);

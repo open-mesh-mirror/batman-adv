@@ -93,7 +93,7 @@ void hna_local_add(uint8_t *addr)
 	hna_local_entry->last_seen = jiffies;
 
 	/* the batman interface mac address should never be purged */
-	if (compare_orig(addr, bat_device->dev_addr))
+	if (compare_orig(addr, soft_device->dev_addr))
 		hna_local_entry->never_purge = 1;
 	else
 		hna_local_entry->never_purge = 0;

@@ -605,8 +605,13 @@ int packet_recv_thread(void *data)
 		if (kthread_should_stop() || atomic_read(&exit_cond))
 			break;
 
+		/* we only want to safely traverse the list, hard-interfaces 
+		 * won't be deleted anyway as long as this thread runs. */
+
 		rcu_read_lock();
 		list_for_each_entry_rcu(batman_if, &if_list, list) {
+			rcu_read_unlock();
+
 			result = -1;
 
 			while (1) {
@@ -785,7 +790,7 @@ int packet_recv_thread(void *data)
 					/* packet for me */
 					if (is_my_mac(unicast_packet->dest)) {
 
-						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct unicast_packet), result - sizeof(struct ethhdr) - sizeof(struct unicast_packet));
+						interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct unicast_packet), result - sizeof(struct ethhdr) - sizeof(struct unicast_packet));
 
 					/* route it */
 					} else {
@@ -856,7 +861,7 @@ int packet_recv_thread(void *data)
 
 						spin_unlock(&orig_hash_lock);
 						/* broadcast for me */
-						interface_rx(bat_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
+						interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
 						/* rebroadcast packet */
 						list_for_each_entry_rcu(batman_if, &if_list, list) {
@@ -907,6 +912,9 @@ int packet_recv_thread(void *data)
 
 			if ((result < 0) && (result != -EAGAIN))
 				debug_log(LOG_TYPE_CRIT, "Could not receive packet from interface %s: %i\n", batman_if->dev, result);
+
+			/* lock for the next iteration */
+			rcu_read_lock();
 		}
 		rcu_read_unlock();
 

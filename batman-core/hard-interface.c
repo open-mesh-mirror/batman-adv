@@ -305,6 +305,7 @@ char hardif_get_active_if_num(void)
 void hardif_check_interfaces_status(struct work_struct *work)
 {
 	struct batman_if *batman_if;
+	int min_mtu;
 
 	if (module_state == MODULE_INACTIVE)
 		goto start_timer;
@@ -329,8 +330,9 @@ void hardif_check_interfaces_status(struct work_struct *work)
 		activate_module();
 
 	/* decrease the MTU if a new interface with a smaller MTU appeared. */
-	if (bat_device && bat_device->mtu > hardif_min_mtu()) 
-		bat_device->mtu = hardif_min_mtu();
+	min_mtu = hardif_min_mtu();
+	if (soft_device->mtu > min_mtu) 
+		soft_device->mtu = min_mtu;
 start_timer:
 	start_hardif_check_timer();
 }
