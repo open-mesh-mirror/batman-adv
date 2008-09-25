@@ -118,7 +118,7 @@ void interface_setup(struct net_device *dev)
 	dev->hard_header_len = BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
 
 	/* generate random address */
-	*(u16 *)dev_addr = htons(0x00FF);
+	*(u16 *)dev_addr = __constant_htons(0x00FF);
 	get_random_bytes(dev_addr + sizeof(u16), 4);
 	memcpy(dev->dev_addr, dev_addr, sizeof(dev->dev_addr));
 

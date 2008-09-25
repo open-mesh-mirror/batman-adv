@@ -137,7 +137,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 #endif
 		goto error;
 
-	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
+	if ((retval = sock_create_kern(PF_PACKET, SOCK_RAW, __constant_htons(ETH_P_BATMAN), &batman_if->raw_sock)) < 0) {
 		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n", retval);
 		goto error;
 	}

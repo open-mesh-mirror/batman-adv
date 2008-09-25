@@ -71,7 +71,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	ethhdr = (struct ethhdr *) data;
 	memcpy(ethhdr->h_source, batman_if->net_dev->dev_addr, ETH_ALEN);
 	memcpy(ethhdr->h_dest, dst_addr, ETH_ALEN);
-	ethhdr->h_proto = htons(ETH_P_BATMAN);
+	ethhdr->h_proto = __constant_htons(ETH_P_BATMAN);
 
 	skb_reset_mac_header(skb);
 	skb_set_network_header(skb, ETH_HLEN);
