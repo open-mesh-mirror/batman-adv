@@ -38,10 +38,19 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 26)
 
-#define device_create_drvdata(_cls, _parent, _devt, _device, _fmt) \
+#define device_create(_cls, _parent, _devt, _device, _fmt) \
 	class_device_create(_cls, _parent, _devt, _device, _fmt)
 
 #define device_destroy(_cls, _device) \
 	class_device_destroy(_cls, _device)
+
+#else
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
+
+#define device_create(_cls, _parent, _devt, _device, _fmt) \
+	device_create_drvdata(_cls, _parent, _devt, _device, _fmt)
+
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27) */
 
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 26) */

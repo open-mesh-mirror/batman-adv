@@ -83,7 +83,7 @@ void bat_device_setup(void)
 		debug_log(LOG_TYPE_WARN, "Could not register class 'batman-adv' \n");
 		return;
 	} else {
-		device_create_drvdata(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
+		device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
 	}
 #endif
 
