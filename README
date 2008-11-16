@@ -1,13 +1,13 @@
-[state: 11-07-2008]
+[state: 17-11-2008]
 
-BATMAN-CORE
------------
+BATMAN-ADV
+----------
 
 The kernel implementation of batman-advanced. It does not depend on any network
 driver, and can be used on wifi as well as ethernet, vpn, etc ... (anything
 with ethernet-style layer 2).
-It compiles against and should work with Linux 2.6.20 - 2.6.26. Supporting older 
-versions is not planned, but it's probably easy to backport it. If you work on a 
+It compiles against and should work with Linux 2.6.20 - 2.6.28. Supporting older
+versions is not planned, but it's probably easy to backport it. If you work on a
 backport, feel free to contact us.  :-)
 
 COMPILE
@@ -23,9 +23,9 @@ if you want to compile against some other kernel, use:
 USAGE
 -----
 
-insmod the batman-adv-core.ko in your kernel:
+insmod the batman-adv.ko in your kernel:
 
-# insmod batman-adv-core.ko
+# insmod batman-adv.ko
 
 the module is now waiting for activation. You must add some interfaces
 on which batman can operate. Each interface must be added separately:
@@ -36,7 +36,7 @@ on which batman can operate. Each interface must be added separately:
 ( # echo eth0 > /proc/net/batman-adv/interfaces )
 ( ... )
 
-Now batman starts broadcasting on this interface. 
+Now batman starts broadcasting on this interface.
 You can now view the table of originators (mesh participants) with:
 
 # cat /proc/net/batman-adv/originators
@@ -48,7 +48,7 @@ regular interface:
 # ping 192.168.0.2
 ...
 
-If you want topology visualization, your meshnode must be configured 
+If you want topology visualization, your meshnode must be configured
 as VIS-server:
 
 # echo "server" > /proc/net/batman-adv/vis
@@ -58,8 +58,8 @@ When configured as server, you can get a topology snapshot of your mesh:
 # cat /proc/net/batman-adv/vis
 
 This output can be processeed with graphviz-tools like dot.
-The labels are similar/compatible to the ETX metric, 1.0 means perfect 
-connection (100%), 2.0 means 50%, 3.0 means 33% and so on. 
+The labels are similar/compatible to the ETX metric, 1.0 means perfect
+connection (100%), 2.0 means 50%, 3.0 means 33% and so on.
 
 To deactivate batman, do:
 
@@ -71,7 +71,7 @@ CONTACT
 Please send us comments, experiences, questions, anything :)
 
 IRC:             #batman on irc.freenode.org
-Mailing-list:    b.a.t.m.a.n@open-mesh.net 
+Mailing-list:    b.a.t.m.a.n@open-mesh.net
 (subscription at https://list.open-mesh.net/mm/listinfo/b.a.t.m.a.n )
 
 You can also contact the Authors:

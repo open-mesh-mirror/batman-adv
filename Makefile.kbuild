@@ -25,5 +25,5 @@ endif
 
 EXTRA_CFLAGS += -DREVISION_VERSION=\"\ rv$(REVISION)\"
 
-obj-m += batman-adv-core.o
-batman-adv-core-objs := main.o proc.o send.o log.o routing.o soft-interface.o device.o translation-table.o bitarray.o hash.o ring_buffer.o vis.o hard-interface.o
+obj-m += batman-adv.o
+batman-adv-objs := main.o proc.o send.o log.o routing.o soft-interface.o device.o translation-table.o bitarray.o hash.o ring_buffer.o vis.o hard-interface.o
