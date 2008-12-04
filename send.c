@@ -62,7 +62,7 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	}
 
 	skb = dev_alloc_skb(pack_buff_len + sizeof(struct ethhdr));
-	if (!skb) 
+	if (!skb)
 		return;
 	data = skb_put(skb, pack_buff_len + sizeof(struct ethhdr));
 
@@ -80,13 +80,13 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_a
 	skb->dev = batman_if->net_dev;
 
 	/* dev_queue_xmit() returns a negative result on error.
-	 * However on congestion and traffic shaping, it drops and returns 
+	 * However on congestion and traffic shaping, it drops and returns
 	 * NET_XMIT_DROP (which is > 0). This will not be treated as an error. */
 	retval = dev_queue_xmit(skb);
 	if (retval < 0) {
 		debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n", retval);
 		batman_if->if_active = IF_TO_BE_DEACTIVATED;
-	}       
+	}
 }
 
 /* send a batman packet. */
@@ -131,7 +131,6 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 				send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 			}
 			rcu_read_unlock();
-
 		}
 	}
 }
@@ -140,7 +139,7 @@ void send_own_packet_work(struct work_struct *work)
 	struct batman_if *batman_if;
 
 	rcu_read_lock();
-	list_for_each_entry_rcu(batman_if, &if_list, list) 
+	list_for_each_entry_rcu(batman_if, &if_list, list)
 		send_own_packet(batman_if);
 	rcu_read_unlock();
 
@@ -159,7 +158,7 @@ void send_own_packet(struct batman_if *batman_if)
 	if ((hna_local_changed) && (batman_if->if_num == 0)) {
 
 		new_len = sizeof(struct batman_packet) + (num_hna * ETH_ALEN);
-		new_buf = kmalloc(batman_if->pack_buff_len, GFP_ATOMIC);
+		new_buf = kmalloc(new_len, GFP_ATOMIC);
 
 		/* keep old buffer if kmalloc should fail */
 		if (new_buf) {
@@ -167,22 +166,22 @@ void send_own_packet(struct batman_if *batman_if)
 			batman_packet = (struct batman_packet *) new_buf;
 
 			batman_packet->num_hna = hna_local_fill_buffer(
-						new_buf + sizeof(struct batman_packet), 
+						new_buf + sizeof(struct batman_packet),
 						new_len - sizeof(struct batman_packet));
 
 			kfree(batman_if->pack_buff);
 			batman_if->pack_buff = new_buf;
 			batman_if->pack_buff_len = new_len;
-
 		}
+
 	}
 
 	/* change sequence number to network order */
 	batman_packet->seqno = htons((uint16_t) atomic_read(&batman_if->seqno));
 	if (is_vis_server())
-		batman_packet->flags = VIS_SERVER;		
+		batman_packet->flags = VIS_SERVER;
 	else
-		batman_packet->flags = 0;		
+		batman_packet->flags = 0;
 
 	/* could be read by receive_bat_packet() */
 	atomic_inc(&batman_if->seqno);
