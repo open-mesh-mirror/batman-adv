@@ -355,7 +355,7 @@ ssize_t proc_orig_interval_write(struct file *file, const char __user * buffer, 
 
 	originator_interval_tmp = simple_strtol(interval_string, NULL, 10);
 
-	if (originator_interval_tmp < JITTER * 2) {
+	if (originator_interval_tmp <= JITTER * 2) {
 		debug_log(LOG_TYPE_WARN, "New originator interval too small: %i (min: %i)\n", originator_interval_tmp, JITTER * 2);
 		goto end;
 	}

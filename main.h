@@ -29,7 +29,7 @@
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
 #define TQ_MAX_VALUE 255
-#define JITTER 100
+#define JITTER 20
 #define TTL 50		/* Time To Live of broadcast messages */
 #define MAX_ADDR 16	/* number of interfaces which can be added to batman. */
 
