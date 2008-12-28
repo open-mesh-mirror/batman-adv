@@ -1,0 +1,21 @@
+batman-adv 0.1:
+
+* support latest kernels (2.6.20 - 2.6.28)
+* LOTS of cleanup: locking, stack usage, memory leaks
+* Change Ethertype from 0x0842 to 0x4305
+  unregistered at IEEE, if you want to sponsor an official Ethertype ($2500) 
+  please contact us
+
+ -- Sun, 28 Dec 2008 00:44:31 +0100
+
+batman-adv 0.1-beta:
+
+* layer 2 meshing based on BATMAN TQ algorithm in kernelland
+* operates on any ethernet like interface
+* supports IPv4, IPv6, DHCP, etc
+* is controlled via /proc/net/batman-adv/
+* bridging via brctl is supported
+* interface watchdog (interfaces can be (de)activated dynamically)
+* offers integrated vis server which meshes/syncs with other vis servers in range
+
+ -- Mon, 05 May 2008 14:10:04 +0200

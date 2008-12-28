@@ -293,27 +293,3 @@ struct hashtable_t *hash_resize(struct hashtable_t *hash, int size)
 
 	return new_hash;
 }
-
-
-/* print the hash table for debugging
-void hash_debug(struct hashtable_t *hash)
-{
-	int i;
-	struct element_t *bucket;
-
-	for (i=0; i<hash->size;i++) {
-		printf("[%d] ",i);
-		bucket= hash->table[i];
-
-		while (bucket != NULL) {
-			printf("-> [%10p] ", bucket);
-			bucket= bucket->next;
-		}
-
-		printf("\n");
-
-	}
-	printf("\n");
-}
- */
-

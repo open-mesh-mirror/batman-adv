@@ -20,11 +20,11 @@
 /* Kernel Programming */
 #define LINUX
 
-#define DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>"
+#define DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>, Simon Wunderlich <siwu@hrz.tu-chemnitz.de>"
 #define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
 #define DRIVER_DEVICE "batman-adv"
 
-#define SOURCE_VERSION "0.1-beta"
+#define SOURCE_VERSION "0.1"
 #define COMPAT_VERSION 6
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
