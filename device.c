@@ -82,9 +82,9 @@ void bat_device_setup(void)
 	if (IS_ERR(batman_class)) {
 		debug_log(LOG_TYPE_WARN, "Could not register class 'batman-adv' \n");
 		return;
-	} else {
-		device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
 	}
+
+	device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL, "batman-adv");
 #endif
 
 	Major = tmp_major;
@@ -233,34 +233,35 @@ ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len,
 		return -EFAULT;
 	}
 
-	if ((icmp_packet.packet_type == BAT_ICMP) && (icmp_packet.msg_type == ECHO_REQUEST)) {
+	if (icmp_packet.packet_type != BAT_ICMP) {
+		debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from char device: got bogus packet type (expected: BAT_ICMP)\n");
+		return -EINVAL;
+	}
 
-		spin_lock(&orig_hash_lock);
-		orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet.dst));
+	if (icmp_packet.msg_type != ECHO_REQUEST) {
+		debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from char device: got bogus message type (expected: ECHO_REQUEST)\n");
+		return -EINVAL;
+	}
 
-		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+	spin_lock(&orig_hash_lock);
+	orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet.dst));
 
-			memcpy(icmp_packet.orig, orig_node->batman_if->net_dev->dev_addr, ETH_ALEN);
-			icmp_packet.uid = device_client->index;
+	if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
 
-			send_raw_packet((unsigned char *)&icmp_packet, sizeof(struct icmp_packet), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+		memcpy(icmp_packet.orig, orig_node->batman_if->net_dev->dev_addr, ETH_ALEN);
+		icmp_packet.uid = device_client->index;
 
-		} else {
-
-			icmp_packet.msg_type = DESTINATION_UNREACHABLE;
-			icmp_packet.uid = device_client->index;
-			bat_device_add_packet(device_client, &icmp_packet);
-
-		}
-
-		spin_unlock(&orig_hash_lock);
+		send_raw_packet((unsigned char *)&icmp_packet, sizeof(struct icmp_packet), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 
 	} else {
 
-		debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from char device: got bogus packet\n");
-		return -EINVAL;
+		icmp_packet.msg_type = DESTINATION_UNREACHABLE;
+		icmp_packet.uid = device_client->index;
+		bat_device_add_packet(device_client, &icmp_packet);
 
 	}
+
+	spin_unlock(&orig_hash_lock);
 
 	return len;
 }

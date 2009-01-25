@@ -24,7 +24,7 @@
 #define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
 #define DRIVER_DEVICE "batman-adv"
 
-#define SOURCE_VERSION "0.1"
+#define SOURCE_VERSION "0.2-alpha"
 #define COMPAT_VERSION 6
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
@@ -83,8 +83,8 @@
 #include <linux/if_ether.h>	/* ethernet header */
 #include <linux/poll.h>		/* poll_table */
 #include <linux/kthread.h>	/* kernel threads */
-#include <linux/pkt_sched.h>/* schedule types */
-#include <linux/workqueue.h>/* workqueue */
+#include <linux/pkt_sched.h>	/* schedule types */
+#include <linux/workqueue.h>	/* workqueue */
 #include <net/sock.h>		/* struct sock */
 #include "types.h"
 
