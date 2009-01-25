@@ -107,33 +107,34 @@ static void send_packet(unsigned char *pack_buff, int pack_buff_len, struct batm
 	addr_to_string(orig_str, ((struct batman_packet *)pack_buff)->orig);
 
 	/* multihomed peer assumed */
-	if (directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) {
+	/* non-primary OGMs are only broadcasted on their interface */
+	if ((directlink && (((struct batman_packet *)pack_buff)->ttl == 1)) ||
+		    (own_packet && (if_outgoing->if_num > 0))) {
+
+		debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->dev, if_outgoing->addr_str);
+
 		send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-	} else {
-
-		/* non-primary OGMs are only broadcasted on their interface */
-		if (own_packet && (if_outgoing->if_num > 0)) {
-			debug_log(LOG_TYPE_BATMAN, "Sending own packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, if_outgoing->dev, if_outgoing->addr_str);
-			send_raw_packet(pack_buff, pack_buff_len, if_outgoing->net_dev->dev_addr, broadcastAddr, if_outgoing);
-		} else {
-			rcu_read_lock();
-			list_for_each_entry_rcu(batman_if, &if_list, list) {
-				if (batman_if->if_active != IF_ACTIVE)
-					continue;
-
-				if (directlink && (if_outgoing == batman_if))
-					((struct batman_packet *)pack_buff)->flags |= DIRECTLINK;
-				else
-					((struct batman_packet *)pack_buff)->flags &= ~DIRECTLINK;
-
-				debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->dev, batman_if->addr_str);
-
-				send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-			}
-			rcu_read_unlock();
-		}
+		return;
 	}
+
+	/* broadcast on every interface */
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		if (batman_if->if_active != IF_ACTIVE)
+			continue;
+
+		if (directlink && (if_outgoing == batman_if))
+			((struct batman_packet *)pack_buff)->flags |= DIRECTLINK;
+		else
+			((struct batman_packet *)pack_buff)->flags &= ~DIRECTLINK;
+
+		debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (own_packet ? "Sending own" : "Forwarding"), orig_str, ntohs(((struct batman_packet *)pack_buff)->seqno), ((struct batman_packet *)pack_buff)->ttl, batman_if->dev, batman_if->addr_str);
+
+		send_raw_packet(pack_buff, pack_buff_len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+	}
+	rcu_read_unlock();
 }
+
 void send_own_packet_work(struct work_struct *work)
 {
 	struct batman_if *batman_if;
@@ -163,7 +164,7 @@ void send_own_packet(struct batman_if *batman_if)
 		/* keep old buffer if kmalloc should fail */
 		if (new_buf) {
 			memcpy(new_buf, batman_if->pack_buff, sizeof(struct batman_packet));
-			batman_packet = (struct batman_packet *) new_buf;
+			batman_packet = (struct batman_packet *)new_buf;
 
 			batman_packet->num_hna = hna_local_fill_buffer(
 						new_buf + sizeof(struct batman_packet),
@@ -177,7 +178,7 @@ void send_own_packet(struct batman_if *batman_if)
 	}
 
 	/* change sequence number to network order */
-	batman_packet->seqno = htons((uint16_t) atomic_read(&batman_if->seqno));
+	batman_packet->seqno = htons((uint16_t)atomic_read(&batman_if->seqno));
 	if (is_vis_server())
 		batman_packet->flags = VIS_SERVER;
 	else
@@ -188,7 +189,6 @@ void send_own_packet(struct batman_if *batman_if)
 
 	slide_own_bcast_window(batman_if);
 	send_packet(batman_if->pack_buff, batman_if->pack_buff_len, batman_if, 1);
-
 }
 
 void send_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t idf, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
