@@ -333,7 +333,7 @@ static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batm
 
 
 	orig_node = get_orig_node(batman_packet->orig);
-	if (orig_node == NULL) 
+	if (orig_node == NULL)
 		return 0;
 
 
@@ -381,7 +381,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	debug_log(LOG_TYPE_BATMAN, "Received BATMAN packet via NB: %s, IF: %s [%s] (from OG: %s, via old OG: %s, seqno %d, tq %d, TTL %d, V %d, IDF %d) \n", neigh_str, if_incoming->dev, if_incoming->addr_str, orig_str, old_orig_str, batman_packet->seqno, batman_packet->tq, batman_packet->ttl, batman_packet->version, has_directlink_flag);
 
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		if (batman_if->if_active != IF_ACTIVE) 
+		if (batman_if->if_active != IF_ACTIVE)
 			continue;
 
 		if (compare_orig(ethhdr->h_source, batman_if->net_dev->dev_addr))
@@ -398,19 +398,21 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	}
 
 	if (batman_packet->version != COMPAT_VERSION) {
-
 		debug_log(LOG_TYPE_BATMAN, "Drop packet: incompatible batman version (%i) \n", batman_packet->version);
+		return;
+	}
 
-	} else if (is_my_addr) {
-
+	if (is_my_addr) {
 		debug_log(LOG_TYPE_BATMAN, "Drop packet: received my own broadcast (sender: %s) \n", neigh_str);
+		return;
+	}
 
-	} else if (is_broadcast) {
-
+	if (is_broadcast) {
 		debug_log(LOG_TYPE_BATMAN, "Drop packet: ignoring all packets with broadcast source addr (sender: %s) \n", neigh_str);
+		return;
+	}
 
-	} else if (is_my_orig) {
-
+	if (is_my_orig) {
 		orig_neigh_node = get_orig_node(ethhdr->h_source);
 
 		/* neighbour has to indicate direct link and it has to come via the corresponding interface */
@@ -421,81 +423,70 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 		}
 
 		debug_log(LOG_TYPE_BATMAN, "Drop packet: originator packet from myself (via neighbour) \n");
+		return;
+	}
 
-	} else if (batman_packet->tq == 0) {
-
+	if (batman_packet->tq == 0) {
 		count_real_packets(ethhdr, batman_packet, if_incoming);
 
 		debug_log(LOG_TYPE_BATMAN, "Drop packet: originator packet with tq equal 0 \n");
-
-	} else if (is_my_oldorig) {
-
-		debug_log(LOG_TYPE_BATMAN, "Drop packet: ignoring all rebroadcast echos (sender: %s) \n", neigh_str);
-
-	} else {
-
-		is_duplicate = count_real_packets(ethhdr, batman_packet, if_incoming);
-
-		orig_node = get_orig_node(batman_packet->orig);
-		if (orig_node == NULL) 
-			return;
-
-
-		/* if sender is a direct neighbor the sender mac equals originator mac */
-		orig_neigh_node = (is_single_hop_neigh ? orig_node : get_orig_node(ethhdr->h_source));
-		if (orig_neigh_node == NULL) 
-			return;
-
-
-		/* drop packet if sender is not a direct neighbor and if we no route towards it */
-		if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
-
-			debug_log(LOG_TYPE_BATMAN, "Drop packet: OGM via unkown neighbor! \n");
-
-		} else {
-
-			is_bidirectional = isBidirectionalNeigh(orig_node, orig_neigh_node, batman_packet, if_incoming);
-
-			/* update ranking if it is not a duplicate or has the same seqno and similar ttl as the non-duplicate */
-			if (is_bidirectional && (!is_duplicate || ((orig_node->last_real_seqno == batman_packet->seqno) && (orig_node->last_ttl - 3 <= batman_packet->ttl))))
-				update_orig(orig_node, ethhdr, batman_packet, if_incoming, hna_buff, hna_buff_len, is_duplicate);
-
-			/* is single hop (direct) neighbour */
-			if (is_single_hop_neigh) {
-
-				/* mark direct link on incoming interface */
-				send_forward_packet(orig_node, ethhdr, batman_packet, 1, hna_buff, hna_buff_len, if_incoming);
-
-				debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
-
-			/* multihop originator */
-			} else {
-
-				if (is_bidirectional) {
-
-					if (!is_duplicate) {
-
-						send_forward_packet(orig_node, ethhdr, batman_packet, 0, hna_buff, hna_buff_len, if_incoming);
-
-						debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast originator packet \n");
-
-					} else {
-
-						debug_log(LOG_TYPE_BATMAN, "Drop packet: duplicate packet received\n");
-
-					}
-
-				} else {
-
-					debug_log(LOG_TYPE_BATMAN, "Drop packet: not received via bidirectional link\n");
-
-				}
-
-			}
-
-		}
-
+		return;
 	}
+
+	if (is_my_oldorig) {
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: ignoring all rebroadcast echos (sender: %s) \n", neigh_str);
+		return;
+	}
+
+	is_duplicate = count_real_packets(ethhdr, batman_packet, if_incoming);
+
+	orig_node = get_orig_node(batman_packet->orig);
+	if (orig_node == NULL)
+		return;
+
+	/* if sender is a direct neighbor the sender mac equals originator mac */
+	orig_neigh_node = (is_single_hop_neigh ? orig_node : get_orig_node(ethhdr->h_source));
+	if (orig_neigh_node == NULL)
+		return;
+
+	/* drop packet if sender is not a direct neighbor and if we no route towards it */
+	if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: OGM via unkown neighbor! \n");
+		return;
+	}
+
+	is_bidirectional = isBidirectionalNeigh(orig_node, orig_neigh_node, batman_packet, if_incoming);
+
+	/* update ranking if it is not a duplicate or has the same seqno and similar ttl as the non-duplicate */
+	if (is_bidirectional && (!is_duplicate ||
+		((orig_node->last_real_seqno == batman_packet->seqno) &&
+			(orig_node->last_ttl - 3 <= batman_packet->ttl))))
+		update_orig(orig_node, ethhdr, batman_packet, if_incoming, hna_buff, hna_buff_len, is_duplicate);
+
+	/* is single hop (direct) neighbour */
+	if (is_single_hop_neigh) {
+
+		/* mark direct link on incoming interface */
+		send_forward_packet(orig_node, ethhdr, batman_packet, 1, hna_buff, hna_buff_len, if_incoming);
+
+		debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
+		return;
+	}
+
+	/* multihop originator */
+	if (!is_bidirectional) {
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: not received via bidirectional link\n");
+		return;
+	}
+
+	if (is_duplicate) {
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: duplicate packet received\n");
+		return;
+	}
+
+	send_forward_packet(orig_node, ethhdr, batman_packet, 0, hna_buff, hna_buff_len, if_incoming);
+
+	debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast originator packet \n");
 }
 
 void purge_orig(struct work_struct *work)
@@ -605,7 +596,7 @@ int packet_recv_thread(void *data)
 		if (kthread_should_stop() || atomic_read(&exit_cond))
 			break;
 
-		/* we only want to safely traverse the list, hard-interfaces 
+		/* we only want to safely traverse the list, hard-interfaces
 		 * won't be deleted anyway as long as this thread runs. */
 
 		rcu_read_lock();
@@ -647,7 +638,7 @@ int packet_recv_thread(void *data)
 					if (is_bcast(ethhdr->h_source))
 						continue;
 
-					/* drop packet if it has no batman packet payload */
+					/* drop packet if it has not at least one batman packet as payload */
 					if (result < sizeof(struct ethhdr) + sizeof(struct batman_packet))
 						continue;
 
@@ -683,32 +674,29 @@ int packet_recv_thread(void *data)
 					/* packet for me */
 					if (is_my_mac(icmp_packet->dst)) {
 
-						/* answer ping request (ping) */
-						if (icmp_packet->msg_type == ECHO_REQUEST) {
-
-							/* get routing information */
-							spin_lock(&orig_hash_lock);
-							orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet->orig));
-
-							if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
-
-								memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
-								memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
-								icmp_packet->msg_type = ECHO_REPLY;
-								icmp_packet->ttl = TTL;
-
-								send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
-
-							}
-
-							spin_unlock(&orig_hash_lock);
-
-						} else {
-
-							/* add data to device queue */
+						/* add data to device queue */
+						if (icmp_packet->msg_type != ECHO_REQUEST) {
 							bat_device_receive_packet(icmp_packet);
+							continue;
+						}
+
+						/* answer echo request (ping) */
+						/* get routing information */
+						spin_lock(&orig_hash_lock);
+						orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet->orig));
+
+						if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
+
+							memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
+							memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
+							icmp_packet->msg_type = ECHO_REPLY;
+							icmp_packet->ttl = TTL;
+
+							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 
 						}
+
+						spin_unlock(&orig_hash_lock);
 
 					/* route it */
 					} else {
@@ -847,30 +835,29 @@ int packet_recv_thread(void *data)
 					spin_lock(&orig_hash_lock);
 					orig_node = ((struct orig_node *)hash_find(orig_hash, bcast_packet->orig));
 
-					if (orig_node != NULL) {
-
-						/* check flood history */
-						if (get_bit_status(orig_node->bcast_bits, orig_node->last_bcast_seqno, ntohs(bcast_packet->seqno))) {
-							spin_unlock(&orig_hash_lock);
-							continue;
-						}
-
-						/* mark broadcast in flood history */
-						if (bit_get_packet(orig_node->bcast_bits, ntohs(bcast_packet->seqno) - orig_node->last_bcast_seqno, 1))
-							orig_node->last_bcast_seqno = ntohs(bcast_packet->seqno);
-
+					if (orig_node == NULL) {
 						spin_unlock(&orig_hash_lock);
-						/* broadcast for me */
-						interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
+						continue;
+					}
 
-						/* rebroadcast packet */
-						list_for_each_entry_rcu(batman_if, &if_list, list) {
-
-							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-						}
-
-					} else {
+					/* check flood history */
+					if (get_bit_status(orig_node->bcast_bits, orig_node->last_bcast_seqno, ntohs(bcast_packet->seqno))) {
 						spin_unlock(&orig_hash_lock);
+						continue;
+					}
+
+					/* mark broadcast in flood history */
+					if (bit_get_packet(orig_node->bcast_bits, ntohs(bcast_packet->seqno) - orig_node->last_bcast_seqno, 1))
+						orig_node->last_bcast_seqno = ntohs(bcast_packet->seqno);
+
+					spin_unlock(&orig_hash_lock);
+
+					/* broadcast for me */
+					interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
+
+					/* rebroadcast packet */
+					list_for_each_entry_rcu(batman_if, &if_list, list) {
+						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
 					}
 
 					break;
@@ -891,12 +878,11 @@ int packet_recv_thread(void *data)
 					if (is_my_mac(vis_packet->sender_orig))
 						continue;
 
-
 					switch (vis_packet->vis_type) {
 					case VIS_TYPE_SERVER_SYNC:
 						receive_server_sync_packet(vis_packet, vis_info_len);
 						break;
-	
+
 					case VIS_TYPE_CLIENT_UPDATE:
 						receive_client_update_packet(vis_packet, vis_info_len);
 						break;
