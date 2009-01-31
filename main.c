@@ -67,7 +67,8 @@ int init_module(void)
 	atomic_set(&originator_interval, 1000);
 	atomic_set(&vis_interval, 1000);	/* TODO: raise this later, this is only for debugging now. */
 
-	bat_event_workqueue = create_singlethread_workqueue("bat_event_workqueue");
+	/* the name should not be longer than 10 chars - see http://lwn.net/Articles/23634/ */
+	bat_event_workqueue = create_singlethread_workqueue("bat_events");
 
 	if (!bat_event_workqueue)
 		return -ENOMEM;

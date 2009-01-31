@@ -41,7 +41,7 @@ void start_bcast_timer(void)
 
 void stop_bcast_timer(void)
 {
-	cancel_rearming_delayed_work(&send_own_packet_wq);
+	cancel_delayed_work_sync(&send_own_packet_wq);
 }
 
 /* sends a raw packet. */

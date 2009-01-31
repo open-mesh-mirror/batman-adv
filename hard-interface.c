@@ -41,18 +41,20 @@ static char active_ifs = 0;
 
 static void hardif_free_interface(struct rcu_head *rcu);
 
-int hardif_min_mtu(void) 
+int hardif_min_mtu(void)
 {
 	struct batman_if *batman_if;
-	/* allow big frames if all devices are capable to do so 
+	/* allow big frames if all devices are capable to do so
 	 * (have MTU > 1500 + BAT_HEADER_LEN) */
-	int min_mtu = 1500;	
+	int min_mtu = 1500;
+
 	rcu_read_lock();
-	list_for_each_entry(batman_if, &if_list, list) {
-		if (batman_if->if_active == IF_ACTIVE) 
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		if (batman_if->if_active == IF_ACTIVE)
 			min_mtu = MIN(batman_if->net_dev->mtu - BAT_HEADER_LEN, min_mtu);
 	}
 	rcu_read_unlock();
+
 	return min_mtu;
 }
 
@@ -193,7 +195,7 @@ void hardif_remove_interfaces(void)
 
 	avail_ifs = 0;
 
-	/* TODO: spinlock for the write here. */
+	/* no lock needed - we don't delete somewhere else */
 	list_for_each_entry(batman_if, &if_list, list) {
 
 		list_del_rcu(&batman_if->list);
@@ -331,7 +333,7 @@ void hardif_check_interfaces_status(struct work_struct *work)
 
 	/* decrease the MTU if a new interface with a smaller MTU appeared. */
 	min_mtu = hardif_min_mtu();
-	if (soft_device->mtu > min_mtu) 
+	if (soft_device->mtu > min_mtu)
 		soft_device->mtu = min_mtu;
 start_timer:
 	start_hardif_check_timer();
