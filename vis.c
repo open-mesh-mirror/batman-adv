@@ -29,6 +29,7 @@
 #include "soft-interface.h"
 #include "hard-interface.h"
 #include "hash.h"
+#include "compat.h"
 
 
 static DECLARE_DELAYED_WORK(vis_timer_wq, send_vis_packets);

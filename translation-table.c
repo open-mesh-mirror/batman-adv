@@ -27,6 +27,7 @@
 #include "soft-interface.h"
 #include "types.h"
 #include "hash.h"
+#include "compat.h"
 
 
 
