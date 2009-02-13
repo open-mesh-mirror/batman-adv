@@ -34,6 +34,7 @@
 #define PROC_FILE_TRANSTABLE_LOCAL "transtable_local"
 #define PROC_FILE_TRANSTABLE_GLOBAL "transtable_global"
 #define PROC_FILE_VIS "vis"
+#define PROC_FILE_AGGR "aggregate_ogm"
 
 
 
@@ -56,5 +57,8 @@ int proc_transtable_global_open(struct inode *inode, struct file *file);
 int proc_transtable_global_read(struct seq_file *seq, void *offset);
 int proc_vis_open(struct inode *inode, struct file *file);
 int proc_vis_read(struct seq_file *seq, void *offset);
+int proc_aggr_open(struct inode *inode, struct file *file);
+int proc_aggr_read(struct seq_file *seq, void *offset);
 ssize_t proc_vis_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos);
+ssize_t proc_aggr_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos);
 ssize_t proc_dummy_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos);

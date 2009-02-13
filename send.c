@@ -163,7 +163,7 @@ void set_outstanding_packets_timer(unsigned long send_time)
 		send_time_next = send_time;
 
 		/**
-		 * we are being called by send_outstanding_packets() we can't acquire the lock
+		 * if we are being called by send_outstanding_packets() we can't acquire the lock
 		 * because we should not kill the running function that sends the packets
 		 */
 		if (spin_trylock(&packets_timer_lock)) {
@@ -239,7 +239,6 @@ static void add_packet_to_list(unsigned char *packet_buff, int packet_len, struc
 		if (time_after(send_time, forw_packet_pos->send_time))
 			break;
 
-// 		forw_node_pos = NULL;
 	}
 	rcu_read_unlock();
 

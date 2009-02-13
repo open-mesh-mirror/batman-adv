@@ -34,8 +34,17 @@
 
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL;
-static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL, *proc_vis_file = NULL;
+static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL;
+static struct proc_dir_entry *proc_vis_file = NULL, *proc_aggr_file = NULL;
 
+static const struct file_operations proc_aggr_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_aggr_open,
+	.read		= seq_read,
+	.write		= proc_aggr_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 static const struct file_operations proc_vis_fops = {
 	.owner		= THIS_MODULE,
 	.open		= proc_vis_open,
@@ -124,7 +133,8 @@ void cleanup_procfs(void)
 	if (proc_vis_file)
 		remove_proc_entry(PROC_FILE_VIS, proc_batman_dir);
 
-
+	if (proc_aggr_file)
+		remove_proc_entry(PROC_FILE_AGGR, proc_aggr_file);
 
 	if (proc_batman_dir)
 #ifdef __NET_NET_NAMESPACE_H
@@ -228,6 +238,15 @@ int setup_procfs(void)
 		return -EFAULT;
 	}
 
+	proc_aggr_file = create_proc_entry(PROC_FILE_AGGR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_aggr_file) {
+		proc_aggr_file->proc_fops = &proc_aggr_fops;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_AGGR);
+		cleanup_procfs();
+		return -EFAULT;
+	}
 
 	return 0;
 }
@@ -312,7 +331,7 @@ ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuff
 		if (module_state == MODULE_WAITING) {
 			if (hardif_get_active_if_num() > 0)
 				activate_module();
-			else 
+			else
 				debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
 		}
 	}
@@ -635,11 +654,8 @@ ssize_t proc_vis_write(struct file *file, const char __user * buffer, size_t cou
 	else if (strcmp(vis_mode_string, "server") == 0) {
 		debug_log(LOG_TYPE_NOTICE, "Setting VIS mode to server\n");
 		vis_set_mode(VIS_TYPE_SERVER_SYNC);
-	} else 
+	} else
 		debug_log(LOG_TYPE_WARN, "unknown vis-server mode: %s\n", vis_mode_string);
-	
-
-
 
 	kfree(vis_mode_string);
 	return count;
@@ -650,6 +666,47 @@ int proc_vis_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_vis_read, NULL);
 }
 
+int proc_aggr_read(struct seq_file *seq, void *offset)
+{
+	seq_printf(seq, "%i\n", atomic_read(&aggregation_enabled));
+
+	return 0;
+}
+
+ssize_t proc_aggr_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
+{
+	char *aggr_string;
+	int not_copied = 0;
+	int16_t aggregation_enabled_tmp;
+
+	aggr_string = kmalloc(count, GFP_KERNEL);
+
+	if (!aggr_string)
+		return -ENOMEM;
+
+	not_copied = copy_from_user(aggr_string, buffer, count);
+	aggr_string[count - not_copied - 1] = 0;
+
+	aggregation_enabled_tmp = simple_strtol(aggr_string, NULL, 10);
+
+	if ((aggregation_enabled_tmp != 0) && (aggregation_enabled_tmp != 1)) {
+		debug_log(LOG_TYPE_WARN, "Aggregation can only be enabled (1) or disabled (0), given value: %i\n", aggregation_enabled_tmp);
+		goto end;
+	}
+
+	debug_log(LOG_TYPE_NOTICE, "Changing aggregated from: %s (%i) to: %s (%i)\n", (atomic_read(&aggregation_enabled) == 1 ? "enabled" : "disabled"), atomic_read(&aggregation_enabled), (aggregation_enabled_tmp == 1 ? "enabled" : "disabled"), aggregation_enabled_tmp);
+
+	atomic_set(&aggregation_enabled, aggregation_enabled_tmp);
+
+end:
+	kfree(aggr_string);
+	return count;
+}
+
+int proc_aggr_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_aggr_read, NULL);
+}
 
 /* satisfying different prototypes ... */
 ssize_t proc_dummy_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
