@@ -51,6 +51,9 @@
 #define LOG_BUF_LEN 8192	/* has to be a power of 2 */
 #define ETH_STR_LEN 20
 
+#define MAX_AGGREGATION_BYTES 512   /* should not be bigger than 512 bytes or change the size of forw_packet->direct_link_flags */
+#define MAX_AGGREGATION_MS 100
+
 #define MODULE_INACTIVE 0
 #define MODULE_ACTIVE 1
 #define MODULE_WAITING 2
@@ -79,7 +82,6 @@
 #include <linux/mutex.h>	/* mutex */
 #include <linux/module.h>	/* needed by all modules */
 #include <linux/netdevice.h>	/* netdevice */
-#include <linux/timer.h>	/* timer */
 #include <linux/if_ether.h>	/* ethernet header */
 #include <linux/poll.h>		/* poll_table */
 #include <linux/kthread.h>	/* kernel threads */
@@ -89,13 +91,16 @@
 #include "types.h"
 
 extern struct list_head if_list;
+extern struct hlist_head forw_list;
 extern struct hashtable_t *orig_hash;
 
 extern struct mutex if_list_lock;
 extern spinlock_t orig_hash_lock;
+extern spinlock_t forw_list_lock;
 
 extern atomic_t originator_interval;
 extern atomic_t vis_interval;
+extern atomic_t aggregation_enabled;
 extern int16_t num_hna;
 extern int16_t num_ifs;
 

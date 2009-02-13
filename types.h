@@ -29,6 +29,10 @@
 
 #define BAT_HEADER_LEN (sizeof(struct ethhdr) + ((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))))
 
+#define aggregated_packet(buff_pos, packet_len, num_hna) \
+		buff_pos + sizeof(struct batman_packet) + (num_hna * ETH_ALEN) <= packet_len && \
+		buff_pos + sizeof(struct batman_packet) + (num_hna * ETH_ALEN) <= MAX_AGGREGATION_BYTES
+
 
 struct batman_if
 {
@@ -40,8 +44,8 @@ struct batman_if
 	struct net_device *net_dev;
 	struct socket *raw_sock;
 	atomic_t seqno;
-	unsigned char *pack_buff;
-	int pack_buff_len;
+	unsigned char *packet_buff;
+	int packet_len;
 	struct rcu_head rcu;
 
 };
@@ -57,7 +61,7 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	int tq_asym_penalty;
 	unsigned long last_valid;        /* when last packet from this node was received */
 /*	uint8_t  gwflags;      * flags related to gateway functions: gateway class */
-	uint8_t  flags;    		/* for now only VIS_SERVER flag. */ 
+	uint8_t  flags;    		/* for now only VIS_SERVER flag. */
 	unsigned char *hna_buff;
 	int16_t  hna_buff_len;
 	uint16_t last_real_seqno;   /* last and best known squence number */
@@ -115,13 +119,17 @@ struct hna_global_entry
 	struct orig_node *orig_node;
 };
 
-struct source_queue_entry
+struct forw_packet                 /* structure for forw_list maintaining packets to be send/forwarded */
 {
-	uint8_t addr[ETH_ALEN];
-	float max_share;
-	float fair_share;
-	float occupied_share;
-	float arrival_rate;
+	struct hlist_node list;
+	unsigned long send_time;
+	uint8_t own;
+	unsigned char *packet_buff;
+	uint16_t packet_len;
+	uint32_t direct_link_flags;
+	uint8_t num_packets;
+	struct batman_if *if_outgoing;
+	struct rcu_head rcu;
 };
 
 #endif

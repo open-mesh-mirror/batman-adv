@@ -367,7 +367,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	char is_my_addr = 0, is_my_orig = 0, is_my_oldorig = 0, is_broadcast = 0, is_bidirectional, is_single_hop_neigh, is_duplicate;
 	unsigned short if_incoming_seqno;
 
-	/* could be changed by send_own_packet() */
+	/* could be changed by schedule_own_packet() */
 	if_incoming_seqno = atomic_read(&if_incoming->seqno);
 
 	addr_to_string(orig_str, batman_packet->orig);
@@ -417,7 +417,8 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 
 		/* neighbour has to indicate direct link and it has to come via the corresponding interface */
 		/* if received seqno equals last send seqno save new seqno for bidirectional check */
-		if (has_directlink_flag && (batman_packet->seqno - if_incoming_seqno + 1 == 0)) {
+		if (has_directlink_flag && compare_orig(if_incoming->net_dev->dev_addr, batman_packet->orig) &&
+				  (batman_packet->seqno - if_incoming_seqno + 2 == 0)) {
 			bit_mark((TYPE_OF_WORD *)&(orig_neigh_node->bcast_own[if_incoming->if_num * NUM_WORDS]), 0);
 			orig_neigh_node->bcast_own_sum[if_incoming->if_num] = bit_packet_count((TYPE_OF_WORD *)&(orig_neigh_node->bcast_own[if_incoming->if_num * NUM_WORDS]));
 		}
@@ -467,7 +468,7 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	if (is_single_hop_neigh) {
 
 		/* mark direct link on incoming interface */
-		send_forward_packet(orig_node, ethhdr, batman_packet, 1, hna_buff, hna_buff_len, if_incoming);
+		schedule_forward_packet(orig_node, ethhdr, batman_packet, 1, hna_buff, hna_buff_len, if_incoming);
 
 		debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast neighbour packet with direct link flag \n");
 		return;
@@ -485,7 +486,27 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 	}
 
 	debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast originator packet \n");
-	send_forward_packet(orig_node, ethhdr, batman_packet, 0, hna_buff, hna_buff_len, if_incoming);
+	schedule_forward_packet(orig_node, ethhdr, batman_packet, 0, hna_buff, hna_buff_len, if_incoming);
+}
+
+static void receive_aggr_bat_packet(struct ethhdr *ethhdr, unsigned char *packet_buff, int packet_len, struct batman_if *if_incoming)
+{
+	struct batman_packet *batman_packet;
+	int16_t buff_pos = 0;
+
+	batman_packet = (struct batman_packet *)packet_buff;
+
+	/* unpack the aggregated packets and process them one by one */
+	while (aggregated_packet(buff_pos, packet_len, batman_packet->num_hna)) {
+
+		/* network to host order for our 16bit seqno. */
+		batman_packet->seqno = ntohs(batman_packet->seqno);
+
+		receive_bat_packet(ethhdr, batman_packet, packet_buff + buff_pos + sizeof(struct batman_packet), batman_packet->num_hna * ETH_ALEN, if_incoming);
+
+		buff_pos += sizeof(struct batman_packet) + batman_packet->num_hna * ETH_ALEN;
+		batman_packet = (struct batman_packet *)(packet_buff + buff_pos);
+	}
 }
 
 void purge_orig(struct work_struct *work)
@@ -641,11 +662,8 @@ int packet_recv_thread(void *data)
 					if (result < sizeof(struct ethhdr) + sizeof(struct batman_packet))
 						continue;
 
-					/* network to host order for our 16bit seqno. */
-					batman_packet->seqno = ntohs(batman_packet->seqno);
-
 					spin_lock(&orig_hash_lock);
-					receive_bat_packet(ethhdr, batman_packet, packet_buff + sizeof(struct ethhdr) + sizeof(struct batman_packet), result - sizeof(struct ethhdr) - sizeof(struct batman_packet), batman_if);
+					receive_aggr_bat_packet(ethhdr, packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if);
 					spin_unlock(&orig_hash_lock);
 
 					break;

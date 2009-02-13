@@ -158,8 +158,8 @@ void hardif_activate_interface(struct batman_if *batman_if)
 
 	addr_to_string(batman_if->addr_str, batman_if->net_dev->dev_addr);
 
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
-	memcpy(((struct batman_packet *)(batman_if->pack_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+	memcpy(((struct batman_packet *)(batman_if->packet_buff))->orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+	memcpy(((struct batman_packet *)(batman_if->packet_buff))->old_orig, batman_if->net_dev->dev_addr, ETH_ALEN);
 
 	batman_if->if_active = IF_ACTIVE;
 	active_ifs++;
@@ -178,7 +178,7 @@ static void hardif_free_interface(struct rcu_head *rcu)
 {
 	struct batman_if *batman_if = container_of(rcu, struct batman_if, rcu);
 
-	kfree(batman_if->pack_buff);
+	kfree(batman_if->packet_buff);
 	kfree(batman_if->dev);
 	kfree(batman_if);
 }
@@ -228,13 +228,13 @@ int hardif_add_interface(char *dev, int if_num)
 	batman_if->net_dev = NULL;
 
 	if ((if_num == 0) && (num_hna > 0))
-		batman_if->pack_buff_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
+		batman_if->packet_len = sizeof(struct batman_packet) + num_hna * ETH_ALEN;
 	else
-		batman_if->pack_buff_len = sizeof(struct batman_packet);
+		batman_if->packet_len = sizeof(struct batman_packet);
 
-	batman_if->pack_buff = kmalloc(batman_if->pack_buff_len, GFP_KERNEL);
+	batman_if->packet_buff = kmalloc(batman_if->packet_len, GFP_KERNEL);
 
-	if (!batman_if->pack_buff) {
+	if (!batman_if->packet_buff) {
 		debug_log(LOG_TYPE_WARN, "Can't add interface packet (%s): out of memory\n", dev);
 		goto out;
 	}
@@ -249,7 +249,7 @@ int hardif_add_interface(char *dev, int if_num)
 
 	INIT_LIST_HEAD(&batman_if->list);
 
-	batman_packet = (struct batman_packet *)(batman_if->pack_buff);
+	batman_packet = (struct batman_packet *)(batman_if->packet_buff);
 	batman_packet->packet_type = BAT_PACKET;
 	batman_packet->version = COMPAT_VERSION;
 	batman_packet->flags = 0x00;
@@ -259,8 +259,8 @@ int hardif_add_interface(char *dev, int if_num)
 	batman_packet->tq = TQ_MAX_VALUE;
 	batman_packet->num_hna = 0;
 
-	if (batman_if->pack_buff_len != sizeof(struct batman_packet))
-		batman_packet->num_hna = hna_local_fill_buffer(batman_if->pack_buff + sizeof(struct batman_packet), batman_if->pack_buff_len - sizeof(struct batman_packet));
+	if (batman_if->packet_len != sizeof(struct batman_packet))
+		batman_packet->num_hna = hna_local_fill_buffer(batman_if->packet_buff + sizeof(struct batman_packet), batman_if->packet_len - sizeof(struct batman_packet));
 
 	atomic_set(&batman_if->seqno, 1);
 
@@ -284,12 +284,13 @@ int hardif_add_interface(char *dev, int if_num)
 
 	spin_unlock(&orig_hash_lock);
 
-
-
 	if (!hardif_is_interface_up(batman_if->dev))
 		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", batman_if->dev);
 
 	list_add_tail_rcu(&batman_if->list, &if_list);
+
+	/* begin sending originator messages on that interface */
+	schedule_own_packet(batman_if);
 	return 1;
 
 out:
@@ -346,6 +347,6 @@ void start_hardif_check_timer(void)
 
 void destroy_hardif_check_timer(void)
 {
-	cancel_rearming_delayed_work(&hardif_check_interfaces_wq);
+	cancel_delayed_work_sync(&hardif_check_interfaces_wq);
 }
 

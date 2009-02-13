@@ -173,7 +173,7 @@ void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len)
 	/* only if we are server ourselves and packet is newer than the one in hash.*/
 	if (is_vis_server_locked() && is_new) {
 		memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
-		if (list_empty(&info->send_list)) 
+		if (list_empty(&info->send_list))
 			list_add_tail(&info->send_list, &send_list);
 	}
 
@@ -220,11 +220,11 @@ end:
 }
 
 /* set the mode of the visualization to client or server */
-void vis_set_mode(int mode) 
+void vis_set_mode(int mode)
 {
 	spin_lock(&vis_hash_lock);
 
-	if (my_vis_info != NULL) 
+	if (my_vis_info != NULL)
 		my_vis_info->packet.vis_type = mode;
 
 	spin_unlock(&vis_hash_lock);
@@ -232,16 +232,16 @@ void vis_set_mode(int mode)
 }
 
 /* is_vis_server(), locked outside */
-int is_vis_server_locked(void) 
+int is_vis_server_locked(void)
 {
-	if (my_vis_info != NULL) 
+	if (my_vis_info != NULL)
 		if (my_vis_info->packet.vis_type == VIS_TYPE_SERVER_SYNC)
 			return 1;
 
 	return 0;
 }
 /* get the current set mode */
-int is_vis_server(void) 
+int is_vis_server(void)
 {
 	int ret = 0;
 
@@ -494,7 +494,7 @@ void free_info(void *data)
 int vis_quit(void)
 {
 	if (vis_hash != NULL) {
-		cancel_rearming_delayed_work(&vis_timer_wq);
+		cancel_delayed_work_sync(&vis_timer_wq);
 		spin_lock(&vis_hash_lock);
 		hash_delete(vis_hash, free_info);	/* properly remove, kill timers ... */
 		vis_hash = NULL;

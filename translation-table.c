@@ -223,7 +223,7 @@ void hna_local_free(void)
 {
 	if (hna_local_hash != NULL) {
 
-		cancel_rearming_delayed_work(&hna_local_purge_wq);
+		cancel_delayed_work_sync(&hna_local_purge_wq);
 		hash_delete(hna_local_hash, _hna_local_del);
 	}
 }

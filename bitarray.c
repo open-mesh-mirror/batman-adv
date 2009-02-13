@@ -41,7 +41,7 @@ uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint16_t last_seqno, uint16_t cur
 {
 	int16_t diff, word_offset, word_num;
 
-	diff = last_seqno- curr_seqno;
+	diff = last_seqno - curr_seqno;
 	if (diff < 0 || diff >= TQ_LOCAL_WINDOW_SIZE) {
 		return 0;
 	} else {
