@@ -38,7 +38,6 @@ struct list_head if_list;
 struct hlist_head forw_list;
 struct hashtable_t *orig_hash;
 
-DEFINE_MUTEX(if_list_lock);
 DEFINE_SPINLOCK(orig_hash_lock);
 DEFINE_SPINLOCK(forw_list_lock);
 static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);

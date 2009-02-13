@@ -94,7 +94,6 @@ extern struct list_head if_list;
 extern struct hlist_head forw_list;
 extern struct hashtable_t *orig_hash;
 
-extern struct mutex if_list_lock;
 extern spinlock_t orig_hash_lock;
 extern spinlock_t forw_list_lock;
 
