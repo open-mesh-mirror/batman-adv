@@ -150,7 +150,15 @@ static void send_packet(struct forw_packet *forw_packet)
 	rcu_read_unlock();
 }
 
-void set_outstanding_packets_timer(unsigned long send_time)
+/* 
+ * set_outstanding_packets() timer moves the packet timer if necessary. 
+ * reset_timer must be set to 1 if the timer can be reset inside the function
+ * (by canceling the previously set workqueue), and 0 if this is not possible.
+ * 
+ * The workqueue must then be reactivated outside of this function.
+ */
+
+void set_outstanding_packets_timer(unsigned long send_time, int reset_timer)
 {
 	/**
 	 * on scheduler start or after a complete run through send_outstanding_packets()
@@ -166,9 +174,10 @@ void set_outstanding_packets_timer(unsigned long send_time)
 		 * if we are being called by send_outstanding_packets() we can't acquire the lock
 		 * because we should not kill the running function that sends the packets
 		 */
-		if (spin_trylock(&packets_timer_lock)) {
+		if (reset_timer) {
 			cancel_delayed_work_sync(&send_outstanding_packets_wq);
 
+			spin_lock(&packets_timer_lock);
 			queue_delayed_work(bat_event_workqueue, &send_outstanding_packets_wq, send_time_next - jiffies);
 			spin_unlock(&packets_timer_lock);
 		}
@@ -296,7 +305,7 @@ static void add_packet_to_list(unsigned char *packet_buff, int packet_len, struc
 
 		spin_unlock(&forw_list_lock);
 
-		set_outstanding_packets_timer(forw_packet_new->send_time);
+		set_outstanding_packets_timer(forw_packet_new->send_time, 1);
 	}
 }
 
@@ -417,7 +426,7 @@ static void send_outstanding_packets(struct work_struct *work)
 
 		/* FIXME: is that safe ? */
 		if (time_after(forw_packet->send_time, jiffies)) {
-			set_outstanding_packets_timer(forw_packet->send_time);
+			set_outstanding_packets_timer(forw_packet->send_time, 0);
 			break;
 		}
 
