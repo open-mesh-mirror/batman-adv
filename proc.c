@@ -134,7 +134,7 @@ void cleanup_procfs(void)
 		remove_proc_entry(PROC_FILE_VIS, proc_batman_dir);
 
 	if (proc_aggr_file)
-		remove_proc_entry(PROC_FILE_AGGR, proc_aggr_file);
+		remove_proc_entry(PROC_FILE_AGGR, proc_batman_dir);
 
 	if (proc_batman_dir)
 #ifdef __NET_NET_NAMESPACE_H
@@ -694,7 +694,7 @@ ssize_t proc_aggr_write(struct file *file, const char __user * buffer, size_t co
 		goto end;
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "Changing aggregated from: %s (%i) to: %s (%i)\n", (atomic_read(&aggregation_enabled) == 1 ? "enabled" : "disabled"), atomic_read(&aggregation_enabled), (aggregation_enabled_tmp == 1 ? "enabled" : "disabled"), aggregation_enabled_tmp);
+	debug_log(LOG_TYPE_NOTICE, "Changing aggregation from: %s (%i) to: %s (%i)\n", (atomic_read(&aggregation_enabled) == 1 ? "enabled" : "disabled"), atomic_read(&aggregation_enabled), (aggregation_enabled_tmp == 1 ? "enabled" : "disabled"), aggregation_enabled_tmp);
 
 	atomic_set(&aggregation_enabled, aggregation_enabled_tmp);
 
