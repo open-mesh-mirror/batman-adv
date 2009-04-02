@@ -148,14 +148,15 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 
 		log_start++;
 
-		spin_unlock(&logbuf_lock);
+		spin_unlock_irqrestore(&logbuf_lock, flags);
 
 		error = __put_user(c,buf);
+
+		spin_lock_irqsave(&logbuf_lock, flags);
 
 		buf++;
 		i++;
 
-		spin_lock(&logbuf_lock);
 	}
 
 	spin_unlock_irqrestore(&logbuf_lock, flags);
