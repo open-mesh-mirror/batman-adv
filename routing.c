@@ -588,7 +588,7 @@ int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int 
 
 int packet_recv_thread(void *data)
 {
-	struct batman_if *batman_if;
+	struct batman_if *batman_if, *batman_bcastif;
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
 	struct unicast_packet *unicast_packet;
@@ -869,8 +869,8 @@ int packet_recv_thread(void *data)
 					interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
 					/* rebroadcast packet */
-					list_for_each_entry_rcu(batman_if, &if_list, list) {
-						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+					list_for_each_entry_rcu(batman_bcastif, &if_list, list) {
+						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_bcastif->net_dev->dev_addr, broadcastAddr, batman_bcastif);
 					}
 
 					break;
