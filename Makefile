@@ -19,14 +19,13 @@
 
 
 PWD:=$(shell pwd)
-ifeq ($(wildcard $(KERNELPATH)),)
-KERNELPATH = /lib/modules/$(shell uname -r)/build
+KERNELPATH ?= /lib/modules/$(shell uname -r)/build
 # sanity check: does KERNELPATH exist?
 ifeq ($(shell cd $(KERNELPATH) && pwd),)
-$(error $(KERNELPATH) is missing, please set KERNELPATH)
+$(warning $(KERNELPATH) is missing, please set KERNELPATH)
 endif
+
 export KERNELPATH
-endif
 
 REVISION=	$(shell if [ -d .svn ]; then \
 						if which svn > /dev/null; then \
