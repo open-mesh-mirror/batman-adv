@@ -20,14 +20,7 @@
 
 
 
-
-#include "types.h"
-
+#include "main.h"
 
 
-void send_own_packet_work(struct work_struct *work);
-void send_raw_packet(unsigned char *pack_buff, int pack_buff_len, uint8_t *src_addr, uint8_t *dst_addr, struct batman_if *batman_if);
-void schedule_own_packet(struct batman_if *batman_if);
-void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing);
-void send_outstanding_packets(struct work_struct *work);
-void purge_outstanding_packets(void);
+void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time);

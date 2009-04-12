@@ -128,8 +128,8 @@ struct forw_packet                 /* structure for forw_list maintaining packet
 	uint16_t packet_len;
 	uint32_t direct_link_flags;
 	uint8_t num_packets;
+	struct delayed_work delayed_work;
 	struct batman_if *if_outgoing;
-	struct rcu_head rcu;
 };
 
 #endif

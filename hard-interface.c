@@ -165,7 +165,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	batman_if->if_active = IF_ACTIVE;
 	active_ifs++;
 
-	/* save the mac address if it is out primary interface */
+	/* save the mac address if it is our primary interface */
 	if (batman_if->if_num == 0)
 		set_main_if_addr(batman_if->net_dev->dev_addr);
 

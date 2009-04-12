@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
+ * Copyright (C) 2007-2009 B.A.T.M.A.N. contributors:
  * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -28,14 +28,10 @@
 #include "hard-interface.h"
 #include "types.h"
 #include "vis.h"
+#include "aggregation.h"
 
 #include "compat.h"
 
-static void send_outstanding_packets(struct work_struct *work);
-
-static DECLARE_DELAYED_WORK(send_outstanding_packets_wq, send_outstanding_packets);
-spinlock_t packets_timer_lock = SPIN_LOCK_UNLOCKED;
-static unsigned long send_time_next = 0;
 
 
 /* sends a raw packet. */
@@ -150,165 +146,6 @@ static void send_packet(struct forw_packet *forw_packet)
 	rcu_read_unlock();
 }
 
-/* 
- * set_outstanding_packets() timer moves the packet timer if necessary. 
- * reset_timer must be set to 1 if the timer can be reset inside the function
- * (by canceling the previously set workqueue), and 0 if this is not possible.
- * 
- * The workqueue must then be reactivated outside of this function.
- */
-
-void set_outstanding_packets_timer(unsigned long send_time, int reset_timer)
-{
-	/**
-	 * on scheduler start or after a complete run through send_outstanding_packets()
-	 * or if first packet was just sent or if the new packet
-	 * needs to be sent earlier than the previously scheduled packet
-	 */
-	if ((send_time_next == 0) || (time_after_eq(jiffies, send_time_next)) || (time_before(send_time, send_time_next))) {
-
-		/* FIXME: do we need to make send_time_next thread safe ?? */
-		send_time_next = send_time;
-
-		/**
-		 * if we are being called by send_outstanding_packets() we can't acquire the lock
-		 * because we should not kill the running function that sends the packets
-		 */
-		if (reset_timer) {
-			cancel_delayed_work_sync(&send_outstanding_packets_wq);
-
-			spin_lock(&packets_timer_lock);
-			queue_delayed_work(bat_event_workqueue, &send_outstanding_packets_wq, send_time_next - jiffies);
-			spin_unlock(&packets_timer_lock);
-		}
-	}
-}
-
-static void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time)
-{
-	/**
-	 * _new -> new forward packet which might be created
-	 * _aggr -> pointer to the packet we want to aggregate with
-	 * _pos -> pointer to the position in the queue
-	 */
-	struct forw_packet *forw_packet_new, *forw_packet_aggr = NULL, *forw_packet_pos = NULL;
-	struct hlist_node *tmp_node;
-	struct batman_packet *batman_packet;
-
-	/* find position for the packet in the forward queue */
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(forw_packet_pos, tmp_node, &forw_list, list) {
-
-		/* own packets are not to be aggregated */
-		if ((atomic_read(&aggregation_enabled)) && (!own_packet)) {
-
-			/* don't save aggregation position if aggregation is disabled */
-			forw_packet_aggr = forw_packet_pos;
-
-			/**
-			 * we can aggregate the current packet to this packet if:
-			 * - the send time is within our MAX_AGGREGATION_MS time
-			 * - the resulting packet wont be bigger than MAX_AGGREGATION_BYTES
-			 */
-			if ((time_before(send_time, forw_packet_pos->send_time)) &&
-						(forw_packet_pos->packet_len + packet_len <= MAX_AGGREGATION_BYTES)) {
-
-				batman_packet = (struct batman_packet *)forw_packet_pos->packet_buff;
-
-				/**
-				 * check aggregation compability
-				 * -> direct link packets are broadcasted on their interface only
-				 */
-
-				/* packets without direct link flag and high TTL are flooded through the net  */
-				if (((!(batman_packet->flags & DIRECTLINK)) && (batman_packet->ttl != 1)) &&
-
-				/* own packets originating non-primary interfaces leave only that interface */
-						((!forw_packet_pos->own) || (forw_packet_pos->if_outgoing->if_num == 0)))
-					break;
-
-				/**
-				 * FIXME: if we can aggregate this packet with an ordinary packet we flood it over
-				 *        all interfaces  - if its a direct link base packet only via one interface
-				 *        whats correct ?
-				 */
-				batman_packet = (struct batman_packet *)packet_buff;
-
-				/* if the incoming packet is sent via this one interface only - we still can aggregate */
-				if ((batman_packet->flags & DIRECTLINK) && (batman_packet->ttl == 1) && (forw_packet_pos->if_outgoing == if_outgoing))
-					break;
-
-			}
-
-			/* could not find packet to aggregate with */
-			forw_packet_aggr = NULL;
-
-		}
-
-		if (time_after(send_time, forw_packet_pos->send_time))
-			break;
-
-	}
-	rcu_read_unlock();
-
-	/* nothing to aggregate with - either aggregation disabled or no suitable aggregation packet found */
-	if (forw_packet_aggr == NULL) {
-
-		forw_packet_new = kmalloc(sizeof(struct forw_packet), GFP_ATOMIC);
-		forw_packet_new->packet_buff = kmalloc(MAX_AGGREGATION_BYTES, GFP_ATOMIC);
-
-		INIT_HLIST_NODE(&forw_packet_new->list);
-		INIT_RCU_HEAD(&forw_packet_new->rcu);
-
-		forw_packet_new->packet_len = packet_len;
-		memcpy(forw_packet_new->packet_buff, packet_buff, forw_packet_new->packet_len);
-
-		forw_packet_new->own = own_packet;
-		forw_packet_new->if_outgoing = if_outgoing;
-		forw_packet_new->num_packets = 0;
-		forw_packet_new->direct_link_flags = 0;
-
-		forw_packet_new->send_time = send_time;
-
-	} else {
-
-		memcpy(forw_packet_aggr->packet_buff + forw_packet_aggr->packet_len, packet_buff, packet_len);
-		forw_packet_aggr->packet_len += packet_len;
-
-		forw_packet_aggr->num_packets++;
-
-		forw_packet_new = forw_packet_aggr;
-
-	}
-
-	batman_packet = (struct batman_packet *)packet_buff;
-
-	/* save packet direct link flag status */
-	if (batman_packet->flags & DIRECTLINK)
-		forw_packet_new->direct_link_flags = forw_packet_new->direct_link_flags | (1 << forw_packet_new->num_packets);
-
-	/* if the packet was not aggregated */
-	if (forw_packet_aggr == NULL) {
-		spin_lock(&forw_list_lock);
-
-		/* no packet in the queue */
-		if (forw_packet_pos == NULL)
-			hlist_add_head_rcu(&forw_packet_new->list, &forw_list);
-
-		/* add new packet before the found item */
-		else if (time_before(forw_packet_new->send_time, forw_packet_pos->send_time))
-			hlist_add_before_rcu(&forw_packet_new->list, &forw_packet_pos->list);
-
-		/* add new packet after the found item */
-		else
-			hlist_add_after_rcu(&forw_packet_pos->list, &forw_packet_new->list);
-
-		spin_unlock(&forw_list_lock);
-
-		set_outstanding_packets_timer(forw_packet_new->send_time, 1);
-	}
-}
-
 void schedule_own_packet(struct batman_if *batman_if)
 {
 	unsigned char *new_buff;
@@ -407,49 +244,31 @@ void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr,
 	add_packet_to_list((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0, send_time);
 }
 
-static void forw_packet_free(struct rcu_head *rcu)
+static void forw_packet_free(struct forw_packet *forw_packet)
 {
-	struct forw_packet *forw_packet = container_of(rcu, struct forw_packet, rcu);
-
 	kfree(forw_packet->packet_buff);
 	kfree(forw_packet);
 }
 
-static void send_outstanding_packets(struct work_struct *work)
+void send_outstanding_packets(struct work_struct *work)
 {
-	struct forw_packet *forw_packet;
-	struct hlist_node *tmp_node;
+	struct delayed_work *delayed_work = container_of(work, struct delayed_work, work);
+	struct forw_packet *forw_packet = container_of(delayed_work, struct forw_packet, delayed_work);
 
-	spin_lock(&packets_timer_lock);
+	spin_lock(&forw_list_lock);
+	hlist_del(&forw_packet->list);
+	spin_unlock(&forw_list_lock);
 
-	hlist_for_each_entry_rcu(forw_packet, tmp_node, &forw_list, list) {
+	send_packet(forw_packet);
 
-		/* FIXME: is that safe ? */
-		if (time_after(forw_packet->send_time, jiffies)) {
-			set_outstanding_packets_timer(forw_packet->send_time, 0);
-			break;
-		}
+	/**
+	* we have to have at least one packet in the queue
+	* to determine the queues wake up time
+	*/
+	if (forw_packet->own)
+		schedule_own_packet(forw_packet->if_outgoing);
 
-		send_packet(forw_packet);
-
-		spin_lock(&forw_list_lock);
-		hlist_del_rcu(&forw_packet->list);
-		spin_unlock(&forw_list_lock);
-
-		/**
-		 * we have to have at least one packet in the queue
-		 * to determine the queues wake up time
-		 */
-		if (forw_packet->own)
-			schedule_own_packet(forw_packet->if_outgoing);
-
-		call_rcu(&forw_packet->rcu, forw_packet_free);
-	}
-
-	/* send_time_next was set while running through the loop above */
-	queue_delayed_work(bat_event_workqueue, &send_outstanding_packets_wq, send_time_next - jiffies);
-
-	spin_unlock(&packets_timer_lock);
+	forw_packet_free(forw_packet);
 }
 
 void purge_outstanding_packets(void)
@@ -459,17 +278,14 @@ void purge_outstanding_packets(void)
 
 	debug_log(LOG_TYPE_BATMAN, "purge_outstanding_packets()\n");
 
-	cancel_delayed_work_sync(&send_outstanding_packets_wq);
+	spin_lock(&forw_list_lock);
 
-	hlist_for_each_entry_rcu(forw_packet, tmp_node, &forw_list, list) {
+	hlist_for_each_entry(forw_packet, tmp_node, &forw_list, list) {
 
-		spin_lock(&forw_list_lock);
-		hlist_del_rcu(&forw_packet->list);
-		spin_unlock(&forw_list_lock);
-
-		call_rcu(&forw_packet->rcu, forw_packet_free);
+		hlist_del(&forw_packet->list);
+		cancel_delayed_work_sync(&forw_packet->delayed_work);
+		forw_packet_free(forw_packet);
 	}
 
-	/* reset timer */
-	send_time_next = 0;
+	spin_unlock(&forw_list_lock);
 }
