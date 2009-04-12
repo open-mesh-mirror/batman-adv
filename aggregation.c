@@ -113,14 +113,14 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 		if (batman_packet->flags & DIRECTLINK)
 			forw_packet_aggr->direct_link_flags = forw_packet_aggr->direct_link_flags | (1 << forw_packet_aggr->num_packets);
 
-		/* start timer for this packet */
-		INIT_DELAYED_WORK(&forw_packet_aggr->delayed_work, send_outstanding_packets);
-		queue_delayed_work(bat_event_workqueue, &forw_packet_aggr->delayed_work, send_time - jiffies);
-
 		/* add new packet to packet list */
 		spin_lock(&forw_list_lock);
 		hlist_add_head(&forw_packet_aggr->list, &forw_list);
 		spin_unlock(&forw_list_lock);
+
+		/* start timer for this packet */
+		INIT_DELAYED_WORK(&forw_packet_aggr->delayed_work, send_outstanding_packets);
+		queue_delayed_work(bat_event_workqueue, &forw_packet_aggr->delayed_work, send_time - jiffies);
 
 	} else {
 
