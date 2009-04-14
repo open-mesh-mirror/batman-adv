@@ -87,10 +87,12 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 		}
 
 	}
-	spin_unlock(&forw_list_lock);
 
 	/* nothing to aggregate with - either aggregation disabled or no suitable aggregation packet found */
 	if (forw_packet_aggr == NULL) {
+
+		/* the following section can run without the lock */
+		spin_unlock(&forw_list_lock);
 
 		forw_packet_aggr = kmalloc(sizeof(struct forw_packet), GFP_ATOMIC);
 		forw_packet_aggr->packet_buff = kmalloc(MAX_AGGREGATION_BYTES, GFP_ATOMIC);
@@ -125,7 +127,6 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 	} else {
 
 		batman_packet = (struct batman_packet *)packet_buff;
-		spin_lock(&forw_list_lock);
 
 		memcpy(forw_packet_aggr->packet_buff + forw_packet_aggr->packet_len, packet_buff, packet_len);
 		forw_packet_aggr->packet_len += packet_len;
