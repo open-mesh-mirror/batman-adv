@@ -23,6 +23,7 @@
 #include "main.h"
 #include "aggregation.h"
 #include "send.h"
+#include "routing.h"
 
 
 
@@ -139,5 +140,25 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 
 		spin_unlock(&forw_list_lock);
 
+	}
+}
+
+void receive_aggr_bat_packet(struct ethhdr *ethhdr, unsigned char *packet_buff, int packet_len, struct batman_if *if_incoming)
+{
+	struct batman_packet *batman_packet;
+	int16_t buff_pos = 0;
+
+	batman_packet = (struct batman_packet *)packet_buff;
+
+	/* unpack the aggregated packets and process them one by one */
+	while (aggregated_packet(buff_pos, packet_len, batman_packet->num_hna)) {
+
+		/* network to host order for our 16bit seqno. */
+		batman_packet->seqno = ntohs(batman_packet->seqno);
+
+		receive_bat_packet(ethhdr, batman_packet, packet_buff + buff_pos + sizeof(struct batman_packet), batman_packet->num_hna * ETH_ALEN, if_incoming);
+
+		buff_pos += sizeof(struct batman_packet) + batman_packet->num_hna * ETH_ALEN;
+		batman_packet = (struct batman_packet *)(packet_buff + buff_pos);
 	}
 }

@@ -33,6 +33,7 @@
 #include "hash.h"
 #include "ring_buffer.h"
 #include "vis.h"
+#include "aggregation.h"
 
 
 
@@ -358,7 +359,7 @@ static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batm
 	return is_duplicate;
 }
 
-static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_packet, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
+void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_packet, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
 {
 	struct batman_if *batman_if;
 	struct orig_node *orig_neigh_node, *orig_node;
@@ -487,26 +488,6 @@ static void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batm
 
 	debug_log(LOG_TYPE_BATMAN, "Forwarding packet: rebroadcast originator packet \n");
 	schedule_forward_packet(orig_node, ethhdr, batman_packet, 0, hna_buff, hna_buff_len, if_incoming);
-}
-
-static void receive_aggr_bat_packet(struct ethhdr *ethhdr, unsigned char *packet_buff, int packet_len, struct batman_if *if_incoming)
-{
-	struct batman_packet *batman_packet;
-	int16_t buff_pos = 0;
-
-	batman_packet = (struct batman_packet *)packet_buff;
-
-	/* unpack the aggregated packets and process them one by one */
-	while (aggregated_packet(buff_pos, packet_len, batman_packet->num_hna)) {
-
-		/* network to host order for our 16bit seqno. */
-		batman_packet->seqno = ntohs(batman_packet->seqno);
-
-		receive_bat_packet(ethhdr, batman_packet, packet_buff + buff_pos + sizeof(struct batman_packet), batman_packet->num_hna * ETH_ALEN, if_incoming);
-
-		buff_pos += sizeof(struct batman_packet) + batman_packet->num_hna * ETH_ALEN;
-		batman_packet = (struct batman_packet *)(packet_buff + buff_pos);
-	}
 }
 
 void purge_orig(struct work_struct *work)
