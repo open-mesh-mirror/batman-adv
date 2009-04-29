@@ -327,6 +327,7 @@ ssize_t proc_interfaces_write(struct file *instance, const char __user *userbuff
 			module_state = MODULE_WAITING;
 
 		hardif_add_interface(if_string, if_num);
+		hardif_check_interfaces_status();
 
 		if (module_state == MODULE_WAITING) {
 			if (hardif_get_active_if_num() > 0)

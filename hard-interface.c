@@ -35,7 +35,7 @@
 
 
 
-static DECLARE_DELAYED_WORK(hardif_check_interfaces_wq, hardif_check_interfaces_status);
+static DECLARE_DELAYED_WORK(hardif_check_interfaces_wq, hardif_check_interfaces_status_wq);
 
 static char avail_ifs = 0;
 static char active_ifs = 0;
@@ -306,17 +306,18 @@ char hardif_get_active_if_num(void)
 }
 
 /* checks inactive interfaces and deactivates "to-be-deactivated" interfaces */
-void hardif_check_interfaces_status(struct work_struct *work)
+void hardif_check_interfaces_status(void)
 {
 	struct batman_if *batman_if;
 	int min_mtu;
 
 	if (module_state == MODULE_INACTIVE)
-		goto start_timer;
+		return;
 
-	/* wait for readers of the the interfaces, so update won't be a problem.
-	 *
-	 * this function is not time critical and can wait a bit ....*/
+	/**
+	 * wait for readers of the the interfaces, so update won't be a problem.
+	 * this function is not time critical and can wait a bit ....
+	 */
 	synchronize_rcu();
 
 	rcu_read_lock();
@@ -337,7 +338,12 @@ void hardif_check_interfaces_status(struct work_struct *work)
 	min_mtu = hardif_min_mtu();
 	if (soft_device->mtu > min_mtu)
 		soft_device->mtu = min_mtu;
-start_timer:
+}
+
+/* checks inactive interfaces and deactivates "to-be-deactivated" interfaces */
+void hardif_check_interfaces_status_wq(struct work_struct *work)
+{
+	hardif_check_interfaces_status();
 	start_hardif_check_timer();
 }
 
