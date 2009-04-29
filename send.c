@@ -262,10 +262,11 @@ void send_outstanding_packets(struct work_struct *work)
 	send_packet(forw_packet);
 
 	/**
-	* we have to have at least one packet in the queue
-	* to determine the queues wake up time
-	*/
-	if (forw_packet->own)
+	 * we have to have at least one packet in the queue
+	 * to determine the queues wake up time unless we are
+	 * shutting down
+	 */
+	if ((forw_packet->own) && (module_state != MODULE_INACTIVE))
 		schedule_own_packet(forw_packet->if_outgoing);
 
 	forw_packet_free(forw_packet);
@@ -274,17 +275,22 @@ void send_outstanding_packets(struct work_struct *work)
 void purge_outstanding_packets(void)
 {
 	struct forw_packet *forw_packet;
-	struct hlist_node *tmp_node;
+	struct hlist_node *tmp_node, *safe_tmp_node;
 
 	debug_log(LOG_TYPE_BATMAN, "purge_outstanding_packets()\n");
 
 	spin_lock(&forw_list_lock);
 
-	hlist_for_each_entry(forw_packet, tmp_node, &forw_list, list) {
+	hlist_for_each_entry_safe(forw_packet, tmp_node, safe_tmp_node, &forw_list, list) {
 
-		hlist_del(&forw_packet->list);
+		spin_unlock(&forw_list_lock);
+
+		/**
+		 * send_outstanding_packets() will lock the list to
+		 * delete the item from the list
+		 */
 		cancel_delayed_work_sync(&forw_packet->delayed_work);
-		forw_packet_free(forw_packet);
+		spin_lock(&forw_list_lock);
 	}
 
 	spin_unlock(&forw_list_lock);
