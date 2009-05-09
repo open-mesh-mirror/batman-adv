@@ -255,7 +255,6 @@ int hardif_add_interface(char *dev, int if_num)
 	batman_packet->version = COMPAT_VERSION;
 	batman_packet->flags = 0x00;
 	batman_packet->ttl = (batman_if->if_num > 0 ? 2 : TTL);
-	batman_packet->gwflags = 0;
 	batman_packet->flags = 0;
 	batman_packet->tq = TQ_MAX_VALUE;
 	batman_packet->num_hna = 0;

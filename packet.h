@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2007-2008 B.A.T.M.A.N. contributors:
- * Marek Lindner
+ * Copyright (C) 2007-2009 B.A.T.M.A.N. contributors:
+ * Marek Lindner, Simon Wunderlich
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
@@ -41,14 +41,12 @@ struct batman_packet
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
 	uint8_t  flags;    /* 0x40: DIRECTLINK flag, 0x20 VIS_SERVER flag... */
-	uint8_t  ttl;
-	uint8_t  gwflags;  /* flags related to gateway functions: gateway class */
 	uint8_t  tq;
 	uint16_t seqno;
 	uint8_t  orig[6];
 	uint8_t  old_orig[6];
+	uint8_t  ttl;
 	uint8_t  num_hna;
-	uint8_t  pad;
 } __attribute__((packed));
 
 struct icmp_packet
@@ -56,11 +54,11 @@ struct icmp_packet
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
 	uint8_t  msg_type;   /* 0 = ECHO REPLY, 3 = DESTINATION_UNREACHABLE, 8 = ECHO_REQUEST, 11 = TTL exceeded */
+	uint8_t  ttl;
 	uint8_t  dst[6];
 	uint8_t  orig[6];
-	uint8_t  ttl;
-	uint8_t  uid;
 	uint16_t seqno;
+	uint8_t  uid;
 } __attribute__((packed));
 
 struct unicast_packet
