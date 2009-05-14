@@ -48,7 +48,7 @@ NUM_CPUS = $(shell NUM_CPUS=`cat /proc/cpuinfo | grep -v 'model name' | grep pro
 include $(PWD)/Makefile.kbuild
 
 all:
-	make -C $(KERNELPATH) REVISION=$(REVISION) M=$(PWD) PWD=$(PWD) -j $(NUM_CPUS) modules
+	$(MAKE) -C $(KERNELPATH) REVISION=$(REVISION) M=$(PWD) PWD=$(PWD) -j $(NUM_CPUS) modules
 
 clean:
-	make -C $(KERNELPATH) M=$(PWD) PWD=$(PWD) clean
+	$(MAKE) -C $(KERNELPATH) M=$(PWD) PWD=$(PWD) clean
