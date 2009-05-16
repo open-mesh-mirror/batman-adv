@@ -35,13 +35,21 @@
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL;
 static struct proc_dir_entry *proc_log_file = NULL, *proc_log_level_file = NULL, *proc_transtable_local_file = NULL, *proc_transtable_global_file = NULL;
-static struct proc_dir_entry *proc_vis_file = NULL, *proc_aggr_file = NULL;
+static struct proc_dir_entry *proc_vis_file = NULL, *proc_vis_format_file = NULL, *proc_aggr_file = NULL;
 
 static const struct file_operations proc_aggr_fops = {
 	.owner		= THIS_MODULE,
 	.open		= proc_aggr_open,
 	.read		= seq_read,
 	.write		= proc_aggr_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+static const struct file_operations proc_vis_format_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_vis_format_open,
+	.read		= seq_read,
+	.write		= proc_vis_format_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
@@ -132,6 +140,9 @@ void cleanup_procfs(void)
 
 	if (proc_vis_file)
 		remove_proc_entry(PROC_FILE_VIS, proc_batman_dir);
+
+	if (proc_vis_format_file)
+		remove_proc_entry(PROC_FILE_VIS_FORMAT, proc_batman_dir);
 
 	if (proc_aggr_file)
 		remove_proc_entry(PROC_FILE_AGGR, proc_batman_dir);
@@ -234,6 +245,16 @@ int setup_procfs(void)
 		proc_vis_file->proc_fops = &proc_vis_fops;
 	} else {
 		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_VIS);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_vis_format_file = create_proc_entry(PROC_FILE_VIS_FORMAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, proc_batman_dir);
+
+	if (proc_vis_format_file) {
+		proc_vis_format_file->proc_fops = &proc_vis_format_fops;
+	} else {
+		printk("batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_VIS_FORMAT);
 		cleanup_procfs();
 		return -EFAULT;
 	}
@@ -471,7 +492,6 @@ int proc_log_level_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_log_level_read, NULL);
 }
 
-
 ssize_t proc_log_level_write(struct file *instance, const char __user *userbuffer, size_t count, loff_t *data)
 {
 	char *log_level_string, *tokptr, *cp;
@@ -557,7 +577,6 @@ int proc_transtable_local_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_transtable_local_read, NULL);
 }
 
-
 int proc_transtable_global_read(struct seq_file *seq, void *offset)
 {
 	char *buf;
@@ -584,11 +603,11 @@ end:
 	kfree(buf);
 	return 0;
 }
+
 int proc_transtable_global_open(struct inode *inode, struct file *file)
 {
 	return single_open(file, proc_transtable_global_read, NULL);
 }
-
 
 int proc_vis_read(struct seq_file *seq, void *offset)
 {
@@ -597,18 +616,23 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 	struct vis_info_entry *entries;
 	char from[40], to[40];
 	int i, int_part, frac_part;
+	uint8_t current_format, first_line = 1;
 
+
+	current_format = vis_format;
 
 	rcu_read_lock();
 	if (list_empty(&if_list) || (!is_vis_server())) {
 		rcu_read_unlock();
-		seq_printf(seq, "digraph {\n}\n" );
+		if (current_format == DOT_DRAW)
+			seq_printf(seq, "digraph {\n}\n" );
 		goto end;
 	}
 
 	rcu_read_unlock();
 
-	seq_printf(seq, "digraph {\n" );
+	if (current_format == DOT_DRAW)
+		seq_printf(seq, "digraph {\n" );
 
 	spin_lock(&vis_hash_lock);
 	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
@@ -617,19 +641,34 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 		addr_to_string(from, info->packet.vis_orig);
 		for (i = 0; i < info->packet.entries; i++) {
 			addr_to_string(to, entries[i].dest);
-			if (entries[i].quality == 0)
-				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
-			else {
+			if (entries[i].quality == 0) {
+				if (current_format == DOT_DRAW) {
+					seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
+				} else {
+					seq_printf(seq, "%s\t{ router : \"%s\", gateway : \"%s\", label : \"HNA\" }",
+					           (first_line ? "" : ",\n"), from, to);
+					first_line = 0;
+				}
+			} else {
 				/* kernel has no printf-support for %f? it'd be better to return this in float. */
 				int_part = 255/entries[i].quality;
 				frac_part = 1000 * 255/entries[i].quality - int_part * 1000;
-				seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"%d.%d\"]\n", from, to, int_part, frac_part);
+				if (current_format == DOT_DRAW) {
+					seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"%d.%d\"]\n", from, to, int_part, frac_part);
+				} else {
+					seq_printf(seq, "%s\t{ router : \"%s\", neighbour : \"%s\", label : %d.%d }",
+					           (first_line ? "" : ",\n"), from, to, int_part, frac_part);
+					first_line = 0;
+				}
 			}
 		}
 	}
 
 	spin_unlock(&vis_hash_lock);
-	seq_printf(seq, "}\n");
+	if (current_format == DOT_DRAW)
+		seq_printf(seq, "}\n");
+	else
+		seq_printf(seq, "\n");
 end:
 	return 0;
 }
@@ -651,12 +690,11 @@ ssize_t proc_vis_write(struct file *file, const char __user * buffer, size_t cou
 	if (strcmp(vis_mode_string, "client") == 0) {
 		debug_log(LOG_TYPE_NOTICE, "Setting VIS mode to client\n");
 		vis_set_mode(VIS_TYPE_CLIENT_UPDATE);
-	}
-	else if (strcmp(vis_mode_string, "server") == 0) {
+	} else if (strcmp(vis_mode_string, "server") == 0) {
 		debug_log(LOG_TYPE_NOTICE, "Setting VIS mode to server\n");
 		vis_set_mode(VIS_TYPE_SERVER_SYNC);
 	} else
-		debug_log(LOG_TYPE_WARN, "unknown vis-server mode: %s\n", vis_mode_string);
+		debug_log(LOG_TYPE_WARN, "Unknown VIS mode: %s\n", vis_mode_string);
 
 	kfree(vis_mode_string);
 	return count;
@@ -665,6 +703,47 @@ ssize_t proc_vis_write(struct file *file, const char __user * buffer, size_t cou
 int proc_vis_open(struct inode *inode, struct file *file)
 {
 	return single_open(file, proc_vis_read, NULL);
+}
+
+int proc_vis_format_read(struct seq_file *seq, void *offset)
+{
+	uint8_t current_format = vis_format;
+
+	seq_printf(seq, "[%c] %s\n", (current_format == DOT_DRAW) ? 'x' : ' ', VIS_FORMAT_DD_NAME);
+	seq_printf(seq, "[%c] %s\n", (current_format == JSON) ? 'x' : ' ', VIS_FORMAT_JSON_NAME);
+
+	return 0;
+}
+
+int proc_vis_format_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_vis_format_read, NULL);
+}
+
+ssize_t proc_vis_format_write(struct file *file, const char __user * buffer, size_t count, loff_t * ppos)
+{
+	char *vis_format_string;
+	int not_copied = 0;
+
+	vis_format_string = kmalloc(count, GFP_KERNEL);
+
+	if (!vis_format_string)
+		return -ENOMEM;
+
+	not_copied = copy_from_user(vis_format_string, buffer, count);
+	vis_format_string[count - not_copied - 1] = 0;
+
+	if (strcmp(vis_format_string, VIS_FORMAT_DD_NAME) == 0) {
+		debug_log(LOG_TYPE_NOTICE, "Setting VIS output format to: %s\n", VIS_FORMAT_DD_NAME);
+		vis_format = DOT_DRAW;
+	} else if (strcmp(vis_format_string, VIS_FORMAT_JSON_NAME) == 0) {
+		debug_log(LOG_TYPE_NOTICE, "Setting VIS output format to: %s\n", VIS_FORMAT_JSON_NAME);
+		vis_format = JSON;
+	} else
+		debug_log(LOG_TYPE_WARN, "Unknown VIS output format: %s\n", vis_format_string);
+
+	kfree(vis_format_string);
+	return count;
 }
 
 int proc_aggr_read(struct seq_file *seq, void *offset)
