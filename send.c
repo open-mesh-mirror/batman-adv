@@ -190,7 +190,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 
 	slide_own_bcast_window(batman_if);
 	send_time = jiffies + (((atomic_read(&originator_interval) - JITTER + (random32() % 2*JITTER)) * HZ) / 1000);
-	add_packet_to_list(batman_if->packet_buff, batman_if->packet_len, batman_if, 1, send_time);
+	add_bat_packet_to_list(batman_if->packet_buff, batman_if->packet_len, batman_if, 1, send_time);
 }
 
 void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
@@ -241,7 +241,7 @@ void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr,
 	else
 		send_time = jiffies + (((random32() % (JITTER/2)) * HZ) / 1000);
 
-	add_packet_to_list((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0, send_time);
+	add_bat_packet_to_list((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0, send_time);
 }
 
 static void forw_packet_free(struct forw_packet *forw_packet)
@@ -250,14 +250,71 @@ static void forw_packet_free(struct forw_packet *forw_packet)
 	kfree(forw_packet);
 }
 
-void send_outstanding_packets(struct work_struct *work)
+static void _add_bcast_packet_to_list(struct forw_packet *forw_packet, unsigned long send_time)
+{
+	INIT_HLIST_NODE(&forw_packet->list);
+
+	/* add new packet to packet list */
+	spin_lock(&forw_bcast_list_lock);
+	hlist_add_head(&forw_packet->list, &forw_bcast_list);
+	spin_unlock(&forw_bcast_list_lock);
+
+	/* start timer for this packet */
+	INIT_DELAYED_WORK(&forw_packet->delayed_work, send_outstanding_bcast_packet);
+	queue_delayed_work(bat_event_workqueue, &forw_packet->delayed_work, send_time);
+}
+
+void add_bcast_packet_to_list(unsigned char *packet_buff, int packet_len)
+{
+	struct forw_packet *forw_packet = NULL;
+
+	forw_packet = kmalloc(sizeof(struct forw_packet), GFP_ATOMIC);
+	forw_packet->packet_buff = kmalloc(packet_len, GFP_ATOMIC);
+
+	forw_packet->packet_len = packet_len;
+	memcpy(forw_packet->packet_buff, packet_buff, forw_packet->packet_len);
+
+	/* how often did we send the bcast packet ? */
+	forw_packet->num_packets = 0;
+
+	_add_bcast_packet_to_list(forw_packet, 1);
+}
+
+void send_outstanding_bcast_packet(struct work_struct *work)
+{
+	struct batman_if *batman_if;
+	struct delayed_work *delayed_work = container_of(work, struct delayed_work, work);
+	struct forw_packet *forw_packet = container_of(delayed_work, struct forw_packet, delayed_work);
+
+	spin_lock(&forw_bcast_list_lock);
+	hlist_del(&forw_packet->list);
+	spin_unlock(&forw_bcast_list_lock);
+
+	/* rebroadcast packet */
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		send_raw_packet(forw_packet->packet_buff, forw_packet->packet_len,
+				batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
+	}
+	rcu_read_unlock();
+
+	forw_packet->num_packets++;
+
+	/* if we still have some more bcasts to send and we are not shutting down */
+	if ((forw_packet->num_packets < 3) && (module_state != MODULE_INACTIVE))
+		_add_bcast_packet_to_list(forw_packet, ((5 * HZ) / 1000));
+	else
+		forw_packet_free(forw_packet);
+}
+
+void send_outstanding_bat_packet(struct work_struct *work)
 {
 	struct delayed_work *delayed_work = container_of(work, struct delayed_work, work);
 	struct forw_packet *forw_packet = container_of(delayed_work, struct forw_packet, delayed_work);
 
-	spin_lock(&forw_list_lock);
+	spin_lock(&forw_bat_list_lock);
 	hlist_del(&forw_packet->list);
-	spin_unlock(&forw_list_lock);
+	spin_unlock(&forw_bat_list_lock);
 
 	send_packet(forw_packet);
 
@@ -279,19 +336,33 @@ void purge_outstanding_packets(void)
 
 	debug_log(LOG_TYPE_BATMAN, "purge_outstanding_packets()\n");
 
-	spin_lock(&forw_list_lock);
+	/* free bcast list */
+	spin_lock(&forw_bcast_list_lock);
+	hlist_for_each_entry_safe(forw_packet, tmp_node, safe_tmp_node, &forw_bcast_list, list) {
 
-	hlist_for_each_entry_safe(forw_packet, tmp_node, safe_tmp_node, &forw_list, list) {
-
-		spin_unlock(&forw_list_lock);
+		spin_unlock(&forw_bcast_list_lock);
 
 		/**
-		 * send_outstanding_packets() will lock the list to
+		 * send_outstanding_bcast_packet() will lock the list to
 		 * delete the item from the list
 		 */
 		cancel_delayed_work_sync(&forw_packet->delayed_work);
-		spin_lock(&forw_list_lock);
+		spin_lock(&forw_bcast_list_lock);
 	}
+	spin_unlock(&forw_bcast_list_lock);
 
-	spin_unlock(&forw_list_lock);
+	/* free batman packet list */
+	spin_lock(&forw_bat_list_lock);
+	hlist_for_each_entry_safe(forw_packet, tmp_node, safe_tmp_node, &forw_bat_list, list) {
+
+		spin_unlock(&forw_bat_list_lock);
+
+		/**
+		 * send_outstanding_bat_packet() will lock the list to
+		 * delete the item from the list
+		 */
+		cancel_delayed_work_sync(&forw_packet->delayed_work);
+		spin_lock(&forw_bat_list_lock);
+	}
+	spin_unlock(&forw_bat_list_lock);
 }

@@ -91,11 +91,13 @@
 #include "types.h"
 
 extern struct list_head if_list;
-extern struct hlist_head forw_list;
+extern struct hlist_head forw_bat_list;
+extern struct hlist_head forw_bcast_list;
 extern struct hashtable_t *orig_hash;
 
 extern spinlock_t orig_hash_lock;
-extern spinlock_t forw_list_lock;
+extern spinlock_t forw_bat_list_lock;
+extern spinlock_t forw_bcast_list_lock;
 
 extern atomic_t originator_interval;
 extern atomic_t vis_interval;

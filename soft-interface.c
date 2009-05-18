@@ -115,7 +115,7 @@ void interface_setup(struct net_device *dev)
 
 	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu = hardif_min_mtu();
-	dev->hard_header_len = BAT_HEADER_LEN; /*reserve more space in the skbuff for our header */
+	dev->hard_header_len = BAT_HEADER_LEN; /* reserve more space in the skbuff for our header */
 
 	/* generate random address */
 	*(u16 *)dev_addr = __constant_htons(0x00FF);
@@ -163,7 +163,6 @@ int interface_change_mtu(struct net_device *dev, int new_mtu)
 
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
-	struct batman_if *batman_if;
 	struct unicast_packet *unicast_packet;
 	struct bcast_packet *bcast_packet;
 	struct orig_node *orig_node;
@@ -194,20 +193,12 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		/* hw address of first interface is the orig mac because only this mac is known throughout the mesh */
 		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 		/* set broadcast sequence number */
-
 		bcast_packet->seqno = htons(bcast_seqno);
 
 		bcast_seqno++;
 
 		/* broadcast packet */
-		rcu_read_lock();
-		list_for_each_entry_rcu(batman_if, &if_list, list) {
-			if (batman_if->if_active != IF_ACTIVE)
-				continue;
-			
-			send_raw_packet(skb->data, skb->len, batman_if->net_dev->dev_addr, broadcastAddr, batman_if);
-		}
-		rcu_read_unlock();
+		add_bcast_packet_to_list(skb->data, skb->len);
 
 	/* unicast packet */
 	} else {

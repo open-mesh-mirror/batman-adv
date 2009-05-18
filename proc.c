@@ -645,7 +645,7 @@ int proc_vis_read(struct seq_file *seq, void *offset)
 				if (current_format == DOT_DRAW) {
 					seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n", from, to);
 				} else {
-					seq_printf(seq, "%s\t{ router : \"%s\", gateway : \"%s\", label : \"HNA\" }",
+					seq_printf(seq, "%s\t{ router : \"%s\", gateway   : \"%s\", label : \"HNA\" }",
 					           (first_line ? "" : ",\n"), from, to);
 					first_line = 0;
 				}

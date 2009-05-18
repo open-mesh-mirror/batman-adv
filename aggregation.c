@@ -27,7 +27,7 @@
 
 
 
-void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time)
+void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time)
 {
 	/**
 	 * _aggr -> pointer to the packet we want to aggregate with
@@ -38,8 +38,8 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 	struct batman_packet *batman_packet;
 
 	/* find position for the packet in the forward queue */
-	spin_lock(&forw_list_lock);
-	hlist_for_each_entry(forw_packet_pos, tmp_node, &forw_list, list) {
+	spin_lock(&forw_bat_list_lock);
+	hlist_for_each_entry(forw_packet_pos, tmp_node, &forw_bat_list, list) {
 
 		/* own packets are not to be aggregated */
 		if ((atomic_read(&aggregation_enabled)) && (!own_packet)) {
@@ -93,7 +93,7 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 	if (forw_packet_aggr == NULL) {
 
 		/* the following section can run without the lock */
-		spin_unlock(&forw_list_lock);
+		spin_unlock(&forw_bat_list_lock);
 
 		forw_packet_aggr = kmalloc(sizeof(struct forw_packet), GFP_ATOMIC);
 		forw_packet_aggr->packet_buff = kmalloc(MAX_AGGREGATION_BYTES, GFP_ATOMIC);
@@ -117,12 +117,12 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 			forw_packet_aggr->direct_link_flags = forw_packet_aggr->direct_link_flags | (1 << forw_packet_aggr->num_packets);
 
 		/* add new packet to packet list */
-		spin_lock(&forw_list_lock);
-		hlist_add_head(&forw_packet_aggr->list, &forw_list);
-		spin_unlock(&forw_list_lock);
+		spin_lock(&forw_bat_list_lock);
+		hlist_add_head(&forw_packet_aggr->list, &forw_bat_list);
+		spin_unlock(&forw_bat_list_lock);
 
 		/* start timer for this packet */
-		INIT_DELAYED_WORK(&forw_packet_aggr->delayed_work, send_outstanding_packets);
+		INIT_DELAYED_WORK(&forw_packet_aggr->delayed_work, send_outstanding_bat_packet);
 		queue_delayed_work(bat_event_workqueue, &forw_packet_aggr->delayed_work, send_time - jiffies);
 
 	} else {
@@ -138,7 +138,7 @@ void add_packet_to_list(unsigned char *packet_buff, int packet_len, struct batma
 		if (batman_packet->flags & DIRECTLINK)
 			forw_packet_aggr->direct_link_flags = forw_packet_aggr->direct_link_flags | (1 << forw_packet_aggr->num_packets);
 
-		spin_unlock(&forw_list_lock);
+		spin_unlock(&forw_bat_list_lock);
 
 	}
 }

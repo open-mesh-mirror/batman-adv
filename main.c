@@ -35,11 +35,13 @@
 
 
 struct list_head if_list;
-struct hlist_head forw_list;
+struct hlist_head forw_bat_list;
+struct hlist_head forw_bcast_list;
 struct hashtable_t *orig_hash;
 
 DEFINE_SPINLOCK(orig_hash_lock);
-DEFINE_SPINLOCK(forw_list_lock);
+DEFINE_SPINLOCK(forw_bat_list_lock);
+DEFINE_SPINLOCK(forw_bcast_list_lock);
 static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
 atomic_t originator_interval;
@@ -66,7 +68,8 @@ int init_module(void)
 	int result;
 
 	INIT_LIST_HEAD(&if_list);
-	INIT_HLIST_HEAD(&forw_list);
+	INIT_HLIST_HEAD(&forw_bat_list);
+	INIT_HLIST_HEAD(&forw_bcast_list);
 	atomic_set(&originator_interval, 1000);
 	atomic_set(&vis_interval, 1000);	/* TODO: raise this later, this is only for debugging now. */
 	atomic_set(&aggregation_enabled, 1);

@@ -569,7 +569,7 @@ int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int 
 
 int packet_recv_thread(void *data)
 {
-	struct batman_if *batman_if, *batman_bcastif;
+	struct batman_if *batman_if;
 	struct ethhdr *ethhdr;
 	struct batman_packet *batman_packet;
 	struct unicast_packet *unicast_packet;
@@ -590,7 +590,6 @@ int packet_recv_thread(void *data)
 	}
 
 	while ((!kthread_should_stop()) && (!atomic_read(&exit_cond))) {
-
 
 		wait_event_interruptible(thread_wait, (atomic_read(&data_ready_cond) || atomic_read(&exit_cond)));
 
@@ -627,10 +626,9 @@ int packet_recv_thread(void *data)
 					continue;
 				}
 
-				/* batman packet */
 				switch (batman_packet->packet_type) {
+				/* batman originator packet */
 				case BAT_PACKET:
-
 					/* packet with broadcast indication but unicast recipient */
 					if (!is_bcast(ethhdr->h_dest))
 						continue;
@@ -750,7 +748,6 @@ int packet_recv_thread(void *data)
 
 				/* unicast packet */
 				case BAT_UNICAST:
-
 					/* packet with unicast indication but broadcast recipient */
 					if (is_bcast(ethhdr->h_dest))
 						continue;
@@ -763,7 +760,7 @@ int packet_recv_thread(void *data)
 					if (!is_my_mac(ethhdr->h_dest))
 						continue;
 
-					/* drop packet if it has not neccessary minimum size - 1 byte ttl, 1 byte payload */
+					/* drop packet if it has not neccessary minimum size */
 					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
 						continue;
 
@@ -803,7 +800,6 @@ int packet_recv_thread(void *data)
 
 				/* broadcast packet */
 				case BAT_BCAST:
-
 					/* packet with broadcast indication but unicast recipient */
 					if (!is_bcast(ethhdr->h_dest))
 						continue;
@@ -812,7 +808,7 @@ int packet_recv_thread(void *data)
 					if (is_bcast(ethhdr->h_source))
 						continue;
 
-					/* drop packet if it has not neccessary minimum size - orig source mac, 2 byte seqno, 1 byte padding, 1 byte payload */
+					/* drop packet if it has not neccessary minimum size */
 					if (result < sizeof(struct ethhdr) + sizeof(struct bcast_packet))
 						continue;
 
@@ -850,15 +846,17 @@ int packet_recv_thread(void *data)
 					interface_rx(soft_device, packet_buff + sizeof(struct ethhdr) + sizeof(struct bcast_packet), result - sizeof(struct ethhdr) - sizeof(struct bcast_packet));
 
 					/* rebroadcast packet */
-					list_for_each_entry_rcu(batman_bcastif, &if_list, list) {
-						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), batman_bcastif->net_dev->dev_addr, broadcastAddr, batman_bcastif);
-					}
+					add_bcast_packet_to_list(packet_buff + sizeof(struct ethhdr),
+									result - sizeof(struct ethhdr));
 
 					break;
+
+				/* vis packet */
 				case BAT_VIS:
 					/* drop if too short. */
 					if (result < sizeof(struct ethhdr) + sizeof(struct vis_packet))
 						continue;
+
 					/* not for me */
 					if (!is_my_mac(ethhdr->h_dest))
 						continue;
@@ -869,6 +867,7 @@ int packet_recv_thread(void *data)
 					/* ignore own packets */
 					if (is_my_mac(vis_packet->vis_orig))
 						continue;
+
 					if (is_my_mac(vis_packet->sender_orig))
 						continue;
 
@@ -884,8 +883,8 @@ int packet_recv_thread(void *data)
 					default:	/* ignore unknown packet */
 						break;
 					}
-					break;
 
+					break;
 				}
 
 			}
