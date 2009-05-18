@@ -24,7 +24,7 @@
 #define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
 #define DRIVER_DEVICE "batman-adv"
 
-#define SOURCE_VERSION "0.2-alpha"
+#define SOURCE_VERSION "0.2-beta"
 #define COMPAT_VERSION 7
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
