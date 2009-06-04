@@ -36,6 +36,7 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 	struct forw_packet *forw_packet_aggr = NULL, *forw_packet_pos = NULL;
 	struct hlist_node *tmp_node;
 	struct batman_packet *batman_packet;
+	unsigned char directlink = (((struct batman_packet *)packet_buff)->flags & DIRECTLINK ? 1 : 0);
 
 	/* find position for the packet in the forward queue */
 	spin_lock(&forw_bat_list_lock);
@@ -60,25 +61,21 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 				/**
 				 * check aggregation compability
 				 * -> direct link packets are broadcasted on their interface only
+				 * -> aggregate packet if the current packet is a "global" packet
+				 *    as well as the base packet
 				 */
 
 				/* packets without direct link flag and high TTL are flooded through the net  */
-				if (((!(batman_packet->flags & DIRECTLINK)) && (batman_packet->ttl != 1)) &&
+				if ((!directlink) && (!(batman_packet->flags & DIRECTLINK)) && (batman_packet->ttl != 1) &&
 
 				/* own packets originating non-primary interfaces leave only that interface */
 						((!forw_packet_pos->own) || (forw_packet_pos->if_incoming->if_num == 0)))
 					break;
 
-				/**
-				 * FIXME: if we can aggregate this packet with an ordinary packet we flood it over
-				 *        all interfaces  - if its a direct link base packet only via one interface
-				 *        whats correct ?
-				 */
 				batman_packet = (struct batman_packet *)packet_buff;
 
 				/* if the incoming packet is sent via this one interface only - we still can aggregate */
-				if ((batman_packet->flags & DIRECTLINK) && (batman_packet->ttl == 1) &&
-						(forw_packet_pos->if_incoming == if_incoming))
+				if ((directlink) && (batman_packet->ttl == 1) && (forw_packet_pos->if_incoming == if_incoming))
 					break;
 
 			}
