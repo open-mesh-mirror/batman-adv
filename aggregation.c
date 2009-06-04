@@ -27,7 +27,7 @@
 
 
 
-void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time)
+void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_incoming, char own_packet, unsigned long send_time)
 {
 	/**
 	 * _aggr -> pointer to the packet we want to aggregate with
@@ -66,7 +66,7 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 				if (((!(batman_packet->flags & DIRECTLINK)) && (batman_packet->ttl != 1)) &&
 
 				/* own packets originating non-primary interfaces leave only that interface */
-						((!forw_packet_pos->own) || (forw_packet_pos->if_outgoing->if_num == 0)))
+						((!forw_packet_pos->own) || (forw_packet_pos->if_incoming->if_num == 0)))
 					break;
 
 				/**
@@ -77,7 +77,8 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 				batman_packet = (struct batman_packet *)packet_buff;
 
 				/* if the incoming packet is sent via this one interface only - we still can aggregate */
-				if ((batman_packet->flags & DIRECTLINK) && (batman_packet->ttl == 1) && (forw_packet_pos->if_outgoing == if_outgoing))
+				if ((batman_packet->flags & DIRECTLINK) && (batman_packet->ttl == 1) &&
+						(forw_packet_pos->if_incoming == if_incoming))
 					break;
 
 			}
@@ -104,7 +105,7 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 		memcpy(forw_packet_aggr->packet_buff, packet_buff, forw_packet_aggr->packet_len);
 
 		forw_packet_aggr->own = own_packet;
-		forw_packet_aggr->if_outgoing = if_outgoing;
+		forw_packet_aggr->if_incoming = if_incoming;
 		forw_packet_aggr->num_packets = 0;
 		forw_packet_aggr->direct_link_flags = 0;
 

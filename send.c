@@ -89,13 +89,13 @@ static void send_packet(struct forw_packet *forw_packet)
 	uint8_t packet_num;
 	int16_t buff_pos;
 
-	/* according to calltree the outgoing iface should always be specified. */
-	if (forw_packet->if_outgoing == NULL) {
-		debug_log(LOG_TYPE_CRIT, "Error - can't forward packet: outgoing iface not specified\n");
+	/* according to calltree the incoming iface should always be specified. */
+	if (forw_packet->if_incoming == NULL) {
+		debug_log(LOG_TYPE_CRIT, "Error - can't forward packet: incoming iface not specified\n");
 		return;
 	}
 
-	if (forw_packet->if_outgoing->if_active != IF_ACTIVE)
+	if (forw_packet->if_incoming->if_active != IF_ACTIVE)
 		return;
 
 	addr_to_string(orig_str, batman_packet->orig);
@@ -103,12 +103,12 @@ static void send_packet(struct forw_packet *forw_packet)
 	/* multihomed peer assumed */
 	/* non-primary OGMs are only broadcasted on their interface */
 	if ((directlink && (batman_packet->ttl == 1)) ||
-		    (forw_packet->own && (forw_packet->if_outgoing->if_num > 0))) {
+		    (forw_packet->own && (forw_packet->if_incoming->if_num > 0))) {
 
 		/* FIXME: what about aggregated packets ? */
-		debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (forw_packet->own ? "Sending own" : "Forwarding"), orig_str, ntohs(batman_packet->seqno), batman_packet->ttl, forw_packet->if_outgoing->dev, forw_packet->if_outgoing->addr_str);
+		debug_log(LOG_TYPE_BATMAN, "%s packet (originator %s, seqno %d, TTL %d) on interface %s [%s]\n", (forw_packet->own ? "Sending own" : "Forwarding"), orig_str, ntohs(batman_packet->seqno), batman_packet->ttl, forw_packet->if_incoming->dev, forw_packet->if_incoming->addr_str);
 
-		send_raw_packet(forw_packet->packet_buff, forw_packet->packet_len, forw_packet->if_outgoing->net_dev->dev_addr, broadcastAddr, forw_packet->if_outgoing);
+		send_raw_packet(forw_packet->packet_buff, forw_packet->packet_len, forw_packet->if_incoming->net_dev->dev_addr, broadcastAddr, forw_packet->if_incoming);
 		return;
 	}
 
@@ -125,7 +125,7 @@ static void send_packet(struct forw_packet *forw_packet)
 		while (aggregated_packet(buff_pos, forw_packet->packet_len, batman_packet->num_hna)) {
 
 			/* we might have aggregated direct link packets with an ordinary base packet */
-			if ((forw_packet->direct_link_flags & (1 << packet_num)) && (forw_packet->if_outgoing == batman_if))
+			if ((forw_packet->direct_link_flags & (1 << packet_num)) && (forw_packet->if_incoming == batman_if))
 				batman_packet->flags |= DIRECTLINK;
 			else
 				batman_packet->flags &= ~DIRECTLINK;
@@ -134,9 +134,17 @@ static void send_packet(struct forw_packet *forw_packet)
 			if (packet_num > 0)
 				addr_to_string(orig_str, batman_packet->orig);
 
-			debug_log(LOG_TYPE_BATMAN, "%s %spacket (originator %s, seqno %d, TTL %d, IDF %s) on interface %s [%s]\n", (packet_num > 0 ? "Forwarding" : (forw_packet->own ? "Sending own" : "Forwarding")), (packet_num > 0 ? "aggregated " : ""), orig_str, ntohs(batman_packet->seqno), batman_packet->ttl, (batman_packet->flags & DIRECTLINK ? "on" : "off"), batman_if->dev, batman_if->addr_str);
+			/**
+			 * if the outgoing interface is a wifi interface and equal to the incoming interface
+			 * add extra penalty (own packets are to be ignored)
+			 */
+			if ((batman_if->net_dev->wireless_handlers) && (!forw_packet->own) &&
+					(forw_packet->if_incoming == batman_if))
+				batman_packet->tq = (batman_packet->tq * (TQ_MAX_VALUE - (2 * TQ_HOP_PENALTY))) / (TQ_MAX_VALUE);
 
-			buff_pos += sizeof(struct batman_packet) + batman_packet->num_hna * ETH_ALEN;
+			debug_log(LOG_TYPE_BATMAN, "%s %spacket (originator %s, seqno %d, TQ %d, TTL %d, IDF %s) on interface %s [%s]\n", (packet_num > 0 ? "Forwarding" : (forw_packet->own ? "Sending own" : "Forwarding")), (packet_num > 0 ? "aggregated " : ""), orig_str, ntohs(batman_packet->seqno), batman_packet->tq, batman_packet->ttl, (batman_packet->flags & DIRECTLINK ? "on" : "off"), batman_if->dev, batman_if->addr_str);
+
+			buff_pos += sizeof(struct batman_packet) + (batman_packet->num_hna * ETH_ALEN);
 			packet_num++;
 			batman_packet = (struct batman_packet *)(forw_packet->packet_buff + buff_pos);
 		}
@@ -193,7 +201,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 	add_bat_packet_to_list(batman_if->packet_buff, batman_if->packet_len, batman_if, 1, send_time);
 }
 
-void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_outgoing)
+void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
 {
 	unsigned char in_tq, in_ttl, tq_avg = 0;
 	unsigned long send_time;
@@ -241,7 +249,7 @@ void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr,
 	else
 		send_time = jiffies + (((random32() % (JITTER/2)) * HZ) / 1000);
 
-	add_bat_packet_to_list((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_outgoing, 0, send_time);
+	add_bat_packet_to_list((unsigned char *)batman_packet, sizeof(struct batman_packet) + hna_buff_len, if_incoming, 0, send_time);
 }
 
 static void forw_packet_free(struct forw_packet *forw_packet)
@@ -324,7 +332,7 @@ void send_outstanding_bat_packet(struct work_struct *work)
 	 * shutting down
 	 */
 	if ((forw_packet->own) && (module_state != MODULE_INACTIVE))
-		schedule_own_packet(forw_packet->if_outgoing);
+		schedule_own_packet(forw_packet->if_incoming);
 
 	forw_packet_free(forw_packet);
 }

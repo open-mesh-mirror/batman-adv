@@ -125,7 +125,7 @@ struct forw_packet                 /* structure for forw_list maintaining packet
 	uint32_t direct_link_flags;
 	uint8_t num_packets;
 	struct delayed_work delayed_work;
-	struct batman_if *if_outgoing;
+	struct batman_if *if_incoming;
 };
 
 #endif

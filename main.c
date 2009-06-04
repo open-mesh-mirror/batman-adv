@@ -264,7 +264,7 @@ int choose_orig(void *data, int32_t size)
 	hash ^= (hash >> 11);
 	hash += (hash << 15);
 
-	return (hash%size);
+	return (hash % size);
 }
 
 
