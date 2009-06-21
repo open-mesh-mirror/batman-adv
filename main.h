@@ -25,9 +25,6 @@
 #define DRIVER_DEVICE "batman-adv"
 
 #define SOURCE_VERSION "0.2-beta"
-#define COMPAT_VERSION 7
-#define DIRECTLINK 0x40
-#define VIS_SERVER 0x20
 #define TQ_MAX_VALUE 255
 #define JITTER 20
 #define TTL 50		/* Time To Live of broadcast messages */
