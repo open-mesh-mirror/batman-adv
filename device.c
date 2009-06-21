@@ -243,26 +243,34 @@ ssize_t bat_device_write(struct file *file, const char __user *buff, size_t len,
 		return -EINVAL;
 	}
 
+	icmp_packet.uid = device_client->index;
+
+	if (icmp_packet.version != COMPAT_VERSION) {
+		icmp_packet.msg_type = PARAMETER_PROBLEM;
+		icmp_packet.ttl = COMPAT_VERSION;
+		bat_device_add_packet(device_client, &icmp_packet);
+		goto out;
+	}
+
 	spin_lock(&orig_hash_lock);
 	orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet.dst));
 
 	if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
 
 		memcpy(icmp_packet.orig, orig_node->batman_if->net_dev->dev_addr, ETH_ALEN);
-		icmp_packet.uid = device_client->index;
 
 		send_raw_packet((unsigned char *)&icmp_packet, sizeof(struct icmp_packet), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
 
 	} else {
 
 		icmp_packet.msg_type = DESTINATION_UNREACHABLE;
-		icmp_packet.uid = device_client->index;
 		bat_device_add_packet(device_client, &icmp_packet);
 
 	}
 
 	spin_unlock(&orig_hash_lock);
 
+out:
 	return len;
 }
 

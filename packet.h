@@ -33,11 +33,12 @@
 #define VIS_SERVER 0x20
 
 
+/* ICMP message types */
 #define ECHO_REPLY 0
 #define DESTINATION_UNREACHABLE 3
 #define ECHO_REQUEST 8
 #define TTL_EXCEEDED 11
-
+#define PARAMETER_PROBLEM 12
 
 
 struct batman_packet
@@ -57,7 +58,7 @@ struct icmp_packet
 {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  msg_type;   /* 0 = ECHO REPLY, 3 = DESTINATION_UNREACHABLE, 8 = ECHO_REQUEST, 11 = TTL exceeded */
+	uint8_t  msg_type;   /* see ICMP message types above */
 	uint8_t  ttl;
 	uint8_t  dst[6];
 	uint8_t  orig[6];
