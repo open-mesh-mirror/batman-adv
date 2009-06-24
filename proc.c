@@ -430,6 +430,12 @@ int proc_originators_read(struct seq_file *seq, void *offset)
 		goto end;
 	}
 
+	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
+		rcu_read_unlock();
+		seq_printf(seq, "BATMAN disabled - primary interface not active \n");
+		goto end;
+	}
+
 	seq_printf(seq, "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s] \n", "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF", "Potential nexthops", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), ((struct batman_if *)if_list.next)->dev, ((struct batman_if *)if_list.next)->addr_str);
 
 	rcu_read_unlock();
