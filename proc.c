@@ -278,11 +278,11 @@ int proc_interfaces_read(struct seq_file *seq, void *offset)
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		seq_printf(seq, "%s ", batman_if->dev);
+		seq_printf(seq, "[%8s] %s %s \n", (batman_if->if_active == IF_ACTIVE ? "active" : "inactive"),
+			batman_if->dev, (batman_if->if_active == IF_ACTIVE ? batman_if->addr_str : " "));
 	}
 	rcu_read_unlock();
 
-	seq_printf(seq, "\n");
 	return 0;
 }
 
