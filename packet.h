@@ -41,6 +41,10 @@
 #define PARAMETER_PROBLEM 12
 
 
+/* vis defines */
+#define VIS_TYPE_SERVER_SYNC		0
+#define VIS_TYPE_CLIENT_UPDATE		1
+
 struct batman_packet
 {
 	uint8_t  packet_type;
@@ -94,6 +98,3 @@ struct vis_packet
 	uint8_t  target_orig[6];	/* who should receive this packet */
 	uint8_t  sender_orig[6];	/* who sent or rebroadcasted this packet */
 } __attribute__((packed));
-
-#define VIS_TYPE_SERVER_SYNC		0
-#define VIS_TYPE_CLIENT_UPDATE		1

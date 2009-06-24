@@ -706,7 +706,7 @@ int packet_recv_thread(void *data)
 
 						debug_log(LOG_TYPE_NOTICE, "Error - can't send packet from %s to %s: ttl exceeded\n", src_str, dst_str);
 
-						/* send TTL exceed if packet is an echo request (traceroute) */
+						/* send TTL exceeded if packet is an echo request (traceroute) */
 						if (icmp_packet->msg_type != ECHO_REQUEST)
 							continue;
 
