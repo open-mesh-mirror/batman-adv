@@ -608,6 +608,7 @@ int packet_recv_thread(void *data)
 			while (1) {
 				if (batman_if->if_active != IF_ACTIVE) {
 					debug_log(LOG_TYPE_NOTICE, "Could not read from deactivated interface %s!\n", batman_if->dev);
+					receive_raw_packet(batman_if->raw_sock, packet_buff, PACKBUFF_SIZE);
 					result = 0;
 					break;
 				}
