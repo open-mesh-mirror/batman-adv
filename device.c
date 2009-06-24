@@ -296,7 +296,7 @@ void bat_device_add_packet(struct device_client *device_client, struct icmp_pack
 		return;
 
 	INIT_LIST_HEAD(&device_packet->list);
-	memcpy(&device_packet->icmp_packet, icmp_packet, sizeof(icmp_packet));
+	memcpy(&device_packet->icmp_packet, icmp_packet, sizeof(struct icmp_packet));
 
 	spin_lock(&device_client->lock);
 
