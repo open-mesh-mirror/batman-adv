@@ -21,7 +21,7 @@
 #define LINUX
 
 #define DRIVER_AUTHOR "Marek Lindner <lindner_marek@yahoo.de>, Simon Wunderlich <siwu@hrz.tu-chemnitz.de>"
-#define DRIVER_DESC   "B.A.T.M.A.N. Advanced"
+#define DRIVER_DESC   "B.A.T.M.A.N. advanced"
 #define DRIVER_DEVICE "batman-adv"
 
 #define SOURCE_VERSION "0.2-beta"

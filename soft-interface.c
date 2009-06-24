@@ -312,7 +312,7 @@ static int bat_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 
 static void bat_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
 {
-	strcpy(info->driver, "B.A.T.M.A.N. Advanced");
+	strcpy(info->driver, "B.A.T.M.A.N. advanced");
 	strcpy(info->version, SOURCE_VERSION);
 	strcpy(info->fw_version, "N/A");
 	strcpy(info->bus_info, "batman");
