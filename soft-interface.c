@@ -31,6 +31,7 @@
 #include "hash.h"
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
+#include "compat.h"
 
 
 
@@ -98,6 +99,18 @@ int my_skb_push(struct sk_buff *skb, unsigned int len)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29)
+static const struct net_device_ops bat_netdev_ops = {
+	.ndo_open = interface_open,
+	.ndo_stop = interface_release,
+	.ndo_get_stats = interface_stats,
+	.ndo_set_mac_address = interface_set_mac_addr,
+	.ndo_change_mtu = interface_change_mtu,
+	.ndo_start_xmit = interface_tx,
+	.ndo_validate_addr = eth_validate_addr
+};
+#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29) */
+
 void interface_setup(struct net_device *dev)
 {
 	struct bat_priv *priv = netdev_priv(dev);
@@ -105,12 +118,16 @@ void interface_setup(struct net_device *dev)
 
 	ether_setup(dev);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
 	dev->open = interface_open;
 	dev->stop = interface_release;
 	dev->get_stats = interface_stats;
 	dev->set_mac_address = interface_set_mac_addr;
 	dev->change_mtu = interface_change_mtu;
 	dev->hard_start_xmit = interface_tx;
+#else
+	dev->netdev_ops = &bat_netdev_ops;
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29) */
 	dev->destructor = free_netdev;
 
 	dev->features |= NETIF_F_NO_CSUM;
