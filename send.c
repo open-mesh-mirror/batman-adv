@@ -207,7 +207,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 	add_bat_packet_to_list(batman_if->packet_buff, batman_if->packet_len, batman_if, 1, send_time);
 }
 
-void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, unsigned char *hna_buff, int hna_buff_len, struct batman_if *if_incoming)
+void schedule_forward_packet(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, uint8_t directlink, int hna_buff_len, struct batman_if *if_incoming)
 {
 	unsigned char in_tq, in_ttl, tq_avg = 0;
 	unsigned long send_time;
