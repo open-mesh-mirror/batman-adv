@@ -76,7 +76,7 @@ void free_orig_node(void *data)
 		kfree(neigh_node);
 	}
 
-	hna_global_del_orig(orig_node, "originator timeouted");
+	hna_global_del_orig(orig_node, "originator timed out");
 
 	kfree(orig_node->bcast_own);
 	kfree(orig_node->bcast_own_sum);
@@ -158,7 +158,7 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 		if ((orig_node->router != NULL) && (neigh_node == NULL)) {
 
 			debug_log(LOG_TYPE_ROUTES, "Deleting route towards: %s\n", orig_str);
-			hna_global_del_orig(orig_node, "originator timeouted");
+			hna_global_del_orig(orig_node, "originator timed out");
 
 		/* route added */
 		} else if ((orig_node->router == NULL) && (neigh_node != NULL)) {
@@ -247,7 +247,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 	/*
 	 * 1 - ((1-x) ** 3), normalized to TQ_MAX_VALUE
 	 * this does affect the nearly-symmetric links only a little,
-	 * but punishes asymetric links more.
+	 * but punishes asymmetric links more.
 	 * this will give a value between 0 and TQ_MAX_VALUE
 	 */
 	orig_neigh_node->tq_asym_penalty = TQ_MAX_VALUE - (TQ_MAX_VALUE *
@@ -258,7 +258,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 
 	batman_packet->tq = ((batman_packet->tq * orig_neigh_node->tq_own * orig_neigh_node->tq_asym_penalty) / (TQ_MAX_VALUE *  TQ_MAX_VALUE));
 
-	debug_log(LOG_TYPE_BATMAN, "bidirectional: orig = %-15s neigh = %-15s => own_bcast = %2i, real recv = %2i, local tq: %3i, asym_penality: %3i, total tq: %3i \n",
+	debug_log(LOG_TYPE_BATMAN, "bidirectional: orig = %-15s neigh = %-15s => own_bcast = %2i, real recv = %2i, local tq: %3i, asym_penalty: %3i, total tq: %3i \n",
 		  orig_str, neigh_str, total_count, neigh_node->real_packet_count, orig_neigh_node->tq_own, orig_neigh_node->tq_asym_penalty, batman_packet->tq);
 
 	/* if link has the minimum required transmission quality consider it bidirectional */
@@ -451,9 +451,9 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	if (orig_neigh_node == NULL)
 		return;
 
-	/* drop packet if sender is not a direct neighbor and if we no route towards it */
+	/* drop packet if sender is not a direct neighbor and if we don't route towards it */
 	if (!is_single_hop_neigh && (orig_neigh_node->router == NULL)) {
-		debug_log(LOG_TYPE_BATMAN, "Drop packet: OGM via unkown neighbor! \n");
+		debug_log(LOG_TYPE_BATMAN, "Drop packet: OGM via unknown neighbor! \n");
 		return;
 	}
 
@@ -662,7 +662,7 @@ int packet_recv_thread(void *data)
 					if (!is_my_mac(ethhdr->h_dest))
 						continue;
 
-					/* drop packet if it has not neccessary minimum size */
+					/* drop packet if it has not necessary minimum size */
 					if (result < sizeof(struct ethhdr) + sizeof(struct icmp_packet))
 						continue;
 
@@ -761,7 +761,7 @@ int packet_recv_thread(void *data)
 					if (!is_my_mac(ethhdr->h_dest))
 						continue;
 
-					/* drop packet if it has not neccessary minimum size */
+					/* drop packet if it has not necessary minimum size */
 					if (result < sizeof(struct ethhdr) + sizeof(struct unicast_packet))
 						continue;
 
@@ -809,7 +809,7 @@ int packet_recv_thread(void *data)
 					if (is_bcast(ethhdr->h_source))
 						continue;
 
-					/* drop packet if it has not neccessary minimum size */
+					/* drop packet if it has not necessary minimum size */
 					if (result < sizeof(struct ethhdr) + sizeof(struct bcast_packet))
 						continue;
 

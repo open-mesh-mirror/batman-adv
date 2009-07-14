@@ -59,7 +59,7 @@ void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct b
 				batman_packet = (struct batman_packet *)forw_packet_pos->packet_buff;
 
 				/**
-				 * check aggregation compability
+				 * check aggregation compatibility
 				 * -> direct link packets are broadcasted on their interface only
 				 * -> aggregate packet if the current packet is a "global" packet
 				 *    as well as the base packet

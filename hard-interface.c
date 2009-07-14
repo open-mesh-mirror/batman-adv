@@ -314,7 +314,7 @@ void hardif_check_interfaces_status(void)
 		return;
 
 	/**
-	 * wait for readers of the the interfaces, so update won't be a problem.
+	 * wait for readers of the interfaces, so update won't be a problem.
 	 * this function is not time critical and can wait a bit ....
 	 */
 	synchronize_rcu();

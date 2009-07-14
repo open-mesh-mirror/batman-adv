@@ -143,7 +143,7 @@ static void send_packet(struct forw_packet *forw_packet)
 				batman_packet->tq = (batman_packet->tq * (TQ_MAX_VALUE - (2 * TQ_HOP_PENALTY))) / (TQ_MAX_VALUE);
 
 			debug_log(LOG_TYPE_BATMAN,
-					"%s %spacket (originator %s, seqno %d, TQ %d, TTL %d, IDF %s) on interface %s [%s]\n",
+					"%s %s packet (originator %s, seqno %d, TQ %d, TTL %d, IDF %s) on interface %s [%s]\n",
 					(packet_num > 0 ? "Forwarding" : (forw_packet->own ? "Sending own" : "Forwarding")),
 					(packet_num > 0 ? "aggregated " : ""), orig_str, ntohs(batman_packet->seqno),
 					batman_packet->tq, batman_packet->ttl,
