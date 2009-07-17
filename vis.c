@@ -42,7 +42,6 @@ static struct list_head send_list;	/* always locked with vis_hash_lock ... */
 void free_info(void *data);
 void send_vis_packet(struct vis_info *info);
 void start_vis_timer(void);
-volatile uint8_t vis_format = DOT_DRAW;
 
 
 int vis_info_cmp(void *data1, void *data2) {

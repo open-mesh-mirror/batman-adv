@@ -31,6 +31,7 @@
 #include "types.h"
 #include "hash.h"
 
+static uint8_t vis_format = DOT_DRAW;
 
 
 static struct proc_dir_entry *proc_batman_dir = NULL, *proc_interface_file = NULL, *proc_orig_interval_file = NULL, *proc_originators_file = NULL;

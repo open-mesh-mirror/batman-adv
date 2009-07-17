@@ -51,7 +51,6 @@ enum vis_formats {
 
 extern struct hashtable_t *vis_hash;
 extern spinlock_t vis_hash_lock;
-extern volatile uint8_t vis_format;
 
 void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, int vis_info_len);
 void vis_set_mode(int mode);
