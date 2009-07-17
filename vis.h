@@ -17,19 +17,17 @@
  *
  */
 
-
 #define VIS_TIMEOUT		200000
 #define VIS_FORMAT_DD_NAME	"dot_draw"
 #define VIS_FORMAT_JSON_NAME	"json"
 
-
 struct vis_info {
 	unsigned long       first_seen;
 	struct list_head    recv_list;
-			/* list of server-neighbors we received a vis-packet from.
-			 * we should not reply to them. */
+			    /* list of server-neighbors we received a vis-packet
+			     * from.  we should not reply to them. */
 	struct list_head send_list;
-			/* this packet might be part of the vis send queue. */
+	/* this packet might be part of the vis send queue. */
 	struct vis_packet packet;
 	/* vis_info may follow here*/
 } __attribute__((packed));
@@ -41,7 +39,7 @@ struct vis_info_entry {
 
 struct recvlist_node {
 	struct list_head list;
-	uint8_t mac[6];
+	uint8_t mac[ETH_ALEN];
 };
 
 enum vis_formats {
@@ -52,12 +50,11 @@ enum vis_formats {
 extern struct hashtable_t *vis_hash;
 extern spinlock_t vis_hash_lock;
 
-void receive_vis_packet(struct ethhdr *ethhdr, struct vis_packet *vis_packet, int vis_info_len);
 void vis_set_mode(int mode);
 int is_vis_server(void);
-int is_vis_server_locked(void);
-void receive_server_sync_packet(struct vis_packet *vis_packet, int vis_info_len);
-void receive_client_update_packet(struct vis_packet *vis_packet, int vis_info_len);
-void send_vis_packets(struct work_struct *work);
+void receive_server_sync_packet(struct vis_packet *vis_packet,
+				int vis_info_len);
+void receive_client_update_packet(struct vis_packet *vis_packet,
+				  int vis_info_len);
 int vis_init(void);
 int vis_quit(void);
