@@ -17,8 +17,6 @@
  *
  */
 
-
-
 #define ETH_P_BATMAN  0x4305	/* unofficial/not registered Ethertype */
 
 #define BAT_PACKET    0x01
@@ -32,7 +30,6 @@
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
 
-
 /* ICMP message types */
 #define ECHO_REPLY 0
 #define DESTINATION_UNREACHABLE 3
@@ -40,13 +37,11 @@
 #define TTL_EXCEEDED 11
 #define PARAMETER_PROBLEM 12
 
-
 /* vis defines */
 #define VIS_TYPE_SERVER_SYNC		0
 #define VIS_TYPE_CLIENT_UPDATE		1
 
-struct batman_packet
-{
+struct batman_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
 	uint8_t  flags;    /* 0x40: DIRECTLINK flag, 0x20 VIS_SERVER flag... */
@@ -58,11 +53,12 @@ struct batman_packet
 	uint8_t  num_hna;
 } __attribute__((packed));
 
-struct icmp_packet
-{
+#define BAT_PACKET_LEN sizeof(struct batman_packet)
+
+struct icmp_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  msg_type;   /* see ICMP message types above */
+	uint8_t  msg_type; /* see ICMP message types above */
 	uint8_t  ttl;
 	uint8_t  dst[6];
 	uint8_t  orig[6];
@@ -70,31 +66,29 @@ struct icmp_packet
 	uint8_t  uid;
 } __attribute__((packed));
 
-struct unicast_packet
-{
+struct unicast_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
 	uint8_t  dest[6];
 	uint8_t  ttl;
 } __attribute__((packed));
 
-struct bcast_packet
-{
+struct bcast_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
 	uint8_t  orig[6];
 	uint16_t seqno;
 } __attribute__((packed));
 
-struct vis_packet
-{
+struct vis_packet {
 	uint8_t  packet_type;
-	uint8_t  version;  			/* batman version field */
-	uint8_t  vis_type;			/* which type of vis-participant sent this? */
-	uint8_t  seqno;				/* sequence number */
-	uint8_t  entries;			/* number of entries behind this struct */
-	uint8_t  ttl;				/* TTL */
-	uint8_t  vis_orig[6];		/* originator that informs about its neighbours */
-	uint8_t  target_orig[6];	/* who should receive this packet */
-	uint8_t  sender_orig[6];	/* who sent or rebroadcasted this packet */
+	uint8_t  version;        /* batman version field */
+	uint8_t  vis_type;	 /* which type of vis-participant sent this? */
+	uint8_t  seqno;		 /* sequence number */
+	uint8_t  entries;	 /* number of entries behind this struct */
+	uint8_t  ttl;		 /* TTL */
+	uint8_t  vis_orig[6];	 /* originator that informs about its
+				  * neighbours */
+	uint8_t  target_orig[6]; /* who should receive this packet */
+	uint8_t  sender_orig[6]; /* who sent or rebroadcasted this packet */
 } __attribute__((packed));
