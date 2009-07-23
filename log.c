@@ -17,28 +17,21 @@
  *
  */
 
-
-
-
-
 #include "main.h"
 #include "log.h"
-
 
 #define LOG_BUF_MASK (log_buf_len-1)
 #define LOG_BUF(idx) (log_buf[(idx) & LOG_BUF_MASK])
 
-
-
 static char log_buf[LOG_BUF_LEN];
 static int log_buf_len = LOG_BUF_LEN;
-static unsigned long log_start = 0;
-static unsigned long log_end = 0;
-volatile uint8_t log_level = 0;
+static unsigned long log_start;
+static unsigned long log_end;
+uint8_t log_level;
 
 static DEFINE_SPINLOCK(logbuf_lock);
 
-struct file_operations proc_log_operations = {
+const struct file_operations proc_log_operations = {
 	.open           = log_open,
 	.release        = log_release,
 	.read           = log_read,
@@ -47,7 +40,6 @@ struct file_operations proc_log_operations = {
 };
 
 static DECLARE_WAIT_QUEUE_HEAD(log_wait);
-
 
 static void emit_log_char(char c)
 {
@@ -68,7 +60,8 @@ static int fdebug_log(char *fmt, ...)
 
 	spin_lock_irqsave(&logbuf_lock, flags);
 	va_start(args, fmt);
-	printed_len = vscnprintf(debug_log_buf, sizeof(debug_log_buf), fmt, args);
+	printed_len = vscnprintf(debug_log_buf, sizeof(debug_log_buf), fmt,
+				 args);
 	va_end(args);
 
 	for (p = debug_log_buf; *p != 0; p++)
@@ -81,7 +74,6 @@ static int fdebug_log(char *fmt, ...)
 	return 0;
 }
 
-
 int debug_log(int type, char *fmt, ...)
 {
 	va_list args;
@@ -92,7 +84,7 @@ int debug_log(int type, char *fmt, ...)
 	if (type == LOG_TYPE_CRIT) {
 		va_start(args, fmt);
 		vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
-		printk("batman-adv: %s", tmp_log_buf);
+		printk(KERN_ERR "batman-adv: %s", tmp_log_buf);
 		va_end(args);
 	}
 
@@ -106,19 +98,20 @@ int debug_log(int type, char *fmt, ...)
 	return retval;
 }
 
-int log_open(struct inode * inode, struct file * file)
+int log_open(struct inode *inode, struct file *file)
 {
 	inc_module_count();
 	return 0;
 }
 
-int log_release(struct inode * inode, struct file * file)
+int log_release(struct inode *inode, struct file *file)
 {
 	dec_module_count();
 	return 0;
 }
 
-ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
+ssize_t log_read(struct file *file, char __user *buf, size_t count,
+		 loff_t *ppos)
 {
 	int error, i = 0;
 	char c;
@@ -150,7 +143,7 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 
 		spin_unlock_irqrestore(&logbuf_lock, flags);
 
-		error = __put_user(c,buf);
+		error = __put_user(c, buf);
 
 		spin_lock_irqsave(&logbuf_lock, flags);
 
@@ -167,7 +160,8 @@ ssize_t log_read(struct file *file, char __user *buf, size_t count, loff_t *ppos
 	return error;
 }
 
-ssize_t log_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
+ssize_t log_write(struct file *file, const char __user *buf, size_t count,
+		  loff_t *ppos)
 {
 	return count;
 }
@@ -181,4 +175,3 @@ unsigned int log_poll(struct file *file, poll_table *wait)
 
 	return 0;
 }
-
