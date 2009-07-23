@@ -27,14 +27,18 @@
 #define SOURCE_VERSION "0.2-beta"
 #define TQ_MAX_VALUE 255
 #define JITTER 20
-#define TTL 50		/* Time To Live of broadcast messages */
-#define MAX_ADDR 16	/* number of interfaces which can be added to batman. */
+#define TTL 50		          /* Time To Live of broadcast messages */
+#define MAX_ADDR 16	          /* number of interfaces which can be added to
+				   * batman. */
 
-
-#define PURGE_TIMEOUT 200000  /* purge originators after time in ms if no valid packet comes in -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
+#define PURGE_TIMEOUT 200000      /* purge originators after time in ms if no
+				   * valid packet comes in -> TODO: check
+				   * influence on TQ_LOCAL_WINDOW_SIZE */
 #define LOCAL_HNA_TIMEOUT 3600000
 
-#define TQ_LOCAL_WINDOW_SIZE 64     /* sliding packet range of received originator messages in sequence numbers (should be a multiple of our word size) */
+#define TQ_LOCAL_WINDOW_SIZE 64   /* sliding packet range of received originator
+				   * messages in squence numbers (should be a
+				   * multiple of our word size) */
 #define TQ_GLOBAL_WINDOW_SIZE 10
 #define TQ_LOCAL_BIDRECT_SEND_MINIMUM 1
 #define TQ_LOCAL_BIDRECT_RECV_MINIMUM 1
@@ -45,10 +49,12 @@
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 
 #define PACKBUFF_SIZE 2000
-#define LOG_BUF_LEN 8192	/* has to be a power of 2 */
+#define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 #define ETH_STR_LEN 20
 
-#define MAX_AGGREGATION_BYTES 512   /* should not be bigger than 512 bytes or change the size of forw_packet->direct_link_flags */
+#define MAX_AGGREGATION_BYTES 512 /* should not be bigger than 512 bytes or
+				   * change the size of
+				   * forw_packet->direct_link_flags */
 #define MAX_AGGREGATION_MS 100
 
 #define MODULE_INACTIVE 0
@@ -60,10 +66,15 @@
  * Logging
  */
 
-#define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as blocked sockets / failed packet delivery / programming errors */
-#define LOG_TYPE_WARN 1		/* warnings for  small errors like wrong user input / damaged packets / etc */
-#define LOG_TYPE_NOTICE 2	/* notice information for new interfaces / changed settings / new originators / etc */
-#define LOG_TYPE_BATMAN 4	/* all messages related to routing / flooding / broadcasting / etc */
+#define LOG_TYPE_CRIT 0		/* highest priority for fatal errors such as
+				 * blocked sockets / failed packet delivery /
+				 * programming errors */
+#define LOG_TYPE_WARN 1		/* warnings for small errors like wrong user
+				 * input / damaged packets / etc */
+#define LOG_TYPE_NOTICE 2	/* notice information for new interfaces /
+				 * changed settings / new originators / etc */
+#define LOG_TYPE_BATMAN 4	/* all messages related to routing / flooding /
+				 * broadcasting / etc */
 #define LOG_TYPE_ROUTES 8	/* route or hna added / changed / deleted */
 #define LOG_TYPE_CRIT_NAME	"critical"
 #define LOG_TYPE_WARN_NAME	"warnings"
@@ -85,6 +96,7 @@
 #include <linux/pkt_sched.h>	/* schedule types */
 #include <linux/workqueue.h>	/* workqueue */
 #include <net/sock.h>		/* struct sock */
+#include <linux/jiffies.h>
 #include "types.h"
 
 extern struct list_head if_list;
@@ -108,10 +120,6 @@ extern unsigned char broadcastAddr[];
 extern char hna_local_changed;
 extern char module_state;
 extern struct workqueue_struct *bat_event_workqueue;
-
-
-
-
 
 void start_purge_timer(void);
 void activate_module(void);

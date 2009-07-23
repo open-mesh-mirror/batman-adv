@@ -17,7 +17,6 @@
  *
  */
 
-
 #include "main.h"
 #include "proc.h"
 #include "log.h"
@@ -27,12 +26,10 @@
 #include "device.h"
 #include "translation-table.h"
 #include "hard-interface.h"
-#include "vis.h"
 #include "types.h"
+#include "vis.h"
 #include "hash.h"
 #include "compat.h"
-
-
 
 struct list_head if_list;
 struct hlist_head forw_bat_list;
@@ -47,20 +44,18 @@ static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 atomic_t originator_interval;
 atomic_t vis_interval;
 atomic_t aggregation_enabled;
-int16_t num_hna = 0;
-int16_t num_ifs = 0;
+int16_t num_hna;
+int16_t num_ifs;
 
-struct net_device *soft_device = NULL;
+struct net_device *soft_device;
 
-static struct task_struct *kthread_task = NULL;
+static struct task_struct *kthread_task;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char hna_local_changed = 0;
+char hna_local_changed;
 char module_state = MODULE_INACTIVE;
 
-struct workqueue_struct *bat_event_workqueue = NULL;
-
-
+struct workqueue_struct *bat_event_workqueue;
 
 int init_module(void)
 {
@@ -71,16 +66,19 @@ int init_module(void)
 	INIT_HLIST_HEAD(&forw_bat_list);
 	INIT_HLIST_HEAD(&forw_bcast_list);
 	atomic_set(&originator_interval, 1000);
-	atomic_set(&vis_interval, 1000);	/* TODO: raise this later, this is only for debugging now. */
+	atomic_set(&vis_interval, 1000);/* TODO: raise this later, this is only
+					 * for debugging now. */
 	atomic_set(&aggregation_enabled, 1);
 
-	/* the name should not be longer than 10 chars - see http://lwn.net/Articles/23634/ */
+	/* the name should not be longer than 10 chars - see
+	 * http://lwn.net/Articles/23634/ */
 	bat_event_workqueue = create_singlethread_workqueue("bat_events");
 
 	if (!bat_event_workqueue)
 		return -ENOMEM;
 
-	if ((retval = setup_procfs()) < 0)
+	retval = setup_procfs();
+	if (retval < 0)
 		return retval;
 
 	orig_hash = hash_new(128, compare_orig, choose_orig);
@@ -97,9 +95,10 @@ int init_module(void)
 	bat_device_init();
 
 	/* initialize layer 2 interface */
-	soft_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d", interface_setup);
+	soft_device = alloc_netdev(sizeof(struct bat_priv) , "bat%d",
+				   interface_setup);
 
-	if (soft_device == NULL) {
+	if (!soft_device) {
 		debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
 		goto free_lhna_hash;
 	}
@@ -114,13 +113,13 @@ int init_module(void)
 	hna_local_add(soft_device->dev_addr);
 
 	start_hardif_check_timer();
-	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. advanced %s%s (compability version %i) loaded \n", SOURCE_VERSION, (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""), COMPAT_VERSION);
+
+	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. advanced %s%s (compatibility version %i) loaded \n",
+		  SOURCE_VERSION,
+		  (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""),
+		  COMPAT_VERSION);
 
 	return 0;
-/* for later use ...
-unregister_soft_device:
-	unregister_netdev(soft_device);
-*/
 
 free_soft_device:
 	free_netdev(soft_device);
@@ -139,7 +138,7 @@ clean_proc:
 void cleanup_module(void)
 {
 	shutdown_module();
-	if (soft_device != NULL) {
+	if (soft_device) {
 		unregister_netdev(soft_device);
 		soft_device = NULL;
 	}
@@ -214,13 +213,11 @@ void shutdown_module(void)
 
 	hardif_remove_interfaces();
 	synchronize_rcu();
-
-
 }
 
 void inc_module_count(void)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 	MOD_INC_USE_COUNT;
 #else
 	try_module_get(THIS_MODULE);
@@ -229,7 +226,7 @@ void inc_module_count(void)
 
 void dec_module_count(void)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 	MOD_DEC_USE_COUNT;
 #else
 	module_put(THIS_MODULE);
@@ -238,7 +235,8 @@ void dec_module_count(void)
 
 int addr_to_string(char *buff, uint8_t *addr)
 {
-	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+	return sprintf(buff, "%02x:%02x:%02x:%02x:%02x:%02x",
+		       addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
 int compare_orig(void *data1, void *data2)
@@ -250,7 +248,7 @@ int compare_orig(void *data1, void *data2)
 /* hash algorithm from http://en.wikipedia.org/wiki/Hash_table */
 int choose_orig(void *data, int32_t size)
 {
-	unsigned char *key= data;
+	unsigned char *key = data;
 	uint32_t hash = 0;
 	size_t i;
 
@@ -264,17 +262,16 @@ int choose_orig(void *data, int32_t size)
 	hash ^= (hash >> 11);
 	hash += (hash << 15);
 
-	return (hash % size);
+	return hash % size;
 }
-
-
 
 int is_my_mac(uint8_t *addr)
 {
 	struct batman_if *batman_if;
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		if ((batman_if->net_dev != NULL) && (compare_orig(batman_if->net_dev->dev_addr, addr))) {
+		if ((batman_if->net_dev) &&
+		    (compare_orig(batman_if->net_dev->dev_addr, addr))) {
 			rcu_read_unlock();
 			return 1;
 		}
@@ -286,19 +283,16 @@ int is_my_mac(uint8_t *addr)
 
 int is_bcast(uint8_t *addr)
 {
-	return ((addr[0] == (uint8_t)0xff) && (addr[1] == (uint8_t)0xff));
+	return (addr[0] == (uint8_t)0xff) && (addr[1] == (uint8_t)0xff);
 }
 
 int is_mcast(uint8_t *addr)
 {
-	return (*addr & 0x01);
+	return *addr & 0x01;
 }
-
-
 
 MODULE_LICENSE("GPL");
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_SUPPORTED_DEVICE(DRIVER_DEVICE);
-
