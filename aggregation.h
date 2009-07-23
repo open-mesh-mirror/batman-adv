@@ -17,15 +17,19 @@
  *
  */
 
-
-
-
 #include "main.h"
 
-#define aggregated_packet(buff_pos, packet_len, num_hna) \
-		buff_pos + sizeof(struct batman_packet) + (num_hna * ETH_ALEN) <= packet_len && \
-		buff_pos + sizeof(struct batman_packet) + (num_hna * ETH_ALEN) <= MAX_AGGREGATION_BYTES
+/* is there another aggregated packet here? */
+static inline int aggregated_packet(int buff_pos, int packet_len, int num_hna)
+{
+	int next_buff_pos = buff_pos + BAT_PACKET_LEN + (num_hna * ETH_ALEN);
 
+	return (next_buff_pos <= packet_len) &&
+		(next_buff_pos <= MAX_AGGREGATION_BYTES);
+}
 
-void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len, struct batman_if *if_outgoing, char own_packet, unsigned long send_time);
-void receive_aggr_bat_packet(struct ethhdr *ethhdr, unsigned char *packet_buff, int packet_len, struct batman_if *if_incoming);
+void add_bat_packet_to_list(unsigned char *packet_buff, int packet_len,
+			    struct batman_if *if_outgoing, char own_packet,
+			    unsigned long send_time);
+void receive_aggr_bat_packet(struct ethhdr *ethhdr, unsigned char *packet_buff,
+			     int packet_len, struct batman_if *if_incoming);
