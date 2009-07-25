@@ -17,14 +17,8 @@
  *
  */
 
-
-
-
-
 #include "main.h"
 #include "ring_buffer.h"
-
-
 
 void ring_buffer_set(uint8_t lq_recv[], uint8_t *lq_index, uint8_t value)
 {
