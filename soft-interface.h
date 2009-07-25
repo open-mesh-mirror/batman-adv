@@ -17,10 +17,6 @@
  *
  */
 
-
-
-
-
 void set_main_if_addr(uint8_t *addr);
 int main_if_was_up(void);
 void interface_setup(struct net_device *dev);

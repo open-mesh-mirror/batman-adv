@@ -17,10 +17,6 @@
  *
  */
 
-
-
-
-
 #include "main.h"
 #include "soft-interface.h"
 #include "hard-interface.h"
@@ -33,29 +29,22 @@
 #include <linux/etherdevice.h>
 #include "compat.h"
 
+static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
+				  * broadcast storms */
+static int32_t skb_packets;
+static int32_t skb_bad_packets;
+static int32_t lock_dropped;
 
-
-
-
-static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid broadcast storms */
-static int32_t skb_packets = 0;
-static int32_t skb_bad_packets = 0;
-static int32_t lock_dropped = 0;
-
-unsigned char mainIfAddr[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-static unsigned char mainIfAddr_default[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-
-
-
-
+unsigned char mainIfAddr[ETH_ALEN];
+static unsigned char mainIfAddr_default[ETH_ALEN];
 static int bat_get_settings(struct net_device *dev, struct ethtool_cmd *cmd);
-static void bat_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info);
+static void bat_get_drvinfo(struct net_device *dev,
+			    struct ethtool_drvinfo *info);
 static u32 bat_get_msglevel(struct net_device *dev);
 static void bat_set_msglevel(struct net_device *dev, u32 value);
 static u32 bat_get_link(struct net_device *dev);
 static u32 bat_get_rx_csum(struct net_device *dev);
 static int bat_set_rx_csum(struct net_device *dev, u32 data);
-
 
 static const struct ethtool_ops bat_ethtool_ops = {
 	.get_settings = bat_get_settings,
@@ -66,7 +55,6 @@ static const struct ethtool_ops bat_ethtool_ops = {
 	.get_rx_csum = bat_get_rx_csum,
 	.set_rx_csum = bat_set_rx_csum
 };
-
 
 void set_main_if_addr(uint8_t *addr)
 {
@@ -90,10 +78,6 @@ int my_skb_push(struct sk_buff *skb, unsigned int len)
 		if (result < 0)
 			return result;
 	}
-	/* TODO: remove this later. it's just for verification. */
-	if ((skb_packets & 0xFF) == 0) /* report every 256 packets */
-		debug_log(LOG_TYPE_NOTICE, "(%d/%d skbs had to be re-expanded)\n", skb_bad_packets, skb_packets);
-
 
 	skb_push(skb, len);
 	return 0;
@@ -132,7 +116,8 @@ void interface_setup(struct net_device *dev)
 
 	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu = hardif_min_mtu();
-	dev->hard_header_len = BAT_HEADER_LEN; /* reserve more space in the skbuff for our header */
+	dev->hard_header_len = BAT_HEADER_LEN; /* reserve more space in the
+						* skbuff for our header */
 
 	/* generate random address */
 	*(u16 *)dev_addr = __constant_htons(0x00FF);
@@ -207,7 +192,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		/* batman packet type: broadcast */
 		bcast_packet->packet_type = BAT_BCAST;
 
-		/* hw address of first interface is the orig mac because only this mac is known throughout the mesh */
+		/* hw address of first interface is the orig mac because only
+		 * this mac is known throughout the mesh */
 		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 		/* set broadcast sequence number */
 		bcast_packet->seqno = htons(bcast_seqno);
@@ -220,8 +206,10 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	/* unicast packet */
 	} else {
 
-		/* simply spin_lock()ing can deadlock when the lock is already hold. */
-		/* TODO: defer the work in a working queue instead of dropping */
+		/* simply spin_lock()ing can deadlock when the lock is already
+		 * hold. */
+		/* TODO: defer the work in a working queue instead of
+		 * dropping */
 		if (!spin_trylock(&orig_hash_lock)) {
 			lock_dropped++;
 			debug_log(LOG_TYPE_NOTICE, "%d packets dropped because lock was hold\n", lock_dropped);
@@ -229,14 +217,16 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		}
 
 		/* get routing information */
-		orig_node = ((struct orig_node *)hash_find(orig_hash, ethhdr->h_dest));
+		orig_node = ((struct orig_node *)hash_find(orig_hash,
+							   ethhdr->h_dest));
 
 		/* check for hna host */
-		if (orig_node == NULL)
+		if (!orig_node)
 			orig_node = transtable_search(ethhdr->h_dest);
 
-		if ((orig_node != NULL) && (orig_node->batman_if != NULL) && (orig_node->router != NULL)) {
-
+		if ((orig_node) &&
+		    (orig_node->batman_if) &&
+		    (orig_node->router)) {
 			if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
 				goto unlock;
 
@@ -254,12 +244,12 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			if (orig_node->batman_if->if_active != IF_ACTIVE)
 				goto unlock;
 
-			send_raw_packet(skb->data, skb->len, orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
-
+			send_raw_packet(skb->data, skb->len,
+					orig_node->batman_if->net_dev->dev_addr,
+					orig_node->router->addr,
+					orig_node->batman_if);
 		} else {
-
 			goto unlock;
-
 		}
 
 		spin_unlock(&orig_hash_lock);
@@ -271,10 +261,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 unlock:
 	spin_unlock(&orig_hash_lock);
-
 dropped:
 	priv->stats.tx_dropped++;
-
 end:
 	kfree_skb(skb);
 	return 0;
@@ -327,7 +315,8 @@ static int bat_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 	return 0;
 }
 
-static void bat_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
+static void bat_get_drvinfo(struct net_device *dev,
+			    struct ethtool_drvinfo *info)
 {
 	strcpy(info->driver, "B.A.T.M.A.N. advanced");
 	strcpy(info->version, SOURCE_VERSION);
@@ -359,4 +348,3 @@ static int bat_set_rx_csum(struct net_device *dev, u32 data)
 {
 	return -EOPNOTSUPP;
 }
-
