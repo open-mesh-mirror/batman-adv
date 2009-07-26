@@ -597,7 +597,7 @@ static ssize_t proc_aggr_write(struct file *file, const char __user *buffer,
 {
 	char *aggr_string;
 	int not_copied = 0;
-	int16_t aggregation_enabled_tmp;
+	long aggregation_enabled_tmp;
 
 	aggr_string = kmalloc(count, GFP_KERNEL);
 
@@ -607,21 +607,21 @@ static ssize_t proc_aggr_write(struct file *file, const char __user *buffer,
 	not_copied = copy_from_user(aggr_string, buffer, count);
 	aggr_string[count - not_copied - 1] = 0;
 
-	aggregation_enabled_tmp = simple_strtol(aggr_string, NULL, 10);
+	strict_strtol(aggr_string, 10, &aggregation_enabled_tmp);
 
 	if ((aggregation_enabled_tmp != 0) && (aggregation_enabled_tmp != 1)) {
-		debug_log(LOG_TYPE_WARN, "Aggregation can only be enabled (1) or disabled (0), given value: %i\n", aggregation_enabled_tmp);
+		debug_log(LOG_TYPE_WARN, "Aggregation can only be enabled (1) or disabled (0), given value: %li\n", aggregation_enabled_tmp);
 		goto end;
 	}
 
-	debug_log(LOG_TYPE_NOTICE, "Changing aggregation from: %s (%i) to: %s (%i)\n",
+	debug_log(LOG_TYPE_NOTICE, "Changing aggregation from: %s (%i) to: %s (%li)\n",
 		  (atomic_read(&aggregation_enabled) == 1 ?
 		   "enabled" : "disabled"),
 		  atomic_read(&aggregation_enabled),
 		  (aggregation_enabled_tmp == 1 ? "enabled" : "disabled"),
 		  aggregation_enabled_tmp);
 
-	atomic_set(&aggregation_enabled, aggregation_enabled_tmp);
+	atomic_set(&aggregation_enabled, (unsigned)aggregation_enabled_tmp);
 end:
 	kfree(aggr_string);
 	return count;

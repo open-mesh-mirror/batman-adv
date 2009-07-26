@@ -30,8 +30,7 @@
 #define BAT_HEADER_LEN (sizeof(struct ethhdr) + ((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))))
 
 
-struct batman_if
-{
+struct batman_if {
 	struct list_head list;
 	int16_t if_num;
 	char *dev;
@@ -46,8 +45,7 @@ struct batman_if
 
 };
 
-struct orig_node                 /* structure for orig_list maintaining nodes of mesh */
-{
+struct orig_node {               /* structure for orig_list maintaining nodes of mesh */
 	uint8_t orig[ETH_ALEN];
 	struct neigh_node *router;
 	struct batman_if *batman_if;
@@ -67,8 +65,7 @@ struct orig_node                 /* structure for orig_list maintaining nodes of
 	struct list_head neigh_list;
 };
 
-struct neigh_node
-{
+struct neigh_node {
 	struct list_head list;
 	uint8_t addr[ETH_ALEN];
 	uint8_t real_packet_count;
@@ -82,13 +79,11 @@ struct neigh_node
 	struct batman_if *if_incoming;
 };
 
-struct bat_priv
-{
+struct bat_priv {
 	struct net_device_stats stats;
 };
 
-struct device_client
-{
+struct device_client {
 	struct list_head queue_list;
 	unsigned int queue_len;
 	unsigned char index;
@@ -96,27 +91,23 @@ struct device_client
 	wait_queue_head_t queue_wait;
 };
 
-struct device_packet
-{
+struct device_packet {
 	struct list_head list;
 	struct icmp_packet icmp_packet;
 };
 
-struct hna_local_entry
-{
+struct hna_local_entry {
 	uint8_t addr[ETH_ALEN];
 	unsigned long last_seen;
 	char never_purge;
 };
 
-struct hna_global_entry
-{
+struct hna_global_entry {
 	uint8_t addr[ETH_ALEN];
 	struct orig_node *orig_node;
 };
 
-struct forw_packet                 /* structure for forw_list maintaining packets to be send/forwarded */
-{
+struct forw_packet {               /* structure for forw_list maintaining packets to be send/forwarded */
 	struct hlist_node list;
 	unsigned long send_time;
 	uint8_t own;

@@ -186,7 +186,7 @@ static void update_routes(struct orig_node *orig_node, struct neigh_node *neigh_
 	/* may be just HNA changed */
 	} else {
 
-		if ((hna_buff_len != orig_node->hna_buff_len) || ((hna_buff_len > 0 ) && (orig_node->hna_buff_len > 0) && (memcmp(orig_node->hna_buff, hna_buff, hna_buff_len) != 0))) {
+		if ((hna_buff_len != orig_node->hna_buff_len) || ((hna_buff_len > 0) && (orig_node->hna_buff_len > 0) && (memcmp(orig_node->hna_buff, hna_buff, hna_buff_len) != 0))) {
 
 			if (orig_node->hna_buff_len > 0)
 				hna_global_del_orig(orig_node, "originator changed hna");
@@ -227,7 +227,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 				neigh_node = tmp_neigh_node;
 		}
 
-		if ( neigh_node == NULL )
+		if (neigh_node == NULL)
 			neigh_node = create_neighbor(orig_neigh_node, orig_neigh_node, orig_neigh_node->orig, if_incoming);
 	}
 
@@ -612,8 +612,8 @@ int packet_recv_thread(void *data)
 					result = 0;
 					break;
 				}
-
-				if ((result = receive_raw_packet(batman_if->raw_sock, packet_buff, PACKBUFF_SIZE)) <= 0)
+				result = receive_raw_packet(batman_if->raw_sock, packet_buff, PACKBUFF_SIZE);
+				if (result <= 0)
 					break;
 
 				if (result < sizeof(struct ethhdr) + 2)

@@ -57,6 +57,6 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23)
 
-#define cancel_delayed_work_sync(wq) cancel_rearming_delayed_work(wq) 
+#define cancel_delayed_work_sync(wq) cancel_rearming_delayed_work(wq)
 
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23) */
