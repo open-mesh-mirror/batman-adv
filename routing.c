@@ -270,31 +270,22 @@ static int isBidirectionalNeigh(struct orig_node *orig_node, struct orig_node *o
 
 static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming, unsigned char *hna_buff, int hna_buff_len, char is_duplicate)
 {
-	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL, *best_neigh_node = NULL;
-	unsigned char max_tq = 0, max_bcast_own = 0;
+	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
 	int tmp_hna_buff_len;
 
 	debug_log(LOG_TYPE_BATMAN, "update_originator(): Searching and updating originator entry of received packet \n");
 
 	list_for_each_entry(tmp_neigh_node, &orig_node->neigh_list, list) {
-
 		if (compare_orig(tmp_neigh_node->addr, ethhdr->h_source) && (tmp_neigh_node->if_incoming == if_incoming)) {
 			neigh_node = tmp_neigh_node;
-		} else {
-
-			if (!is_duplicate) {
-				ring_buffer_set(tmp_neigh_node->tq_recv, &tmp_neigh_node->tq_index, 0);
-				tmp_neigh_node->tq_avg = ring_buffer_avg(tmp_neigh_node->tq_recv);
-			}
-
-			/* if we got have a better tq value via this neighbour or same tq value if it is currently our best neighbour (to avoid route flipping) */
-			if ((tmp_neigh_node->tq_avg > max_tq) || ((tmp_neigh_node->tq_avg == max_tq) && (tmp_neigh_node->orig_node->bcast_own_sum[if_incoming->if_num] > max_bcast_own)) || ((orig_node->router == tmp_neigh_node) && (tmp_neigh_node->tq_avg == max_tq))) {
-
-				max_tq = tmp_neigh_node->tq_avg;
-				max_bcast_own = tmp_neigh_node->orig_node->bcast_own_sum[if_incoming->if_num];
-				best_neigh_node = tmp_neigh_node;
-			}
+			continue;
 		}
+
+		if (is_duplicate)
+			continue;
+
+		ring_buffer_set(tmp_neigh_node->tq_recv, &tmp_neigh_node->tq_index, 0);
+		tmp_neigh_node->tq_avg = ring_buffer_avg(tmp_neigh_node->tq_recv);
 	}
 
 	if (neigh_node == NULL)
@@ -313,17 +304,20 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 		neigh_node->last_ttl = batman_packet->ttl;
 	}
 
-	if ((neigh_node->tq_avg > max_tq) || ((neigh_node->tq_avg == max_tq) && (neigh_node->orig_node->bcast_own_sum[if_incoming->if_num] > max_bcast_own)) || ((orig_node->router == neigh_node) && (neigh_node->tq_avg == max_tq))) {
-
-		max_tq = neigh_node->tq_avg;
-		max_bcast_own = neigh_node->orig_node->bcast_own_sum[if_incoming->if_num];
-		best_neigh_node = neigh_node;
-
-	}
-
 	tmp_hna_buff_len = (hna_buff_len > batman_packet->num_hna * ETH_ALEN ? batman_packet->num_hna * ETH_ALEN : hna_buff_len);
 
-	update_routes(orig_node, best_neigh_node, hna_buff, tmp_hna_buff_len);
+	/**
+	 * if we got have a better tq value via this neighbour or
+	 * same tq value but the link is more symetric change the next hop
+	 * router
+	 */
+	if ((orig_node->router != neigh_node) && ((!orig_node->router) ||
+	    (neigh_node->tq_avg > orig_node->router->tq_avg) ||
+	    ((neigh_node->tq_avg == orig_node->router->tq_avg) &&
+	     (neigh_node->orig_node->bcast_own_sum[if_incoming->if_num] > orig_node->router->orig_node->bcast_own_sum[if_incoming->if_num]))))
+		update_routes(orig_node, neigh_node, hna_buff, tmp_hna_buff_len);
+	else
+		update_routes(orig_node, orig_node->router, hna_buff, tmp_hna_buff_len);
 }
 
 static char count_real_packets(struct ethhdr *ethhdr, struct batman_packet *batman_packet, struct batman_if *if_incoming)
