@@ -39,7 +39,7 @@
 #define TQ_LOCAL_WINDOW_SIZE 64   /* sliding packet range of received originator
 				   * messages in squence numbers (should be a
 				   * multiple of our word size) */
-#define TQ_GLOBAL_WINDOW_SIZE 10
+#define TQ_GLOBAL_WINDOW_SIZE 5
 #define TQ_LOCAL_BIDRECT_SEND_MINIMUM 1
 #define TQ_LOCAL_BIDRECT_RECV_MINIMUM 1
 #define TQ_TOTAL_BIDRECT_LIMIT 1
