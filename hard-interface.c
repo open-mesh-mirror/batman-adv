@@ -42,7 +42,7 @@ int hardif_min_mtu(void)
 	struct batman_if *batman_if;
 	/* allow big frames if all devices are capable to do so
 	 * (have MTU > 1500 + BAT_HEADER_LEN) */
-	int min_mtu = 1500;
+	int min_mtu = ETH_DATA_LEN;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
