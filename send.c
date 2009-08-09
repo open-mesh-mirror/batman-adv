@@ -29,12 +29,6 @@
 
 #include "compat.h"
 
-/* apply the hop penalty for a wireless link */
-static uint8_t wireless_hop_penalty(const uint8_t tq)
-{
-	return (tq * (TQ_MAX_VALUE - (2 * TQ_HOP_PENALTY))) / (TQ_MAX_VALUE);
-}
-
 /* apply hop penalty for a normal link */
 static uint8_t hop_penalty(const uint8_t tq)
 {
@@ -144,17 +138,6 @@ static void send_packet_to_if(struct forw_packet *forw_packet,
 		/* for later logging */
 		if (packet_num > 0)
 			addr_to_string(orig_str, batman_packet->orig);
-
-		/**
-		 * if the outgoing interface is a wifi interface and
-		 * equal to the incoming interface add extra penalty
-		 * (own packets are to be ignored)
-		 */
-		if ((batman_if->net_dev->wireless_handlers) &&
-		    (!forw_packet->own) &&
-		    (forw_packet->if_incoming == batman_if))
-			batman_packet->tq =
-				wireless_hop_penalty(batman_packet->tq);
 
 		fwd_str = (packet_num > 0 ? "Forwarding" : (forw_packet->own ?
 							    "Sending own" :
