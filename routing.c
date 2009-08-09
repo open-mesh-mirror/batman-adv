@@ -683,7 +683,10 @@ int packet_recv_thread(void *data)
 							icmp_packet->msg_type = ECHO_REPLY;
 							icmp_packet->ttl = TTL;
 
-							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+							send_raw_packet(packet_buff + sizeof(struct ethhdr),
+							                result - sizeof(struct ethhdr),
+							                orig_node->batman_if,
+							                orig_node->router->addr);
 
 						}
 
@@ -715,7 +718,10 @@ int packet_recv_thread(void *data)
 							icmp_packet->msg_type = TTL_EXCEEDED;
 							icmp_packet->ttl = TTL;
 
-							send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+							send_raw_packet(packet_buff + sizeof(struct ethhdr),
+							                result - sizeof(struct ethhdr),
+							                orig_node->batman_if,
+							                orig_node->router->addr);
 
 						}
 
@@ -734,8 +740,10 @@ int packet_recv_thread(void *data)
 						icmp_packet->ttl--;
 
 						/* route it */
-						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
-
+						send_raw_packet(packet_buff + sizeof(struct ethhdr),
+						                result - sizeof(struct ethhdr),
+						                orig_node->batman_if,
+						                orig_node->router->addr);
 					}
 
 					spin_unlock(&orig_hash_lock);
@@ -787,7 +795,10 @@ int packet_recv_thread(void *data)
 						unicast_packet->ttl--;
 
 						/* route it */
-						send_raw_packet(packet_buff + sizeof(struct ethhdr), result - sizeof(struct ethhdr), orig_node->batman_if->net_dev->dev_addr, orig_node->router->addr, orig_node->batman_if);
+						send_raw_packet(packet_buff + sizeof(struct ethhdr),
+						                result - sizeof(struct ethhdr),
+						                orig_node->batman_if,
+						                orig_node->router->addr);
 					}
 
 					spin_unlock(&orig_hash_lock);

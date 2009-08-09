@@ -245,9 +245,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 				goto unlock;
 
 			send_raw_packet(skb->data, skb->len,
-					orig_node->batman_if->net_dev->dev_addr,
-					orig_node->router->addr,
-					orig_node->batman_if);
+					orig_node->batman_if,
+					orig_node->router->addr);
 		} else {
 			goto unlock;
 		}

@@ -409,9 +409,8 @@ static void broadcast_vis_packet(struct vis_info *info, int packet_length)
 
 			send_raw_packet((unsigned char *) &info->packet,
 					packet_length,
-					orig_node->batman_if->net_dev->dev_addr,
-					orig_node->router->addr,
-					orig_node->batman_if);
+					orig_node->batman_if,
+					orig_node->router->addr);
 		}
 	}
 	memcpy(info->packet.target_orig, broadcastAddr, ETH_ALEN);
@@ -430,8 +429,8 @@ static void unicast_vis_packet(struct vis_info *info, int packet_length)
 	    (orig_node->batman_if != NULL) &&
 	    (orig_node->router != NULL)) {
 		send_raw_packet((unsigned char *) &info->packet, packet_length,
-				orig_node->batman_if->net_dev->dev_addr,
-				orig_node->router->addr, orig_node->batman_if);
+				orig_node->batman_if,
+				orig_node->router->addr);
 	}
 	spin_unlock(&orig_hash_lock);
 }

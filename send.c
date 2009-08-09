@@ -65,8 +65,7 @@ static unsigned long forward_send_time(void)
 
 /* sends a raw packet. */
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len,
-		     uint8_t *src_addr, uint8_t *dst_addr,
-		     struct batman_if *batman_if)
+		     struct batman_if *batman_if, uint8_t *dst_addr)
 {
 	struct ethhdr *ethhdr;
 	struct sk_buff *skb;
@@ -179,8 +178,7 @@ static void send_packet_to_if(struct forw_packet *forw_packet,
 
 	send_raw_packet(forw_packet->packet_buff,
 			forw_packet->packet_len,
-			batman_if->net_dev->dev_addr,
-			broadcastAddr, batman_if);
+			batman_if, broadcastAddr);
 }
 
 /* send a batman packet */
@@ -218,8 +216,8 @@ static void send_packet(struct forw_packet *forw_packet)
 
 		send_raw_packet(forw_packet->packet_buff,
 				forw_packet->packet_len,
-				forw_packet->if_incoming->net_dev->dev_addr,
-				broadcastAddr, forw_packet->if_incoming);
+				forw_packet->if_incoming,
+				broadcastAddr);
 		return;
 	}
 
@@ -397,8 +395,7 @@ void send_outstanding_bcast_packet(struct work_struct *work)
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
 		send_raw_packet(forw_packet->packet_buff,
 				forw_packet->packet_len,
-				batman_if->net_dev->dev_addr,
-				broadcastAddr, batman_if);
+				batman_if, broadcastAddr);
 	}
 	rcu_read_unlock();
 

@@ -266,8 +266,8 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 
 		send_raw_packet((unsigned char *)&icmp_packet,
 				sizeof(struct icmp_packet),
-				orig_node->batman_if->net_dev->dev_addr,
-				orig_node->router->addr, orig_node->batman_if);
+				orig_node->batman_if,
+				orig_node->router->addr);
 	} else {
 		icmp_packet.msg_type = DESTINATION_UNREACHABLE;
 		bat_device_add_packet(device_client, &icmp_packet);

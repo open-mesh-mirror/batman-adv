@@ -21,8 +21,7 @@
 
 void send_own_packet_work(struct work_struct *work);
 void send_raw_packet(unsigned char *pack_buff, int pack_buff_len,
-		     uint8_t *src_addr, uint8_t *dst_addr,
-		     struct batman_if *batman_if);
+		     struct batman_if *batman_if, uint8_t *dst_addr);
 void schedule_own_packet(struct batman_if *batman_if);
 void schedule_forward_packet(struct orig_node *orig_node,
 			     struct ethhdr *ethhdr,
