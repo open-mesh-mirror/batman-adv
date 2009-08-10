@@ -135,10 +135,7 @@ static void send_packet_to_if(struct forw_packet *forw_packet,
 		else
 			batman_packet->flags &= ~DIRECTLINK;
 
-		/* for later logging */
-		if (packet_num > 0)
-			addr_to_string(orig_str, batman_packet->orig);
-
+		addr_to_string(orig_str, batman_packet->orig);
 		fwd_str = (packet_num > 0 ? "Forwarding" : (forw_packet->own ?
 							    "Sending own" :
 							    "Forwarding"));
