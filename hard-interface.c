@@ -72,6 +72,7 @@ int hardif_is_interface_up(char *dev)
 	if ((!list_empty(&if_list)) &&
 	    strncmp(((struct batman_if *)if_list.next)->dev, dev, IFNAMSIZ) &&
 	    !(((struct batman_if *)if_list.next)->if_active == IF_ACTIVE) &&
+	    !(((struct batman_if *)if_list.next)->if_active == IF_TO_BE_ACTIVATED) &&
 	    (!main_if_was_up())) {
 		rcu_read_unlock();
 		goto end;
@@ -170,7 +171,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	memcpy(((struct batman_packet *)(batman_if->packet_buff))->old_orig,
 	       batman_if->net_dev->dev_addr, ETH_ALEN);
 
-	batman_if->if_active = IF_ACTIVE;
+	batman_if->if_active = IF_TO_BE_ACTIVATED;
 	active_ifs++;
 
 	/* save the mac address if it is our primary interface */

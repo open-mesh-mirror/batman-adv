@@ -238,6 +238,16 @@ void schedule_own_packet(struct batman_if *batman_if)
 	unsigned long send_time;
 	struct batman_packet *batman_packet;
 
+	/**
+	 * the interface gets activated here to avoid race conditions between
+	 * the moment of activating the interface in
+	 * hardif_activate_interface() where the originator mac is set and
+	 * outdated packets (especially uninitialized mac addresses) in the
+	 * packet queue
+	 */
+	if (batman_if->if_active == IF_TO_BE_ACTIVATED)
+		batman_if->if_active = IF_ACTIVE;
+
 	batman_packet = (struct batman_packet *)batman_if->packet_buff;
 
 	/* if local hna has changed and interface is a primary interface */

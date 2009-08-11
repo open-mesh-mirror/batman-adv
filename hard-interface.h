@@ -20,6 +20,7 @@
 #define IF_INACTIVE 0
 #define IF_ACTIVE 1
 #define IF_TO_BE_DEACTIVATED 2
+#define IF_TO_BE_ACTIVATED 3
 
 void hardif_remove_interfaces(void);
 int hardif_add_interface(char *dev, int if_num);
