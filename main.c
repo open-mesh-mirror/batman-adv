@@ -58,7 +58,6 @@ struct workqueue_struct *bat_event_workqueue;
 int init_module(void)
 {
 	int retval;
-	int result;
 
 	INIT_LIST_HEAD(&if_list);
 	INIT_HLIST_HEAD(&forw_bat_list);
@@ -93,19 +92,17 @@ int init_module(void)
 		goto end;
 	}
 
-	result = register_netdev(soft_device);
+	retval = register_netdev(soft_device);
 
-	if (result < 0) {
-		debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", result);
+	if (retval < 0) {
+		debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", retval);
 		goto free_soft_device;
 	}
 
 	start_hardif_check_timer();
 
 	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. advanced %s%s (compatibility version %i) loaded \n",
-		  SOURCE_VERSION,
-		  (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""),
-		  COMPAT_VERSION);
+	          SOURCE_VERSION, REVISION_VERSION_STR, COMPAT_VERSION);
 
 	return 0;
 
@@ -281,3 +278,8 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_SUPPORTED_DEVICE(DRIVER_DEVICE);
+#ifdef REVISION_VERSION
+MODULE_VERSION(SOURCE_VERSION "-" REVISION_VERSION);
+#else
+MODULE_VERSION(SOURCE_VERSION);
+#endif

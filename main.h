@@ -82,11 +82,6 @@
 #define LOG_TYPE_BATMAN_NAME	"batman"
 #define LOG_TYPE_ROUTES_NAME	"routes"
 
-
-#ifndef REVISION_VERSION
-#define REVISION_VERSION "0"
-#endif
-
 #include <linux/mutex.h>	/* mutex */
 #include <linux/module.h>	/* needed by all modules */
 #include <linux/netdevice.h>	/* netdevice */
@@ -98,6 +93,12 @@
 #include <net/sock.h>		/* struct sock */
 #include <linux/jiffies.h>
 #include "types.h"
+
+#ifndef REVISION_VERSION
+#define REVISION_VERSION_STR ""
+#else
+#define REVISION_VERSION_STR REVISION_VERSION
+#endif
 
 extern struct list_head if_list;
 extern struct hlist_head forw_bat_list;

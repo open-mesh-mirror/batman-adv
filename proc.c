@@ -217,8 +217,7 @@ static int proc_originators_read(struct seq_file *seq, void *offset)
 	seq_printf(seq,
 		   "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s] \n",
 		   "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF",
-		   "Potential nexthops", SOURCE_VERSION,
-		   (strlen(REVISION_VERSION) > 3 ? REVISION_VERSION : ""),
+		   "Potential nexthops", SOURCE_VERSION, REVISION_VERSION_STR,
 		   ((struct batman_if *)if_list.next)->dev,
 		   ((struct batman_if *)if_list.next)->addr_str);
 
