@@ -41,9 +41,12 @@ static void hna_local_start_timer(void)
 
 int hna_local_init(void)
 {
+	if (hna_local_hash)
+		return 1;
+
 	hna_local_hash = hash_new(128, compare_orig, choose_orig);
 
-	if (hna_local_hash == NULL)
+	if (!hna_local_hash)
 		return 0;
 
 	hna_local_start_timer();
@@ -232,17 +235,22 @@ void hna_local_purge(struct work_struct *work)
 
 void hna_local_free(void)
 {
-	if (hna_local_hash != NULL) {
-		cancel_delayed_work_sync(&hna_local_purge_wq);
-		hash_delete(hna_local_hash, _hna_local_del);
-	}
+	if (!hna_local_hash)
+		return;
+
+	cancel_delayed_work_sync(&hna_local_purge_wq);
+	hash_delete(hna_local_hash, _hna_local_del);
+	hna_local_hash = NULL;
 }
 
 int hna_global_init(void)
 {
+	if (hna_global_hash)
+		return 1;
+
 	hna_global_hash = hash_new(128, compare_orig, choose_orig);
 
-	if (hna_global_hash == NULL)
+	if (!hna_global_hash)
 		return 0;
 
 	return 1;
@@ -420,8 +428,11 @@ static void hna_global_del(void *data)
 
 void hna_global_free(void)
 {
-	if (hna_global_hash != NULL)
-		hash_delete(hna_global_hash, hna_global_del);
+	if (!hna_global_hash)
+		return;
+
+	hash_delete(hna_global_hash, hna_global_del);
+	hna_global_hash = NULL;
 }
 
 struct orig_node *transtable_search(uint8_t *addr)

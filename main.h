@@ -120,7 +120,6 @@ extern unsigned char broadcastAddr[];
 extern char module_state;
 extern struct workqueue_struct *bat_event_workqueue;
 
-void start_purge_timer(void);
 void activate_module(void);
 void shutdown_module(void);
 void inc_module_count(void);

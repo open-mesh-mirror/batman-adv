@@ -39,7 +39,6 @@ struct hashtable_t *orig_hash;
 DEFINE_SPINLOCK(orig_hash_lock);
 DEFINE_SPINLOCK(forw_bat_list_lock);
 DEFINE_SPINLOCK(forw_bcast_list_lock);
-static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
 atomic_t originator_interval;
 atomic_t vis_interval;
@@ -80,15 +79,13 @@ int init_module(void)
 	if (retval < 0)
 		return retval;
 
-	orig_hash = hash_new(128, compare_orig, choose_orig);
-
-	if (orig_hash == NULL)
+	if (originator_init() < 1)
 		goto clean_proc;
 
-	if (hna_local_init() < 0)
+	if (hna_local_init() < 1)
 		goto free_orig_hash;
 
-	if (hna_global_init() < 0)
+	if (hna_global_init() < 1)
 		goto free_lhna_hash;
 
 	bat_device_init();
@@ -125,10 +122,8 @@ free_soft_device:
 	soft_device = NULL;
 free_lhna_hash:
 	hna_local_free();
-
 free_orig_hash:
-	hash_delete(orig_hash, free_orig_node);
-
+	originator_free();
 clean_proc:
 	cleanup_procfs();
 	return -ENOMEM;
@@ -144,20 +139,11 @@ void cleanup_module(void)
 
 	destroy_hardif_check_timer();
 
-	spin_lock(&orig_hash_lock);
-	hash_delete(orig_hash, free_orig_node);
-	spin_unlock(&orig_hash_lock);
-
 	hna_local_free();
 	hna_global_free();
 	cleanup_procfs();
 	destroy_workqueue(bat_event_workqueue);
 	bat_event_workqueue = NULL;
-}
-
-void start_purge_timer(void)
-{
-	queue_delayed_work(bat_event_workqueue, &purge_orig_wq, 1 * HZ);
 }
 
 /* activates the module, creates bat device, starts timer ... */
@@ -172,8 +158,6 @@ void activate_module(void)
 		debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
 		kthread_task = NULL;
 	}
-
-	start_purge_timer();
 
 	bat_device_setup();
 
@@ -199,13 +183,7 @@ void shutdown_module(void)
 		kthread_task = NULL;
 	}
 
-	rcu_read_lock();
-	if (!(list_empty(&if_list))) {
-		rcu_read_unlock();
-		cancel_delayed_work_sync(&purge_orig_wq);
-	} else {
-		rcu_read_unlock();
-	}
+	originator_free();
 
 	synchronize_net();
 	bat_device_destroy();
