@@ -97,7 +97,7 @@
 #ifndef REVISION_VERSION
 #define REVISION_VERSION_STR ""
 #else
-#define REVISION_VERSION_STR REVISION_VERSION
+#define REVISION_VERSION_STR " "REVISION_VERSION
 #endif
 
 extern struct list_head if_list;
