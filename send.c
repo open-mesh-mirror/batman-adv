@@ -248,11 +248,15 @@ void schedule_own_packet(struct batman_if *batman_if)
 	if (batman_if->if_active == IF_TO_BE_ACTIVATED)
 		batman_if->if_active = IF_ACTIVE;
 
-	batman_packet = (struct batman_packet *)batman_if->packet_buff;
-
 	/* if local hna has changed and interface is a primary interface */
 	if ((hna_local_changed) && (batman_if->if_num == 0))
 		rebuild_batman_packet(batman_if);
+
+	/**
+	 * NOTE: packet_buff might just have been re-allocated in
+	 * rebuild_batman_packet()
+	 */
+	batman_packet = (struct batman_packet *)batman_if->packet_buff;
 
 	/* change sequence number to network order */
 	batman_packet->seqno = htons((uint16_t)atomic_read(&batman_if->seqno));
