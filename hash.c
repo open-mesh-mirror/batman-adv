@@ -69,6 +69,9 @@ struct hash_it_t *hash_iterate(struct hashtable_t *hash,
 {
 	struct hash_it_t *iter;
 
+	if (!hash)
+		return NULL;
+
 	if (iter_in == NULL) {
 		iter = kmalloc(sizeof(struct hash_it_t), GFP_ATOMIC);
 		iter->index = -1;
@@ -171,6 +174,9 @@ int hash_add(struct hashtable_t *hash, void *data)
 	int index;
 	struct element_t *bucket, *prev_bucket = NULL;
 
+	if (!hash)
+		return -1;
+
 	index = hash->choose(data, hash->size);
 	bucket = hash->table[index];
 
@@ -207,6 +213,9 @@ void *hash_find(struct hashtable_t *hash, void *keydata)
 {
 	int index;
 	struct element_t *bucket;
+
+	if (!hash)
+		return NULL;
 
 	index = hash->choose(keydata , hash->size);
 	bucket = hash->table[index];
