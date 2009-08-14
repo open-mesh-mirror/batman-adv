@@ -249,7 +249,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 		batman_if->if_active = IF_ACTIVE;
 
 	/* if local hna has changed and interface is a primary interface */
-	if ((hna_local_changed) && (batman_if->if_num == 0))
+	if ((atomic_read(&hna_local_changed)) && (batman_if->if_num == 0))
 		rebuild_batman_packet(batman_if);
 
 	/**

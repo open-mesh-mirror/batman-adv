@@ -27,6 +27,7 @@
 
 struct hashtable_t *hna_local_hash;
 static struct hashtable_t *hna_global_hash;
+atomic_t hna_local_changed;
 
 DEFINE_SPINLOCK(hna_local_hash_lock);
 DEFINE_SPINLOCK(hna_global_hash_lock);
@@ -46,6 +47,7 @@ int hna_local_init(void)
 		return 0;
 
 	hna_local_start_timer();
+	atomic_set(&hna_local_changed, 0);
 
 	return 1;
 }
@@ -99,7 +101,7 @@ void hna_local_add(uint8_t *addr)
 
 	hash_add(hna_local_hash, hna_local_entry);
 	num_hna++;
-	hna_local_changed = 1;
+	atomic_set(&hna_local_changed, 1);
 
 	if (hna_local_hash->elements * 4 > hna_local_hash->size) {
 		swaphash = hash_resize(hna_local_hash,
@@ -147,7 +149,7 @@ int hna_local_fill_buffer(unsigned char *buff, int buff_len)
 
 	/* if we did not get all new local hnas see you next time  ;-) */
 	if (i == num_hna)
-		hna_local_changed = 0;
+		atomic_set(&hna_local_changed, 0);
 
 	spin_unlock_irqrestore(&hna_local_hash_lock, flags);
 
@@ -189,7 +191,7 @@ static void _hna_local_del(void *data)
 {
 	kfree(data);
 	num_hna--;
-	hna_local_changed = 1;
+	atomic_set(&hna_local_changed, 1);
 }
 
 static void hna_local_del(struct hna_local_entry *hna_local_entry,

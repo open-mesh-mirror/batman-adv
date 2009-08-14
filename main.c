@@ -52,7 +52,6 @@ struct net_device *soft_device;
 static struct task_struct *kthread_task;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char hna_local_changed;
 char module_state = MODULE_INACTIVE;
 
 struct workqueue_struct *bat_event_workqueue;

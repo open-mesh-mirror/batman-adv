@@ -37,3 +37,4 @@ struct orig_node *transtable_search(uint8_t *addr);
 
 extern spinlock_t hna_local_hash_lock;
 extern struct hashtable_t *hna_local_hash;
+extern atomic_t hna_local_changed;
