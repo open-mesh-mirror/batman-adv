@@ -51,7 +51,7 @@ struct net_device *soft_device;
 static struct task_struct *kthread_task;
 
 unsigned char broadcastAddr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char module_state = MODULE_INACTIVE;
+atomic_t module_state;
 
 struct workqueue_struct *bat_event_workqueue;
 
@@ -63,6 +63,9 @@ int init_module(void)
 	INIT_LIST_HEAD(&if_list);
 	INIT_HLIST_HEAD(&forw_bat_list);
 	INIT_HLIST_HEAD(&forw_bcast_list);
+
+	atomic_set(&module_state, MODULE_INACTIVE);
+
 	atomic_set(&originator_interval, 1000);
 	atomic_set(&vis_interval, 1000);/* TODO: raise this later, this is only
 					 * for debugging now. */
@@ -79,15 +82,6 @@ int init_module(void)
 	if (retval < 0)
 		return retval;
 
-	if (originator_init() < 1)
-		goto clean_proc;
-
-	if (hna_local_init() < 1)
-		goto free_orig_hash;
-
-	if (hna_global_init() < 1)
-		goto free_lhna_hash;
-
 	bat_device_init();
 
 	/* initialize layer 2 interface */
@@ -96,7 +90,7 @@ int init_module(void)
 
 	if (!soft_device) {
 		debug_log(LOG_TYPE_CRIT, "Unable to allocate the batman interface\n");
-		goto free_lhna_hash;
+		goto end;
 	}
 
 	result = register_netdev(soft_device);
@@ -105,8 +99,6 @@ int init_module(void)
 		debug_log(LOG_TYPE_CRIT, "Unable to register the batman interface: %i\n", result);
 		goto free_soft_device;
 	}
-
-	hna_local_add(soft_device->dev_addr);
 
 	start_hardif_check_timer();
 
@@ -120,28 +112,22 @@ int init_module(void)
 free_soft_device:
 	free_netdev(soft_device);
 	soft_device = NULL;
-free_lhna_hash:
-	hna_local_free();
-free_orig_hash:
-	originator_free();
-clean_proc:
-	cleanup_procfs();
+end:
 	return -ENOMEM;
 }
 
 void cleanup_module(void)
 {
 	shutdown_module();
+
 	if (soft_device) {
 		unregister_netdev(soft_device);
 		soft_device = NULL;
 	}
 
 	destroy_hardif_check_timer();
-
-	hna_local_free();
-	hna_global_free();
 	cleanup_procfs();
+
 	destroy_workqueue(bat_event_workqueue);
 	bat_event_workqueue = NULL;
 }
@@ -149,25 +135,44 @@ void cleanup_module(void)
 /* activates the module, creates bat device, starts timer ... */
 void activate_module(void)
 {
-	module_state = MODULE_ACTIVE;
+	if (originator_init() < 1)
+		goto err;
 
-	/* (re)start kernel thread for packet processing */
-	kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
+	if (hna_local_init() < 1)
+		goto err;
 
-	if (IS_ERR(kthread_task)) {
-		debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
-		kthread_task = NULL;
-	}
+	if (hna_global_init() < 1)
+		goto err;
+
+	hna_local_add(soft_device->dev_addr);
 
 	bat_device_setup();
-
 	vis_init();
+
+	/* (re)start kernel thread for packet processing */
+	if (!kthread_task) {
+		kthread_task = kthread_run(packet_recv_thread, NULL, "batman-adv");
+
+		if (IS_ERR(kthread_task)) {
+			debug_log(LOG_TYPE_CRIT, "Unable to start packet receive thread\n");
+			kthread_task = NULL;
+		}
+	}
+
+	atomic_set(&module_state, MODULE_ACTIVE);
+	goto end;
+
+err:
+	debug_log(LOG_TYPE_CRIT, "Unable to allocate memory for mesh information structures: out of mem ?\n");
+	shutdown_module();
+end:
+	return;
 }
 
 /* shuts down the whole module.*/
 void shutdown_module(void)
 {
-	module_state = MODULE_INACTIVE;
+	atomic_set(&module_state, MODULE_INACTIVE);
 
 	purge_outstanding_packets();
 	flush_workqueue(bat_event_workqueue);
@@ -184,6 +189,9 @@ void shutdown_module(void)
 	}
 
 	originator_free();
+
+	hna_local_free();
+	hna_global_free();
 
 	synchronize_net();
 	bat_device_destroy();

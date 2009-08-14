@@ -306,6 +306,7 @@ int hardif_add_interface(char *dev, int if_num)
 		batman_packet->num_hna = hna_local_fill_buffer(hna_buff,
 							       hna_len);
 	}
+
 	atomic_set(&batman_if->seqno, 1);
 
 	/* resize all orig nodes because orig_node->bcast_own(_sum) depend on
@@ -348,7 +349,7 @@ void hardif_check_interfaces_status(void)
 	struct batman_if *batman_if;
 	int min_mtu;
 
-	if (module_state == MODULE_INACTIVE)
+	if (atomic_read(&module_state) == MODULE_INACTIVE)
 		return;
 
 	/**
@@ -370,7 +371,7 @@ void hardif_check_interfaces_status(void)
 
 	/* waiting for activation? if interfaces are available now, we can
 	 * activate. */
-	if ((module_state == MODULE_WAITING) &&
+	if ((atomic_read(&module_state) == MODULE_WAITING) &&
 	    (hardif_get_active_if_num() > 0))
 		activate_module();
 

@@ -49,8 +49,8 @@ int hna_local_init(void)
 	if (!hna_local_hash)
 		return 0;
 
-	hna_local_start_timer();
 	atomic_set(&hna_local_changed, 0);
+	hna_local_start_timer();
 
 	return 1;
 }

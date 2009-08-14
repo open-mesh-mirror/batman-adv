@@ -257,19 +257,22 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 		goto out;
 	}
 
+	if (atomic_read(&module_state) != MODULE_ACTIVE)
+		goto dst_unreach;
+
 	spin_lock(&orig_hash_lock);
 	orig_node = ((struct orig_node *)hash_find(orig_hash, icmp_packet.dst));
 
 	if (!orig_node)
-		goto dst_unreach;
+		goto unlock;
 
 	if (!orig_node->router)
-		goto dst_unreach;
+		goto unlock;
 
 	batman_if = orig_node->batman_if;
 
 	if (!batman_if)
-		goto dst_unreach;
+		goto unlock;
 
 	memcpy(icmp_packet.orig,
 	       batman_if->net_dev->dev_addr,
@@ -282,12 +285,11 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 	spin_unlock(&orig_hash_lock);
 	goto out;
 
-dst_unreach:
+unlock:
 	spin_unlock(&orig_hash_lock);
-
+dst_unreach:
 	icmp_packet.msg_type = DESTINATION_UNREACHABLE;
 	bat_device_add_packet(device_client, &icmp_packet);
-
 out:
 	return len;
 }

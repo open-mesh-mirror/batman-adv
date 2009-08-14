@@ -117,7 +117,7 @@ extern int16_t num_ifs;
 extern struct net_device *soft_device;
 
 extern unsigned char broadcastAddr[];
-extern char module_state;
+extern atomic_t module_state;
 extern struct workqueue_struct *bat_event_workqueue;
 
 void activate_module(void);
