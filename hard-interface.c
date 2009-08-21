@@ -102,7 +102,7 @@ end:
 /* deactivates the interface. */
 void hardif_deactivate_interface(struct batman_if *batman_if)
 {
-	if (batman_if->raw_sock != NULL)
+	if (batman_if->raw_sock)
 		sock_release(batman_if->raw_sock);
 
 	/**
@@ -110,7 +110,7 @@ void hardif_deactivate_interface(struct batman_if *batman_if)
 	 * proc_interfaces_write() and has to be unreferenced.
 	 */
 
-	if (batman_if->net_dev != NULL)
+	if (batman_if->net_dev)
 		dev_put(batman_if->net_dev);
 
 	batman_if->raw_sock = NULL;
