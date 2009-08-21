@@ -116,14 +116,6 @@ static ssize_t proc_interfaces_write(struct file *instance,
 		atomic_set(&module_state, MODULE_WAITING);
 
 	hardif_add_interface(if_string, if_num);
-	hardif_check_interfaces_status();
-
-	if (atomic_read(&module_state) == MODULE_WAITING) {
-		if (hardif_get_active_if_num() > 0)
-			activate_module();
-		else
-			debug_log(LOG_TYPE_WARN, "Can't activate module: the primary interface is not active\n");
-	}
 
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
