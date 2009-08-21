@@ -229,6 +229,7 @@ void receive_client_update_packet(struct vis_packet *vis_packet,
 {
 	struct vis_info *info;
 	int is_new;
+
 	/* clients shall not broadcast. */
 	if (is_bcast(vis_packet->target_orig))
 		return;
@@ -496,8 +497,9 @@ int vis_init(void)
 	my_vis_info = kmalloc(1000, GFP_KERNEL);
 	if (!my_vis_info) {
 		debug_log(LOG_TYPE_CRIT, "Can't initialize vis packet\n");
-		goto vis_quit;
+		goto err;
 	}
+
 	/* prefill the vis info */
 	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
 	INIT_LIST_HEAD(&my_vis_info->recv_list);
@@ -519,17 +521,16 @@ int vis_init(void)
 			  "Can't add own vis packet into hash\n");
 		free_info(my_vis_info);	/* not in hash, need to remove it
 					 * manually. */
-		goto vis_quit;
+		goto err;
 	}
 
 	spin_unlock(&vis_hash_lock);
 	start_vis_timer();
 	return 1;
 
-vis_quit:
-	vis_quit();
 err:
 	spin_unlock(&vis_hash_lock);
+	vis_quit();
 	return 0;
 }
 
