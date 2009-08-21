@@ -117,7 +117,7 @@ static int vis_info_choose(void *data, int size)
 static void recv_list_add(struct list_head *recv_list, char *mac)
 {
 	struct recvlist_node *entry;
-	entry = kmalloc(sizeof(struct recvlist_node), GFP_KERNEL);
+	entry = kmalloc(sizeof(struct recvlist_node), GFP_ATOMIC);
 	if (!entry)
 		return;
 
@@ -172,7 +172,7 @@ static struct vis_info *add_packet(struct vis_packet *vis_packet,
 		free_info(old_info);
 	}
 
-	info = kmalloc(sizeof(struct vis_info) + vis_info_len, GFP_KERNEL);
+	info = kmalloc(sizeof(struct vis_info) + vis_info_len, GFP_ATOMIC);
 	if (info == NULL)
 		return NULL;
 
@@ -368,7 +368,6 @@ void purge_vis_packets(void)
 	struct hash_it_t *hashit = NULL;
 	struct vis_info *info;
 
-	spin_lock(&vis_hash_lock);
 	while (NULL != (hashit = hash_iterate(vis_hash, hashit))) {
 		info = hashit->bucket->data;
 		if (info == my_vis_info)	/* never purge own data. */
@@ -379,7 +378,6 @@ void purge_vis_packets(void)
 			free_info(info);
 		}
 	}
-	spin_unlock(&vis_hash_lock);
 }
 
 static void broadcast_vis_packet(struct vis_info *info, int packet_length)
@@ -464,8 +462,9 @@ static void send_vis_packets(struct work_struct *work)
 {
 	struct vis_info *info, *temp;
 
-	purge_vis_packets();
 	spin_lock(&vis_hash_lock);
+	purge_vis_packets();
+
 	if (generate_vis_packet() == 0)
 		/* schedule if generation was successful */
 		list_add_tail(&my_vis_info->send_list, &send_list);

@@ -87,7 +87,7 @@ static struct neigh_node *create_neighbor(struct orig_node *orig_node, struct or
 
 	debug_log(LOG_TYPE_BATMAN, "Creating new last-hop neighbour of originator\n");
 
-	neigh_node = kmalloc(sizeof(struct neigh_node), GFP_KERNEL);
+	neigh_node = kmalloc(sizeof(struct neigh_node), GFP_ATOMIC);
 	memset(neigh_node, 0, sizeof(struct neigh_node));
 	INIT_LIST_HEAD(&neigh_node->list);
 
@@ -135,7 +135,7 @@ static struct orig_node *get_orig_node(uint8_t *addr)
 	addr_to_string(orig_str, addr);
 	debug_log(LOG_TYPE_BATMAN, "Creating new originator: %s \n", orig_str);
 
-	orig_node = kmalloc(sizeof(struct orig_node), GFP_KERNEL);
+	orig_node = kmalloc(sizeof(struct orig_node), GFP_ATOMIC);
 	memset(orig_node, 0, sizeof(struct orig_node));
 	INIT_LIST_HEAD(&orig_node->neigh_list);
 
@@ -144,10 +144,10 @@ static struct orig_node *get_orig_node(uint8_t *addr)
 	orig_node->batman_if = NULL;
 	orig_node->hna_buff = NULL;
 
-	orig_node->bcast_own = kmalloc(num_ifs * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_KERNEL);
+	orig_node->bcast_own = kmalloc(num_ifs * sizeof(TYPE_OF_WORD) * NUM_WORDS, GFP_ATOMIC);
 	memset(orig_node->bcast_own, 0, num_ifs * sizeof(TYPE_OF_WORD) * NUM_WORDS);
 
-	orig_node->bcast_own_sum = kmalloc(num_ifs * sizeof(uint8_t), GFP_KERNEL);
+	orig_node->bcast_own_sum = kmalloc(num_ifs * sizeof(uint8_t), GFP_ATOMIC);
 	memset(orig_node->bcast_own_sum, 0, num_ifs * sizeof(uint8_t));
 
 	hash_add(orig_hash, orig_node);
@@ -579,6 +579,7 @@ void purge_orig(struct work_struct *work)
 	}
 
 	spin_unlock(&orig_hash_lock);
+
 	start_purge_timer();
 }
 

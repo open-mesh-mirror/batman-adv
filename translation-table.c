@@ -87,7 +87,7 @@ void hna_local_add(uint8_t *addr)
 	debug_log(LOG_TYPE_ROUTES, "Creating new local hna entry: %s \n",
 		  hna_str);
 
-	hna_local_entry = kmalloc(sizeof(struct hna_local_entry), GFP_KERNEL);
+	hna_local_entry = kmalloc(sizeof(struct hna_local_entry), GFP_ATOMIC);
 	if (!hna_local_entry)
 		return;
 
@@ -281,7 +281,7 @@ void hna_global_add_orig(struct orig_node *orig_node,
 
 			hna_global_entry =
 				kmalloc(sizeof(struct hna_global_entry),
-					GFP_KERNEL);
+					GFP_ATOMIC);
 
 			if (!hna_global_entry)
 				break;
@@ -318,7 +318,7 @@ void hna_global_add_orig(struct orig_node *orig_node,
 
 	if (orig_node->hna_buff_len > 0) {
 		orig_node->hna_buff = kmalloc(orig_node->hna_buff_len,
-					      GFP_KERNEL);
+					      GFP_ATOMIC);
 		memcpy(orig_node->hna_buff, hna_buff, orig_node->hna_buff_len);
 	} else {
 		orig_node->hna_buff = NULL;

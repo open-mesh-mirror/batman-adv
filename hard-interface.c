@@ -223,7 +223,7 @@ static int resize_orig(struct orig_node *orig_node, int if_num)
 	void *data_ptr;
 
 	data_ptr = kmalloc((if_num + 1) * sizeof(TYPE_OF_WORD) * NUM_WORDS,
-			   GFP_KERNEL);
+			   GFP_ATOMIC);
 	if (!data_ptr) {
 		debug_log(LOG_TYPE_WARN, "Can't resize orig: out of memory\n");
 		return -1;
@@ -234,7 +234,7 @@ static int resize_orig(struct orig_node *orig_node, int if_num)
 	kfree(orig_node->bcast_own);
 	orig_node->bcast_own = data_ptr;
 
-	data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_KERNEL);
+	data_ptr = kmalloc((if_num + 1) * sizeof(uint8_t), GFP_ATOMIC);
 	if (!data_ptr) {
 		debug_log(LOG_TYPE_WARN, "Can't resize orig: out of memory\n");
 		return -1;
