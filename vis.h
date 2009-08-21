@@ -57,4 +57,4 @@ void receive_server_sync_packet(struct vis_packet *vis_packet,
 void receive_client_update_packet(struct vis_packet *vis_packet,
 				  int vis_info_len);
 int vis_init(void);
-int vis_quit(void);
+void vis_quit(void);

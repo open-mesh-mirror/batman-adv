@@ -146,7 +146,8 @@ void activate_module(void)
 	if (bat_device_setup() < 1)
 		goto end;
 
-	vis_init();
+	if (vis_init() < 1)
+		goto err;
 
 	/* (re)start kernel thread for packet processing */
 	if (!kthread_task) {

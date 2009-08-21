@@ -483,17 +483,21 @@ static DECLARE_DELAYED_WORK(vis_timer_wq, send_vis_packets);
  * initialized (e.g. bat0 is initialized, interfaces have been added) */
 int vis_init(void)
 {
+	if (vis_hash)
+		return 1;
+
+	spin_lock(&vis_hash_lock);
+
 	vis_hash = hash_new(256, vis_info_cmp, vis_info_choose);
-	if (vis_hash == NULL) {
+	if (!vis_hash) {
 		debug_log(LOG_TYPE_CRIT, "Can't initialize vis_hash\n");
-		return -1;
+		goto err;
 	}
 
 	my_vis_info = kmalloc(1000, GFP_KERNEL);
-	if (my_vis_info == NULL) {
-		vis_quit();
+	if (!my_vis_info) {
 		debug_log(LOG_TYPE_CRIT, "Can't initialize vis packet\n");
-		return -1;
+		goto vis_quit;
 	}
 	/* prefill the vis info */
 	my_vis_info->first_seen = jiffies - atomic_read(&vis_interval);
@@ -516,27 +520,34 @@ int vis_init(void)
 			  "Can't add own vis packet into hash\n");
 		free_info(my_vis_info);	/* not in hash, need to remove it
 					 * manually. */
-		vis_quit();
-		return -1;
+		goto vis_quit;
 	}
 
+	spin_unlock(&vis_hash_lock);
 	start_vis_timer();
+	return 1;
+
+vis_quit:
+	vis_quit();
+err:
+	spin_unlock(&vis_hash_lock);
 	return 0;
 }
 
 /* shutdown vis-server */
-int vis_quit(void)
+void vis_quit(void)
 {
-	if (vis_hash != NULL) {
-		cancel_delayed_work_sync(&vis_timer_wq);
-		spin_lock(&vis_hash_lock);
-		/* properly remove, kill timers ... */
-		hash_delete(vis_hash, free_info);
-		vis_hash = NULL;
-		my_vis_info = NULL;
-		spin_unlock(&vis_hash_lock);
-	}
-	return 0;
+	if (!vis_hash)
+		return;
+
+	cancel_delayed_work_sync(&vis_timer_wq);
+
+	spin_lock(&vis_hash_lock);
+	/* properly remove, kill timers ... */
+	hash_delete(vis_hash, free_info);
+	vis_hash = NULL;
+	my_vis_info = NULL;
+	spin_unlock(&vis_hash_lock);
 }
 
 /* schedule packets for (re)transmission */
