@@ -50,33 +50,33 @@ void bat_device_init(void)
 		device_client_hash[i] = NULL;
 }
 
-void bat_device_setup(void)
+int bat_device_setup(void)
 {
 	int tmp_major;
 
 	if (Major)
-		return;
+		return 1;
 
 	/* register our device - kernel assigns a free major number */
 	tmp_major = register_chrdev(0, DRIVER_DEVICE, &fops);
 	if (tmp_major < 0) {
 		debug_log(LOG_TYPE_WARN, "Registering the character device failed with %d\n",
 			  tmp_major);
-		return;
+		return 0;
 	}
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
 	if (devfs_mk_cdev(MKDEV(tmp_major, 0), S_IFCHR | S_IRUGO | S_IWUGO,
 			  "batman-adv", 0)) {
 		debug_log(LOG_TYPE_WARN, "Could not create /dev/batman-adv\n");
-		return;
+		return 0;
 	}
 #else
 	batman_class = class_create(THIS_MODULE, "batman-adv");
 
 	if (IS_ERR(batman_class)) {
 		debug_log(LOG_TYPE_WARN, "Could not register class 'batman-adv' \n");
-		return;
+		return 0;
 	}
 
 	device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL,
@@ -84,6 +84,7 @@ void bat_device_setup(void)
 #endif
 
 	Major = tmp_major;
+	return 1;
 }
 
 void bat_device_destroy(void)

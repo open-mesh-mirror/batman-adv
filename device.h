@@ -20,7 +20,7 @@
 #include "types.h"
 
 void bat_device_init(void);
-void bat_device_setup(void);
+int bat_device_setup(void);
 void bat_device_destroy(void);
 int bat_device_open(struct inode *inode, struct file *file);
 int bat_device_release(struct inode *inode, struct file *file);

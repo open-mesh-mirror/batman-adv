@@ -143,7 +143,9 @@ void activate_module(void)
 
 	hna_local_add(soft_device->dev_addr);
 
-	bat_device_setup();
+	if (bat_device_setup() < 1)
+		goto end;
+
 	vis_init();
 
 	/* (re)start kernel thread for packet processing */
