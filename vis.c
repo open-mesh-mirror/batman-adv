@@ -187,7 +187,7 @@ static struct vis_info *add_packet(struct vis_packet *vis_packet,
 
 	/* repair if entries is longer than packet. */
 	if (info->packet.entries * sizeof(struct vis_info_entry) > vis_info_len)
-		info->packet.entries = vis_info_len / sizeof(struct vis_info);
+		info->packet.entries = vis_info_len / sizeof(struct vis_info_entry);
 
 	recv_list_add(&info->recv_list, info->packet.sender_orig);
 
