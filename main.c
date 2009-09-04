@@ -224,6 +224,8 @@ int addr_to_string(char *buff, uint8_t *addr)
 		       addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
 }
 
+/* returns 1 if they are the same originator */
+
 int compare_orig(void *data1, void *data2)
 {
 	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);

@@ -25,6 +25,10 @@
 #define DRIVER_DEVICE "batman-adv"
 
 #define SOURCE_VERSION "0.2-beta"
+
+
+/* B.A.T.M.A.N. parameters */
+
 #define TQ_MAX_VALUE 255
 #define JITTER 20
 #define TTL 50		          /* Time To Live of broadcast messages */
@@ -81,6 +85,16 @@
 #define LOG_TYPE_NOTICE_NAME	"notices"
 #define LOG_TYPE_BATMAN_NAME	"batman"
 #define LOG_TYPE_ROUTES_NAME	"routes"
+
+/*
+ *  Vis
+ */
+
+/* #define VIS_SUBCLUSTERS_DISABLED */
+
+/* 
+ * Kernel headers
+ */
 
 #include <linux/mutex.h>	/* mutex */
 #include <linux/module.h>	/* needed by all modules */

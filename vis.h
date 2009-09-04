@@ -33,6 +33,7 @@ struct vis_info {
 } __attribute__((packed));
 
 struct vis_info_entry {
+	uint8_t  src[ETH_ALEN];
 	uint8_t  dest[ETH_ALEN];
 	uint8_t  quality;	/* quality = 0 means HNA */
 } __attribute__((packed));

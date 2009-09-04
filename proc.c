@@ -403,17 +403,62 @@ static int proc_transt_global_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_transt_global_read, NULL);
 }
 
+/* insert interface to the list of interfaces of one originator */
+
+static void proc_vis_insert_interface(const uint8_t *interface, 
+				      struct vis_if_list **if_entry, 
+				      bool primary)
+{
+	/* Did we get an empty list? (then insert imediately) */
+	if(*if_entry == NULL) {
+		*if_entry = kmalloc(sizeof(struct vis_if_list), GFP_KERNEL);
+		if (*if_entry == NULL)
+			return;
+
+		(*if_entry)->primary = primary;
+		(*if_entry)->next = NULL;
+		memcpy((*if_entry)->addr, interface, ETH_ALEN);
+	} else {
+		struct vis_if_list *head_if_entry = *if_entry;
+		/* Do we already have this interface in our list? */
+		while (!compare_orig((*if_entry)->addr, (void *)interface)) {
+
+			/* Or did we reach the end (then append the interface) */
+			if ((*if_entry)->next == NULL) {
+				(*if_entry)->next = kmalloc(sizeof(struct vis_if_list), GFP_KERNEL);
+				if ((*if_entry)->next == NULL)
+					return;
+
+				memcpy((*if_entry)->next->addr, interface, ETH_ALEN);
+				(*if_entry)->next->primary = primary;
+				(*if_entry)->next->next = NULL;
+				break;
+			}
+			*if_entry = (*if_entry)->next;
+		}
+		/* Rewind the list to its head */
+		*if_entry = head_if_entry;
+	}
+}
+/* read an entry  */
+
 static void proc_vis_read_entry(struct seq_file *seq,
 				struct vis_info_entry *entry,
-				char *from,
+				struct vis_if_list **if_entry,
+				uint8_t *vis_orig,
 				uint8_t current_format,
 				uint8_t first_line)
 {
+	char from[40];
 	char to[40];
 	int int_part, frac_part;
 
 	addr_to_string(to, entry->dest);
 	if (entry->quality == 0) {
+#ifndef VIS_SUBCLUSTERS_DISABLED
+		proc_vis_insert_interface(vis_orig, if_entry, true);
+#endif /* VIS_SUBCLUSTERS_DISABLED */
+		addr_to_string(from, vis_orig);
 		if (current_format == DOT_DRAW) {
 			seq_printf(seq, "\t\"%s\" -> \"%s\" [label=\"HNA\"]\n",
 				   from, to);
@@ -423,10 +468,17 @@ static void proc_vis_read_entry(struct seq_file *seq,
 				   (first_line ? "" : ",\n"), from, to);
 		}
 	} else {
+#ifndef VIS_SUBCLUSTERS_DISABLED
+		proc_vis_insert_interface(entry->src, if_entry, compare_orig(entry->src, vis_orig));
+#endif /* VIS_SUBCLUSTERS_DISABLED */
+		addr_to_string(from, entry->src);
+
 		/* kernel has no printf-support for %f? it'd be better to return
 		 * this in float. */
+
 		int_part = TQ_MAX_VALUE / entry->quality;
 		frac_part = 1000 * TQ_MAX_VALUE / entry->quality - int_part * 1000;
+
 		if (current_format == DOT_DRAW) {
 			seq_printf(seq,
 				   "\t\"%s\" -> \"%s\" [label=\"%d.%d\"]\n",
@@ -439,14 +491,19 @@ static void proc_vis_read_entry(struct seq_file *seq,
 	}
 }
 
+
 static int proc_vis_read(struct seq_file *seq, void *offset)
 {
 	struct hash_it_t *hashit = NULL;
 	struct vis_info *info;
 	struct vis_info_entry *entries;
-	char from[40];
+	struct vis_if_list *if_entries = NULL;
 	int i;
 	uint8_t current_format, first_line = 1;
+#ifndef VIS_SUBCLUSTERS_DISABLED
+	char tmp_addr_str[ETH_STR_LEN];
+	struct vis_if_list *tmp_if_next;
+#endif /* VIS_SUBCLUSTERS_DISABLED */
 
 	current_format = vis_format;
 
@@ -468,14 +525,37 @@ static int proc_vis_read(struct seq_file *seq, void *offset)
 		info = hashit->bucket->data;
 		entries = (struct vis_info_entry *)
 			((char *)info + sizeof(struct vis_info));
-		addr_to_string(from, info->packet.vis_orig);
 
 		for (i = 0; i < info->packet.entries; i++) {
-			proc_vis_read_entry(seq, &entries[i], from,
+			proc_vis_read_entry(seq, &entries[i], &if_entries,
+					    info->packet.vis_orig,
 					    current_format, first_line);
 			if (first_line)
 				first_line = 0;
 		}
+
+#ifndef VIS_SUBCLUSTERS_DISABLED
+		/* Generate subgraphs from the collected items */
+		if (current_format == DOT_DRAW) {
+
+			addr_to_string(tmp_addr_str, info->packet.vis_orig);
+			seq_printf(seq, "\tsubgraph \"cluster_%s\" \{\n", tmp_addr_str);
+			while (if_entries != NULL) {
+
+				addr_to_string(tmp_addr_str, if_entries->addr);
+				if (if_entries->primary)
+					seq_printf(seq, "\t\t\"%s\" [peripheries=2]\n", tmp_addr_str);
+				else
+					seq_printf(seq, "\t\t\"%s\"\n", tmp_addr_str);
+
+				/* ... and empty the list while doing this */
+				tmp_if_next = if_entries->next;
+				kfree(if_entries);
+				if_entries = tmp_if_next;
+			}
+			seq_printf(seq, "\t}\n");
+		}
+#endif /* VIS_SUBCLUSTERS_DISABLED */
 	}
 	spin_unlock(&vis_hash_lock);
 

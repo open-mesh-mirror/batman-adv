@@ -26,7 +26,7 @@
 #define BAT_VIS       0x05
 
 /* this file is included by batctl which needs these defines */
-#define COMPAT_VERSION 7
+#define COMPAT_VERSION 8
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
 

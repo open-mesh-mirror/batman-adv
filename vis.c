@@ -87,7 +87,7 @@ static int vis_info_cmp(void *data1, void *data2)
 	struct vis_info *d1, *d2;
 	d1 = data1;
 	d2 = data2;
-	return memcmp(d1->packet.vis_orig, d2->packet.vis_orig, ETH_ALEN) == 0;
+	return compare_orig(d1->packet.vis_orig, d2->packet.vis_orig);
 }
 
 /* hash function to choose an entry in a hash table of given size */
@@ -326,13 +326,14 @@ static int generate_vis_packet(void)
 
 	while (NULL != (hashit = hash_iterate(orig_hash, hashit))) {
 		orig_node = hashit->bucket->data;
-		if (orig_node->router != NULL &&
-		    memcmp(orig_node->router->addr,
-			   orig_node->orig, ETH_ALEN) == 0 &&
-		    orig_node->router->tq_avg > 0) {
+		if (orig_node->router != NULL
+			&& compare_orig(orig_node->router->addr, orig_node->orig)
+			&& orig_node->batman_if
+		    && orig_node->router->tq_avg > 0) {
 
 			/* fill one entry into buffer. */
 			entry = &entry_array[info->packet.entries];
+			memcpy(entry->src, orig_node->batman_if->net_dev->dev_addr, ETH_ALEN);
 			memcpy(entry->dest, orig_node->orig, ETH_ALEN);
 			entry->quality = orig_node->router->tq_avg;
 			info->packet.entries++;
@@ -351,6 +352,7 @@ static int generate_vis_packet(void)
 	while (NULL != (hashit = hash_iterate(hna_local_hash, hashit))) {
 		hna_local_entry = hashit->bucket->data;
 		entry = &entry_array[info->packet.entries];
+		memset(entry->src, 0, ETH_ALEN);
 		memcpy(entry->dest, hna_local_entry->addr, ETH_ALEN);
 		entry->quality = 0; /* 0 means HNA */
 		info->packet.entries++;
@@ -556,3 +558,4 @@ static void start_vis_timer(void)
 	queue_delayed_work(bat_event_workqueue, &vis_timer_wq,
 			   (atomic_read(&vis_interval)/1000) * HZ);
 }
+
