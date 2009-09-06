@@ -329,6 +329,7 @@ static int generate_vis_packet(void)
 		if (orig_node->router != NULL
 			&& compare_orig(orig_node->router->addr, orig_node->orig)
 			&& orig_node->batman_if
+			&& (orig_node->batman_if->if_active == IF_ACTIVE)
 		    && orig_node->router->tq_avg > 0) {
 
 			/* fill one entry into buffer. */
