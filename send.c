@@ -71,8 +71,8 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len,
 
 	if (!(batman_if->net_dev->flags & IFF_UP)) {
 		debug_log(LOG_TYPE_WARN,
-			  "Interface %s is not up - can't send packet via that interface !\n", batman_if->dev);
-		batman_if->if_active = IF_TO_BE_DEACTIVATED;
+		         "Interface %s is not up - can't send packet via that interface (IF_TO_BE_DEACTIVATED was here) !\n",
+		          batman_if->dev);
 		return;
 	}
 
@@ -98,11 +98,10 @@ void send_raw_packet(unsigned char *pack_buff, int pack_buff_len,
 	 * congestion and traffic shaping, it drops and returns NET_XMIT_DROP
 	 * (which is > 0). This will not be treated as an error. */
 	retval = dev_queue_xmit(skb);
-	if (retval < 0) {
-		debug_log(LOG_TYPE_CRIT, "Can't write to raw socket: %i\n",
-			  retval);
-		batman_if->if_active = IF_TO_BE_DEACTIVATED;
-	}
+	if (retval < 0)
+		debug_log(LOG_TYPE_CRIT,
+		          "Can't write to raw socket (IF_TO_BE_DEACTIVATED was here): %i\n",
+		          retval);
 }
 
 /* Send a packet to a given interface */

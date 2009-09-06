@@ -19,8 +19,10 @@
 
 #define IF_INACTIVE 0
 #define IF_ACTIVE 1
-#define IF_TO_BE_DEACTIVATED 2
+/* #define IF_TO_BE_DEACTIVATED 2 - not needed anymore */
 #define IF_TO_BE_ACTIVATED 3
+
+extern struct notifier_block hard_if_notifier;
 
 void hardif_remove_interfaces(void);
 int hardif_add_interface(char *dev, int if_num);
@@ -28,6 +30,4 @@ void hardif_deactivate_interface(struct batman_if *batman_if);
 char hardif_get_active_if_num(void);
 void hardif_check_interfaces_status(void);
 void hardif_check_interfaces_status_wq(struct work_struct *work);
-void start_hardif_check_timer(void);
-void destroy_hardif_check_timer(void);
 int hardif_min_mtu(void);

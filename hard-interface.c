@@ -29,13 +29,27 @@
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
-static DECLARE_DELAYED_WORK(hardif_check_interfaces_wq,
-			    hardif_check_interfaces_status_wq);
-
 static char avail_ifs;
 static char active_ifs;
 
 static void hardif_free_interface(struct rcu_head *rcu);
+
+static struct batman_if *get_batman_if_by_name(char *name)
+{
+	struct batman_if *batman_if;
+
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		if (strncmp(batman_if->dev, name, IFNAMSIZ) == 0)
+			goto out;
+	}
+
+	batman_if = NULL;
+
+out:
+	rcu_read_unlock();
+	return batman_if;
+}
 
 int hardif_min_mtu(void)
 {
@@ -102,6 +116,9 @@ end:
 /* deactivates the interface. */
 void hardif_deactivate_interface(struct batman_if *batman_if)
 {
+	if (batman_if->if_active != IF_ACTIVE)
+		return;
+
 	if (batman_if->raw_sock)
 		sock_release(batman_if->raw_sock);
 
@@ -129,13 +146,16 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	struct sockaddr_ll bind_addr;
 	int retval;
 
+	if (batman_if->if_active != IF_INACTIVE)
+		return;
+
 #ifdef __NET_NET_NAMESPACE_H
 	batman_if->net_dev = dev_get_by_name(&init_net, batman_if->dev);
 #else
 	batman_if->net_dev = dev_get_by_name(batman_if->dev);
 #endif
 	if (!batman_if->net_dev)
-		goto error;
+		goto dev_err;
 
 	retval = sock_create_kern(PF_PACKET, SOCK_RAW,
 				  __constant_htons(ETH_P_BATMAN),
@@ -144,7 +164,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	if (retval < 0) {
 		debug_log(LOG_TYPE_WARN, "Can't create raw socket: %i\n",
 			  retval);
-		goto error;
+		goto sock_err;
 	}
 
 	bind_addr.sll_family = AF_PACKET;
@@ -157,7 +177,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	if (retval < 0) {
 		debug_log(LOG_TYPE_WARN, "Can't create bind raw socket: %i\n",
 			  retval);
-		goto error;
+		goto bind_err;
 	}
 
 	batman_if->raw_sock->sk->sk_user_data =
@@ -180,8 +200,13 @@ void hardif_activate_interface(struct batman_if *batman_if)
 
 	return;
 
-error:
-	hardif_deactivate_interface(batman_if);
+bind_err:
+	sock_release(batman_if->raw_sock);
+sock_err:
+	dev_put(batman_if->net_dev);
+dev_err:
+	batman_if->raw_sock = NULL;
+	batman_if->net_dev = NULL;
 }
 
 static void hardif_free_interface(struct rcu_head *rcu)
@@ -325,6 +350,8 @@ int hardif_add_interface(char *dev, int if_num)
 
 	if (!hardif_is_interface_up(batman_if->dev))
 		debug_log(LOG_TYPE_WARN, "Not using interface %s (retrying later): interface not active\n", batman_if->dev);
+	else
+		hardif_activate_interface(batman_if);
 
 	list_add_tail_rcu(&batman_if->list, &if_list);
 
@@ -343,31 +370,30 @@ char hardif_get_active_if_num(void)
 	return active_ifs;
 }
 
-/* checks inactive interfaces and deactivates "to-be-deactivated" interfaces */
-void hardif_check_interfaces_status(void)
+static int hard_if_event(struct notifier_block *this,
+                            unsigned long event, void *ptr)
 {
-	struct batman_if *batman_if;
+	struct net_device *dev = (struct net_device *)ptr;
+	struct batman_if *batman_if = get_batman_if_by_name(dev->name);
 	int min_mtu;
 
-	if (atomic_read(&module_state) == MODULE_INACTIVE)
-		return;
+	if (!batman_if)
+		goto out;
 
-	/**
-	 * wait for readers of the the interfaces, so update won't be a problem.
-	 * this function is not time critical and can wait a bit ....
-	 */
-	synchronize_rcu();
-
-	rcu_read_lock();
-	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		if ((batman_if->if_active == IF_INACTIVE) &&
-		    (hardif_is_interface_up(batman_if->dev)))
-			hardif_activate_interface(batman_if);
-
-		if (batman_if->if_active == IF_TO_BE_DEACTIVATED)
-			hardif_deactivate_interface(batman_if);
-	}
-	rcu_read_unlock();
+	switch (event) {
+	case NETDEV_GOING_DOWN:
+	case NETDEV_DOWN:
+	case NETDEV_UNREGISTER:
+		hardif_deactivate_interface(batman_if);
+		break;
+	case NETDEV_UP:
+		hardif_activate_interface(batman_if);
+		break;
+	/* NETDEV_CHANGEADDR - mac address change - what are we doing here ? */
+	default:
+		/* debug_log(LOG_TYPE_CRIT, "hard_if_event: %s %i\n", dev->name, event); */
+		break;
+	};
 
 	/* waiting for activation? if interfaces are available now, we can
 	 * activate. */
@@ -377,24 +403,13 @@ void hardif_check_interfaces_status(void)
 
 	/* decrease the MTU if a new interface with a smaller MTU appeared. */
 	min_mtu = hardif_min_mtu();
-	if (soft_device->mtu > min_mtu)
+	if (soft_device->mtu != min_mtu)
 		soft_device->mtu = min_mtu;
+
+out:
+	return NOTIFY_DONE;
 }
 
-/* checks inactive interfaces and deactivates "to-be-deactivated" interfaces */
-void hardif_check_interfaces_status_wq(struct work_struct *work)
-{
-	hardif_check_interfaces_status();
-	start_hardif_check_timer();
-}
-
-void start_hardif_check_timer(void)
-{
-	queue_delayed_work(bat_event_workqueue, &hardif_check_interfaces_wq,
-			   1 * HZ);
-}
-
-void destroy_hardif_check_timer(void)
-{
-	cancel_delayed_work_sync(&hardif_check_interfaces_wq);
-}
+struct notifier_block hard_if_notifier = {
+        .notifier_call = hard_if_event,
+};

@@ -99,7 +99,7 @@ int init_module(void)
 		goto free_soft_device;
 	}
 
-	start_hardif_check_timer();
+	register_netdevice_notifier(&hard_if_notifier);
 
 	debug_log(LOG_TYPE_CRIT, "B.A.T.M.A.N. advanced %s%s (compatibility version %i) loaded \n",
 	          SOURCE_VERSION, REVISION_VERSION_STR, COMPAT_VERSION);
@@ -122,7 +122,7 @@ void cleanup_module(void)
 		soft_device = NULL;
 	}
 
-	destroy_hardif_check_timer();
+	unregister_netdevice_notifier(&hard_if_notifier);
 	cleanup_procfs();
 
 	destroy_workqueue(bat_event_workqueue);
