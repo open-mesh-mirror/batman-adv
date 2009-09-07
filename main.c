@@ -159,6 +159,7 @@ void activate_module(void)
 		}
 	}
 
+	update_min_mtu();
 	atomic_set(&module_state, MODULE_ACTIVE);
 	goto end;
 

@@ -60,13 +60,24 @@ int hardif_min_mtu(void)
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		if (batman_if->if_active == IF_ACTIVE)
+		if ((batman_if->if_active == IF_ACTIVE) ||
+		    (batman_if->if_active == IF_TO_BE_ACTIVATED))
 			min_mtu = MIN(batman_if->net_dev->mtu - BAT_HEADER_LEN,
 				      min_mtu);
 	}
 	rcu_read_unlock();
 
 	return min_mtu;
+}
+
+/* adjusts the MTU if a new interface with a smaller MTU appeared. */
+void update_min_mtu(void)
+{
+	int min_mtu;
+
+	min_mtu = hardif_min_mtu();
+	if (soft_device->mtu != min_mtu)
+		soft_device->mtu = min_mtu;
 }
 
 /* checks if the interface is up. (returns 1 if it is) */
@@ -375,7 +386,6 @@ static int hard_if_event(struct notifier_block *this,
 {
 	struct net_device *dev = (struct net_device *)ptr;
 	struct batman_if *batman_if = get_batman_if_by_name(dev->name);
-	int min_mtu;
 
 	if (!batman_if)
 		goto out;
@@ -395,16 +405,7 @@ static int hard_if_event(struct notifier_block *this,
 		break;
 	};
 
-	/* waiting for activation? if interfaces are available now, we can
-	 * activate. */
-	if ((atomic_read(&module_state) == MODULE_WAITING) &&
-	    (hardif_get_active_if_num() > 0))
-		activate_module();
-
-	/* decrease the MTU if a new interface with a smaller MTU appeared. */
-	min_mtu = hardif_min_mtu();
-	if (soft_device->mtu != min_mtu)
-		soft_device->mtu = min_mtu;
+	update_min_mtu();
 
 out:
 	return NOTIFY_DONE;

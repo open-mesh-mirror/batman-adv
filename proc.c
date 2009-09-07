@@ -112,10 +112,11 @@ static ssize_t proc_interfaces_write(struct file *instance,
 	}
 	rcu_read_unlock();
 
-	if (atomic_read(&module_state) == MODULE_INACTIVE)
-		atomic_set(&module_state, MODULE_WAITING);
-
 	hardif_add_interface(if_string, if_num);
+
+	if ((atomic_read(&module_state) == MODULE_INACTIVE) &&
+	    (hardif_get_active_if_num() > 0))
+		activate_module();
 
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
@@ -405,8 +406,8 @@ static int proc_transt_global_open(struct inode *inode, struct file *file)
 
 /* insert interface to the list of interfaces of one originator */
 
-static void proc_vis_insert_interface(const uint8_t *interface, 
-				      struct vis_if_list **if_entry, 
+static void proc_vis_insert_interface(const uint8_t *interface,
+				      struct vis_if_list **if_entry,
 				      bool primary)
 {
 	/* Did we get an empty list? (then insert imediately) */
