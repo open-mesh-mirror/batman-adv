@@ -292,7 +292,7 @@ void schedule_forward_packet(struct orig_node *orig_node,
 	in_ttl = batman_packet->ttl;
 
 	batman_packet->ttl--;
-	memcpy(batman_packet->old_orig, ethhdr->h_source, ETH_ALEN);
+	memcpy(batman_packet->prev_sender, ethhdr->h_source, ETH_ALEN);
 
 	/* rebroadcast tq of our best ranking neighbor to ensure the rebroadcast
 	 * of our best tq value */

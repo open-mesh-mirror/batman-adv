@@ -48,7 +48,7 @@ struct batman_packet {
 	uint8_t  tq;
 	uint16_t seqno;
 	uint8_t  orig[6];
-	uint8_t  old_orig[6];
+	uint8_t  prev_sender[6];
 	uint8_t  ttl;
 	uint8_t  num_hna;
 } __attribute__((packed));

@@ -199,7 +199,7 @@ void hardif_activate_interface(struct batman_if *batman_if)
 
 	memcpy(((struct batman_packet *)(batman_if->packet_buff))->orig,
 	       batman_if->net_dev->dev_addr, ETH_ALEN);
-	memcpy(((struct batman_packet *)(batman_if->packet_buff))->old_orig,
+	memcpy(((struct batman_packet *)(batman_if->packet_buff))->prev_sender,
 	       batman_if->net_dev->dev_addr, ETH_ALEN);
 
 	batman_if->if_active = IF_TO_BE_ACTIVATED;
