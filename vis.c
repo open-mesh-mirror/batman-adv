@@ -497,7 +497,7 @@ int vis_init(void)
 		goto err;
 	}
 
-	my_vis_info = kmalloc(1000, GFP_KERNEL);
+	my_vis_info = kmalloc(1000, GFP_ATOMIC);
 	if (!my_vis_info) {
 		debug_log(LOG_TYPE_CRIT, "Can't initialize vis packet\n");
 		goto err;
