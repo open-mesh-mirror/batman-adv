@@ -26,9 +26,7 @@
 
 #include "compat.h"
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
 static struct class *batman_class;
-#endif
 
 static int Major;	/* Major number assigned to our device driver */
 
@@ -65,13 +63,6 @@ int bat_device_setup(void)
 		return 0;
 	}
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
-	if (devfs_mk_cdev(MKDEV(tmp_major, 0), S_IFCHR | S_IRUGO | S_IWUGO,
-			  "batman-adv", 0)) {
-		debug_log(LOG_TYPE_WARN, "Could not create /dev/batman-adv\n");
-		return 0;
-	}
-#else
 	batman_class = class_create(THIS_MODULE, "batman-adv");
 
 	if (IS_ERR(batman_class)) {
@@ -81,7 +72,6 @@ int bat_device_setup(void)
 
 	device_create(batman_class, NULL, MKDEV(tmp_major, 0), NULL,
 		      "batman-adv");
-#endif
 
 	Major = tmp_major;
 	return 1;
@@ -94,12 +84,8 @@ void bat_device_destroy(void)
 	if (!Major)
 		return;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
-	devfs_remove("batman-adv", 0);
-#else
 	device_destroy(batman_class, MKDEV(Major, 0));
 	class_destroy(batman_class);
-#endif
 
 	/* Unregister the device */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23)

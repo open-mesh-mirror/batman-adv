@@ -203,20 +203,12 @@ void shutdown_module(void)
 
 void inc_module_count(void)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
-	MOD_INC_USE_COUNT;
-#else
 	try_module_get(THIS_MODULE);
-#endif
 }
 
 void dec_module_count(void)
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)
-	MOD_DEC_USE_COUNT;
-#else
 	module_put(THIS_MODULE);
-#endif
 }
 
 int addr_to_string(char *buff, uint8_t *addr)
