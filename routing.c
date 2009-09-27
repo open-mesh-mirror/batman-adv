@@ -625,6 +625,8 @@ int packet_recv_thread(void *data)
 
 		wait_event_interruptible(thread_wait, (atomic_read(&data_ready_cond) || atomic_read(&exit_cond)));
 
+		atomic_set(&data_ready_cond, 0);
+
 		if (kthread_should_stop() || atomic_read(&exit_cond))
 			break;
 
@@ -949,8 +951,6 @@ int packet_recv_thread(void *data)
 			rcu_read_lock();
 		}
 		rcu_read_unlock();
-
-		atomic_set(&data_ready_cond, 0);
 
 	}
 	kfree(packet_buff);

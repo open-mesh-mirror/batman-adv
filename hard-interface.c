@@ -148,7 +148,7 @@ void hardif_deactivate_interface(struct batman_if *batman_if)
 	active_ifs--;
 
 	debug_log(LOG_TYPE_NOTICE, "Interface deactivated: %s\n",
-		  batman_if->dev);
+	          batman_if->dev);
 }
 
 /* (re)activate given interface. */
@@ -208,6 +208,9 @@ void hardif_activate_interface(struct batman_if *batman_if)
 	/* save the mac address if it is our primary interface */
 	if (batman_if->if_num == 0)
 		set_main_if_addr(batman_if->net_dev->dev_addr);
+
+	debug_log(LOG_TYPE_NOTICE, "Interface activated: %s\n",
+	          batman_if->dev);
 
 	return;
 
