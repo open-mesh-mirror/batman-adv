@@ -114,7 +114,6 @@ void interface_setup(struct net_device *dev)
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29) */
 	dev->destructor = free_netdev;
 
-	dev->features |= NETIF_F_NO_CSUM;
 	dev->mtu = hardif_min_mtu();
 	dev->hard_header_len = BAT_HEADER_LEN; /* reserve more space in the
 						* skbuff for our header */
