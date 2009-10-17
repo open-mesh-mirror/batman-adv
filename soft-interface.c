@@ -119,8 +119,7 @@ void interface_setup(struct net_device *dev)
 						* skbuff for our header */
 
 	/* generate random address */
-	*(u16 *)dev_addr = __constant_htons(0x00FF);
-	get_random_bytes(dev_addr + sizeof(u16), 4);
+	random_ether_addr(dev_addr);
 	memcpy(dev->dev_addr, dev_addr, sizeof(dev->dev_addr));
 
 	SET_ETHTOOL_OPS(dev, &bat_ethtool_ops);
