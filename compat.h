@@ -60,3 +60,14 @@
 #define cancel_delayed_work_sync(wq) cancel_rearming_delayed_work(wq)
 
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23) */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
+#define strict_strtoul(cp, base, res) \
+	({ \
+	int ret = 0; \
+	char *endp; \
+	*res = simple_strtoul(cp, &endp, base); \
+	if (cp == endp) \
+		ret = -EINVAL; \
+	ret; \
+})
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25) */

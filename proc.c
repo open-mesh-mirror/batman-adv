@@ -26,6 +26,7 @@
 #include "types.h"
 #include "hash.h"
 #include "vis.h"
+#include "compat.h"
 
 uint8_t vis_format = DOT_DRAW;
 
@@ -146,7 +147,7 @@ static ssize_t proc_orig_interval_write(struct file *file,
 {
 	char *interval_string;
 	int not_copied = 0;
-	long originator_interval_tmp;
+	unsigned long originator_interval_tmp;
 	int retval;
 
 	interval_string = kmalloc(count, GFP_KERNEL);
@@ -157,7 +158,7 @@ static ssize_t proc_orig_interval_write(struct file *file,
 	not_copied = copy_from_user(interval_string, buffer, count);
 	interval_string[count - not_copied - 1] = 0;
 
-	retval = strict_strtol(interval_string, 10, &originator_interval_tmp);
+	retval = strict_strtoul(interval_string, 10, &originator_interval_tmp);
 	if (retval) {
 		debug_log(LOG_TYPE_WARN, "New originator interval invalid\n");
 		goto end;
@@ -290,7 +291,7 @@ static ssize_t proc_log_level_write(struct file *instance,
 {
 	char *log_level_string, *tokptr, *cp;
 	int finished, not_copied = 0;
-	uint8_t log_level_tmp = 0;
+	unsigned long log_level_tmp = 0;
 
 	log_level_string = kmalloc(count, GFP_KERNEL);
 
@@ -300,10 +301,8 @@ static ssize_t proc_log_level_write(struct file *instance,
 	not_copied = copy_from_user(log_level_string, userbuffer, count);
 	log_level_string[count - not_copied - 1] = 0;
 
-	log_level_tmp = simple_strtol(log_level_string, &cp, 10);
-
-	if (cp == log_level_string) {
-		/* was not (beginning with) a number, doing textual parsing */
+	if (strict_strtoul(log_level_string, 10, &log_level_tmp) < 0) {
+		/* was not a number, doing textual parsing */
 		log_level_tmp = 0;
 		tokptr = log_level_string;
 
@@ -663,7 +662,7 @@ static ssize_t proc_aggr_write(struct file *file, const char __user *buffer,
 {
 	char *aggr_string;
 	int not_copied = 0;
-	long aggregation_enabled_tmp;
+	unsigned long aggregation_enabled_tmp;
 
 	aggr_string = kmalloc(count, GFP_KERNEL);
 
@@ -673,7 +672,7 @@ static ssize_t proc_aggr_write(struct file *file, const char __user *buffer,
 	not_copied = copy_from_user(aggr_string, buffer, count);
 	aggr_string[count - not_copied - 1] = 0;
 
-	strict_strtol(aggr_string, 10, &aggregation_enabled_tmp);
+	strict_strtoul(aggr_string, 10, &aggregation_enabled_tmp);
 
 	if ((aggregation_enabled_tmp != 0) && (aggregation_enabled_tmp != 1)) {
 		debug_log(LOG_TYPE_WARN, "Aggregation can only be enabled (1) or disabled (0), given value: %li\n", aggregation_enabled_tmp);
