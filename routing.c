@@ -400,6 +400,19 @@ void receive_bat_packet(struct ethhdr *ethhdr, struct batman_packet *batman_pack
 	char is_my_addr = 0, is_my_orig = 0, is_my_oldorig = 0, is_broadcast = 0, is_bidirectional, is_single_hop_neigh, is_duplicate;
 	unsigned short if_incoming_seqno;
 
+	/* Silently drop when the batman packet is actually not a correct packet.
+	 *
+	 * This might happen if a packet is padded (e.g. Ethernet has a 
+	 * minimum frame length of 64 byte) and the aggregation interprets
+	 * it as an additional length.
+	 *
+	 * TODO: A more sane solution would be to have a bit in the batman_packet
+	 * to detect whether the packet is the last packet in an aggregation.
+	 * Here we expect that the padding is always zero (or not 0x01)
+	 */
+	if (batman_packet->packet_type != BAT_PACKET)
+		return;
+
 	/* could be changed by schedule_own_packet() */
 	if_incoming_seqno = atomic_read(&if_incoming->seqno);
 
