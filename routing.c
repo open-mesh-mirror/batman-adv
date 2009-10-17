@@ -34,6 +34,7 @@
 #include "ring_buffer.h"
 #include "vis.h"
 #include "aggregation.h"
+#include "compat.h"
 
 
 
