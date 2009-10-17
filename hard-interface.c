@@ -70,6 +70,28 @@ int hardif_min_mtu(void)
 	return min_mtu;
 }
 
+void check_known_mac_addr(uint8_t *addr)
+{
+	struct batman_if *batman_if;
+	char mac_string[ETH_STR_LEN];
+
+	rcu_read_lock();
+	list_for_each_entry_rcu(batman_if, &if_list, list) {
+		if ((batman_if->if_active != IF_ACTIVE) &&
+		    (batman_if->if_active != IF_TO_BE_ACTIVATED))
+			continue;
+
+		if (!compare_orig(batman_if->net_dev->dev_addr, addr))
+			continue;
+
+		addr_to_string(mac_string, addr);
+		debug_log(LOG_TYPE_WARN, "The newly added mac address (%s) already exists on: %s\n",
+		          mac_string, batman_if->dev);
+		debug_log(LOG_TYPE_WARN, "It is strongly recommended to keep mac addresses unique to avoid problems!\n");
+	}
+	rcu_read_unlock();
+}
+
 /* adjusts the MTU if a new interface with a smaller MTU appeared. */
 void update_min_mtu(void)
 {
@@ -190,6 +212,8 @@ void hardif_activate_interface(struct batman_if *batman_if)
 			  retval);
 		goto bind_err;
 	}
+
+	check_known_mac_addr(batman_if->net_dev->dev_addr);
 
 	batman_if->raw_sock->sk->sk_user_data =
 		batman_if->raw_sock->sk->sk_data_ready;
