@@ -6,7 +6,7 @@ BATMAN-ADV
 The kernel implementation of batman-advanced. It does not depend on any network
 driver, and can be used on wifi as well as ethernet, vpn, etc ... (anything
 with ethernet-style layer 2).
-It compiles against and should work with Linux 2.6.20 - 2.6.28. Supporting older
+It compiles against and should work with Linux 2.6.20 - 2.6.31. Supporting older
 versions is not planned, but it's probably easy to backport it. If you work on a
 backport, feel free to contact us.  :-)
 
