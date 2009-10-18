@@ -83,7 +83,7 @@ int my_skb_push(struct sk_buff *skb, unsigned int len)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29)
+#ifdef HAVE_NET_DEVICE_OPS
 static const struct net_device_ops bat_netdev_ops = {
 	.ndo_open = interface_open,
 	.ndo_stop = interface_release,
@@ -93,7 +93,7 @@ static const struct net_device_ops bat_netdev_ops = {
 	.ndo_start_xmit = interface_tx,
 	.ndo_validate_addr = eth_validate_addr
 };
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 29) */
+#endif
 
 void interface_setup(struct net_device *dev)
 {
@@ -102,16 +102,16 @@ void interface_setup(struct net_device *dev)
 
 	ether_setup(dev);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
+#ifdef HAVE_NET_DEVICE_OPS
+	dev->netdev_ops = &bat_netdev_ops;
+#else
 	dev->open = interface_open;
 	dev->stop = interface_release;
 	dev->get_stats = interface_stats;
 	dev->set_mac_address = interface_set_mac_addr;
 	dev->change_mtu = interface_change_mtu;
 	dev->hard_start_xmit = interface_tx;
-#else
-	dev->netdev_ops = &bat_netdev_ops;
-#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29) */
+#endif
 	dev->destructor = free_netdev;
 
 	dev->mtu = hardif_min_mtu();
