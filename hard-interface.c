@@ -425,6 +425,10 @@ static int hard_if_event(struct notifier_block *this,
 		break;
 	case NETDEV_UP:
 		hardif_activate_interface(batman_if);
+		if ((atomic_read(&module_state) == MODULE_INACTIVE) &&
+		    (hardif_get_active_if_num() > 0)) {
+			activate_module();
+		}
 		break;
 	/* NETDEV_CHANGEADDR - mac address change - what are we doing here ? */
 	default:

@@ -173,7 +173,7 @@ end:
 /* shuts down the whole module.*/
 void shutdown_module(void)
 {
-	atomic_set(&module_state, MODULE_INACTIVE);
+	atomic_set(&module_state, MODULE_DEACTIVATING);
 
 	purge_outstanding_packets();
 	flush_workqueue(bat_event_workqueue);
@@ -199,6 +199,7 @@ void shutdown_module(void)
 
 	hardif_remove_interfaces();
 	synchronize_rcu();
+	atomic_set(&module_state, MODULE_INACTIVE);
 }
 
 void inc_module_count(void)
