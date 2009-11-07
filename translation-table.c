@@ -32,7 +32,7 @@ static struct hashtable_t *hna_global_hash;
 atomic_t hna_local_changed;
 
 DEFINE_SPINLOCK(hna_local_hash_lock);
-DEFINE_SPINLOCK(hna_global_hash_lock);
+static DEFINE_SPINLOCK(hna_global_hash_lock);
 
 static DECLARE_DELAYED_WORK(hna_local_purge_wq, hna_local_purge);
 

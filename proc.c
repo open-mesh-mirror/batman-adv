@@ -30,7 +30,7 @@
 #include "vis.h"
 #include "compat.h"
 
-uint8_t vis_format = DOT_DRAW;
+static uint8_t vis_format = DOT_DRAW;
 
 static struct proc_dir_entry *proc_batman_dir, *proc_interface_file;
 static struct proc_dir_entry *proc_orig_interval_file, *proc_originators_file;

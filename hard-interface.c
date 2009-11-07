@@ -72,7 +72,7 @@ int hardif_min_mtu(void)
 	return min_mtu;
 }
 
-void check_known_mac_addr(uint8_t *addr)
+static void check_known_mac_addr(uint8_t *addr)
 {
 	struct batman_if *batman_if;
 	char mac_string[ETH_STR_LEN];
@@ -105,7 +105,7 @@ void update_min_mtu(void)
 }
 
 /* checks if the interface is up. (returns 1 if it is) */
-int hardif_is_interface_up(char *dev)
+static int hardif_is_interface_up(char *dev)
 {
 	struct net_device *net_dev;
 
@@ -176,7 +176,7 @@ void hardif_deactivate_interface(struct batman_if *batman_if)
 }
 
 /* (re)activate given interface. */
-void hardif_activate_interface(struct batman_if *batman_if)
+static void hardif_activate_interface(struct batman_if *batman_if)
 {
 	struct sockaddr_ll bind_addr;
 	int retval;

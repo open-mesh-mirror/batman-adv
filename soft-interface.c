@@ -68,7 +68,7 @@ int main_if_was_up(void)
 	return (memcmp(mainIfAddr, mainIfAddr_default, ETH_ALEN) != 0 ? 1 : 0);
 }
 
-int my_skb_push(struct sk_buff *skb, unsigned int len)
+static int my_skb_push(struct sk_buff *skb, unsigned int len)
 {
 	int result = 0;
 

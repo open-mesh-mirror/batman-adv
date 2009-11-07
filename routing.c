@@ -46,7 +46,7 @@ static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 static atomic_t data_ready_cond;
 atomic_t exit_cond;
 
-void start_purge_timer(void)
+static void start_purge_timer(void)
 {
 	queue_delayed_work(bat_event_workqueue, &purge_orig_wq, 1 * HZ);
 }
@@ -618,7 +618,7 @@ void purge_orig(struct work_struct *work)
 	start_purge_timer();
 }
 
-int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int packet_buff_len)
+static int receive_raw_packet(struct socket *raw_sock, unsigned char *packet_buff, int packet_buff_len)
 {
 	struct kvec iov;
 	struct msghdr msg;
