@@ -306,6 +306,7 @@ void bat_device_add_packet(struct device_client *device_client,
 	/* while waiting for the lock the device_client could have been
 	 * deleted */
 	if (!device_client_hash[icmp_packet->uid]) {
+		spin_unlock(&device_client->lock);
 		kfree(device_packet);
 		return;
 	}
