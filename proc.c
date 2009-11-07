@@ -541,7 +541,7 @@ static int proc_vis_read(struct seq_file *seq, void *offset)
 		if (current_format == DOT_DRAW) {
 
 			addr_to_string(tmp_addr_str, info->packet.vis_orig);
-			seq_printf(seq, "\tsubgraph \"cluster_%s\" \{\n", tmp_addr_str);
+			seq_printf(seq, "\tsubgraph \"cluster_%s\" {\n", tmp_addr_str);
 			while (if_entries != NULL) {
 
 				addr_to_string(tmp_addr_str, if_entries->addr);
