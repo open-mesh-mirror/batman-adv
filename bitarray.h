@@ -24,9 +24,6 @@
 #define TYPE_OF_WORD unsigned long
 #define WORD_BIT_SIZE (sizeof(TYPE_OF_WORD) * 8)
 
-/* clear the bits, ready for use */
-void bit_init(TYPE_OF_WORD *seq_bits);
-
 /* returns true if the corresponding bit in the given seq_bits indicates true
  * and curr_seqno is within range of last_seqno */
 uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint16_t last_seqno,
@@ -46,6 +43,3 @@ char bit_get_packet(TYPE_OF_WORD *seq_bits, int16_t seq_num_diff,
 
 /* count the hamming weight, how many good packets did we receive? */
 int  bit_packet_count(TYPE_OF_WORD *seq_bits);
-
-/* print the packet array, for debugging purposes */
-char *bit_print(TYPE_OF_WORD *seq_bits);
