@@ -23,15 +23,6 @@
 #include "bitarray.h"
 #include "log.h"
 
-/* clear the bits */
-void bit_init(TYPE_OF_WORD *seq_bits)
-{
-	int i;
-
-	for (i = 0; i < NUM_WORDS; i++)
-		seq_bits[i] = 0;
-}
-
 /* returns true if the corresponding bit in the given seq_bits indicates true
  * and curr_seqno is within range of last_seqno */
 uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint16_t last_seqno,
@@ -53,24 +44,6 @@ uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint16_t last_seqno,
 		else
 			return 0;
 	}
-}
-
-/* print the packet array, for debugging purposes */
-static char bit_string[130];
-char *bit_print(TYPE_OF_WORD *seq_bits)
-{
-	int i, j, k = 0, b = 0;
-
-	for (i = 0; i < NUM_WORDS; i++) {
-		for (j = 0; j < WORD_BIT_SIZE; j++) {
-			bit_string[k++] = ((seq_bits[i]>>j)%2 ? '1' : '0');
-			if (++b == TQ_LOCAL_WINDOW_SIZE)
-				bit_string[k++] = '|';
-		}
-		bit_string[k++] = ' ';
-	}
-	bit_string[k++] = '\0';
-	return bit_string;
 }
 
 /* turn corresponding bit on, so we can remember that we got the packet */
