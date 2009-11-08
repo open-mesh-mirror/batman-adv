@@ -1,4 +1,5 @@
 batman-adv 0.2:
+
 * support latest kernels (2.6.20 - 2.6.31)
 * temporary routing loops / TTL code bug / ghost entries in originator table fixed
 * internal packet queue for packet aggregation & transmission retry (ARQ)
