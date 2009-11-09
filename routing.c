@@ -358,7 +358,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr, stru
 	/* if the TQ is the same and the link not more symetric we won't consider it either */
 	if ((orig_node->router) &&
 	     ((neigh_node->tq_avg == orig_node->router->tq_avg) &&
-	     (orig_node->router->orig_node->bcast_own_sum[if_incoming->if_num] >
+	     (orig_node->router->orig_node->bcast_own_sum[if_incoming->if_num] >=
 	      neigh_node->orig_node->bcast_own_sum[if_incoming->if_num])))
 		goto update_hna;
 
