@@ -39,7 +39,7 @@ void cleanup_procfs(void);
 int setup_procfs(void);
 
 /* While scanning for vis-entries of a particular vis-originator
- * this list collects its interfaces to create a subgraph/cluster 
+ * this list collects its interfaces to create a subgraph/cluster
  * out of them later
  */
 struct vis_if_list {
