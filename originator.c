@@ -163,7 +163,7 @@ static bool purge_orig_neigbours(struct orig_node *orig_node,
 				 struct neigh_node **best_neigh_node)
 {
 	struct list_head *list_pos, *list_pos_tmp;
-	char neigh_str[ETH_STR_LEN];
+	char neigh_str[ETH_STR_LEN], orig_str[ETH_STR_LEN];
 	struct neigh_node *neigh_node;
 	bool neigh_purged = false;
 
@@ -179,6 +179,7 @@ static bool purge_orig_neigbours(struct orig_node *orig_node,
 				((PURGE_TIMEOUT * HZ) / 1000)))) {
 
 			addr_to_string(neigh_str, neigh_node->addr);
+			addr_to_string(orig_str, orig_node->orig);
 			bat_dbg(DBG_BATMAN, "Neighbour timeout: originator %s, neighbour: %s, last_valid %lu\n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
 
 			neigh_purged = true;
