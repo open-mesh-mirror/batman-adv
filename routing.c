@@ -1063,4 +1063,3 @@ void batman_data_ready(struct sock *sk, int len)
 	atomic_set(&data_ready_cond, 1);
 	wake_up_interruptible(&thread_wait);
 }
-

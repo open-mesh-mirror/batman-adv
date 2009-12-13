@@ -559,4 +559,3 @@ static void start_vis_timer(void)
 	queue_delayed_work(bat_event_workqueue, &vis_timer_wq,
 			   (atomic_read(&vis_interval)/1000) * HZ);
 }
-

@@ -239,5 +239,3 @@ void purge_orig(struct work_struct *work)
 
 	start_purge_timer();
 }
-
-

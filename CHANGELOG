@@ -19,7 +19,7 @@ batman-adv 0.1:
 * support latest kernels (2.6.20 - 2.6.28)
 * LOTS of cleanup: locking, stack usage, memory leaks
 * Change Ethertype from 0x0842 to 0x4305
-  unregistered at IEEE, if you want to sponsor an official Ethertype ($2500) 
+  unregistered at IEEE, if you want to sponsor an official Ethertype ($2500)
   please contact us
 
  -- Sun, 28 Dec 2008 00:44:31 +0100

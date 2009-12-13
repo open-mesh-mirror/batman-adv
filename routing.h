@@ -27,9 +27,9 @@ extern atomic_t exit_cond;
 void slide_own_bcast_window(struct batman_if *batman_if);
 void batman_data_ready(struct sock *sk, int len);
 int packet_recv_thread(void *data);
-void receive_bat_packet(struct ethhdr *ethhdr, 
-				struct batman_packet *batman_packet, 
-				unsigned char *hna_buff, int hna_buff_len, 
+void receive_bat_packet(struct ethhdr *ethhdr,
+				struct batman_packet *batman_packet,
+				unsigned char *hna_buff, int hna_buff_len,
 				struct batman_if *if_incoming);
 void update_routes(struct orig_node *orig_node,
 				struct neigh_node *neigh_node,

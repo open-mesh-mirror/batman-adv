@@ -827,5 +827,3 @@ int setup_procfs(void)
 
 	return 0;
 }
-
-
