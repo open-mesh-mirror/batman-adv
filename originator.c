@@ -180,7 +180,7 @@ static bool purge_orig_neighbors(struct orig_node *orig_node,
 
 			addr_to_string(neigh_str, neigh_node->addr);
 			addr_to_string(orig_str, orig_node->orig);
-			bat_dbg(DBG_BATMAN, "Neighbour timeout: originator %s, neighbor: %s, last_valid %lu\n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
+			bat_dbg(DBG_BATMAN, "neighbor timeout: originator %s, neighbor: %s, last_valid %lu\n", orig_str, neigh_str, (neigh_node->last_valid / HZ));
 
 			neigh_purged = true;
 			list_del(list_pos);
