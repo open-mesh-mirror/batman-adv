@@ -155,7 +155,7 @@ static int isBidirectionalNeigh(struct orig_node *orig_node,
 				neigh_node = tmp_neigh_node;
 		}
 
-		if (neigh_node)
+		if (!neigh_node)
 			neigh_node = create_neighbor(orig_node,
 						     orig_neigh_node,
 						     orig_neigh_node->orig,
@@ -267,7 +267,7 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr,
 			ring_buffer_avg(tmp_neigh_node->tq_recv);
 	}
 
-	if (neigh_node == NULL) {
+	if (!neigh_node) {
 		struct orig_node *orig_tmp;
 
 		orig_tmp = get_orig_node(ethhdr->h_source);
