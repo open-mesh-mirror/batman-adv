@@ -337,10 +337,9 @@ void hna_global_add_orig(struct orig_node *orig_node,
 	orig_node->hna_buff_len = 0;
 
 	if (hna_buff_len > 0) {
-		orig_node->hna_buff = kmalloc(orig_node->hna_buff_len, GFP_ATOMIC);
+		orig_node->hna_buff = kmalloc(hna_buff_len, GFP_ATOMIC);
 		if (orig_node->hna_buff) {
-			memcpy(orig_node->hna_buff, hna_buff,
-					orig_node->hna_buff_len);
+			memcpy(orig_node->hna_buff, hna_buff, hna_buff_len);
 			orig_node->hna_buff_len = hna_buff_len;
 		}
 	}
