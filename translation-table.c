@@ -332,14 +332,19 @@ void hna_global_add_orig(struct orig_node *orig_node,
 		hna_buff_count++;
 	}
 
-	orig_node->hna_buff_len = hna_buff_len;
+	/* initialize, and overwrite if malloc succeeds */
+	orig_node->hna_buff = NULL;
+	orig_node->hna_buff_len = 0;
 
-	if (orig_node->hna_buff_len > 0) {
-		orig_node->hna_buff = kmalloc(orig_node->hna_buff_len,
-					      GFP_ATOMIC);
-		memcpy(orig_node->hna_buff, hna_buff, orig_node->hna_buff_len);
-	} else {
-		orig_node->hna_buff = NULL;
+	if (hna_buff_len > 0) {
+		unsigned char *hna_buff;
+		hna_buff = kmalloc(orig_node->hna_buff_len, GFP_ATOMIC);
+		if (hna_buff) {
+			orig_node->hna_buff = hna_buff;
+			memcpy(orig_node->hna_buff, hna_buff,
+					orig_node->hna_buff_len);
+			orig_node->hna_buff_len = hna_buff_len;
+		}
 	}
 
 	spin_lock_irqsave(&hna_global_hash_lock, flags);
