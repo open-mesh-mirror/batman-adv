@@ -148,7 +148,6 @@ struct net_device_stats *interface_stats(struct net_device *dev)
 int interface_set_mac_addr(struct net_device *dev, void *p)
 {
 	struct sockaddr *addr = p;
-	unsigned long flags;
 
 	if (!is_valid_ether_addr(addr->sa_data))
 		return -EADDRNOTAVAIL;
