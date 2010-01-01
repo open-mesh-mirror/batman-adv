@@ -401,7 +401,7 @@ out:
 }
 
 /* find batman interface by netdev. assumes rcu_read_lock on */
-struct batman_if *find_batman_if(struct net_device *dev)
+static struct batman_if *find_batman_if(struct net_device *dev)
 {
 	struct batman_if *batman_if;
 

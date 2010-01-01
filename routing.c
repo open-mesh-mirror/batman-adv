@@ -589,11 +589,13 @@ static int recv_my_icmp_packet(struct sk_buff *skb)
 	struct icmp_packet *icmp_packet;
 	struct ethhdr *ethhdr;
 	struct sk_buff *skb_old;
+	struct batman_if *batman_if;
 	int ret;
 	unsigned long flags;
+	uint8_t dstaddr[ETH_ALEN];
 
 	icmp_packet = (struct icmp_packet *) skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
+	ethhdr = (struct ethhdr *) skb_mac_header(skb);
 
 	/* add data to device queue */
 	if (icmp_packet->msg_type != ECHO_REQUEST) {
@@ -612,6 +614,12 @@ static int recv_my_icmp_packet(struct sk_buff *skb)
 	    (orig_node->batman_if != NULL) &&
 	    (orig_node->router != NULL)) {
 
+		/* don't lock while sending the packets ... we therefore
+		 * copy the required data before sending */
+		batman_if = orig_node->batman_if;
+		memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 		/* create a copy of the skb, if needed, to modify it. */
 		skb_old = NULL;
 		if (!skb_clone_writable(skb, sizeof(struct icmp_packet))) {
@@ -628,13 +636,12 @@ static int recv_my_icmp_packet(struct sk_buff *skb)
 		icmp_packet->msg_type = ECHO_REPLY;
 		icmp_packet->ttl = TTL;
 
-		send_skb_packet(skb,
-				orig_node->batman_if,
-				orig_node->router->addr);
+		send_skb_packet(skb, batman_if, dstaddr);
 		ret = NET_RX_SUCCESS;
-	}
 
-	spin_unlock_irqrestore(&orig_hash_lock, flags);
+	} else
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 	return ret;
 }
 
@@ -644,8 +651,10 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb)
 	struct icmp_packet *icmp_packet;
 	struct ethhdr *ethhdr;
 	struct sk_buff *skb_old;
+	struct batman_if *batman_if;
 	int ret;
 	unsigned long flags;
+	uint8_t dstaddr[ETH_ALEN];
 
 	icmp_packet = (struct icmp_packet *) skb->data;
 	ethhdr = (struct ethhdr *) skb_mac_header(skb);
@@ -666,6 +675,12 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb)
 	    (orig_node->batman_if != NULL) &&
 	    (orig_node->router != NULL)) {
 
+		/* don't lock while sending the packets ... we therefore
+		 * copy the required data before sending */
+		batman_if = orig_node->batman_if;
+		memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 		/* create a copy of the skb, if needed, to modify it. */
 		if (!skb_clone_writable(skb, sizeof(struct icmp_packet))) {
 			skb_old = skb;
@@ -681,14 +696,12 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb)
 		icmp_packet->msg_type = TTL_EXCEEDED;
 		icmp_packet->ttl = TTL;
 
-		send_skb_packet(skb,
-				orig_node->batman_if,
-				orig_node->router->addr);
+		send_skb_packet(skb, batman_if, dstaddr);
 		ret = NET_RX_SUCCESS;
 
-	}
+	} else
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
 
-	spin_unlock_irqrestore(&orig_hash_lock, flags);
 	return ret;
 }
 
@@ -699,9 +712,11 @@ int recv_icmp_packet(struct sk_buff *skb)
 	struct ethhdr *ethhdr;
 	struct orig_node *orig_node;
 	struct sk_buff *skb_old;
+	struct batman_if *batman_if;
 	int hdr_size = sizeof(struct icmp_packet);
 	int ret;
 	unsigned long flags;
+	uint8_t dstaddr[ETH_ALEN];
 
 	/* drop packet if it has not necessary minimum size */
 	if (skb_headlen(skb) < hdr_size)
@@ -744,6 +759,12 @@ int recv_icmp_packet(struct sk_buff *skb)
 	    (orig_node->batman_if != NULL) &&
 	    (orig_node->router != NULL)) {
 
+		/* don't lock while sending the packets ... we therefore
+		 * copy the required data before sending */
+		batman_if = orig_node->batman_if;
+		memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 		/* create a copy of the skb, if needed, to modify it. */
 		if (!skb_clone_writable(skb, sizeof(struct icmp_packet))) {
 			skb_old = skb;
@@ -758,12 +779,12 @@ int recv_icmp_packet(struct sk_buff *skb)
 		icmp_packet->ttl--;
 
 		/* route it */
-		send_skb_packet(skb,
-				orig_node->batman_if,
-				orig_node->router->addr);
+		send_skb_packet(skb, batman_if, dstaddr);
 		ret = NET_RX_SUCCESS;
-	}
-	spin_unlock_irqrestore(&orig_hash_lock, flags);
+
+	} else
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 	return ret;
 }
 
@@ -842,8 +863,10 @@ int recv_unicast_packet(struct sk_buff *skb)
 		/* route it */
 		send_skb_packet(skb, batman_if, dstaddr);
 		ret = NET_RX_SUCCESS;
+
 	} else
 		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
 	return ret;
 }
 
