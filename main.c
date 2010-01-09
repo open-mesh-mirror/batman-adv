@@ -28,6 +28,8 @@
 #include "device.h"
 #include "translation-table.h"
 #include "hard-interface.h"
+#include "gateway_common.h"
+#include "gateway_client.h"
 #include "types.h"
 #include "vis.h"
 #include "hash.h"
@@ -85,6 +87,9 @@ int init_module(void)
 	atomic_set(&vis_interval, 1000);/* TODO: raise this later, this is only
 					 * for debugging now. */
 	atomic_set(&aggregation_enabled, 1);
+	atomic_set(&gw_mode, GW_MODE_OFF);
+	atomic_set(&gw_srv_class, 0);
+	atomic_set(&gw_clnt_class, 0);
 
 	/* the name should not be longer than 10 chars - see
 	 * http://lwn.net/Articles/23634/ */
@@ -191,6 +196,7 @@ void shutdown_module(void)
 
 	/* TODO: unregister BATMAN pack */
 
+	gw_node_list_free();
 	originator_free();
 
 	hna_local_free();

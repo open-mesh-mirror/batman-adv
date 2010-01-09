@@ -33,6 +33,7 @@
 #include "vis.h"
 #include "aggregation.h"
 #include "compat.h"
+#include "gateway_client.h"
 
 DECLARE_WAIT_QUEUE_HEAD(thread_wait);
 
@@ -306,10 +307,20 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr,
 		goto update_hna;
 
 	update_routes(orig_node, neigh_node, hna_buff, tmp_hna_buff_len);
-	return;
+	goto update_gw;
 
 update_hna:
 	update_routes(orig_node, orig_node->router, hna_buff, tmp_hna_buff_len);
+
+update_gw:
+	if (orig_node->gw_flags != batman_packet->gw_flags)
+		gw_node_update(orig_node, batman_packet->gw_flags);
+
+	orig_node->gw_flags = batman_packet->gw_flags;
+
+	/* restart gateway selection if fast or late switching was enabled */
+	if ((orig_node->gw_flags) && (atomic_read(&gw_clnt_class) > 2))
+		gw_check_election(orig_node);
 }
 
 static char count_real_packets(struct ethhdr *ethhdr,

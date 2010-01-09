@@ -28,6 +28,7 @@
 #include "types.h"
 #include "vis.h"
 #include "aggregation.h"
+#include "gateway_common.h"
 
 #include "compat.h"
 
@@ -278,6 +279,8 @@ void schedule_own_packet(struct batman_if *batman_if)
 		batman_packet->flags = VIS_SERVER;
 	else
 		batman_packet->flags = 0;
+
+	batman_packet->gw_flags = (uint8_t)atomic_read(&gw_srv_class);
 
 	/* could be read by receive_bat_packet() */
 	atomic_inc(&batman_if->seqno);

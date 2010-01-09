@@ -28,6 +28,8 @@
 #include "hash.h"
 #include "vis.h"
 #include "compat.h"
+#include "gateway_common.h"
+#include "gateway_client.h"
 
 static struct proc_dir_entry *proc_batman_dir, *proc_interface_file;
 static struct proc_dir_entry *proc_orig_interval_file, *proc_originators_file;
@@ -35,6 +37,7 @@ static struct proc_dir_entry *proc_transt_local_file;
 static struct proc_dir_entry *proc_transt_global_file;
 static struct proc_dir_entry *proc_vis_srv_file, *proc_vis_data_file;
 static struct proc_dir_entry *proc_aggr_file;
+static struct proc_dir_entry *proc_gw_mode_file, *proc_gw_srv_list_file;
 
 static int proc_interfaces_read(struct seq_file *seq, void *offset)
 {
@@ -462,12 +465,123 @@ static int proc_aggr_open(struct inode *inode, struct file *file)
 	return single_open(file, proc_aggr_read, NULL);
 }
 
+static int proc_gw_mode_read(struct seq_file *seq, void *offset)
+{
+	int down, up;
+	long gw_mode_curr = atomic_read(&gw_mode);
+	uint8_t gw_srv_class_curr = (uint8_t)atomic_read(&gw_srv_class);
+
+	gw_srv_class_to_kbit(gw_srv_class_curr, &down, &up);
+
+	seq_printf(seq, "[%c] %s\n",
+		   (gw_mode_curr == GW_MODE_OFF) ? 'x' : ' ',
+		   GW_MODE_OFF_NAME);
+
+	if (gw_mode_curr == GW_MODE_CLIENT)
+		seq_printf(seq, "[x] %s (gw_clnt_class: %i)\n",
+			   GW_MODE_CLIENT_NAME,
+			   atomic_read(&gw_clnt_class));
+	else
+		seq_printf(seq, "[ ] %s\n", GW_MODE_CLIENT_NAME);
+
+	if (gw_mode_curr == GW_MODE_SERVER)
+		seq_printf(seq,
+			   "[x] %s (gw_srv_class: %i -> propagating: %i%s/%i%s)\n",
+			   GW_MODE_SERVER_NAME,
+			   gw_srv_class_curr,
+			   (down > 2048 ? down / 1024 : down),
+			   (down > 2048 ? "MBit" : "KBit"),
+			   (up > 2048 ? up / 1024 : up),
+			   (up > 2048 ? "MBit" : "KBit"));
+	else
+		seq_printf(seq, "[ ] %s\n", GW_MODE_SERVER_NAME);
+
+	return 0;
+}
+
+static int proc_gw_mode_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_gw_mode_read, NULL);
+}
+
+static ssize_t proc_gw_mode_write(struct file *instance,
+				    const char __user *userbuffer,
+				    size_t count, loff_t *data)
+{
+	return gw_mode_set(userbuffer, count);
+}
+
+static int proc_gw_srv_list_read(struct seq_file *seq, void *offset)
+{
+	char *buff;
+	int buffsize = 4096;
+
+	buff = kmalloc(buffsize, GFP_KERNEL);
+	if (!buff)
+		return 0;
+
+	rcu_read_lock();
+	if (list_empty(&if_list)) {
+		rcu_read_unlock();
+		seq_printf(seq,
+			   "BATMAN disabled - please specify interfaces to enable it\n");
+		goto end;
+	}
+
+	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
+		rcu_read_unlock();
+		seq_printf(seq,
+			   "BATMAN disabled - primary interface not active\n");
+		goto end;
+	}
+
+	seq_printf(seq,
+		   "      %-12s (%s/%i) %17s [%10s]: gw_srv_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s] \n",
+		   "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
+		   "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
+		   ((struct batman_if *)if_list.next)->dev,
+		   ((struct batman_if *)if_list.next)->addr_str);
+
+	rcu_read_unlock();
+
+	gw_client_fill_buffer_text(buff, buffsize);
+	seq_printf(seq, "%s", buff);
+
+end:
+	kfree(buff);
+	return 0;
+}
+
+static int proc_gw_srv_list_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_gw_srv_list_read, NULL);
+}
+
+
 /* satisfying different prototypes ... */
 static ssize_t proc_dummy_write(struct file *file, const char __user *buffer,
 				size_t count, loff_t *ppos)
 {
 	return count;
 }
+
+static const struct file_operations proc_gw_srv_list_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_gw_srv_list_open,
+	.read		= seq_read,
+	.write		= proc_dummy_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static const struct file_operations proc_gw_mode_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_gw_mode_open,
+	.read		= seq_read,
+	.write		= proc_gw_mode_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 
 static const struct file_operations proc_aggr_fops = {
 	.owner		= THIS_MODULE,
@@ -566,6 +680,12 @@ void cleanup_procfs(void)
 
 	if (proc_aggr_file)
 		remove_proc_entry(PROC_FILE_AGGR, proc_batman_dir);
+
+	if (proc_gw_mode_file)
+		remove_proc_entry(PROC_FILE_GW_MODE, proc_batman_dir);
+
+	if (proc_gw_srv_list_file)
+		remove_proc_entry(PROC_FILE_GW_SRV_LIST, proc_batman_dir);
 
 	if (proc_batman_dir)
 #ifdef __NET_NET_NAMESPACE_H
@@ -667,6 +787,30 @@ int setup_procfs(void)
 		proc_aggr_file->proc_fops = &proc_aggr_fops;
 	} else {
 		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_AGGR);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_gw_mode_file = create_proc_entry(PROC_FILE_GW_MODE,
+					   S_IWUSR | S_IRUGO,
+					   proc_batman_dir);
+	if (proc_gw_mode_file) {
+		proc_gw_mode_file->proc_fops = &proc_gw_mode_fops;
+	} else {
+		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n",
+		       PROC_ROOT_DIR, PROC_FILE_GW_MODE);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_gw_srv_list_file = create_proc_entry(PROC_FILE_GW_SRV_LIST,
+					   S_IWUSR | S_IRUGO,
+					   proc_batman_dir);
+	if (proc_gw_srv_list_file) {
+		proc_gw_srv_list_file->proc_fops = &proc_gw_srv_list_fops;
+	} else {
+		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n",
+		       PROC_ROOT_DIR, PROC_FILE_GW_SRV_LIST);
 		cleanup_procfs();
 		return -EFAULT;
 	}

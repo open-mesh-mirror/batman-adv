@@ -34,6 +34,8 @@
 #define PROC_FILE_VIS_SRV "vis_server"
 #define PROC_FILE_VIS_DATA "vis_data"
 #define PROC_FILE_AGGR "aggregate_ogm"
+#define PROC_FILE_GW_MODE "gateway_mode"
+#define PROC_FILE_GW_SRV_LIST "gateway_srv_list"
 
 void cleanup_procfs(void);
 int setup_procfs(void);

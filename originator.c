@@ -27,7 +27,7 @@
 #include "translation-table.h"
 #include "routing.h"
 #include "compat.h"
-
+#include "gateway_client.h"
 
 static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
@@ -241,6 +241,8 @@ void purge_orig(struct work_struct *work)
 	while (hash_iterate(orig_hash, &hashit)) {
 		orig_node = hashit.bucket->data;
 		if (purge_orig_node(orig_node)) {
+			if (orig_node->gw_flags)
+				gw_node_delete(orig_node);
 			hash_remove_bucket(orig_hash, &hashit);
 			free_orig_node(orig_node);
 		}
@@ -248,5 +250,7 @@ void purge_orig(struct work_struct *work)
 
 	spin_unlock_irqrestore(&orig_hash_lock, flags);
 
+	gw_node_purge_deleted();
+	gw_election();
 	start_purge_timer();
 }

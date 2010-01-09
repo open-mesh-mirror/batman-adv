@@ -43,7 +43,6 @@ struct batman_if {
 	unsigned char *packet_buff;
 	int packet_len;
 	struct rcu_head rcu;
-
 };
 
 struct orig_node {               /* structure for orig_list maintaining nodes of mesh */
@@ -55,15 +54,22 @@ struct orig_node {               /* structure for orig_list maintaining nodes of
 	uint8_t tq_own;
 	int tq_asym_penalty;
 	unsigned long last_valid;        /* when last packet from this node was received */
-/*	uint8_t  gwflags;      * flags related to gateway functions: gateway class */
-	uint8_t  flags;    		/* for now only VIS_SERVER flag. */
+	uint8_t gw_flags;      /* flags related to gateway class */
+	uint8_t flags;    /* for now only VIS_SERVER flag. */
 	unsigned char *hna_buff;
-	int16_t  hna_buff_len;
+	int16_t hna_buff_len;
 	uint16_t last_real_seqno;   /* last and best known squence number */
 	uint8_t last_ttl;         /* ttl of last received packet */
 	TYPE_OF_WORD bcast_bits[NUM_WORDS];
 	uint16_t last_bcast_seqno;  /* last broadcast sequence number received by this host */
 	struct list_head neigh_list;
+};
+
+struct gw_node {
+	struct list_head list;
+	struct orig_node *orig_node;
+	unsigned long deleted;
+	struct rcu_head rcu;
 };
 
 struct neigh_node {
