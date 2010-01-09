@@ -28,6 +28,10 @@
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include "bat_sysfs.h"		/* struct bat_attribute */
 
+#ifndef IPPROTO_UDP
+#define IPPROTO_UDP 17
+#endif
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 22)
 
 #define skb_set_network_header(_skb, _offset) \
