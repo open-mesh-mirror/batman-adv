@@ -26,6 +26,7 @@
 #include "translation-table.h"
 #include "types.h"
 #include "hash.h"
+#include "gateway_client.h"
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include "compat.h"
@@ -181,6 +182,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	uint8_t dstaddr[6];
 	int data_len = skb->len;
 	unsigned long flags;
+	bool bcast_dst = false, do_bcast = true;
 
 	if (atomic_read(&module_state) != MODULE_ACTIVE)
 		goto dropped;
@@ -189,9 +191,14 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	/* TODO: check this for locks */
 	hna_local_add(ethhdr->h_source);
 
-	/* ethernet packet should be broadcasted */
-	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest)) {
+	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest))
+		bcast_dst = true;
 
+	if ((bcast_dst) && gw_is_target(skb))
+		do_bcast = false;
+
+	/* ethernet packet should be broadcasted */
+	if (bcast_dst && do_bcast) {
 		if (my_skb_push(skb, sizeof(struct bcast_packet)) < 0)
 			goto dropped;
 
@@ -219,8 +226,12 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	/* unicast packet */
 	} else {
 		spin_lock_irqsave(&orig_hash_lock, flags);
+
 		/* get routing information */
-		orig_node = ((struct orig_node *)hash_find(orig_hash,
+		if (bcast_dst)
+			orig_node = (struct orig_node *)gw_get_selected();
+		else
+			orig_node = ((struct orig_node *)hash_find(orig_hash,
 							   ethhdr->h_dest));
 
 		/* check for hna host */

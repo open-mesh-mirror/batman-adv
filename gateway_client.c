@@ -20,12 +20,28 @@
 #include "main.h"
 #include "gateway_client.h"
 #include "gateway_common.h"
+#include <linux/ip.h>
+#include <linux/udp.h>
 
 LIST_HEAD(gw_list);
 DEFINE_SPINLOCK(curr_gw_lock);
 DEFINE_SPINLOCK(gw_list_lock);
 atomic_t gw_clnt_class;
 static struct gw_node *curr_gateway;
+
+void *gw_get_selected(void)
+{
+	struct gw_node *curr_gateway_tmp = NULL;
+
+	spin_lock(&curr_gw_lock);
+	curr_gateway_tmp = curr_gateway;
+	spin_unlock(&curr_gw_lock);
+
+	if (!curr_gateway_tmp)
+		return NULL;
+
+	return curr_gateway_tmp->orig_node;
+}
 
 void gw_deselect(void)
 {
@@ -332,4 +348,33 @@ int gw_client_fill_buffer_text(unsigned char *buff, int buff_len)
 		sprintf(buff, "No gateways in range ... \n");
 
 	return bytes_written;
+}
+
+bool gw_is_target(struct sk_buff *skb)
+{
+	struct ethhdr *ethhdr;
+	struct iphdr *iphdr;
+	struct udphdr *udphdr;
+
+	if (atomic_read(&gw_mode) != GW_MODE_CLIENT)
+		return false;
+
+	if (!curr_gateway)
+		return false;
+
+	ethhdr = (struct ethhdr *)skb->data;
+	if (ntohs(ethhdr->h_proto) != ETH_P_IP)
+		return false;
+
+	iphdr = (struct iphdr *)(skb->data + ETH_HLEN);
+
+	if (iphdr->protocol != IPPROTO_UDP)
+		return false;
+
+	udphdr = (struct udphdr *)(skb->data + ETH_HLEN + (iphdr->ihl * 4));
+
+	if (ntohs(udphdr->dest) != 67)
+		return false;
+
+	return true;
 }
