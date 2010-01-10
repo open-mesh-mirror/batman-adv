@@ -22,6 +22,7 @@
 #include "gateway_common.h"
 #include <linux/ip.h>
 #include <linux/udp.h>
+#include <linux/if_vlan.h>
 
 LIST_HEAD(gw_list);
 DEFINE_SPINLOCK(curr_gw_lock);
@@ -370,15 +371,20 @@ bool gw_is_target(struct sk_buff *skb)
 		return false;
 
 	ethhdr = (struct ethhdr *)skb->data;
+
+	if (ntohs(ethhdr->h_proto) == ETH_P_8021Q)
+		ethhdr = (struct ethhdr *)(skb->data + VLAN_HLEN);
+
 	if (ntohs(ethhdr->h_proto) != ETH_P_IP)
 		return false;
 
-	iphdr = (struct iphdr *)(skb->data + ETH_HLEN);
+	iphdr = (struct iphdr *)(((unsigned char *)ethhdr) + ETH_HLEN);
 
 	if (iphdr->protocol != IPPROTO_UDP)
 		return false;
 
-	udphdr = (struct udphdr *)(skb->data + ETH_HLEN + (iphdr->ihl * 4));
+	udphdr = (struct udphdr *)(((unsigned char *)iphdr) +
+						(iphdr->ihl * 4));
 
 	if (ntohs(udphdr->dest) != 67)
 		return false;
