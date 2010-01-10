@@ -162,6 +162,12 @@ void gw_check_election(struct orig_node *orig_node)
 	if (!curr_gateway_tmp)
 		return;
 
+	if (!curr_gateway_tmp->orig_node)
+		goto deselect;
+
+	if (!curr_gateway_tmp->orig_node->router)
+		goto deselect;
+
 	/* this node already is the gateway */
 	if (curr_gateway_tmp->orig_node == orig_node)
 		return;
@@ -188,6 +194,7 @@ void gw_check_election(struct orig_node *orig_node)
 		"Restarting gateway selection: better gateway found (tq curr: %i, tq new: %i) \n",
 		gw_tq_avg, orig_tq_avg);
 
+deselect:
 	gw_deselect();
 }
 
