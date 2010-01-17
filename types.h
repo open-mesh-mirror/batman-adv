@@ -47,6 +47,7 @@ struct batman_if {
 
 struct orig_node {               /* structure for orig_list maintaining nodes of mesh */
 	uint8_t orig[ETH_ALEN];
+	uint8_t primary_addr[ETH_ALEN];	/* hosts primary interface address */
 	struct neigh_node *router;
 	struct batman_if *batman_if;
 	TYPE_OF_WORD *bcast_own;
@@ -63,6 +64,10 @@ struct orig_node {               /* structure for orig_list maintaining nodes of
 	TYPE_OF_WORD bcast_bits[NUM_WORDS];
 	uint16_t last_bcast_seqno;  /* last broadcast sequence number received by this host */
 	struct list_head neigh_list;
+	struct {
+		uint8_t candidates;	/* how many candidates are available */
+		struct neigh_node *selected;	/* next bonding candidate */
+	} bond;
 };
 
 struct gw_node {
@@ -80,6 +85,7 @@ struct neigh_node {
 	uint8_t tq_index;
 	uint8_t tq_avg;
 	uint8_t last_ttl;
+	struct neigh_node *next_bond_candidate;
 	unsigned long last_valid;            /* when last packet via this neighbor was received */
 	TYPE_OF_WORD real_bits[NUM_WORDS];
 	struct orig_node *orig_node;

@@ -36,7 +36,7 @@ static struct proc_dir_entry *proc_orig_interval_file, *proc_originators_file;
 static struct proc_dir_entry *proc_transt_local_file;
 static struct proc_dir_entry *proc_transt_global_file;
 static struct proc_dir_entry *proc_vis_srv_file, *proc_vis_data_file;
-static struct proc_dir_entry *proc_aggr_file;
+static struct proc_dir_entry *proc_aggr_file, *proc_bond_file;
 static struct proc_dir_entry *proc_gw_mode_file, *proc_gw_srv_list_file;
 
 static int proc_interfaces_read(struct seq_file *seq, void *offset)
@@ -558,6 +558,53 @@ static int proc_gw_srv_list_open(struct inode *inode, struct file *file)
 }
 
 
+static int proc_bond_read(struct seq_file *seq, void *offset)
+{
+	seq_printf(seq, "%i\n", atomic_read(&bonding_enabled));
+
+	return 0;
+}
+
+static ssize_t proc_bond_write(struct file *file, const char __user *buffer,
+			       size_t count, loff_t *ppos)
+{
+	char *bond_string;
+	int not_copied = 0;
+	unsigned long bonding_enabled_tmp;
+	int retval;
+
+	bond_string = kmalloc(count, GFP_KERNEL);
+
+	if (!bond_string)
+		return -ENOMEM;
+
+	not_copied = copy_from_user(bond_string, buffer, count);
+	bond_string[count - not_copied - 1] = 0;
+
+	retval = strict_strtoul(bond_string, 10, &bonding_enabled_tmp);
+
+	if (retval || bonding_enabled_tmp > 1) {
+		printk(KERN_ERR "batman-adv: Bonding can only be enabled (1) or disabled (0), given value: %li\n", bonding_enabled_tmp);
+	} else {
+		printk(KERN_INFO "batman-adv:Changing bonding from: %s (%i) to: %s (%li)\n",
+		       (atomic_read(&bonding_enabled) == 1 ?
+			"enabled" : "disabled"),
+		       atomic_read(&bonding_enabled),
+		       (bonding_enabled_tmp == 1 ? "enabled" : "disabled"),
+		       bonding_enabled_tmp);
+		atomic_set(&bonding_enabled,
+						(unsigned)bonding_enabled_tmp);
+	}
+
+	kfree(bond_string);
+	return count;
+}
+
+static int proc_bond_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, proc_bond_read, NULL);
+}
+
 /* satisfying different prototypes ... */
 static ssize_t proc_dummy_write(struct file *file, const char __user *buffer,
 				size_t count, loff_t *ppos)
@@ -588,6 +635,15 @@ static const struct file_operations proc_aggr_fops = {
 	.open		= proc_aggr_open,
 	.read		= seq_read,
 	.write		= proc_aggr_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+static const struct file_operations proc_bond_fops = {
+	.owner		= THIS_MODULE,
+	.open		= proc_bond_open,
+	.read		= seq_read,
+	.write		= proc_bond_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
@@ -686,6 +742,10 @@ void cleanup_procfs(void)
 
 	if (proc_gw_srv_list_file)
 		remove_proc_entry(PROC_FILE_GW_SRV_LIST, proc_batman_dir);
+
+	if (proc_bond_file)
+		remove_proc_entry(PROC_FILE_BOND, proc_batman_dir);
+
 
 	if (proc_batman_dir)
 #ifdef __NET_NET_NAMESPACE_H
@@ -811,6 +871,16 @@ int setup_procfs(void)
 	} else {
 		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n",
 		       PROC_ROOT_DIR, PROC_FILE_GW_SRV_LIST);
+		cleanup_procfs();
+		return -EFAULT;
+	}
+
+	proc_bond_file = create_proc_entry(PROC_FILE_BOND, S_IWUSR | S_IRUGO,
+					   proc_batman_dir);
+	if (proc_bond_file) {
+		proc_bond_file->proc_fops = &proc_bond_fops;
+	} else {
+		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_BOND);
 		cleanup_procfs();
 		return -EFAULT;
 	}

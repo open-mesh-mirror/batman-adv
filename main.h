@@ -58,6 +58,11 @@
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 #define ETH_STR_LEN 20
 
+/* how much worse secondary interfaces may be to
+ * to be considered as bonding candidates */
+
+#define BONDING_TQ_THRESHOLD	50
+
 #define MAX_AGGREGATION_BYTES 512 /* should not be bigger than 512 bytes or
 				   * change the size of
 				   * forw_packet->direct_link_flags */
@@ -131,6 +136,7 @@ extern spinlock_t forw_bcast_list_lock;
 extern atomic_t originator_interval;
 extern atomic_t vis_interval;
 extern atomic_t aggregation_enabled;
+extern atomic_t bonding_enabled;
 extern int16_t num_hna;
 extern int16_t num_ifs;
 

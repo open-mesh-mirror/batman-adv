@@ -312,9 +312,9 @@ int hardif_add_interface(char *dev, int if_num)
 	batman_packet = (struct batman_packet *)(batman_if->packet_buff);
 	batman_packet->packet_type = BAT_PACKET;
 	batman_packet->version = COMPAT_VERSION;
-	batman_packet->flags = 0x00;
-	batman_packet->ttl = (batman_if->if_num > 0 ? 2 : TTL);
-	batman_packet->flags = 0;
+	batman_packet->flags = batman_if->if_num > 0 ?
+			0x00 : PRIMARIES_FIRST_HOP;
+	batman_packet->ttl = batman_if->if_num > 0 ? 2 : TTL;
 	batman_packet->tq = TQ_MAX_VALUE;
 	batman_packet->num_hna = 0;
 

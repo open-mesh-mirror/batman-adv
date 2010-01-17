@@ -22,6 +22,7 @@
 #include "main.h"
 #include "soft-interface.h"
 #include "hard-interface.h"
+#include "routing.h"
 #include "send.h"
 #include "translation-table.h"
 #include "types.h"
@@ -171,11 +172,14 @@ int interface_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
+
+
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
 	struct unicast_packet *unicast_packet;
 	struct bcast_packet *bcast_packet;
 	struct orig_node *orig_node;
+	struct neigh_node *router;
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
 	struct bat_priv *priv = netdev_priv(dev);
 	struct batman_if *batman_if;
@@ -238,37 +242,36 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		if (!orig_node)
 			orig_node = transtable_search(ethhdr->h_dest);
 
-		if ((orig_node) &&
-		    (orig_node->batman_if) &&
-		    (orig_node->router)) {
-			if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
-				goto unlock;
+		router = find_router(orig_node);
 
-			unicast_packet = (struct unicast_packet *)skb->data;
-
-			unicast_packet->version = COMPAT_VERSION;
-			/* batman packet type: unicast */
-			unicast_packet->packet_type = BAT_UNICAST;
-			/* set unicast ttl */
-			unicast_packet->ttl = TTL;
-			/* copy the destination for faster routing */
-			memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
-
-			/* net_dev won't be available when not active */
-			if (orig_node->batman_if->if_active != IF_ACTIVE)
-				goto unlock;
-
-			/* don't lock while sending the packets ... we therefore
-			 * copy the required data before sending */
-
-			batman_if = orig_node->batman_if;
-			memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-			spin_unlock_irqrestore(&orig_hash_lock, flags);
-
-			send_skb_packet(skb, batman_if, dstaddr);
-		} else {
+		if (!router)
 			goto unlock;
-		}
+
+		/* don't lock while sending the packets ... we therefore
+		 * copy the required data before sending */
+
+		batman_if = router->if_incoming;
+		memcpy(dstaddr, router->addr, ETH_ALEN);
+
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
+
+		if (batman_if->if_active != IF_ACTIVE)
+			goto dropped;
+
+		if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
+			goto dropped;
+
+		unicast_packet = (struct unicast_packet *)skb->data;
+
+		unicast_packet->version = COMPAT_VERSION;
+		/* batman packet type: unicast */
+		unicast_packet->packet_type = BAT_UNICAST;
+		/* set unicast ttl */
+		unicast_packet->ttl = TTL;
+		/* copy the destination for faster routing */
+		memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
+
+		send_skb_packet(skb, batman_if, dstaddr);
 	}
 
 	priv->stats.tx_packets++;
