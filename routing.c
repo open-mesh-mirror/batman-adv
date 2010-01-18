@@ -1015,7 +1015,7 @@ int recv_unicast_packet(struct sk_buff *skb)
 	router = find_router(orig_node);
 
 	if (!router) {
-		spin_lock_irqsave(&orig_hash_lock, flags);
+		spin_unlock_irqrestore(&orig_hash_lock, flags);
 		return NET_RX_DROP;
 	}
 
