@@ -24,9 +24,9 @@
 #include <linux/udp.h>
 #include <linux/if_vlan.h>
 
-LIST_HEAD(gw_list);
-DEFINE_SPINLOCK(curr_gw_lock);
-DEFINE_SPINLOCK(gw_list_lock);
+static LIST_HEAD(gw_list);
+static DEFINE_SPINLOCK(curr_gw_lock);
+static DEFINE_SPINLOCK(gw_list_lock);
 atomic_t gw_clnt_class;
 static struct gw_node *curr_gateway;
 

@@ -25,7 +25,7 @@ atomic_t gw_mode;
 atomic_t gw_srv_class;
 
 /* calculates the gateway class from kbit */
-void kbit_to_gw_srv_class(int down, int up, long *gw_srv_class)
+static void kbit_to_gw_srv_class(int down, int up, long *gw_srv_class)
 {
 	int mdown = 0, tdown, tup, difference;
 	uint8_t sbit, part;
