@@ -250,6 +250,7 @@ void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 				gw_deselect();
 		}
 
+		rcu_read_unlock();
 		return;
 	}
 	rcu_read_unlock();
