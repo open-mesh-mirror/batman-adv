@@ -46,6 +46,7 @@ DEFINE_SPINLOCK(forw_bcast_list_lock);
 
 atomic_t originator_interval;
 atomic_t vis_interval;
+atomic_t vis_mode;
 atomic_t aggregation_enabled;
 atomic_t bonding_enabled;
 int16_t num_hna;
@@ -87,6 +88,7 @@ int init_module(void)
 	atomic_set(&originator_interval, 1000);
 	atomic_set(&vis_interval, 1000);/* TODO: raise this later, this is only
 					 * for debugging now. */
+	atomic_set(&vis_mode, VIS_TYPE_CLIENT_UPDATE);
 	atomic_set(&aggregation_enabled, 1);
 	atomic_set(&bonding_enabled, 0);
 	atomic_set(&gw_mode, GW_MODE_OFF);
