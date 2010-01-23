@@ -20,6 +20,7 @@
 #include "main.h"
 #include "gateway_common.h"
 #include "gateway_client.h"
+#include "compat.h"
 
 atomic_t gw_mode;
 atomic_t gw_srv_class;

@@ -20,6 +20,7 @@
 #include "main.h"
 #include "gateway_client.h"
 #include "gateway_common.h"
+#include "compat.h"
 #include <linux/ip.h>
 #include <linux/udp.h>
 #include <linux/if_vlan.h>
