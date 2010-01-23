@@ -85,7 +85,7 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 
 	switch (*gw_mode_tmp) {
 	case GW_MODE_CLIENT:
-		ret = strict_strtol(tokptr, 10, gw_clnt_class_tmp);
+		ret = strict_strtoul(tokptr, 10, gw_clnt_class_tmp);
 		if (ret) {
 			printk(KERN_ERR "Client class of gateway mode invalid: %s\n",
 			       tokptr);
@@ -104,7 +104,7 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 		if (slash_ptr)
 			*slash_ptr = 0;
 
-		ret = strict_strtol(tokptr, 10, down);
+		ret = strict_strtoul(tokptr, 10, down);
 		if (ret) {
 			printk(KERN_ERR "Download speed of gateway mode invalid: %s\n",
 			       tokptr);
@@ -121,7 +121,7 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 
 		/* we also got some upload info */
 		if (slash_ptr) {
-			ret = strict_strtol(slash_ptr + 1, 10, up);
+			ret = strict_strtoul(slash_ptr + 1, 10, up);
 			if (ret) {
 				printk(KERN_ERR "Upload speed of gateway mode invalid: %s\n",
 				       slash_ptr + 1);
