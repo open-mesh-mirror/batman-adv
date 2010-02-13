@@ -857,5 +857,5 @@ asmlinkage int bat_printk(const char *fmt, ...)
 	r = bat_vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
-	return printk("foo:%s", buf);
+	return printk("%s", buf);
 }
