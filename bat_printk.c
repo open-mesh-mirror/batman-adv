@@ -35,6 +35,12 @@
 /* Works only for digits and letters, but small and fast */
 #define TOLOWER(x) ((x) | 0x20)
 
+/* We don't want to recursively call bat_printk here
+   because of the previous define in compat.h */
+#ifdef printk
+#undef printk
+#endif
+
 static int skip_atoi(const char **s)
 {
 	int i = 0;
