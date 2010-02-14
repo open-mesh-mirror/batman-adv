@@ -427,10 +427,11 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	struct net_device_stats *stats;
 	int ret;
 
-    skb = skb_share_check(skb, GFP_ATOMIC);
+	skb = skb_share_check(skb, GFP_ATOMIC);
 
-    if (skb == NULL)
-		goto err_free;
+	/* skb was released by skb_share_check() */
+	if (!skb)
+		goto err_out;
 
 	/* packet should hold at least type and version */
 	if (unlikely(skb_headlen(skb) < 2))
@@ -445,7 +446,7 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	if (!batman_if)
 		goto err_free;
 
-    stats = (struct net_device_stats *) dev_get_stats(skb->dev);
+	stats = (struct net_device_stats *)dev_get_stats(skb->dev);
 	if (stats) {
 		stats->rx_packets++;
 		stats->rx_bytes += skb->len;
@@ -491,6 +492,7 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	default:
 		ret = NET_RX_DROP;
 	}
+
 	if (ret == NET_RX_DROP)
 		kfree_skb(skb);
 
@@ -501,9 +503,9 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	return NET_RX_SUCCESS;
 
 err_free:
-    kfree_skb(skb);
-    return NET_RX_DROP;
-
+	kfree_skb(skb);
+err_out:
+	return NET_RX_DROP;
 }
 
 
