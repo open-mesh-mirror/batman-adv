@@ -937,11 +937,17 @@ struct neigh_node *find_router(struct orig_node *orig_node)
 		return orig_node->router;
 
 	/* find the orig_node which has the primary interface. might
-	 * even be the same as our orig_node in many cases */
+	 * even be the same as our router_orig in many cases */
 
-	primary_orig_node = hash_find(orig_hash, router_orig->primary_addr);
-	if (!primary_orig_node)
-		return orig_node->router;
+	if (memcmp(router_orig->primary_addr,
+				router_orig->orig, ETH_ALEN) == 0) {
+		primary_orig_node = router_orig;
+	} else {
+		primary_orig_node = hash_find(orig_hash,
+						router_orig->primary_addr);
+		if (!primary_orig_node)
+			return orig_node->router;
+	}
 
 	/* with less than 2 candidates, we can't do any
 	 * bonding and prefer the original router. */
