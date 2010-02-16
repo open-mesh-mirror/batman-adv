@@ -106,7 +106,8 @@ struct device_client {
 
 struct device_packet {
 	struct list_head list;
-	struct icmp_packet icmp_packet;
+	size_t icmp_len;
+	struct icmp_packet_rr icmp_packet;
 };
 
 struct hna_local_entry {

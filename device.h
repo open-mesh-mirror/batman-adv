@@ -32,5 +32,7 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 			 size_t len, loff_t *off);
 unsigned int bat_device_poll(struct file *file, poll_table *wait);
 void bat_device_add_packet(struct device_client *device_client,
-			   struct icmp_packet *icmp_packet);
-void bat_device_receive_packet(struct icmp_packet *icmp_packet);
+			   struct icmp_packet_rr *icmp_packet,
+			   size_t icmp_len);
+void bat_device_receive_packet(struct icmp_packet_rr *icmp_packet,
+			       size_t icmp_len);

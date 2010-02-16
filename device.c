@@ -163,6 +163,7 @@ ssize_t bat_device_read(struct file *file, char __user *buf, size_t count,
 	struct device_client *device_client =
 		(struct device_client *)file->private_data;
 	struct device_packet *device_packet;
+	size_t packet_len;
 	int error;
 	unsigned long flags;
 
@@ -191,14 +192,15 @@ ssize_t bat_device_read(struct file *file, char __user *buf, size_t count,
 	spin_unlock_irqrestore(&device_client->lock, flags);
 
 	error = __copy_to_user(buf, &device_packet->icmp_packet,
-			       sizeof(struct icmp_packet));
+			       device_packet->icmp_len);
 
+	packet_len = device_packet->icmp_len;
 	kfree(device_packet);
 
 	if (error)
 		return error;
 
-	return sizeof(struct icmp_packet);
+	return packet_len;
 }
 
 ssize_t bat_device_write(struct file *file, const char __user *buff,
@@ -206,9 +208,10 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 {
 	struct device_client *device_client =
 		(struct device_client *)file->private_data;
-	struct icmp_packet icmp_packet;
+	struct icmp_packet_rr icmp_packet;
 	struct orig_node *orig_node;
 	struct batman_if *batman_if;
+	size_t packet_len = sizeof(struct icmp_packet);
 	uint8_t dstaddr[ETH_ALEN];
 	unsigned long flags;
 
@@ -217,10 +220,13 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 		return -EINVAL;
 	}
 
-	if (!access_ok(VERIFY_READ, buff, sizeof(struct icmp_packet)))
+	if (len >= sizeof(struct icmp_packet_rr))
+		packet_len = sizeof(struct icmp_packet_rr);
+
+	if (!access_ok(VERIFY_READ, buff, packet_len))
 		return -EFAULT;
 
-	if (__copy_from_user(&icmp_packet, buff, sizeof(icmp_packet)))
+	if (__copy_from_user(&icmp_packet, buff, packet_len))
 		return -EFAULT;
 
 	if (icmp_packet.packet_type != BAT_ICMP) {
@@ -238,7 +244,7 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 	if (icmp_packet.version != COMPAT_VERSION) {
 		icmp_packet.msg_type = PARAMETER_PROBLEM;
 		icmp_packet.ttl = COMPAT_VERSION;
-		bat_device_add_packet(device_client, &icmp_packet);
+		bat_device_add_packet(device_client, &icmp_packet, packet_len);
 		goto out;
 	}
 
@@ -265,13 +271,13 @@ ssize_t bat_device_write(struct file *file, const char __user *buff,
 	if (batman_if->if_active != IF_ACTIVE)
 		goto dst_unreach;
 
-	memcpy(icmp_packet.orig,
-	       batman_if->net_dev->dev_addr,
-	       ETH_ALEN);
+	memcpy(icmp_packet.orig, batman_if->net_dev->dev_addr, ETH_ALEN);
+
+	if (packet_len == sizeof(struct icmp_packet_rr))
+		memcpy(icmp_packet.rr, batman_if->net_dev->dev_addr, ETH_ALEN);
 
 	send_raw_packet((unsigned char *)&icmp_packet,
-			sizeof(struct icmp_packet),
-			batman_if, dstaddr);
+			packet_len, batman_if, dstaddr);
 
 	goto out;
 
@@ -279,7 +285,7 @@ unlock:
 	spin_unlock_irqrestore(&orig_hash_lock, flags);
 dst_unreach:
 	icmp_packet.msg_type = DESTINATION_UNREACHABLE;
-	bat_device_add_packet(device_client, &icmp_packet);
+	bat_device_add_packet(device_client, &icmp_packet, packet_len);
 out:
 	return len;
 }
@@ -298,7 +304,8 @@ unsigned int bat_device_poll(struct file *file, poll_table *wait)
 }
 
 void bat_device_add_packet(struct device_client *device_client,
-			   struct icmp_packet *icmp_packet)
+			   struct icmp_packet_rr *icmp_packet,
+			   size_t icmp_len)
 {
 	struct device_packet *device_packet;
 	unsigned long flags;
@@ -309,8 +316,8 @@ void bat_device_add_packet(struct device_client *device_client,
 		return;
 
 	INIT_LIST_HEAD(&device_packet->list);
-	memcpy(&device_packet->icmp_packet, icmp_packet,
-	       sizeof(struct icmp_packet));
+	memcpy(&device_packet->icmp_packet, icmp_packet, icmp_len);
+	device_packet->icmp_len = icmp_len;
 
 	spin_lock_irqsave(&device_client->lock, flags);
 
@@ -339,10 +346,11 @@ void bat_device_add_packet(struct device_client *device_client,
 	wake_up(&device_client->queue_wait);
 }
 
-void bat_device_receive_packet(struct icmp_packet *icmp_packet)
+void bat_device_receive_packet(struct icmp_packet_rr *icmp_packet,
+			       size_t icmp_len)
 {
 	struct device_client *hash = device_client_hash[icmp_packet->uid];
 
 	if (hash)
-		bat_device_add_packet(hash, icmp_packet);
+		bat_device_add_packet(hash, icmp_packet, icmp_len);
 }
