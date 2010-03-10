@@ -373,6 +373,8 @@ static int proc_vis_data_read(struct seq_file *seq, void *offset)
 	struct vis_info *info;
 	struct vis_info_entry *entries;
 	HLIST_HEAD(vis_if_list);
+	struct if_list_entry *entry;
+	struct hlist_node *pos, *n;
 	int i;
 	char tmp_addr_str[ETH_STR_LEN];
 	unsigned long flags;
@@ -391,17 +393,34 @@ static int proc_vis_data_read(struct seq_file *seq, void *offset)
 		info = hashit.bucket->data;
 		entries = (struct vis_info_entry *)
 			((char *)info + sizeof(struct vis_info));
-		addr_to_string(tmp_addr_str, info->packet.vis_orig);
-		seq_printf(seq, "%s,", tmp_addr_str);
 
 		for (i = 0; i < info->packet.entries; i++) {
-			proc_vis_read_entry(seq, &entries[i], &vis_if_list,
-					    info->packet.vis_orig);
+			if (entries[i].quality == 0)
+				continue;
+			proc_vis_insert_interface(entries[i].src, &vis_if_list,
+				compare_orig(entries[i].src,
+						info->packet.vis_orig));
 		}
 
-		/* add primary/secondary records */
-		proc_vis_read_prim_sec(seq, &vis_if_list);
-		seq_printf(seq, "\n");
+		hlist_for_each_entry(entry, pos, &vis_if_list, list) {
+			addr_to_string(tmp_addr_str, entry->addr);
+			seq_printf(seq, "%s,", tmp_addr_str);
+
+			for (i = 0; i < info->packet.entries; i++)
+				proc_vis_read_entry(seq, &entries[i],
+						entry->addr, entry->primary);
+
+			/* add primary/secondary records */
+			if (compare_orig(entry->addr, info->packet.vis_orig))
+				proc_vis_read_prim_sec(seq, &vis_if_list);
+
+			seq_printf(seq, "\n");
+		}
+
+		hlist_for_each_entry_safe(entry, pos, n, &vis_if_list, list) {
+			hlist_del(&entry->list);
+			kfree(entry);
+		}
 	}
 	spin_unlock_irqrestore(&vis_hash_lock, flags);
 
