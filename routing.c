@@ -363,34 +363,36 @@ static char count_real_packets(struct ethhdr *ethhdr,
 
 /* copy primary address for bonding */
 static void mark_bonding_address(struct orig_node *orig_node,
-				struct orig_node *orig_neigh_node,
-				struct batman_packet *batman_packet)
+				 struct orig_node *orig_neigh_node,
+				 struct batman_packet *batman_packet,
+				 struct bat_priv *bat_priv)
 
 {
 	/* don't care if bonding is not enabled */
-	if (!atomic_read(&bonding_enabled)) {
+	if (!atomic_read(&bat_priv->bonding_enabled)) {
 		orig_node->bond.candidates = 0;
 		return;
 	}
 
 	if (batman_packet->flags & PRIMARIES_FIRST_HOP)
 		memcpy(orig_neigh_node->primary_addr,
-						orig_node->orig, ETH_ALEN);
-	 else
-		return;
+		       orig_node->orig, ETH_ALEN);
+
+	return;
 }
 
 /* mark possible bonding candidates in the neighbor list */
-void update_bonding_candidates(struct orig_node *orig_node)
+void update_bonding_candidates(struct orig_node *orig_node,
+			       struct bat_priv *bat_priv)
 {
 	int candidates;
 	int interference_candidate;
 	int best_tq;
 	struct neigh_node *tmp_neigh_node, *tmp_neigh_node2;
-    struct neigh_node *first_candidate, *last_candidate;
+	struct neigh_node *first_candidate, *last_candidate;
 
 	/* don't care if bonding is not enabled */
-	if (!atomic_read(&bonding_enabled)) {
+	if (!atomic_read(&bat_priv->bonding_enabled)) {
 		orig_node->bond.candidates = 0;
 		return;
 	}
@@ -477,6 +479,8 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 				unsigned char *hna_buff, int hna_buff_len,
 				struct batman_if *if_incoming)
 {
+	/* FIXME: each orig_node->batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct batman_if *batman_if;
 	struct orig_node *orig_neigh_node, *orig_node;
 	char has_directlink_flag;
@@ -638,8 +642,9 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 		update_orig(orig_node, ethhdr, batman_packet,
 			    if_incoming, hna_buff, hna_buff_len, is_duplicate);
 
-	mark_bonding_address(orig_node, orig_neigh_node, batman_packet);
-	update_bonding_candidates(orig_node);
+	mark_bonding_address(orig_node, orig_neigh_node,
+			     batman_packet, bat_priv);
+	update_bonding_candidates(orig_node, bat_priv);
 
 	/* is single hop (direct) neighbor */
 	if (is_single_hop_neigh) {
@@ -928,6 +933,8 @@ int recv_icmp_packet(struct sk_buff *skb)
  * bonding if possible. */
 struct neigh_node *find_router(struct orig_node *orig_node)
 {
+	/* FIXME: each orig_node->batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct orig_node *primary_orig_node;
 	struct orig_node *router_orig;
 	struct neigh_node *router;
@@ -940,7 +947,7 @@ struct neigh_node *find_router(struct orig_node *orig_node)
 		return NULL;
 
 	/* don't care if bonding is not enabled */
-	if (!atomic_read(&bonding_enabled))
+	if (!atomic_read(&bat_priv->bonding_enabled))
 		return orig_node->router;
 
 	router_orig = orig_node->router->orig_node;

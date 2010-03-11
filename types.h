@@ -94,6 +94,9 @@ struct neigh_node {
 
 struct bat_priv {
 	struct net_device_stats stats;
+	atomic_t aggregation_enabled;
+	atomic_t bonding_enabled;
+	struct kobject *mesh_obj;
 };
 
 struct device_client {
