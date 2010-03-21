@@ -96,6 +96,9 @@ struct bat_priv {
 	struct net_device_stats stats;
 	atomic_t aggregation_enabled;
 	atomic_t bonding_enabled;
+	atomic_t vis_mode;
+	atomic_t gw_mode;
+	atomic_t gw_class;
 	struct kobject *mesh_obj;
 };
 

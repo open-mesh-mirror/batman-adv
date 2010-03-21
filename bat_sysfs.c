@@ -24,6 +24,9 @@
 #include "translation-table.h"
 #include "originator.h"
 #include "hard-interface.h"
+#include "gateway_common.h"
+#include "gateway_client.h"
+#include "vis.h"
 
 #define to_dev(obj)     container_of(obj, struct device, kobj)
 
@@ -50,6 +53,54 @@ struct bin_attribute bat_attr_##_name = {		\
 	.read = _read,					\
 	.write = _write,				\
 };
+
+static ssize_t show_aggr_ogm(struct kobject *kobj, struct attribute *attr,
+			     char *buff)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
+	int aggr_status = atomic_read(&bat_priv->aggregation_enabled);
+
+	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1 \n",
+		       aggr_status == 0 ? "disabled" : "enabled");
+}
+
+static ssize_t store_aggr_ogm(struct kobject *kobj, struct attribute *attr,
+			      char *buff, size_t count)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
+	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	int aggr_tmp = -1;
+
+	if (((count == 2) && (buff[0] == '1')) ||
+	    (strncmp(buff, "enable", 6) == 0))
+		aggr_tmp = 1;
+
+	if (((count == 2) && (buff[0] == '0')) ||
+	    (strncmp(buff, "disable", 7) == 0))
+		aggr_tmp = 0;
+
+	if (aggr_tmp < 0) {
+		if (buff[count - 1] == '\n')
+			buff[count - 1] = '\0';
+
+		printk(KERN_INFO "batman-adv:Invalid parameter for 'aggregate OGM' setting on mesh %s received: %s\n",
+		       net_dev->name, buff);
+		return -EINVAL;
+	}
+
+	if (atomic_read(&bat_priv->aggregation_enabled) == aggr_tmp)
+		return count;
+
+	printk(KERN_INFO "batman-adv:Changing aggregation from: %s to: %s on mesh: %s\n",
+	       atomic_read(&bat_priv->aggregation_enabled) == 1 ?
+	       "enabled" : "disabled", aggr_tmp == 1 ? "enabled" : "disabled",
+	       net_dev->name);
+
+	atomic_set(&bat_priv->aggregation_enabled, (unsigned)aggr_tmp);
+	return count;
+}
 
 static ssize_t show_bond(struct kobject *kobj, struct attribute *attr,
 			     char *buff)
@@ -100,61 +151,117 @@ static ssize_t store_bond(struct kobject *kobj, struct attribute *attr,
 	return count;
 }
 
-static ssize_t show_aggr_ogm(struct kobject *kobj, struct attribute *attr,
+static ssize_t show_vis_mode(struct kobject *kobj, struct attribute *attr,
 			     char *buff)
 {
 	struct device *dev = to_dev(kobj->parent);
 	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
-	int aggr_status = atomic_read(&bat_priv->aggregation_enabled);
+	int vis_mode = atomic_read(&bat_priv->vis_mode);
 
-	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1 \n",
-		       aggr_status == 0 ? "disabled" : "enabled");
+	return sprintf(buff, "status: %s\ncommands: client, server, %d, %d \n",
+		       vis_mode == VIS_TYPE_CLIENT_UPDATE ?
+							"client" : "server",
+		       VIS_TYPE_SERVER_SYNC, VIS_TYPE_CLIENT_UPDATE);
 }
 
-static ssize_t store_aggr_ogm(struct kobject *kobj, struct attribute *attr,
+static ssize_t store_vis_mode(struct kobject *kobj, struct attribute *attr,
 			      char *buff, size_t count)
 {
 	struct device *dev = to_dev(kobj->parent);
 	struct net_device *net_dev = to_net_dev(dev);
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
-	int aggr_tmp = -1;
+	unsigned long val;
+	int ret, vis_mode_tmp = -1;
 
-	if (((count == 2) && (buff[0] == '1')) ||
-	    (strncmp(buff, "enable", 6) == 0))
-		aggr_tmp = 1;
+	ret = strict_strtoul(buff, 10, &val);
 
-	if (((count == 2) && (buff[0] == '0')) ||
-	    (strncmp(buff, "disable", 7) == 0))
-		aggr_tmp = 0;
+	if (((count == 2) && (!ret) && (val == VIS_TYPE_CLIENT_UPDATE)) ||
+	    (strncmp(buff, "client", 6) == 0))
+		vis_mode_tmp = VIS_TYPE_CLIENT_UPDATE;
 
-	if (aggr_tmp < 0) {
+	if (((count == 2) && (!ret) && (val == VIS_TYPE_SERVER_SYNC)) ||
+	    (strncmp(buff, "server", 6) == 0))
+		vis_mode_tmp = VIS_TYPE_SERVER_SYNC;
+
+	if (vis_mode_tmp < 0) {
 		if (buff[count - 1] == '\n')
 			buff[count - 1] = '\0';
 
-		printk(KERN_INFO "batman-adv:Invalid parameter for 'aggregate OGM' setting on mesh %s received: %s\n",
+		printk(KERN_INFO "batman-adv:Invalid parameter for 'vis mode' setting on mesh %s received: %s\n",
 		       net_dev->name, buff);
 		return -EINVAL;
 	}
 
-	if (atomic_read(&bat_priv->aggregation_enabled) == aggr_tmp)
+	if (atomic_read(&bat_priv->vis_mode) == vis_mode_tmp)
 		return count;
 
-	printk(KERN_INFO "batman-adv:Changing aggregation from: %s to: %s on mesh: %s\n",
-	       atomic_read(&bat_priv->aggregation_enabled) == 1 ?
-	       "enabled" : "disabled", aggr_tmp == 1 ? "enabled" : "disabled",
-	       net_dev->name);
+	printk(KERN_INFO "batman-adv:Changing vis mode from: %s to: %s on mesh: %s\n",
+	       atomic_read(&bat_priv->vis_mode) == VIS_TYPE_CLIENT_UPDATE ?
+	       "client" : "server", vis_mode_tmp == VIS_TYPE_CLIENT_UPDATE ?
+	       "client" : "server", net_dev->name);
 
-	atomic_set(&bat_priv->aggregation_enabled, (unsigned)aggr_tmp);
+	atomic_set(&bat_priv->vis_mode, (unsigned)vis_mode_tmp);
 	return count;
+}
+
+static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
+			    char *buff)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
+	int down, up, bytes_written;
+	int gw_mode = atomic_read(&bat_priv->gw_mode);
+	int gw_class = atomic_read(&bat_priv->gw_class);
+
+	switch (gw_mode) {
+	case GW_MODE_CLIENT:
+		bytes_written = sprintf(buff, "status: %s (gw_class: %i)\n",
+					GW_MODE_CLIENT_NAME, gw_class);
+		break;
+	case GW_MODE_SERVER:
+		gw_srv_class_to_kbit(gw_class, &down, &up);
+		bytes_written = sprintf(buff,
+					"status: %s (gw_class: %i -> propagating: %i%s/%i%s)\n",
+					GW_MODE_SERVER_NAME, gw_class,
+					(down > 2048 ? down / 1024 : down),
+					(down > 2048 ? "MBit" : "KBit"),
+					(up > 2048 ? up / 1024 : up),
+					(up > 2048 ? "MBit" : "KBit"));
+		break;
+	default:
+		bytes_written = sprintf(buff, "status: %s\n",
+					GW_MODE_OFF_NAME);
+		break;
+	}
+
+	bytes_written += sprintf(buff + bytes_written,
+				 "commands: %s, %s <opt arg>, %s <opt arg> \n",
+				 GW_MODE_OFF_NAME, GW_MODE_CLIENT_NAME,
+				 GW_MODE_SERVER_NAME);
+	return bytes_written;
+}
+
+static ssize_t store_gw_mode(struct kobject *kobj, struct attribute *attr,
+			      char *buff, size_t count)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
+	struct bat_priv *bat_priv = netdev_priv(net_dev);
+
+	return gw_mode_set(bat_priv, buff, count);
 }
 
 static BAT_ATTR(aggregate_ogm, S_IRUGO | S_IWUSR,
 		show_aggr_ogm, store_aggr_ogm);
 static BAT_ATTR(bonding, S_IRUGO | S_IWUSR, show_bond, store_bond);
+static BAT_ATTR(vis_mode, S_IRUGO | S_IWUSR, show_vis_mode, store_vis_mode);
+static BAT_ATTR(gw_mode, S_IRUGO | S_IWUSR, show_gw_mode, store_gw_mode);
 
 static struct bat_attribute *mesh_attrs[] = {
-	&bat_attr_bonding,
 	&bat_attr_aggregate_ogm,
+	&bat_attr_bonding,
+	&bat_attr_vis_mode,
+	&bat_attr_gw_mode,
 	NULL,
 };
 
@@ -164,19 +271,6 @@ static ssize_t transtable_local_read(struct kobject *kobj,
 {
 	struct device *dev = to_dev(kobj->parent);
 	struct net_device *net_dev = to_net_dev(dev);
-
-	rcu_read_lock();
-	if (list_empty(&if_list)) {
-		rcu_read_unlock();
-
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
-				       net_dev->name);
-
-		return 0;
-	}
-	rcu_read_unlock();
 
 	return hna_local_fill_buffer_text(net_dev, buff, count, off);
 }
@@ -188,19 +282,6 @@ static ssize_t transtable_global_read(struct kobject *kobj,
 	struct device *dev = to_dev(kobj->parent);
 	struct net_device *net_dev = to_net_dev(dev);
 
-	rcu_read_lock();
-	if (list_empty(&if_list)) {
-		rcu_read_unlock();
-
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
-				       net_dev->name);
-
-		return 0;
-	}
-	rcu_read_unlock();
-
 	return hna_global_fill_buffer_text(net_dev, buff, count, off);
 }
 
@@ -208,45 +289,44 @@ static ssize_t originators_read(struct kobject *kobj,
 			       struct bin_attribute *bin_attr,
 			       char *buff, loff_t off, size_t count)
 {
-	/* FIXME: orig table should exist per batif */
 	struct device *dev = to_dev(kobj->parent);
 	struct net_device *net_dev = to_net_dev(dev);
 
-	rcu_read_lock();
-	if (list_empty(&if_list)) {
-		rcu_read_unlock();
+	return orig_fill_buffer_text(net_dev, buff, count, off);
+}
 
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
-				       net_dev->name);
+static ssize_t gateways_read(struct kobject *kobj,
+			     struct bin_attribute *bin_attr,
+			     char *buff, loff_t off, size_t count)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
 
-		return 0;
-	}
+	return gw_client_fill_buffer_text(net_dev, buff, count, off);
+}
 
-	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
-		rcu_read_unlock();
+static ssize_t vis_data_read(struct kobject *kobj,
+			     struct bin_attribute *bin_attr,
+			     char *buff, loff_t off, size_t count)
+{
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
 
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - primary interface not active\n",
-				       net_dev->name);
-
-		return 0;
-	}
-	rcu_read_unlock();
-
-	return orig_fill_buffer_text(buff, count, off);
+	return vis_fill_buffer_text(net_dev, buff, count, off);
 }
 
 static BAT_BIN_ATTR(transtable_local, S_IRUGO, transtable_local_read, NULL);
 static BAT_BIN_ATTR(transtable_global, S_IRUGO, transtable_global_read, NULL);
 static BAT_BIN_ATTR(originators, S_IRUGO, originators_read, NULL);
+static BAT_BIN_ATTR(gateways, S_IRUGO, gateways_read, NULL);
+static BAT_BIN_ATTR(vis_data, S_IRUGO, vis_data_read, NULL);
 
 static struct bin_attribute *mesh_bin_attrs[] = {
 	&bat_attr_transtable_local,
 	&bat_attr_transtable_global,
 	&bat_attr_originators,
+	&bat_attr_gateways,
+	&bat_attr_vis_data,
 	NULL,
 };
 
@@ -262,6 +342,9 @@ int sysfs_add_meshif(struct net_device *dev)
 		  routine as soon as we have it */
 	atomic_set(&bat_priv->aggregation_enabled, 1);
 	atomic_set(&bat_priv->bonding_enabled, 0);
+	atomic_set(&bat_priv->vis_mode, VIS_TYPE_CLIENT_UPDATE);
+	atomic_set(&bat_priv->gw_mode, GW_MODE_OFF);
+	atomic_set(&bat_priv->gw_class, 0);
 
 	bat_priv->mesh_obj = kobject_create_and_add(SYSFS_IF_MESH_SUBDIR,
 						    batif_kobject);

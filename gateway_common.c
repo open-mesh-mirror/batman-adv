@@ -24,9 +24,6 @@
 #include "gateway_client.h"
 #include "compat.h"
 
-atomic_t gw_mode;
-atomic_t gw_srv_class;
-
 /* calculates the gateway class from kbit */
 static void kbit_to_gw_srv_class(int down, int up, long *gw_srv_class)
 {
@@ -80,24 +77,24 @@ void gw_srv_class_to_kbit(uint8_t gw_srv_class, int *down, int *up)
 }
 
 static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
-			      char **gw_mode_tmp_str, long *gw_clnt_class_tmp,
+			      char **gw_mode_tmp_str, long *gw_class_tmp,
 			      long *up, long *down)
 {
-	int ret;
+	int ret, multi;
 	char *slash_ptr, *tmp_ptr;
 
 	switch (*gw_mode_tmp) {
 	case GW_MODE_CLIENT:
-		ret = strict_strtoul(tokptr, 10, gw_clnt_class_tmp);
+		ret = strict_strtoul(tokptr, 10, gw_class_tmp);
 		if (ret) {
-			printk(KERN_ERR "Client class of gateway mode invalid: %s\n",
+			printk(KERN_ERR "batman-adv: Client class of gateway mode invalid: %s\n",
 			       tokptr);
 			return false;
 		}
 
-		if (*gw_clnt_class_tmp > TQ_MAX_VALUE) {
-			printk(KERN_ERR "Client class of gateway mode greater than %i: %ld\n",
-					TQ_MAX_VALUE, *gw_clnt_class_tmp);
+		if (*gw_class_tmp > TQ_MAX_VALUE) {
+			printk(KERN_ERR "batman-adv: Client class of gateway mode greater than %i: %ld\n",
+					TQ_MAX_VALUE, *gw_class_tmp);
 			return false;
 		}
 
@@ -107,39 +104,51 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 		if (slash_ptr)
 			*slash_ptr = 0;
 
+		multi = 1;
+
+		if (strlen(tokptr) > 4) {
+			tmp_ptr = tokptr + strlen(tokptr) - 4;
+
+			if (strnicmp(tmp_ptr, "mbit", 4) == 0)
+				multi = 1024;
+
+			if ((strnicmp(tmp_ptr, "kbit", 4) == 0) ||
+			    (multi > 1))
+				*tmp_ptr = '\0';
+		}
+
 		ret = strict_strtoul(tokptr, 10, down);
 		if (ret) {
-			printk(KERN_ERR "Download speed of gateway mode invalid: %s\n",
+			printk(KERN_ERR "batman-adv: Download speed of gateway mode invalid: %s\n",
 			       tokptr);
 			return false;
 		}
 
-		tmp_ptr = tokptr + strlen(tokptr) - 4;
-
-		if ((strlen(tokptr) > 4) &&
-			((strncmp(tmp_ptr, "MBit", 4) == 0) ||
-			(strncmp(tmp_ptr, "mbit", 4) == 0) ||
-			(strncmp(tmp_ptr, "Mbit", 4) == 0)))
-			*down *= 1024;
+		*down *= multi;
 
 		/* we also got some upload info */
 		if (slash_ptr) {
+			multi = 1;
+
+			if (strlen(slash_ptr + 1) > 4) {
+				tmp_ptr = slash_ptr + 1 + strlen(slash_ptr + 1) - 4;
+
+				if (strnicmp(tmp_ptr, "mbit", 4) == 0)
+					multi = 1024;
+
+				if ((strnicmp(tmp_ptr, "kbit", 4) == 0) ||
+				    (multi > 1))
+					*tmp_ptr = '\0';
+			}
+
 			ret = strict_strtoul(slash_ptr + 1, 10, up);
 			if (ret) {
-				printk(KERN_ERR "Upload speed of gateway mode invalid: %s\n",
+				printk(KERN_ERR "batman-adv: Upload speed of gateway mode invalid: %s\n",
 				       slash_ptr + 1);
 				return false;
 			}
 
-			tmp_ptr = slash_ptr + 1 + strlen(slash_ptr + 1) - 4;
-
-			if ((strlen(slash_ptr + 1) > 4) &&
-				((strncmp(tmp_ptr, "MBit", 4) == 0) ||
-				(strncmp(tmp_ptr, "mbit", 4) == 0) ||
-				(strncmp(tmp_ptr, "Mbit", 4) == 0)))
-				*up *= 1024;
-
-			*slash_ptr = '/';
+			*up *= multi;
 		}
 
 		break;
@@ -163,27 +172,18 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 	return true;
 }
 
-ssize_t gw_mode_set(const char __user *userbuffer, size_t count)
+ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count)
 {
-	char *gw_mode_string, *tokptr, *cp;
+	char *tokptr, *cp, finished;
 	char *gw_mode_curr_str, *gw_mode_tmp_str = NULL;
-	int finished, not_copied = 0;
 	long gw_mode_curr, gw_mode_tmp = GW_MODE_OFF;
-	long gw_srv_class_tmp = 0, gw_clnt_class_tmp = 0, up = 0, down = 0;
+	long gw_class_tmp = 0, up = 0, down = 0;
 	bool ret;
 
-	gw_mode_string = kmalloc(count, GFP_KERNEL);
+	tokptr = buff;
+	gw_mode_curr = atomic_read(&bat_priv->gw_mode);
 
-	if (!gw_mode_string)
-		return -ENOMEM;
-
-	not_copied = copy_from_user(gw_mode_string, userbuffer, count);
-	gw_mode_string[count - not_copied - 1] = 0;
-
-	tokptr = gw_mode_string;
-	gw_mode_curr = atomic_read(&gw_mode);
-
-	for (cp = gw_mode_string, finished = 0; !finished; cp++) {
+	for (cp = buff, finished = 0; !finished; cp++) {
 		switch (*cp) {
 		case 0:
 			finished = 1;
@@ -191,14 +191,19 @@ ssize_t gw_mode_set(const char __user *userbuffer, size_t count)
 		case '\n':
 		case '\t':
 			*cp = 0;
+
+			if (strlen(tokptr) == 0)
+				goto next;
+
 			ret = parse_gw_mode_tok(tokptr, &gw_mode_tmp,
 						&gw_mode_tmp_str,
-						&gw_clnt_class_tmp,
+						&gw_class_tmp,
 						&up, &down);
 
 			if (!ret)
 				goto end;
 
+next:
 			tokptr = cp + 1;
 			break;
 		default:
@@ -207,9 +212,9 @@ ssize_t gw_mode_set(const char __user *userbuffer, size_t count)
 	}
 
 	if (!gw_mode_tmp_str) {
-		printk(KERN_INFO "Gateway mode can only be set to: '%s', '%s' or '%s' - given value: %s\n",
+		printk(KERN_INFO "batman-adv: Gateway mode can only be set to: '%s', '%s' or '%s' - given value: %s\n",
 			GW_MODE_OFF_NAME, GW_MODE_CLIENT_NAME,
-			GW_MODE_SERVER_NAME, gw_mode_string);
+			GW_MODE_SERVER_NAME, buff);
 		goto end;
 	}
 
@@ -227,12 +232,11 @@ ssize_t gw_mode_set(const char __user *userbuffer, size_t count)
 
 	switch (gw_mode_tmp) {
 	case GW_MODE_CLIENT:
-		if ((gw_mode_tmp == GW_MODE_CLIENT) && (!gw_clnt_class_tmp))
-			gw_clnt_class_tmp = 20;
+		if ((gw_mode_tmp == GW_MODE_CLIENT) && (!gw_class_tmp))
+			gw_class_tmp = 20;
 
-		printk(KERN_INFO "Changing gateway mode from: '%s' to: '%s' (gw_clnt_class: %ld)\n",
-			  gw_mode_curr_str, gw_mode_tmp_str,
-			  gw_clnt_class_tmp);
+		printk(KERN_INFO "batman-adv: Changing gateway mode from: '%s' to: '%s' (gw_class: %ld)\n",
+			  gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp);
 		break;
 	case GW_MODE_SERVER:
 		if (!down)
@@ -241,39 +245,36 @@ ssize_t gw_mode_set(const char __user *userbuffer, size_t count)
 		if (!up)
 			up = down / 5;
 
-		kbit_to_gw_srv_class(down, up, &gw_srv_class_tmp);
+		kbit_to_gw_srv_class(down, up, &gw_class_tmp);
 
 		/**
 		 * the gw class we guessed above might not match the given
 		 * speeds, hence we need to calculate it back to show the
 		 * number that is going to be propagated
 		 **/
-		gw_srv_class_to_kbit((uint8_t)gw_srv_class_tmp,
+		gw_srv_class_to_kbit((uint8_t)gw_class_tmp,
 				     (int *)&down, (int *)&up);
 
 		printk(KERN_INFO
-			  "Changing gateway mode from: '%s' to: '%s' (gw_srv_class: %ld -> propagating: %ld%s/%ld%s)\n",
-			  gw_mode_curr_str, gw_mode_tmp_str,
-			  gw_srv_class_tmp,
+			  "batman-adv: Changing gateway mode from: '%s' to: '%s' (gw_class: %ld -> propagating: %ld%s/%ld%s)\n",
+			  gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp,
 			  (down > 2048 ? down / 1024 : down),
 			  (down > 2048 ? "MBit" : "KBit"),
 			  (up > 2048 ? up / 1024 : up),
 			  (up > 2048 ? "MBit" : "KBit"));
 		break;
 	default:
-		printk(KERN_INFO "Changing gateway mode from: '%s' to: '%s'\n",
+		printk(KERN_INFO "batman-adv: Changing gateway mode from: '%s' to: '%s'\n",
 			  gw_mode_curr_str, gw_mode_tmp_str);
 		break;
 	}
 
-	atomic_set(&gw_mode, gw_mode_tmp);
-	atomic_set(&gw_srv_class, gw_srv_class_tmp);
-	atomic_set(&gw_clnt_class, gw_clnt_class_tmp);
+	atomic_set(&bat_priv->gw_mode, gw_mode_tmp);
+	atomic_set(&bat_priv->gw_class, gw_class_tmp);
 
-	if (gw_clnt_class_tmp == 0)
+	if (gw_class_tmp == 0)
 		gw_deselect();
 
 end:
-	kfree(gw_mode_string);
 	return count;
 }

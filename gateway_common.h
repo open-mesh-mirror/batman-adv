@@ -29,8 +29,5 @@ enum gw_modes {
 #define GW_MODE_CLIENT_NAME	"client"
 #define GW_MODE_SERVER_NAME	"server"
 
-extern atomic_t gw_mode;
-extern atomic_t gw_srv_class;
-
 void gw_srv_class_to_kbit(uint8_t gw_class, int *down, int *up);
-ssize_t gw_mode_set(const char __user *userbuffer, size_t count);
+ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count);

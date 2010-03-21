@@ -22,6 +22,7 @@
 #include "main.h"
 #include "gateway_client.h"
 #include "gateway_common.h"
+#include "hard-interface.h"
 #include "compat.h"
 #include <linux/ip.h>
 #include <linux/udp.h>
@@ -333,10 +334,47 @@ static int _write_buffer_text(unsigned char *buff, int bytes_written,
 		       (up > 2048 ? "MBit" : "KBit"));
 }
 
-int gw_client_fill_buffer_text(unsigned char *buff, int buff_len)
+int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
+			       size_t count, loff_t off)
 {
 	struct gw_node *gw_node;
+	size_t hdr_len, tmp_len;
 	int bytes_written = 0, gw_count = 0;
+
+	rcu_read_lock();
+	if (list_empty(&if_list)) {
+		rcu_read_unlock();
+
+		if (off == 0)
+			return sprintf(buff,
+				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
+				       net_dev->name);
+
+		return 0;
+	}
+
+	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
+		rcu_read_unlock();
+
+		if (off == 0)
+			return sprintf(buff,
+				       "BATMAN mesh %s disabled - primary interface not active\n",
+				       net_dev->name);
+
+		return 0;
+	}
+
+	hdr_len = sprintf(buff,
+			  "      %-12s (%s/%i) %17s [%10s]: gw_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)] \n",
+			  "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
+			  "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
+			  ((struct batman_if *)if_list.next)->dev,
+			  ((struct batman_if *)if_list.next)->addr_str,
+			  net_dev->name);
+	rcu_read_unlock();
+
+	if (off < hdr_len)
+		bytes_written = hdr_len;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(gw_node, &gw_list, list) {
@@ -346,29 +384,35 @@ int gw_client_fill_buffer_text(unsigned char *buff, int buff_len)
 		if (!gw_node->orig_node->router)
 			continue;
 
-		if (buff_len < bytes_written + (2 * ETH_STR_LEN) + 30)
+		if (count < bytes_written + (2 * ETH_STR_LEN) + 30)
 			break;
 
-		bytes_written += _write_buffer_text(buff,
-						    bytes_written,
-						    gw_node);
+		tmp_len = _write_buffer_text(buff, bytes_written, gw_node);
 		gw_count++;
+
+		hdr_len += tmp_len;
+
+		if (off >= hdr_len)
+			continue;
+
+		bytes_written += tmp_len;
 	}
 	rcu_read_unlock();
 
-	if (gw_count == 0)
-		sprintf(buff, "No gateways in range ... \n");
+	if ((gw_count == 0) && (off == 0))
+		bytes_written += sprintf(buff + bytes_written,
+					 "No gateways in range ... \n");
 
 	return bytes_written;
 }
 
-bool gw_is_target(struct sk_buff *skb)
+bool gw_is_target(struct bat_priv *bat_priv, struct sk_buff *skb)
 {
 	struct ethhdr *ethhdr;
 	struct iphdr *iphdr;
 	struct udphdr *udphdr;
 
-	if (atomic_read(&gw_mode) != GW_MODE_CLIENT)
+	if (atomic_read(&bat_priv->gw_mode) != GW_MODE_CLIENT)
 		return false;
 
 	if (!curr_gateway)

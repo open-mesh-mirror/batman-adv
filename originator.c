@@ -28,6 +28,7 @@
 #include "routing.h"
 #include "compat.h"
 #include "gateway_client.h"
+#include "hard-interface.h"
 
 static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
@@ -207,7 +208,6 @@ static bool purge_orig_neighbors(struct orig_node *orig_node,
 	return neigh_purged;
 }
 
-
 static bool purge_orig_node(struct orig_node *orig_node)
 {
 	/* FIXME: each batman_if will be attached to a softif */
@@ -229,7 +229,7 @@ static bool purge_orig_node(struct orig_node *orig_node)
 				      orig_node->hna_buff_len);
 			/* update bonding candidates, we could have lost
 			 * some candidates. */
-			update_bonding_candidates(orig_node, bat_priv);
+			update_bonding_candidates(bat_priv, orig_node);
 		}
 	}
 	return false;
@@ -261,7 +261,8 @@ void purge_orig(struct work_struct *work)
 	start_purge_timer();
 }
 
-ssize_t orig_fill_buffer_text(char *buff, size_t count, loff_t off)
+ssize_t orig_fill_buffer_text(struct net_device *net_dev, char *buff,
+			      size_t count, loff_t off)
 {
 	HASHIT(hashit);
 	struct orig_node *orig_node;
@@ -272,12 +273,35 @@ ssize_t orig_fill_buffer_text(char *buff, size_t count, loff_t off)
 	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
 	rcu_read_lock();
+	if (list_empty(&if_list)) {
+		rcu_read_unlock();
+
+		if (off == 0)
+			return sprintf(buff,
+				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
+				       net_dev->name);
+
+		return 0;
+	}
+
+	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
+		rcu_read_unlock();
+
+		if (off == 0)
+			return sprintf(buff,
+				       "BATMAN mesh %s disabled - primary interface not active\n",
+				       net_dev->name);
+
+		return 0;
+	}
+
 	hdr_len = sprintf(buff,
-		   "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s] \n",
+		   "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)] \n",
 		   "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF",
 		   "Potential nexthops", SOURCE_VERSION, REVISION_VERSION_STR,
 		   ((struct batman_if *)if_list.next)->dev,
-		   ((struct batman_if *)if_list.next)->addr_str);
+		   ((struct batman_if *)if_list.next)->addr_str,
+		   net_dev->name);
 	rcu_read_unlock();
 
 	if (off < hdr_len)

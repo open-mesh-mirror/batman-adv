@@ -187,6 +187,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
 	struct bat_priv *priv = netdev_priv(dev);
 	struct batman_if *batman_if;
+	struct bat_priv *bat_priv;
 	uint8_t dstaddr[6];
 	int data_len = skb->len;
 	unsigned long flags;
@@ -195,6 +196,9 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	if (atomic_read(&module_state) != MODULE_ACTIVE)
 		goto dropped;
 
+	/* FIXME: each batman_if will be attached to a softif */
+	bat_priv = netdev_priv(soft_device);
+
 	dev->trans_start = jiffies;
 	/* TODO: check this for locks */
 	hna_local_add(ethhdr->h_source);
@@ -202,7 +206,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest))
 		bcast_dst = true;
 
-	if ((bcast_dst) && gw_is_target(skb))
+	if ((bcast_dst) && gw_is_target(bat_priv, skb))
 		do_bcast = false;
 
 	/* ethernet packet should be broadcasted */

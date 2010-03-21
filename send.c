@@ -245,7 +245,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	unsigned long send_time;
 	struct batman_packet *batman_packet;
-	int vis_server = atomic_read(&vis_mode);
+	int vis_server = atomic_read(&bat_priv->vis_mode);
 
 	/**
 	 * the interface gets activated here to avoid race conditions between
@@ -275,17 +275,21 @@ void schedule_own_packet(struct batman_if *batman_if)
 	else
 		batman_packet->flags &= ~VIS_SERVER;
 
-	batman_packet->gw_flags = (uint8_t)atomic_read(&gw_srv_class);
+	if (atomic_read(&bat_priv->gw_mode) == GW_MODE_SERVER)
+		batman_packet->gw_flags =
+				(uint8_t)atomic_read(&bat_priv->gw_class);
+	else
+		batman_packet->gw_flags = 0;
 
 	/* could be read by receive_bat_packet() */
 	atomic_inc(&batman_if->seqno);
 
 	slide_own_bcast_window(batman_if);
 	send_time = own_send_time();
-	add_bat_packet_to_list(batman_if->packet_buff,
+	add_bat_packet_to_list(bat_priv,
+			       batman_if->packet_buff,
 			       batman_if->packet_len,
-			       batman_if, 1, send_time,
-			       bat_priv);
+			       batman_if, 1, send_time);
 }
 
 void schedule_forward_packet(struct orig_node *orig_node,
@@ -342,10 +346,10 @@ void schedule_forward_packet(struct orig_node *orig_node,
 		batman_packet->flags &= ~DIRECTLINK;
 
 	send_time = forward_send_time(bat_priv);
-	add_bat_packet_to_list((unsigned char *)batman_packet,
+	add_bat_packet_to_list(bat_priv,
+			       (unsigned char *)batman_packet,
 			       sizeof(struct batman_packet) + hna_buff_len,
-			       if_incoming, 0, send_time,
-			       bat_priv);
+			       if_incoming, 0, send_time);
 }
 
 static void forw_packet_free(struct forw_packet *forw_packet)

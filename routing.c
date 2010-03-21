@@ -362,10 +362,10 @@ static char count_real_packets(struct ethhdr *ethhdr,
 }
 
 /* copy primary address for bonding */
-static void mark_bonding_address(struct orig_node *orig_node,
+static void mark_bonding_address(struct bat_priv *bat_priv,
+				 struct orig_node *orig_node,
 				 struct orig_node *orig_neigh_node,
-				 struct batman_packet *batman_packet,
-				 struct bat_priv *bat_priv)
+				 struct batman_packet *batman_packet)
 
 {
 	/* don't care if bonding is not enabled */
@@ -382,8 +382,8 @@ static void mark_bonding_address(struct orig_node *orig_node,
 }
 
 /* mark possible bonding candidates in the neighbor list */
-void update_bonding_candidates(struct orig_node *orig_node,
-			       struct bat_priv *bat_priv)
+void update_bonding_candidates(struct bat_priv *bat_priv,
+			       struct orig_node *orig_node)
 {
 	int candidates;
 	int interference_candidate;
@@ -642,9 +642,9 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 		update_orig(orig_node, ethhdr, batman_packet,
 			    if_incoming, hna_buff, hna_buff_len, is_duplicate);
 
-	mark_bonding_address(orig_node, orig_neigh_node,
-			     batman_packet, bat_priv);
-	update_bonding_candidates(orig_node, bat_priv);
+	mark_bonding_address(bat_priv, orig_node,
+			     orig_neigh_node, batman_packet);
+	update_bonding_candidates(bat_priv, orig_node);
 
 	/* is single hop (direct) neighbor */
 	if (is_single_hop_neigh) {
@@ -1150,6 +1150,7 @@ int recv_vis_packet(struct sk_buff *skb)
 {
 	struct vis_packet *vis_packet;
 	struct ethhdr *ethhdr;
+	struct bat_priv *bat_priv;
 	int hdr_size = sizeof(struct vis_packet);
 
 	if (skb_headlen(skb) < hdr_size)
@@ -1169,15 +1170,20 @@ int recv_vis_packet(struct sk_buff *skb)
 	if (is_my_mac(vis_packet->sender_orig))
 		return NET_RX_DROP;
 
+	/* FIXME: each batman_if will be attached to a softif */
+	bat_priv = netdev_priv(soft_device);
+
 	switch (vis_packet->vis_type) {
 	case VIS_TYPE_SERVER_SYNC:
 		/* TODO: handle fragmented skbs properly */
-		receive_server_sync_packet(vis_packet, skb_headlen(skb));
+		receive_server_sync_packet(bat_priv, vis_packet,
+					   skb_headlen(skb));
 		break;
 
 	case VIS_TYPE_CLIENT_UPDATE:
 		/* TODO: handle fragmented skbs properly */
-		receive_client_update_packet(vis_packet, skb_headlen(skb));
+		receive_client_update_packet(bat_priv, vis_packet,
+					     skb_headlen(skb));
 		break;
 
 	default:	/* ignore unknown packet */
