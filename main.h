@@ -26,7 +26,7 @@
 #define DRIVER_DESC   "B.A.T.M.A.N. advanced"
 #define DRIVER_DEVICE "batman-adv"
 
-#define SOURCE_VERSION "0.2.1-beta"
+#define SOURCE_VERSION "0.2.1"
 
 
 /* B.A.T.M.A.N. parameters */
@@ -34,8 +34,6 @@
 #define TQ_MAX_VALUE 255
 #define JITTER 20
 #define TTL 50			  /* Time To Live of broadcast messages */
-#define MAX_ADDR 16		  /* number of interfaces which can be added to
-				   * batman. */
 
 #define PURGE_TIMEOUT 200000	  /* purge originators after time in ms if no
 				   * valid packet comes in -> TODO: check
