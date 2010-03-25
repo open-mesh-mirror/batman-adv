@@ -19,12 +19,10 @@
  *
  */
 
-extern atomic_t gw_clnt_class;
-
 void gw_deselect(void);
 void gw_election(void);
 void *gw_get_selected(void);
-void gw_check_election(struct orig_node *orig_node);
+void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node);
 void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags);
 void gw_node_delete(struct orig_node *orig_node);
 void gw_node_purge_deleted(void);

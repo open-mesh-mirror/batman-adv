@@ -233,6 +233,8 @@ static void update_orig(struct orig_node *orig_node, struct ethhdr *ethhdr,
 			unsigned char *hna_buff, int hna_buff_len,
 			char is_duplicate)
 {
+	/* FIXME: get bat_priv */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct neigh_node *neigh_node = NULL, *tmp_neigh_node = NULL;
 	int tmp_hna_buff_len;
 
@@ -317,8 +319,8 @@ update_gw:
 	orig_node->gw_flags = batman_packet->gw_flags;
 
 	/* restart gateway selection if fast or late switching was enabled */
-	if ((orig_node->gw_flags) && (atomic_read(&gw_clnt_class) > 2))
-		gw_check_election(orig_node);
+	if ((orig_node->gw_flags) && (atomic_read(&bat_priv->gw_class) > 2))
+		gw_check_election(bat_priv, orig_node);
 }
 
 static char count_real_packets(struct ethhdr *ethhdr,

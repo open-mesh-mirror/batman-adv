@@ -31,7 +31,6 @@
 static LIST_HEAD(gw_list);
 static DEFINE_SPINLOCK(curr_gw_lock);
 static DEFINE_SPINLOCK(gw_list_lock);
-atomic_t gw_clnt_class;
 static struct gw_node *curr_gateway;
 
 void *gw_get_selected(void)
@@ -57,6 +56,8 @@ void gw_deselect(void)
 
 void gw_election(void)
 {
+	/* FIXME: get bat_priv */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node, *curr_gw_tmp = NULL;
 	uint8_t max_tq = 0;
 	uint32_t max_gw_factor = 0, tmp_gw_factor = 0;
@@ -68,7 +69,7 @@ void gw_election(void)
 	 * hear about. This check is based on the daemon's uptime which we
 	 * don't have.
 	 **/
-	if (atomic_read(&gw_clnt_class) == 0)
+	if (atomic_read(&bat_priv->gw_mode) != GW_MODE_CLIENT)
 		return;
 
 	if (curr_gateway)
@@ -94,7 +95,7 @@ void gw_election(void)
 		if (gw_node->deleted)
 			continue;
 
-		switch (atomic_read(&gw_clnt_class)) {
+		switch (atomic_read(&bat_priv->gw_class)) {
 		case 1: /* fast connection */
 			gw_srv_class_to_kbit(gw_node->orig_node->gw_flags,
 					     &down, &up);
@@ -155,7 +156,7 @@ void gw_election(void)
 	spin_unlock(&curr_gw_lock);
 }
 
-void gw_check_election(struct orig_node *orig_node)
+void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
 {
 	struct gw_node *curr_gateway_tmp;
 	uint8_t gw_tq_avg, orig_tq_avg;
@@ -191,8 +192,8 @@ void gw_check_election(struct orig_node *orig_node)
 	 * if the routing class is greater than 3 the value tells us how much
 	 * greater the TQ value of the new gateway must be
 	 **/
-	if ((atomic_read(&gw_clnt_class) > 3) &&
-	    (orig_tq_avg - gw_tq_avg < atomic_read(&gw_clnt_class)))
+	if ((atomic_read(&bat_priv->gw_class) > 3) &&
+	    (orig_tq_avg - gw_tq_avg < atomic_read(&bat_priv->gw_class)))
 		return;
 
 	bat_dbg(DBG_BATMAN,
