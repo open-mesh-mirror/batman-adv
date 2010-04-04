@@ -42,7 +42,7 @@ static int proc_interfaces_read(struct seq_file *seq, void *offset)
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
-		seq_printf(seq, "[%8s] %s %s \n",
+		seq_printf(seq, "[%8s] %s %s\n",
 			   (batman_if->if_active == IF_ACTIVE ?
 			    "active" : "inactive"),
 			   batman_if->dev,
@@ -189,18 +189,18 @@ static int proc_originators_read(struct seq_file *seq, void *offset)
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
 		rcu_read_unlock();
-		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it\n");
 		goto end;
 	}
 
 	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
 		rcu_read_unlock();
-		seq_printf(seq, "BATMAN disabled - primary interface not active \n");
+		seq_printf(seq, "BATMAN disabled - primary interface not active\n");
 		goto end;
 	}
 
 	seq_printf(seq,
-		   "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s] \n",
+		   "  %-14s (%s/%i) %17s [%10s]: %20s ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s]\n",
 		   "Originator", "#", TQ_MAX_VALUE, "Nexthop", "outgoingIF",
 		   "Potential nexthops", SOURCE_VERSION, REVISION_VERSION_STR,
 		   ((struct batman_if *)if_list.next)->dev,
@@ -241,7 +241,7 @@ static int proc_originators_read(struct seq_file *seq, void *offset)
 	spin_unlock_irqrestore(&orig_hash_lock, flags);
 
 	if (batman_count == 0)
-		seq_printf(seq, "No batman nodes in range ... \n");
+		seq_printf(seq, "No batman nodes in range ...\n");
 
 end:
 	return 0;
@@ -263,7 +263,7 @@ static int proc_transt_local_read(struct seq_file *seq, void *offset)
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
 		rcu_read_unlock();
-		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it\n");
 		goto end;
 	}
 
@@ -295,7 +295,7 @@ static int proc_transt_global_read(struct seq_file *seq, void *offset)
 	rcu_read_lock();
 	if (list_empty(&if_list)) {
 		rcu_read_unlock();
-		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it \n");
+		seq_printf(seq, "BATMAN disabled - please specify interfaces to enable it\n");
 		goto end;
 	}
 	rcu_read_unlock();
@@ -351,9 +351,9 @@ static int proc_vis_srv_read(struct seq_file *seq, void *offset)
 {
 	int vis_server = atomic_read(&vis_mode);
 
-	seq_printf(seq, "[%c] client mode (server disabled) \n",
+	seq_printf(seq, "[%c] client mode (server disabled)\n",
 			(vis_server == VIS_TYPE_CLIENT_UPDATE) ? 'x' : ' ');
-	seq_printf(seq, "[%c] server mode (server enabled) \n",
+	seq_printf(seq, "[%c] server mode (server enabled)\n",
 			(vis_server == VIS_TYPE_SERVER_SYNC) ? 'x' : ' ');
 
 	return 0;
