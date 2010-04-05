@@ -49,7 +49,6 @@ struct orig_node {               /* structure for orig_list maintaining nodes of
 	uint8_t orig[ETH_ALEN];
 	uint8_t primary_addr[ETH_ALEN];	/* hosts primary interface address */
 	struct neigh_node *router;
-	struct batman_if *batman_if;
 	TYPE_OF_WORD *bcast_own;
 	uint8_t *bcast_own_sum;
 	uint8_t tq_own;
