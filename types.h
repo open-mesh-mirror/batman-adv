@@ -99,6 +99,7 @@ struct bat_priv {
 	atomic_t vis_mode;
 	atomic_t gw_mode;
 	atomic_t gw_class;
+	atomic_t orig_interval;
 	struct kobject *mesh_obj;
 };
 
