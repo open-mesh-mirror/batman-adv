@@ -174,13 +174,10 @@ ssize_t vis_fill_buffer_text(struct net_device *net_dev, char *buff,
 	unsigned long flags;
 	int vis_server = atomic_read(&bat_priv->vis_mode);
 
-	rcu_read_lock();
-	if (list_empty(&if_list) || (vis_server == VIS_TYPE_CLIENT_UPDATE)) {
-		rcu_read_unlock();
+	if ((!bat_priv->primary_if) ||
+	    (vis_server == VIS_TYPE_CLIENT_UPDATE))
 		return 0;
-	}
 
-	rcu_read_unlock();
 	hdr_len = 0;
 
 	spin_lock_irqsave(&vis_hash_lock, flags);

@@ -176,8 +176,6 @@ int interface_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
-
-
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
 	struct unicast_packet *unicast_packet;
@@ -263,7 +261,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		spin_unlock_irqrestore(&orig_hash_lock, flags);
 
-		if (batman_if->if_active != IF_ACTIVE)
+		if (batman_if->if_status != IF_ACTIVE)
 			goto dropped;
 
 		if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)

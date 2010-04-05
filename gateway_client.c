@@ -338,12 +338,13 @@ static int _write_buffer_text(unsigned char *buff, int bytes_written,
 int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 			       size_t count, loff_t off)
 {
+	struct bat_priv *bat_priv = netdev_priv(net_dev);
 	struct gw_node *gw_node;
 	size_t hdr_len, tmp_len;
 	int bytes_written = 0, gw_count = 0;
 
 	rcu_read_lock();
-	if (list_empty(&if_list)) {
+	if (!bat_priv->primary_if) {
 		rcu_read_unlock();
 
 		if (off == 0)
@@ -354,7 +355,7 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 		return 0;
 	}
 
-	if (((struct batman_if *)if_list.next)->if_active != IF_ACTIVE) {
+	if (bat_priv->primary_if->if_status != IF_ACTIVE) {
 		rcu_read_unlock();
 
 		if (off == 0)
@@ -369,8 +370,8 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 			  "      %-12s (%s/%i) %17s [%10s]: gw_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)] \n",
 			  "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
 			  "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
-			  ((struct batman_if *)if_list.next)->dev,
-			  ((struct batman_if *)if_list.next)->addr_str,
+			  bat_priv->primary_if->dev,
+			  bat_priv->primary_if->addr_str,
 			  net_dev->name);
 	rcu_read_unlock();
 
