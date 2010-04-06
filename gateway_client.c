@@ -197,7 +197,7 @@ void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
 		return;
 
 	bat_dbg(DBG_BATMAN,
-		"Restarting gateway selection: better gateway found (tq curr: %i, tq new: %i) \n",
+		"Restarting gateway selection: better gateway found (tq curr: %i, tq new: %i)\n",
 		gw_tq_avg, orig_tq_avg);
 
 deselect:
@@ -367,7 +367,7 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 	}
 
 	hdr_len = sprintf(buff,
-			  "      %-12s (%s/%i) %17s [%10s]: gw_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)] \n",
+			  "      %-12s (%s/%i) %17s [%10s]: gw_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
 			  "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
 			  "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
 			  bat_priv->primary_if->dev,
@@ -403,7 +403,7 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 
 	if ((gw_count == 0) && (off == 0))
 		bytes_written += sprintf(buff + bytes_written,
-					 "No gateways in range ... \n");
+					 "No gateways in range ...\n");
 
 	return bytes_written;
 }

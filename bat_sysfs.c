@@ -77,7 +77,7 @@ static ssize_t show_aggr_ogm(struct kobject *kobj, struct attribute *attr,
 	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
 	int aggr_status = atomic_read(&bat_priv->aggregation_enabled);
 
-	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1 \n",
+	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1\n",
 		       aggr_status == 0 ? "disabled" : "enabled");
 }
 
@@ -125,7 +125,7 @@ static ssize_t show_bond(struct kobject *kobj, struct attribute *attr,
 	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
 	int bond_status = atomic_read(&bat_priv->bonding_enabled);
 
-	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1 \n",
+	return sprintf(buff, "status: %s\ncommands: enable, disable, 0, 1\n",
 		       bond_status == 0 ? "disabled" : "enabled");
 }
 
@@ -174,7 +174,7 @@ static ssize_t show_vis_mode(struct kobject *kobj, struct attribute *attr,
 	struct bat_priv *bat_priv = netdev_priv(to_net_dev(dev));
 	int vis_mode = atomic_read(&bat_priv->vis_mode);
 
-	return sprintf(buff, "status: %s\ncommands: client, server, %d, %d \n",
+	return sprintf(buff, "status: %s\ncommands: client, server, %d, %d\n",
 		       vis_mode == VIS_TYPE_CLIENT_UPDATE ?
 							"client" : "server",
 		       VIS_TYPE_SERVER_SYNC, VIS_TYPE_CLIENT_UPDATE);
@@ -251,7 +251,7 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 	}
 
 	bytes_written += sprintf(buff + bytes_written,
-				 "commands: %s, %s <opt arg>, %s <opt arg> \n",
+				 "commands: %s, %s <opt arg>, %s <opt arg>\n",
 				 GW_MODE_OFF_NAME, GW_MODE_CLIENT_NAME,
 				 GW_MODE_SERVER_NAME);
 	return bytes_written;
@@ -480,7 +480,7 @@ static ssize_t show_mesh_iface(struct kobject *kobj, struct attribute *attr,
 	if (!batman_if)
 		return 0;
 
-	return sprintf(buff, "status: %s\ncommands: none, bat0 \n",
+	return sprintf(buff, "status: %s\ncommands: none, bat0\n",
 		       batman_if->if_status == IF_NOT_IN_USE ?
 							"none" : "bat0");
 }
