@@ -56,6 +56,8 @@
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 #define ETH_STR_LEN 20
 
+#define VIS_INTERVAL 5000	/* 5 seconds */
+
 /* how much worse secondary interfaces may be to
  * to be considered as bonding candidates */
 
@@ -137,7 +139,6 @@ extern spinlock_t orig_hash_lock;
 extern spinlock_t forw_bat_list_lock;
 extern spinlock_t forw_bcast_list_lock;
 
-extern atomic_t vis_interval;
 extern int16_t num_hna;
 
 extern struct net_device *soft_device;

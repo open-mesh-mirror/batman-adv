@@ -43,8 +43,6 @@ DEFINE_SPINLOCK(orig_hash_lock);
 DEFINE_SPINLOCK(forw_bat_list_lock);
 DEFINE_SPINLOCK(forw_bcast_list_lock);
 
-atomic_t vis_interval;
-
 int16_t num_hna;
 
 struct net_device *soft_device;
@@ -79,9 +77,6 @@ int init_module(void)
 	INIT_HLIST_HEAD(&forw_bcast_list);
 
 	atomic_set(&module_state, MODULE_INACTIVE);
-
-	atomic_set(&vis_interval, 1000);/* TODO: raise this later, this is only
-					 * for debugging now. */
 
 	/* the name should not be longer than 10 chars - see
 	 * http://lwn.net/Articles/23634/ */
