@@ -104,6 +104,8 @@ struct bat_priv {
 	atomic_t gw_mode;
 	atomic_t gw_class;
 	atomic_t orig_interval;
+	atomic_t bcast_queue_left;
+	atomic_t batman_queue_left;
 	char num_ifaces;
 	struct batman_if *primary_if;
 	struct kobject *mesh_obj;
