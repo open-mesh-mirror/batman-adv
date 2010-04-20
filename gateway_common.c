@@ -255,6 +255,7 @@ next:
 		gw_srv_class_to_kbit((uint8_t)gw_class_tmp,
 				     (int *)&down, (int *)&up);
 
+		gw_deselect();
 		printk(KERN_INFO
 			  "batman-adv: Changing gateway mode from: '%s' to: '%s' (gw_class: %ld -> propagating: %ld%s/%ld%s)\n",
 			  gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp,
