@@ -747,6 +747,7 @@ int recv_bat_packet(struct sk_buff *skb,
 		skb = skb_copy(skb, GFP_ATOMIC);
 		if (!skb)
 			return NET_RX_DROP;
+		ethhdr = (struct ethhdr *)skb_mac_header(skb);
 		kfree_skb(skb_old);
 	}
 
@@ -805,6 +806,7 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 			if (!skb)
 				return NET_RX_DROP;
 			icmp_packet = (struct icmp_packet_rr *)skb->data;
+			ethhdr = (struct ethhdr *)skb_mac_header(skb);
 			kfree_skb(skb_old);
 		}
 
@@ -865,6 +867,7 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 			if (!skb)
 				return NET_RX_DROP;
 			icmp_packet = (struct icmp_packet *) skb->data;
+			ethhdr = (struct ethhdr *)skb_mac_header(skb);
 			kfree_skb(skb_old);
 		}
 
@@ -960,6 +963,7 @@ int recv_icmp_packet(struct sk_buff *skb)
 			if (!skb)
 				return NET_RX_DROP;
 			icmp_packet = (struct icmp_packet_rr *)skb->data;
+			ethhdr = (struct ethhdr *)skb_mac_header(skb);
 			kfree_skb(skb_old);
 		}
 
@@ -1106,6 +1110,7 @@ int recv_unicast_packet(struct sk_buff *skb)
 		if (!skb)
 			return NET_RX_DROP;
 		unicast_packet = (struct unicast_packet *) skb->data;
+		ethhdr = (struct ethhdr *)skb_mac_header(skb);
 		kfree_skb(skb_old);
 	}
 
