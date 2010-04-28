@@ -63,10 +63,10 @@ struct orig_node {               /* structure for orig_list maintaining nodes of
 	uint8_t flags;    /* for now only VIS_SERVER flag. */
 	unsigned char *hna_buff;
 	int16_t hna_buff_len;
-	uint16_t last_real_seqno;   /* last and best known squence number */
+	uint32_t last_real_seqno;   /* last and best known sequence number */
 	uint8_t last_ttl;         /* ttl of last received packet */
 	TYPE_OF_WORD bcast_bits[NUM_WORDS];
-	uint16_t last_bcast_seqno;  /* last broadcast sequence number received by this host */
+	uint32_t last_bcast_seqno;  /* last received broadcast seqno */
 	struct list_head neigh_list;
 	struct {
 		uint8_t candidates;	/* how many candidates are available */

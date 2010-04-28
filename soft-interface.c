@@ -32,7 +32,7 @@
 #include <linux/etherdevice.h>
 #include "compat.h"
 
-static uint16_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
+static uint32_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
 				  * broadcast storms */
 static int32_t skb_packets;
 static int32_t skb_bad_packets;
@@ -214,6 +214,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 
 		bcast_packet = (struct bcast_packet *)skb->data;
 		bcast_packet->version = COMPAT_VERSION;
+		bcast_packet->ttl = TTL;
 
 		/* batman packet type: broadcast */
 		bcast_packet->packet_type = BAT_BCAST;
@@ -223,7 +224,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		memcpy(bcast_packet->orig, mainIfAddr, ETH_ALEN);
 
 		/* set broadcast sequence number */
-		bcast_packet->seqno = htons(bcast_seqno);
+		bcast_packet->seqno = htonl(bcast_seqno);
 
 		/* broadcast packet. on success, increase seqno. */
 		if (add_bcast_packet_to_list(skb) == NETDEV_TX_OK)

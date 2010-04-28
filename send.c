@@ -153,7 +153,7 @@ static void send_packet_to_if(struct forw_packet *forw_packet,
 			"%s %spacket (originator %pM, seqno %d, TQ %d, TTL %d, IDF %s) on interface %s [%s]\n",
 			fwd_str,
 			(packet_num > 0 ? "aggregated " : ""),
-			batman_packet->orig, ntohs(batman_packet->seqno),
+			batman_packet->orig, ntohl(batman_packet->seqno),
 			batman_packet->tq, batman_packet->ttl,
 			(batman_packet->flags & DIRECTLINK ?
 			 "on" : "off"),
@@ -196,7 +196,7 @@ static void send_packet(struct forw_packet *forw_packet)
 		bat_dbg(DBG_BATMAN,
 			"%s packet (originator %pM, seqno %d, TTL %d) on interface %s [%s]\n",
 			(forw_packet->own ? "Sending own" : "Forwarding"),
-			batman_packet->orig, ntohs(batman_packet->seqno),
+			batman_packet->orig, ntohl(batman_packet->seqno),
 			batman_packet->ttl, forw_packet->if_incoming->dev,
 			forw_packet->if_incoming->addr_str);
 
@@ -275,7 +275,8 @@ void schedule_own_packet(struct batman_if *batman_if)
 	batman_packet = (struct batman_packet *)batman_if->packet_buff;
 
 	/* change sequence number to network order */
-	batman_packet->seqno = htons((uint16_t)atomic_read(&batman_if->seqno));
+	batman_packet->seqno =
+		htonl((uint32_t)atomic_read(&batman_if->seqno));
 
 	if (vis_server == VIS_TYPE_SERVER_SYNC)
 		batman_packet->flags |= VIS_SERVER;
@@ -288,7 +289,6 @@ void schedule_own_packet(struct batman_if *batman_if)
 	else
 		batman_packet->gw_flags = 0;
 
-	/* could be read by receive_bat_packet() */
 	atomic_inc(&batman_if->seqno);
 
 	slide_own_bcast_window(batman_if);
@@ -343,7 +343,7 @@ void schedule_forward_packet(struct orig_node *orig_node,
 		in_tq, tq_avg, batman_packet->tq, in_ttl - 1,
 		batman_packet->ttl);
 
-	batman_packet->seqno = htons(batman_packet->seqno);
+	batman_packet->seqno = htonl(batman_packet->seqno);
 
 	/* switch of primaries first hop flag when forwarding */
 	batman_packet->flags &= ~PRIMARIES_FIRST_HOP;
@@ -397,6 +397,7 @@ static void _add_bcast_packet_to_list(struct forw_packet *forw_packet,
 int add_bcast_packet_to_list(struct sk_buff *skb)
 {
 	struct forw_packet *forw_packet;
+	struct bcast_packet *bcast_packet;
 	/* FIXME: each batman_if will be attached to a softif */
 	struct bat_priv *bat_priv = netdev_priv(soft_device);
 
@@ -413,6 +414,10 @@ int add_bcast_packet_to_list(struct sk_buff *skb)
 	skb = skb_copy(skb, GFP_ATOMIC);
 	if (!skb)
 		goto packet_free;
+
+	/* as we have a copy now, it is safe to decrease the TTL */
+	bcast_packet = (struct bcast_packet *)skb->data;
+	bcast_packet->ttl--;
 
 	skb_reset_mac_header(skb);
 
