@@ -357,7 +357,8 @@ void sysfs_del_meshif(struct net_device *dev)
 static ssize_t show_mesh_iface(struct kobject *kobj, struct attribute *attr,
 			       char *buff)
 {
-	struct net_device *net_dev = to_net_dev(to_dev(kobj->parent));
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
 	struct batman_if *batman_if = get_batman_if_by_netdev(net_dev);
 
 	if (!batman_if)
@@ -371,7 +372,8 @@ static ssize_t show_mesh_iface(struct kobject *kobj, struct attribute *attr,
 static ssize_t store_mesh_iface(struct kobject *kobj, struct attribute *attr,
 				char *buff, size_t count)
 {
-	struct net_device *net_dev = to_net_dev(to_dev(kobj->parent));
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
 	struct batman_if *batman_if = get_batman_if_by_netdev(net_dev);
 	int status_tmp = -1;
 
@@ -409,7 +411,8 @@ static ssize_t store_mesh_iface(struct kobject *kobj, struct attribute *attr,
 static ssize_t show_iface_status(struct kobject *kobj, struct attribute *attr,
 				 char *buff)
 {
-	struct net_device *net_dev = to_net_dev(to_dev(kobj->parent));
+	struct device *dev = to_dev(kobj->parent);
+	struct net_device *net_dev = to_net_dev(dev);
 	struct batman_if *batman_if = get_batman_if_by_netdev(net_dev);
 
 	if (!batman_if)

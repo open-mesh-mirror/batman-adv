@@ -103,7 +103,7 @@ static int vis_info_choose(void *data, int size)
 
 /* insert interface to the list of interfaces of one originator, if it
  * does not already exist in the list */
-void vis_data_insert_interface(const uint8_t *interface,
+static void vis_data_insert_interface(const uint8_t *interface,
 				      struct hlist_head *if_list,
 				      bool primary)
 {
@@ -124,7 +124,7 @@ void vis_data_insert_interface(const uint8_t *interface,
 	hlist_add_head(&entry->list, if_list);
 }
 
-ssize_t vis_data_read_prim_sec(char *buff, struct hlist_head *if_list)
+static ssize_t vis_data_read_prim_sec(char *buff, struct hlist_head *if_list)
 {
 	struct if_list_entry *entry;
 	struct hlist_node *pos;
@@ -144,8 +144,8 @@ ssize_t vis_data_read_prim_sec(char *buff, struct hlist_head *if_list)
 }
 
 /* read an entry  */
-ssize_t vis_data_read_entry(char *buff, struct vis_info_entry *entry,
-			    uint8_t *src, bool primary)
+static ssize_t vis_data_read_entry(char *buff, struct vis_info_entry *entry,
+				   uint8_t *src, bool primary)
 {
 	char to[40];
 
