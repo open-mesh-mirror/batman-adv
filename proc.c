@@ -68,7 +68,8 @@ static ssize_t proc_interfaces_write(struct file *instance,
 		return -ENOMEM;
 
 	if (count > IFNAMSIZ - 1) {
-		printk(KERN_WARNING "batman-adv:Can't add interface: device name is too long\n");
+		printk(KERN_WARNING "batman-adv:"
+		       "Can't add interface: device name is too long\n");
 		goto end;
 	}
 
@@ -95,7 +96,9 @@ static ssize_t proc_interfaces_write(struct file *instance,
 	rcu_read_lock();
 	list_for_each_entry_rcu(batman_if, &if_list, list) {
 		if (strncmp(batman_if->dev, if_string, count) == 0) {
-			printk(KERN_ERR "batman-adv:Given interface is already active: %s\n", if_string);
+			printk(KERN_ERR "batman-adv:"
+			       "Given interface is already active: %s\n",
+			       if_string);
 			rcu_read_unlock();
 			goto end;
 
@@ -152,7 +155,9 @@ int setup_procfs(void)
 #endif
 
 	if (!proc_batman_dir) {
-		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s' folder failed\n", PROC_ROOT_DIR);
+		printk(KERN_ERR "batman-adv:"
+		       "Registering the '/proc/net/%s' folder failed\n",
+		       PROC_ROOT_DIR);
 		return -EFAULT;
 	}
 
@@ -162,7 +167,9 @@ int setup_procfs(void)
 	if (proc_interface_file) {
 		proc_interface_file->proc_fops = &proc_interfaces_fops;
 	} else {
-		printk(KERN_ERR "batman-adv: Registering the '/proc/net/%s/%s' file failed\n", PROC_ROOT_DIR, PROC_FILE_INTERFACES);
+		printk(KERN_ERR "batman-adv:"
+		       "Registering the '/proc/net/%s/%s' file failed\n",
+		       PROC_ROOT_DIR, PROC_FILE_INTERFACES);
 		cleanup_procfs();
 		return -EFAULT;
 	}
