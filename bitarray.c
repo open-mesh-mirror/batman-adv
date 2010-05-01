@@ -150,7 +150,7 @@ char bit_get_packet(TYPE_OF_WORD *seq_bits, int32_t seq_num_diff,
 
 	/* sequence number is much newer, probably missed a lot of packets */
 
-	if ((seq_num_diff >= TQ_LOCAL_WINDOW_SIZE) 
+	if ((seq_num_diff >= TQ_LOCAL_WINDOW_SIZE)
 		|| (seq_num_diff < EXPECTED_SEQNO_RANGE)) {
 		bat_dbg(DBG_BATMAN,
 			"We missed a lot of packets (%i) !\n",
