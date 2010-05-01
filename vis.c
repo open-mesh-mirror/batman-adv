@@ -40,9 +40,9 @@
     * before adding more than 127 to the starting value - it is a predecessor,
     * when adding 128 - it is neither a predecessor nor a successor,
     * after adding more than 127 to the starting value - it is a successor */
-#define seq_before(x,y) ({typeof(x) _dummy = (x - y); \
-                         _dummy > smallest_signed_int(_dummy); })
-#define seq_after(x,y) seq_before(y,x)
+#define seq_before(x, y) ({typeof(x) _dummy = (x - y); \
+			_dummy > smallest_signed_int(_dummy); })
+#define seq_after(x, y) seq_before(y, x)
 
 struct hashtable_t *vis_hash;
 DEFINE_SPINLOCK(vis_hash_lock);
