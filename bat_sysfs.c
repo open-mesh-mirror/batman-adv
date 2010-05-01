@@ -237,7 +237,8 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 	case GW_MODE_SERVER:
 		gw_srv_class_to_kbit(gw_class, &down, &up);
 		bytes_written = sprintf(buff,
-					"status: %s (gw_class: %i -> propagating: %i%s/%i%s)\n",
+					"status: %s (gw_class: %i "
+					"-> propagating: %i%s/%i%s)\n",
 					GW_MODE_SERVER_NAME, gw_class,
 					(down > 2048 ? down / 1024 : down),
 					(down > 2048 ? "MBit" : "KBit"),

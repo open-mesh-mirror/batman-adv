@@ -81,7 +81,8 @@ void gw_election(void)
 
 		if (curr_gateway) {
 			bat_dbg(DBG_BATMAN,
-				"Removing selected gateway - no gateway in range\n");
+				"Removing selected gateway - "
+				"no gateway in range\n");
 			gw_deselect();
 		}
 
@@ -137,16 +138,19 @@ void gw_election(void)
 	if (curr_gateway != curr_gw_tmp) {
 		if ((curr_gateway) && (!curr_gw_tmp))
 			bat_dbg(DBG_BATMAN,
-				"Removing selected gateway - no gateway in range\n");
+				"Removing selected gateway - "
+				"no gateway in range\n");
 		else if ((!curr_gateway) && (curr_gw_tmp))
 			bat_dbg(DBG_BATMAN,
-				"Adding route to gateway %pM (gw_flags: %i, tq: %i)\n",
+				"Adding route to gateway %pM "
+				"(gw_flags: %i, tq: %i)\n",
 				curr_gw_tmp->orig_node->orig,
 				curr_gw_tmp->orig_node->gw_flags,
 				curr_gw_tmp->orig_node->router->tq_avg);
 		else
 			bat_dbg(DBG_BATMAN,
-				"Changing route to gateway %pM (gw_flags: %i, tq: %i)\n",
+				"Changing route to gateway %pM "
+				"(gw_flags: %i, tq: %i)\n",
 				curr_gw_tmp->orig_node->orig,
 				curr_gw_tmp->orig_node->gw_flags,
 				curr_gw_tmp->orig_node->router->tq_avg);
@@ -197,7 +201,8 @@ void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
 		return;
 
 	bat_dbg(DBG_BATMAN,
-		"Restarting gateway selection: better gateway found (tq curr: %i, tq new: %i)\n",
+		"Restarting gateway selection: better gateway found (tq curr: "
+		"%i, tq new: %i)\n",
 		gw_tq_avg, orig_tq_avg);
 
 deselect:
@@ -239,7 +244,8 @@ void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 			continue;
 
 		bat_dbg(DBG_BATMAN,
-			"Gateway class of originator %pM changed from %i to %i\n",
+			"Gateway class of originator %pM changed from "
+			"%i to %i\n",
 			orig_node->orig, gw_node->orig_node->gw_flags,
 			new_gwflags);
 
@@ -349,7 +355,8 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 
 		if (off == 0)
 			return sprintf(buff,
-				       "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
+				       "BATMAN mesh %s disabled - please "
+				       "specify interfaces to enable it\n",
 				       net_dev->name);
 
 		return 0;
@@ -360,14 +367,15 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 
 		if (off == 0)
 			return sprintf(buff,
-				       "BATMAN mesh %s disabled - primary interface not active\n",
+				       "BATMAN mesh %s disabled - "
+				       "primary interface not active\n",
 				       net_dev->name);
 
 		return 0;
 	}
 
-	hdr_len = sprintf(buff,
-			  "      %-12s (%s/%i) %17s [%10s]: gw_class ... [B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
+	hdr_len = sprintf(buff, "      %-12s (%s/%i) %17s [%10s]: gw_class ... "
+			  "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
 			  "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
 			  "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
 			  bat_priv->primary_if->dev,

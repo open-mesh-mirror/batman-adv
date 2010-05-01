@@ -29,7 +29,10 @@
 #include "packet.h"
 #include "bitarray.h"
 
-#define BAT_HEADER_LEN (sizeof(struct ethhdr) + ((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? sizeof(struct unicast_packet) : sizeof(struct bcast_packet))))
+#define BAT_HEADER_LEN (sizeof(struct ethhdr) + \
+	((sizeof(struct unicast_packet) > sizeof(struct bcast_packet) ? \
+	 sizeof(struct unicast_packet) : \
+	 sizeof(struct bcast_packet))))
 
 
 struct batman_if {
@@ -46,31 +49,44 @@ struct batman_if {
 	struct rcu_head rcu;
 };
 
-struct orig_node {               /* structure for orig_list maintaining nodes of mesh */
+/**
+  *	orig_node - structure for orig_list maintaining nodes of mesh
+  *	@primary_addr: hosts primary interface address
+  *	@last_valid: when last packet from this node was received
+  *	@bcast_seqno_reset: time when the broadcast seqno window was reset
+  *	@batman_seqno_reset: time when the batman seqno window was reset
+  *	@gw_flags: flags related to gateway class
+  *	@flags: for now only VIS_SERVER flag
+  *	@last_real_seqno: last and best known squence number
+  *	@last_ttl: ttl of last received packet
+  *	@last_bcast_seqno: last broadcast sequence number received by this host
+  *
+  *	@candidates: how many candidates are available
+  *	@selected: next bonding candidate
+ */
+struct orig_node {
 	uint8_t orig[ETH_ALEN];
-	uint8_t primary_addr[ETH_ALEN];	/* hosts primary interface address */
+	uint8_t primary_addr[ETH_ALEN];
 	struct neigh_node *router;
 	TYPE_OF_WORD *bcast_own;
 	uint8_t *bcast_own_sum;
 	uint8_t tq_own;
 	int tq_asym_penalty;
-	unsigned long last_valid;        /* when last packet from this node was received */
-	unsigned long bcast_seqno_reset; /* time when the broadcast
-					    seqno window was reset. */
-	unsigned long batman_seqno_reset;/* time when the batman seqno
-					    window was reset. */
-	uint8_t gw_flags;      /* flags related to gateway class */
-	uint8_t flags;    /* for now only VIS_SERVER flag. */
+	unsigned long last_valid;
+	unsigned long bcast_seqno_reset;
+	unsigned long batman_seqno_reset;
+	uint8_t gw_flags;
+	uint8_t flags;
 	unsigned char *hna_buff;
 	int16_t hna_buff_len;
-	uint32_t last_real_seqno;   /* last and best known sequence number */
-	uint8_t last_ttl;         /* ttl of last received packet */
+	uint32_t last_real_seqno;
+	uint8_t last_ttl;
 	TYPE_OF_WORD bcast_bits[NUM_WORDS];
-	uint32_t last_bcast_seqno;  /* last received broadcast seqno */
+	uint32_t last_bcast_seqno;
 	struct list_head neigh_list;
 	struct {
-		uint8_t candidates;	/* how many candidates are available */
-		struct neigh_node *selected;	/* next bonding candidate */
+		uint8_t candidates;
+		struct neigh_node *selected;
 	} bond;
 };
 
@@ -81,6 +97,10 @@ struct gw_node {
 	struct rcu_head rcu;
 };
 
+/**
+  *	neigh_node
+  *	@last_valid: when last packet via this neighbor was received
+ */
 struct neigh_node {
 	struct list_head list;
 	uint8_t addr[ETH_ALEN];
@@ -90,7 +110,7 @@ struct neigh_node {
 	uint8_t tq_avg;
 	uint8_t last_ttl;
 	struct neigh_node *next_bond_candidate;
-	unsigned long last_valid;            /* when last packet via this neighbor was received */
+	unsigned long last_valid;
 	TYPE_OF_WORD real_bits[NUM_WORDS];
 	struct orig_node *orig_node;
 	struct batman_if *if_incoming;
@@ -136,7 +156,11 @@ struct hna_global_entry {
 	struct orig_node *orig_node;
 };
 
-struct forw_packet {               /* structure for forw_list maintaining packets to be send/forwarded */
+/**
+  *	forw_packet - structure for forw_list maintaining packets to be
+  *	              send/forwarded
+ */
+struct forw_packet {
 	struct hlist_node list;
 	unsigned long send_time;
 	uint8_t own;
