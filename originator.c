@@ -250,6 +250,7 @@ static bool purge_orig_node(struct orig_node *orig_node)
 			update_bonding_candidates(bat_priv, orig_node);
 		}
 	}
+
 	return false;
 }
 
@@ -310,7 +311,7 @@ ssize_t orig_fill_buffer_text(struct net_device *net_dev, char *buff,
 			       "BATMAN mesh %s "
 			       "disabled - primary interface not active\n",
 			       net_dev->name);
-	else if (bat_priv->primary_if->if_status)
+	else if (bat_priv->primary_if->if_status != IF_ACTIVE)
 		return 0;
 
 	rcu_read_lock();

@@ -152,11 +152,9 @@ static void send_packet_to_if(struct forw_packet *forw_packet,
 							    "Sending own" :
 							    "Forwarding"));
 		bat_dbg(DBG_BATMAN,
-			"%s %spacket "
-			"(originator %pM, seqno %d, TQ %d, TTL %d, IDF %s) "
-			"on interface %s [%s]\n",
-			fwd_str,
-			(packet_num > 0 ? "aggregated " : ""),
+			"%s %spacket (originator %pM, seqno %d, TQ %d, TTL %d,"
+			" IDF %s) on interface %s [%s]\n",
+			fwd_str, (packet_num > 0 ? "aggregated " : ""),
 			batman_packet->orig, ntohl(batman_packet->seqno),
 			batman_packet->tq, batman_packet->ttl,
 			(batman_packet->flags & DIRECTLINK ?

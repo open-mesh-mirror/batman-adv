@@ -641,8 +641,8 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 
 	if (is_my_oldorig) {
 		bat_dbg(DBG_BATMAN,
-			"Drop packet: ignoring all rebroadcast echos "
-			"(sender: %pM)\n", ethhdr->h_source);
+			"Drop packet: ignoring all rebroadcast echos (sender: "
+			"%pM)\n", ethhdr->h_source);
 		return;
 	}
 
