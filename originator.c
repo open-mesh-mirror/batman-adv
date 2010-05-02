@@ -296,23 +296,22 @@ ssize_t orig_fill_buffer_text(struct net_device *net_dev, char *buff,
 	unsigned long flags;
 	char orig_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	if (!bat_priv->primary_if) {
-		if (off == 0)
+	if ((!bat_priv->primary_if) ||
+	    (bat_priv->primary_if->if_status != IF_ACTIVE)) {
+		if (off > 0)
+			return 0;
+
+		if (!bat_priv->primary_if)
 			return sprintf(buff,
-				     "BATMAN mesh %s disabled - "
-				     "please specify interfaces to enable it\n",
-				     net_dev->name);
+				    "BATMAN mesh %s disabled - "
+				    "please specify interfaces to enable it\n",
+				    net_dev->name);
 
-		return 0;
-	}
-
-	if (bat_priv->primary_if->if_status != IF_ACTIVE && off == 0)
 		return sprintf(buff,
 			       "BATMAN mesh %s "
 			       "disabled - primary interface not active\n",
 			       net_dev->name);
-	else if (bat_priv->primary_if->if_status != IF_ACTIVE)
-		return 0;
+	}
 
 	rcu_read_lock();
 	hdr_len = sprintf(buff,
