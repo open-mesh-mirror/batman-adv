@@ -25,6 +25,7 @@
 #include "originator.h"
 #include "hard-interface.h"
 #include "vis.h"
+#include "compat.h"
 
 #define to_dev(obj)     container_of(obj, struct device, kobj)
 

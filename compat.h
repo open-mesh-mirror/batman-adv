@@ -23,6 +23,7 @@
  */
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
+#include "bat_sysfs.h"		/* struct bat_attribute */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 22)
 
@@ -47,6 +48,17 @@
 #endif /* < KERNEL_VERSION(2,6,22) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23)
+
+#define transtable_local_read(kobj, attr, buff, off, count) \
+	transtable_local_read(kobj, buff, off, count)
+#define transtable_global_read(kobj, attr, buff, off, count) \
+	transtable_global_read(kobj, buff, off, count)
+#define originators_read(kobj, attr, buff, off, count) \
+	originators_read(kobj, buff, off, count)
+#define gateways_read(kobj, attr, buff, off, count) \
+	gateways_read(kobj, buff, off, count)
+#define vis_data_read(kobj, attr, buff, off, count) \
+	vis_data_read(kobj, buff, off, count)
 
 static inline int skb_clone_writable(struct sk_buff *skb, unsigned int len)
 {
@@ -75,6 +87,64 @@ static inline int skb_clone_writable(struct sk_buff *skb, unsigned int len)
 		ret = -EINVAL; \
 	ret; \
 })
+
+#define to_battr(a) container_of(a, struct bat_attribute, attr)
+
+static inline ssize_t bat_wrapper_show(struct kobject *kobj,
+				   struct attribute *attr, char *buf)
+{
+	struct bat_attribute *bat_attr = to_battr(attr);
+
+	if (bat_attr->show)
+		return bat_attr->show(kobj, attr, buf);
+
+	return -EIO;
+}
+
+static inline ssize_t bat_wrapper_store(struct kobject *kobj,
+				    struct attribute *attr,
+				    const char *buf, size_t count)
+{
+	struct bat_attribute *bat_attr = to_battr(attr);
+
+	if (bat_attr->store)
+		return bat_attr->store(kobj, attr, (char *)buf, count);
+
+	return -EIO;
+}
+
+static struct sysfs_ops bat_wrapper_ops = {
+	.show   = bat_wrapper_show,
+	.store  = bat_wrapper_store,
+};
+
+static struct kobj_type ktype_bat_wrapper = {
+	.sysfs_ops      = &bat_wrapper_ops,
+};
+
+static inline struct kobject *kobject_create_and_add(const char *name,
+						     struct kobject *parent)
+{
+	struct kobject *kobj;
+	int err;
+
+	kobj = kzalloc(sizeof(*kobj), GFP_KERNEL);
+	if (!kobj)
+		return NULL;
+
+	kobject_set_name(kobj, name);
+	kobj->ktype = &ktype_bat_wrapper;
+	kobj->kset = NULL;
+	kobj->parent = parent;
+
+	err = kobject_register(kobj);
+	if (err) {
+		kobject_put(kobj);
+		return NULL;
+	}
+
+	return kobj;
+}
 
 #endif /* < KERNEL_VERSION(2, 6, 25) */
 
