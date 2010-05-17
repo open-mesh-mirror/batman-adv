@@ -400,8 +400,7 @@ int hna_global_fill_buffer_text(struct net_device *net_dev, char *buff,
 	}
 
 	hdr_len = sprintf(buff,
-			  "Globally announced HNAs received via the mesh %s "
-			  "(translation table):\n",
+			  "Globally announced HNAs received via the mesh %s\n",
 			  net_dev->name);
 
 	if (off < hdr_len)
