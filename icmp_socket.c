@@ -292,7 +292,7 @@ static void bat_socket_add_packet(struct socket_client *socket_client,
 	struct socket_packet *socket_packet;
 	unsigned long flags;
 
-	socket_packet = kmalloc(sizeof(struct socket_packet), GFP_KERNEL);
+	socket_packet = kmalloc(sizeof(struct socket_packet), GFP_ATOMIC);
 
 	if (!socket_packet)
 		return;
