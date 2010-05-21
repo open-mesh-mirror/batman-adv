@@ -160,12 +160,6 @@ static inline char *pack_hex_byte(char *buf, u8 byte)
     return buf;
 }
 
-#define device_create(_cls, _parent, _devt, _device, _fmt) \
-	class_device_create(_cls, _parent, _devt, _device, _fmt)
-
-#define device_destroy(_cls, _device) \
-	class_device_destroy(_cls, _device)
-
 #endif /* < KERNEL_VERSION(2, 6, 26) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
@@ -174,10 +168,61 @@ static inline char *pack_hex_byte(char *buf, u8 byte)
 #define dereference_function_descriptor(p) (p)
 #endif
 
-#ifndef device_create
-#define device_create(_cls, _parent, _devt, _device, _fmt) \
-	device_create_drvdata(_cls, _parent, _devt, _device, _fmt)
-#endif
+#include <linux/debugfs.h>
+
+static inline void debugfs_remove_recursive(struct dentry *dentry)
+{
+	struct dentry *child;
+	struct dentry *parent;
+
+	if (!dentry)
+		return;
+
+	parent = dentry->d_parent;
+	if (!parent || !parent->d_inode)
+		return;
+
+	parent = dentry;
+
+	while (1) {
+		/*
+		 * When all dentries under "parent" has been removed,
+		 * walk up the tree until we reach our starting point.
+		 */
+		if (list_empty(&parent->d_subdirs)) {
+			if (parent == dentry)
+				break;
+			parent = parent->d_parent;
+		}
+		child = list_entry(parent->d_subdirs.next, struct dentry,
+				d_u.d_child);
+next_sibling:
+
+		/*
+		 * If "child" isn't empty, walk down the tree and
+		 * remove all its descendants first.
+		 */
+		if (!list_empty(&child->d_subdirs)) {
+			parent = child;
+			continue;
+		}
+		debugfs_remove(child);
+		if (parent->d_subdirs.next == &child->d_u.d_child) {
+			/*
+			 * Try the next sibling.
+			 */
+			if (child->d_u.d_child.next != &parent->d_subdirs) {
+				child = list_entry(child->d_u.d_child.next,
+						   struct dentry,
+						   d_u.d_child);
+				goto next_sibling;
+			}
+			break;
+		}
+	}
+
+	debugfs_remove(dentry);
+}
 
 #endif /* < KERNEL_VERSION(2, 6, 27) */
 
