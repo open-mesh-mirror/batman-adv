@@ -123,6 +123,7 @@ extern int bat_debug_type(int type);
 #include <linux/workqueue.h>	/* workqueue */
 #include <net/sock.h>		/* struct sock */
 #include <linux/jiffies.h>
+#include <linux/seq_file.h>
 #include "types.h"
 
 #ifndef REVISION_VERSION

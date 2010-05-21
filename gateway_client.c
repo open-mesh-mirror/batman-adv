@@ -317,8 +317,7 @@ void gw_node_list_free(void)
 	spin_unlock(&gw_list_lock);
 }
 
-static int _write_buffer_text(unsigned char *buff, int bytes_written,
-			      struct gw_node *gw_node)
+static int _write_buffer_text(struct seq_file *seq, struct gw_node *gw_node)
 {
 	int down, up;
 	char gw_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
@@ -327,8 +326,7 @@ static int _write_buffer_text(unsigned char *buff, int bytes_written,
 	addr_to_string(router_str, gw_node->orig_node->router->addr);
 	gw_srv_class_to_kbit(gw_node->orig_node->gw_flags, &down, &up);
 
-	return sprintf(buff + bytes_written,
-		       "%s %-17s (%3i) %17s [%10s]: %3i - %i%s/%i%s\n",
+	return seq_printf(seq, "%s %-17s (%3i) %17s [%10s]: %3i - %i%s/%i%s\n",
 		       (curr_gateway == gw_node ? "=>" : "  "),
 		       gw_str,
 		       gw_node->orig_node->router->tq_avg,
@@ -341,50 +339,37 @@ static int _write_buffer_text(unsigned char *buff, int bytes_written,
 		       (up > 2048 ? "MBit" : "KBit"));
 }
 
-int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
-			       size_t count, loff_t off)
+int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 {
+	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
 	struct gw_node *gw_node;
-	size_t hdr_len, tmp_len;
-	int bytes_written = 0, gw_count = 0;
+	int gw_count = 0;
 
 	rcu_read_lock();
 	if (!bat_priv->primary_if) {
 		rcu_read_unlock();
 
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - please "
-				       "specify interfaces to enable it\n",
-				       net_dev->name);
-
-		return 0;
+		return seq_printf(seq, "BATMAN mesh %s disabled - please "
+				  "specify interfaces to enable it\n",
+				  net_dev->name);
 	}
 
 	if (bat_priv->primary_if->if_status != IF_ACTIVE) {
 		rcu_read_unlock();
 
-		if (off == 0)
-			return sprintf(buff,
-				       "BATMAN mesh %s disabled - "
+		return seq_printf(seq, "BATMAN mesh %s disabled - "
 				       "primary interface not active\n",
 				       net_dev->name);
-
-		return 0;
 	}
 
-	hdr_len = sprintf(buff, "      %-12s (%s/%i) %17s [%10s]: gw_class ... "
-			  "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
-			  "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
-			  "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
-			  bat_priv->primary_if->dev,
-			  bat_priv->primary_if->addr_str,
-			  net_dev->name);
+	seq_printf(seq, "      %-12s (%s/%i) %17s [%10s]: gw_class ... "
+		   "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
+		   "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
+		   "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
+		   bat_priv->primary_if->dev, bat_priv->primary_if->addr_str,
+		   net_dev->name);
 	rcu_read_unlock();
-
-	if (off < hdr_len)
-		bytes_written = hdr_len;
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(gw_node, &gw_list, list) {
@@ -394,26 +379,15 @@ int gw_client_fill_buffer_text(struct net_device *net_dev, char *buff,
 		if (!gw_node->orig_node->router)
 			continue;
 
-		if (count < bytes_written + (2 * ETH_STR_LEN) + 30)
-			break;
-
-		tmp_len = _write_buffer_text(buff, bytes_written, gw_node);
+		_write_buffer_text(seq, gw_node);
 		gw_count++;
-
-		hdr_len += tmp_len;
-
-		if (off >= hdr_len)
-			continue;
-
-		bytes_written += tmp_len;
 	}
 	rcu_read_unlock();
 
-	if ((gw_count == 0) && (off == 0))
-		bytes_written += sprintf(buff + bytes_written,
-					 "No gateways in range ...\n");
+	if (gw_count == 0)
+		seq_printf(seq, "No gateways in range ...\n");
 
-	return bytes_written;
+	return 0;
 }
 
 bool gw_is_target(struct bat_priv *bat_priv, struct sk_buff *skb)
