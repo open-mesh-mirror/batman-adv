@@ -70,7 +70,7 @@ static inline int skb_clone_writable(struct sk_buff *skb, unsigned int len)
 	return 0;
 }
 
-#define cancel_delayed_work_sync(wq) cancel_rearming_delayed_work(wq)
+#define cancel_delayed_work_sync(wq) cancel_delayed_work(wq)
 
 #endif /* < KERNEL_VERSION(2, 6, 23) */
 
