@@ -466,7 +466,7 @@ void send_outstanding_bcast_packet(struct work_struct *work)
 
 out:
 	forw_packet_free(forw_packet);
-	atomic_inc(&bat_priv->bcast_queue_left);
+	atomic_inc(&bcast_queue_left);
 }
 
 void send_outstanding_bat_packet(struct work_struct *work)
