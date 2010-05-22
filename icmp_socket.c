@@ -20,6 +20,7 @@
  */
 
 #include <linux/debugfs.h>
+#include <linux/slab.h>
 #include "main.h"
 #include "icmp_socket.h"
 #include "send.h"
