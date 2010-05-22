@@ -141,7 +141,11 @@ rem_attr:
 	debugfs_remove_recursive(bat_priv->debug_dir);
 	bat_priv->debug_dir = NULL;
 out:
+#ifdef CONFIG_DEBUG_FS
 	return -ENOMEM;
+#else
+	return 0;
+#endif /* CONFIG_DEBUG_FS */
 }
 
 void debugfs_del_meshif(struct net_device *dev)
