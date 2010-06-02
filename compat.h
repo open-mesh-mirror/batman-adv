@@ -70,12 +70,6 @@ static inline int skb_clone_writable(struct sk_buff *skb, unsigned int len)
 
 #endif /* < KERNEL_VERSION(2, 6, 23) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 24)
-
-#define MAC_FMT "%02x:%02x:%02x:%02x:%02x:%02x"
-
-#endif /* < KERNEL_VERSION(2, 6, 24) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
 
 #define strict_strtoul(cp, base, res) \
@@ -230,6 +224,12 @@ next_sibling:
 
 asmlinkage int bat_printk(const char *fmt, ...);
 #define printk bat_printk
+
+int bat_sprintf(char *buf, const char *fmt, ...);
+#define sprintf bat_sprintf
+
+int bat_snprintf(char *buf, size_t size, const char *fmt, ...);
+#define snprintf bat_snprintf
 
 static inline struct net_device_stats *dev_get_stats(struct net_device *dev)
 {
