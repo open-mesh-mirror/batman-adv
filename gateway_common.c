@@ -63,7 +63,7 @@ static void kbit_to_gw_srv_class(int down, int up, long *gw_srv_class)
 void gw_srv_class_to_kbit(uint8_t gw_srv_class, int *down, int *up)
 {
 	char sbit = (gw_srv_class & 0x80) >> 7;
-	char dpart = (gw_srv_class & 0x7C) >> 3;
+	char dpart = (gw_srv_class & 0x78) >> 3;
 	char upart = (gw_srv_class & 0x07);
 
 	if (!gw_srv_class) {
