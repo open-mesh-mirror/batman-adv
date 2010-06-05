@@ -148,7 +148,7 @@ static ssize_t bat_socket_read(struct file *file, char __user *buf,
 	kfree(socket_packet);
 
 	if (error)
-		return error;
+		return -EFAULT;
 
 	return packet_len;
 }
