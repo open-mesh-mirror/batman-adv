@@ -39,26 +39,12 @@
 #define skb_mac_header(_skb) \
     ((_skb)->mac.raw)
 
-#define skb_network_header(_skb) \
-    ((_skb)->nh.raw)
-
 #define skb_mac_header(_skb) \
     ((_skb)->mac.raw)
 
 #endif /* < KERNEL_VERSION(2,6,22) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23)
-
-#define transtable_local_read(kobj, attr, buff, off, count) \
-	transtable_local_read(kobj, buff, off, count)
-#define transtable_global_read(kobj, attr, buff, off, count) \
-	transtable_global_read(kobj, buff, off, count)
-#define originators_read(kobj, attr, buff, off, count) \
-	originators_read(kobj, buff, off, count)
-#define gateways_read(kobj, attr, buff, off, count) \
-	gateways_read(kobj, buff, off, count)
-#define vis_data_read(kobj, attr, buff, off, count) \
-	vis_data_read(kobj, buff, off, count)
 
 static inline int skb_clone_writable(struct sk_buff *skb, unsigned int len)
 {
