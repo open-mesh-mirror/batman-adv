@@ -34,7 +34,7 @@
 #include "aggregation.h"
 #include "compat.h"
 
-DECLARE_WAIT_QUEUE_HEAD(thread_wait);
+static DECLARE_WAIT_QUEUE_HEAD(thread_wait);
 
 void slide_own_bcast_window(struct batman_if *batman_if)
 {

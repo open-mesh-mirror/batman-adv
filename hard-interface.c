@@ -435,7 +435,7 @@ out:
 	return NOTIFY_DONE;
 }
 
-int batman_skb_recv_finish(struct sk_buff *skb)
+static int batman_skb_recv_finish(struct sk_buff *skb)
 {
 	return NF_ACCEPT;
 }
