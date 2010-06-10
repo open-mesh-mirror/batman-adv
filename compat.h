@@ -130,6 +130,8 @@ static inline struct kobject *kobject_create_and_add(const char *name,
 	return kobj;
 }
 
+#define kobject_put(kobj) kobject_unregister(kobj)
+
 #endif /* < KERNEL_VERSION(2, 6, 25) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 26)
