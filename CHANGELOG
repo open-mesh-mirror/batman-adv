@@ -1,3 +1,15 @@
+batman-adv 2010.0.0:
+
+* support latest kernels (2.6.21 - 2.6.35)
+* further code refactoring and cleaning for coding style
+* move from procfs based configuration to debugfs
+* reorganized sequence number handling
+* limit queue lengths for batman and broadcast packets
+* many bugs (endless loop and rogue packets on shutdown, wrong tcpdump output,
+  missing frees in error situations, sleeps in atomic contexts) squashed
+
+ -- XXX, XX Jun 2010 XX:XX:XX +0200
+
 batman-adv 0.2.1:
 
 * support latest kernels (2.6.20 - 2.6.33)
