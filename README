@@ -1,4 +1,4 @@
-[state: 03-05-2010]
+[state: 12-06-2010]
 
 BATMAN-ADV
 ----------
@@ -18,7 +18,7 @@ Batman advanced was implemented as a Linux kernel driver  to  re-
 duce the overhead to a minimum. It does not depend on any (other)
 network driver, and can be used on wifi as well as ethernet  lan,
 vpn,  etc ... (anything with ethernet-style layer 2). It compiles
-against and should work with Linux 2.6.21 -  2.6.33.   Supporting
+against and should work with Linux 2.6.21 -  2.6.35.   Supporting
 older versions is not planned, but it's probably easy to backport
 it.  If you work on a backport, feel free to contact us.  :-)
 
