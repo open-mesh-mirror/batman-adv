@@ -286,7 +286,7 @@ static void gw_node_free(struct rcu_head *rcu)
 void gw_node_purge_deleted(void)
 {
 	struct gw_node *gw_node, *gw_node_tmp;
-	unsigned long timeout = (2 * PURGE_TIMEOUT * HZ) / 1000;
+	unsigned long timeout = 2 * PURGE_TIMEOUT * HZ;
 
 	spin_lock(&gw_list_lock);
 
