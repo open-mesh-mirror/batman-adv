@@ -29,17 +29,25 @@ endif
 
 export KERNELPATH
 
-REVISION=	$(shell if [ -d .svn ]; then \
-						if which svn > /dev/null; then \
-							svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'; \
-						fi; \
-					else \
-						if [ -d ~/.svk ]; then \
-							if which svk > /dev/null; then \
-								echo $$(svk info | grep "Mirrored From" | awk '{print $$5}'); \
-							fi; \
-						fi; \
-					fi)
+REVISION= $(shell	if [ -d .svn ]; then \
+				if which svn > /dev/null; then \
+					echo rv$$(svn info | grep "Rev:" | sed -e '1p' -n | awk '{print $$4}'); \
+				else \
+					echo "[unknown]"; \
+				fi; \
+			elif [ -d .git ]; then \
+				if which git > /dev/null; then \
+					echo $$(git describe --always --dirty 2> /dev/null); \
+				else \
+					echo "[unknown]"; \
+				fi; \
+			elif [ -d ~/.svk ]; then \
+				if which svk > /dev/null; then \
+					echo rv$$(svk info | grep "Mirrored From" | awk '{print $$5}'); \
+				else \
+					echo "[unknown]"; \
+				fi; \
+			fi)
 
 NUM_CPUS = $(shell nproc 2> /dev/null || echo 1)
 
