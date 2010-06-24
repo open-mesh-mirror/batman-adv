@@ -19,6 +19,9 @@
  *
  */
 
+#ifndef _NET_BATMAN_ADV_GATEWAY_COMMON_H_
+#define _NET_BATMAN_ADV_GATEWAY_COMMON_H_
+
 enum gw_modes {
 	GW_MODE_OFF,
 	GW_MODE_CLIENT,
@@ -31,3 +34,5 @@ enum gw_modes {
 
 void gw_srv_class_to_kbit(uint8_t gw_class, int *down, int *up);
 ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count);
+
+#endif /* _NET_BATMAN_ADV_GATEWAY_COMMON_H_ */

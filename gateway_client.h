@@ -19,6 +19,9 @@
  *
  */
 
+#ifndef _NET_BATMAN_ADV_GATEWAY_CLIENT_H_
+#define _NET_BATMAN_ADV_GATEWAY_CLIENT_H_
+
 void gw_deselect(void);
 void gw_election(void);
 void *gw_get_selected(void);
@@ -29,3 +32,5 @@ void gw_node_purge_deleted(void);
 void gw_node_list_free(void);
 int gw_client_seq_print_text(struct seq_file *seq, void *offset);
 bool gw_is_target(struct bat_priv *bat_priv, struct sk_buff *skb);
+
+#endif /* _NET_BATMAN_ADV_GATEWAY_CLIENT_H_ */

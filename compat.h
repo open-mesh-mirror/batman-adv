@@ -22,6 +22,9 @@
  * of the Linux kernel.
  */
 
+#ifndef _NET_BATMAN_ADV_COMPAT_H_
+#define _NET_BATMAN_ADV_COMPAT_H_
+
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include "bat_sysfs.h"		/* struct bat_attribute */
 
@@ -232,3 +235,5 @@ static inline struct net_device_stats *dev_get_stats(struct net_device *dev)
 }
 
 #endif /* < KERNEL_VERSION(2, 6, 29) */
+
+#endif /* _NET_BATMAN_ADV_COMPAT_H_ */
