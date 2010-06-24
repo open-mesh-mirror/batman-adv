@@ -41,7 +41,7 @@ REVISION=	$(shell if [ -d .svn ]; then \
 						fi; \
 					fi)
 
-NUM_CPUS = $(shell NUM_CPUS=`cat /proc/cpuinfo | grep -v 'model name' | grep processor | tail -1 | awk -F' ' '{print $$3}'`;echo `expr $$NUM_CPUS + 1`)
+NUM_CPUS = $(shell nproc 2> /dev/null || echo 1)
 
 include $(PWD)/Makefile.kbuild
 
