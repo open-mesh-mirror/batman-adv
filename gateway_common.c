@@ -76,7 +76,8 @@ void gw_srv_class_to_kbit(uint8_t gw_srv_class, int *down, int *up)
 	*up = ((upart + 1) * (*down)) / 8;
 }
 
-static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
+static bool parse_gw_mode_tok(struct net_device *net_dev,
+			      char *tokptr, long *gw_mode_tmp,
 			      char **gw_mode_tmp_str, long *gw_class_tmp,
 			      long *up, long *down)
 {
@@ -87,16 +88,15 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 	case GW_MODE_CLIENT:
 		ret = strict_strtoul(tokptr, 10, gw_class_tmp);
 		if (ret) {
-			printk(KERN_ERR "batman-adv: "
-			       "Client class of gateway mode invalid: %s\n",
-			       tokptr);
+			bat_err(net_dev, "Client class of gateway mode invalid:"
+				" %s\n", tokptr);
 			return false;
 		}
 
 		if (*gw_class_tmp > TQ_MAX_VALUE) {
-			printk(KERN_ERR "batman-adv: Client class of gateway "
-					"mode greater than %i: %ld\n",
-					TQ_MAX_VALUE, *gw_class_tmp);
+			bat_err(net_dev,
+				"Client class of gateway mode greater than %i: "
+				"%ld\n", TQ_MAX_VALUE, *gw_class_tmp);
 			return false;
 		}
 
@@ -121,9 +121,9 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 
 		ret = strict_strtoul(tokptr, 10, down);
 		if (ret) {
-			printk(KERN_ERR "batman-adv: "
-			       "Download speed of gateway mode invalid: %s\n",
-			       tokptr);
+			bat_err(net_dev,
+				"Download speed of gateway mode invalid: %s\n",
+				tokptr);
 			return false;
 		}
 
@@ -147,9 +147,9 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 
 			ret = strict_strtoul(slash_ptr + 1, 10, up);
 			if (ret) {
-				printk(KERN_ERR "batman-adv: Upload speed of "
-				       "gateway mode invalid: %s\n",
-				       slash_ptr + 1);
+				bat_err(net_dev,
+					"Upload speed of gateway mode invalid: "
+					"%s\n", slash_ptr + 1);
 				return false;
 			}
 
@@ -177,13 +177,14 @@ static bool parse_gw_mode_tok(char *tokptr, long *gw_mode_tmp,
 	return true;
 }
 
-ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count)
+ssize_t gw_mode_set(struct net_device *net_dev, char *buff, size_t count)
 {
 	char *tokptr, *cp, finished;
 	char *gw_mode_curr_str, *gw_mode_tmp_str = NULL;
 	long gw_mode_curr, gw_mode_tmp = GW_MODE_OFF;
 	long gw_class_tmp = 0, up = 0, down = 0;
 	bool ret;
+	struct bat_priv *bat_priv = netdev_priv(net_dev);
 
 	tokptr = buff;
 	gw_mode_curr = atomic_read(&bat_priv->gw_mode);
@@ -200,9 +201,8 @@ ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count)
 			if (strlen(tokptr) == 0)
 				goto next;
 
-			ret = parse_gw_mode_tok(tokptr, &gw_mode_tmp,
-						&gw_mode_tmp_str,
-						&gw_class_tmp,
+			ret = parse_gw_mode_tok(net_dev, tokptr, &gw_mode_tmp,
+						&gw_mode_tmp_str, &gw_class_tmp,
 						&up, &down);
 
 			if (!ret)
@@ -217,11 +217,9 @@ next:
 	}
 
 	if (!gw_mode_tmp_str) {
-		printk(KERN_INFO "batman-adv: "
-		       "Gateway mode can only be set to: '%s', '%s' or '%s' - "
-		       "given value: %s\n",
-		       GW_MODE_OFF_NAME, GW_MODE_CLIENT_NAME,
-		       GW_MODE_SERVER_NAME, buff);
+		bat_info(net_dev, "Gateway mode can only be set to: '%s', '%s' "
+			 "or '%s' - given value: %s\n", GW_MODE_OFF_NAME,
+			 GW_MODE_CLIENT_NAME, GW_MODE_SERVER_NAME, buff);
 		goto end;
 	}
 
@@ -242,10 +240,9 @@ next:
 		if ((gw_mode_tmp == GW_MODE_CLIENT) && (!gw_class_tmp))
 			gw_class_tmp = 20;
 
-		printk(KERN_INFO "batman-adv: "
-		       "Changing gateway mode from: '%s' to: '%s' "
-		       "(gw_class: %ld)\n",
-		       gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp);
+		bat_info(net_dev, "Changing gateway mode from: '%s' to: '%s' "
+			 "(gw_class: %ld)\n",
+			 gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp);
 		break;
 	case GW_MODE_SERVER:
 		if (!down)
@@ -265,19 +262,17 @@ next:
 				     (int *)&down, (int *)&up);
 
 		gw_deselect();
-		printk(KERN_INFO
-		       "batman-adv: Changing gateway mode from: '%s' to: '%s' "
-		       "(gw_class: %ld -> propagating: %ld%s/%ld%s)\n",
-		       gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp,
-		       (down > 2048 ? down / 1024 : down),
-		       (down > 2048 ? "MBit" : "KBit"),
-		       (up > 2048 ? up / 1024 : up),
-		       (up > 2048 ? "MBit" : "KBit"));
+		bat_info(net_dev, "Changing gateway mode from: '%s' to: '%s' "
+			 "(gw_class: %ld -> propagating: %ld%s/%ld%s)\n",
+			 gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp,
+			 (down > 2048 ? down / 1024 : down),
+			 (down > 2048 ? "MBit" : "KBit"),
+			 (up > 2048 ? up / 1024 : up),
+			 (up > 2048 ? "MBit" : "KBit"));
 		break;
 	default:
-		printk(KERN_INFO "batman-adv: "
-			  "Changing gateway mode from: '%s' to: '%s'\n",
-			  gw_mode_curr_str, gw_mode_tmp_str);
+		bat_info(net_dev, "Changing gateway mode from: '%s' to: '%s'\n",
+			 gw_mode_curr_str, gw_mode_tmp_str);
 		break;
 	}
 

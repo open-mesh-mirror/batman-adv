@@ -33,6 +33,6 @@ enum gw_modes {
 #define GW_MODE_SERVER_NAME	"server"
 
 void gw_srv_class_to_kbit(uint8_t gw_class, int *down, int *up);
-ssize_t gw_mode_set(struct bat_priv *bat_priv, char *buff, size_t count);
+ssize_t gw_mode_set(struct net_device *net_dev, char *buff, size_t count);
 
 #endif /* _NET_BATMAN_ADV_GATEWAY_COMMON_H_ */

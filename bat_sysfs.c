@@ -70,18 +70,19 @@ static ssize_t store_aggr_ogms(struct kobject *kobj, struct attribute *attr,
 		if (buff[count - 1] == '\n')
 			buff[count - 1] = '\0';
 
-		printk(KERN_INFO "batman-adv:Invalid parameter for 'aggregate OGM' setting on mesh %s received: %s\n",
-		       net_dev->name, buff);
+		bat_info(net_dev,
+			 "Invalid parameter for 'aggregate OGM' setting"
+			 "received: %s\n", buff);
 		return -EINVAL;
 	}
 
 	if (atomic_read(&bat_priv->aggregation_enabled) == aggr_tmp)
 		return count;
 
-	printk(KERN_INFO "batman-adv:Changing aggregation from: %s to: %s on mesh: %s\n",
-	       atomic_read(&bat_priv->aggregation_enabled) == 1 ?
-	       "enabled" : "disabled", aggr_tmp == 1 ? "enabled" : "disabled",
-	       net_dev->name);
+	bat_info(net_dev, "Changing aggregation from: %s to: %s\n",
+		 atomic_read(&bat_priv->aggregation_enabled) == 1 ?
+		 "enabled" : "disabled", aggr_tmp == 1 ? "enabled" :
+		 "disabled");
 
 	atomic_set(&bat_priv->aggregation_enabled, (unsigned)aggr_tmp);
 	return count;
@@ -118,19 +119,19 @@ static ssize_t store_bond(struct kobject *kobj, struct attribute *attr,
 		if (buff[count - 1] == '\n')
 			buff[count - 1] = '\0';
 
-		printk(KERN_ERR "batman-adv:Invalid parameter for 'bonding' setting on mesh %s received: %s\n",
-		       net_dev->name, buff);
+		bat_err(net_dev,
+			"Invalid parameter for 'bonding' setting received: "
+			"%s\n", buff);
 		return -EINVAL;
 	}
 
 	if (atomic_read(&bat_priv->bonding_enabled) == bonding_enabled_tmp)
 		return count;
 
-	printk(KERN_INFO "batman-adv:Changing bonding from: %s to: %s on mesh: %s\n",
-	       atomic_read(&bat_priv->bonding_enabled) == 1 ?
-	       "enabled" : "disabled",
-	       bonding_enabled_tmp == 1 ? "enabled" : "disabled",
-	       net_dev->name);
+	bat_info(net_dev, "Changing bonding from: %s to: %s\n",
+		 atomic_read(&bat_priv->bonding_enabled) == 1 ?
+		 "enabled" : "disabled",
+		 bonding_enabled_tmp == 1 ? "enabled" : "disabled");
 
 	atomic_set(&bat_priv->bonding_enabled, (unsigned)bonding_enabled_tmp);
 	return count;
@@ -172,18 +173,19 @@ static ssize_t store_vis_mode(struct kobject *kobj, struct attribute *attr,
 		if (buff[count - 1] == '\n')
 			buff[count - 1] = '\0';
 
-		printk(KERN_INFO "batman-adv:Invalid parameter for 'vis mode' setting on mesh %s received: %s\n",
-		       net_dev->name, buff);
+		bat_info(net_dev,
+			 "Invalid parameter for 'vis mode' setting received: "
+			 "%s\n", buff);
 		return -EINVAL;
 	}
 
 	if (atomic_read(&bat_priv->vis_mode) == vis_mode_tmp)
 		return count;
 
-	printk(KERN_INFO "batman-adv:Changing vis mode from: %s to: %s on mesh: %s\n",
-	       atomic_read(&bat_priv->vis_mode) == VIS_TYPE_CLIENT_UPDATE ?
-	       "client" : "server", vis_mode_tmp == VIS_TYPE_CLIENT_UPDATE ?
-	       "client" : "server", net_dev->name);
+	bat_info(net_dev, "Changing vis mode from: %s to: %s\n",
+		 atomic_read(&bat_priv->vis_mode) == VIS_TYPE_CLIENT_UPDATE ?
+		 "client" : "server", vis_mode_tmp == VIS_TYPE_CLIENT_UPDATE ?
+		 "client" : "server");
 
 	atomic_set(&bat_priv->vis_mode, (unsigned)vis_mode_tmp);
 	return count;
@@ -228,9 +230,8 @@ static ssize_t store_gw_mode(struct kobject *kobj, struct attribute *attr,
 {
 	struct device *dev = to_dev(kobj->parent);
 	struct net_device *net_dev = to_net_dev(dev);
-	struct bat_priv *bat_priv = netdev_priv(net_dev);
 
-	return gw_mode_set(bat_priv, buff, count);
+	return gw_mode_set(net_dev, buff, count);
 }
 
 static ssize_t show_orig_interval(struct kobject *kobj, struct attribute *attr,
@@ -254,23 +255,23 @@ static ssize_t store_orig_interval(struct kobject *kobj, struct attribute *attr,
 
 	ret = strict_strtoul(buff, 10, &orig_interval_tmp);
 	if (ret) {
-		printk(KERN_INFO "batman-adv:Invalid parameter for 'orig_interval' setting on mesh %s received: %s\n",
-		       net_dev->name, buff);
+		bat_info(net_dev, "Invalid parameter for 'orig_interval' "
+			 "setting received: %s\n", buff);
 		return -EINVAL;
 	}
 
 	if (orig_interval_tmp < JITTER * 2) {
-		printk(KERN_INFO "batman-adv:New originator interval too small: %li (min: %i)\n",
-		       orig_interval_tmp, JITTER * 2);
+		bat_info(net_dev, "New originator interval too small: %li "
+			 "(min: %i)\n", orig_interval_tmp, JITTER * 2);
 		return -EINVAL;
 	}
 
 	if (atomic_read(&bat_priv->orig_interval) == orig_interval_tmp)
 		return count;
 
-	printk(KERN_INFO "batman-adv:Changing originator interval from: %i to: %li on mesh: %s\n",
-	       atomic_read(&bat_priv->orig_interval),
-	       orig_interval_tmp, net_dev->name);
+	bat_info(net_dev, "Changing originator interval from: %i to: %li\n",
+		 atomic_read(&bat_priv->orig_interval),
+		 orig_interval_tmp);
 
 	atomic_set(&bat_priv->orig_interval, orig_interval_tmp);
 	return count;
@@ -298,24 +299,23 @@ static ssize_t store_log_level(struct kobject *kobj, struct attribute *attr,
 
 	ret = strict_strtoul(buff, 10, &log_level_tmp);
 	if (ret) {
-		printk(KERN_INFO "batman-adv:Invalid parameter for 'log_level' setting on mesh %s received: %s\n",
-		       net_dev->name, buff);
+		bat_info(net_dev, "Invalid parameter for 'log_level' "
+			 "setting received: %s\n", buff);
 		return -EINVAL;
 	}
 
 	if (log_level_tmp > 3) {
-		printk(KERN_INFO "batman-adv:New log level too big: %li (max: %i)\n",
-		       log_level_tmp, 3);
+		bat_info(net_dev, "New log level too big: %li "
+			 "(max: %i)\n", log_level_tmp, 3);
 		return -EINVAL;
 	}
 
 	if (atomic_read(&bat_priv->log_level) == log_level_tmp)
 		return count;
 
-	printk(KERN_INFO
-	       "batman-adv:Changing log level from: %i to: %li on mesh: %s\n",
-	       atomic_read(&bat_priv->log_level),
-	       log_level_tmp, net_dev->name);
+	bat_info(net_dev, "Changing log level from: %i to: %li\n",
+		 atomic_read(&bat_priv->log_level),
+		 log_level_tmp);
 
 	atomic_set(&bat_priv->log_level, (unsigned)log_level_tmp);
 	return count;
@@ -370,8 +370,8 @@ int sysfs_add_meshif(struct net_device *dev)
 	bat_priv->mesh_obj = kobject_create_and_add(SYSFS_IF_MESH_SUBDIR,
 						    batif_kobject);
 	if (!bat_priv->mesh_obj) {
-		printk(KERN_ERR "batman-adv:Can't add sysfs directory: %s/%s\n",
-		       dev->name, SYSFS_IF_MESH_SUBDIR);
+		bat_err(dev, "Can't add sysfs directory: %s/%s\n", dev->name,
+			SYSFS_IF_MESH_SUBDIR);
 		goto out;
 	}
 
@@ -379,9 +379,9 @@ int sysfs_add_meshif(struct net_device *dev)
 		err = sysfs_create_file(bat_priv->mesh_obj,
 					&((*bat_attr)->attr));
 		if (err) {
-			printk(KERN_ERR "batman-adv:Can't add sysfs file: %s/%s/%s\n",
-			       dev->name, SYSFS_IF_MESH_SUBDIR,
-			       ((*bat_attr)->attr).name);
+			bat_err(dev, "Can't add sysfs file: %s/%s/%s\n",
+				dev->name, SYSFS_IF_MESH_SUBDIR,
+				((*bat_attr)->attr).name);
 			goto rem_attr;
 		}
 	}
@@ -446,8 +446,8 @@ static ssize_t store_mesh_iface(struct kobject *kobj, struct attribute *attr,
 		if (buff[count - 1] == '\n')
 			buff[count - 1] = '\0';
 
-		printk(KERN_ERR "batman-adv:Invalid parameter for 'mesh_iface' setting received: %s\n",
-		       buff);
+		pr_err("Invalid parameter for 'mesh_iface' setting received: "
+		       "%s\n", buff);
 		return -EINVAL;
 	}
 
@@ -509,17 +509,17 @@ int sysfs_add_hardif(struct kobject **hardif_obj, struct net_device *dev)
 						    hardif_kobject);
 
 	if (!*hardif_obj) {
-		printk(KERN_ERR "batman-adv:Can't add sysfs directory: %s/%s\n",
-		       dev->name, SYSFS_IF_BAT_SUBDIR);
+		bat_err(dev, "Can't add sysfs directory: %s/%s\n", dev->name,
+			SYSFS_IF_BAT_SUBDIR);
 		goto out;
 	}
 
 	for (bat_attr = batman_attrs; *bat_attr; ++bat_attr) {
 		err = sysfs_create_file(*hardif_obj, &((*bat_attr)->attr));
 		if (err) {
-			printk(KERN_ERR "batman-adv:Can't add sysfs file: %s/%s/%s\n",
-			       dev->name, SYSFS_IF_BAT_SUBDIR,
-			       ((*bat_attr)->attr).name);
+			bat_err(dev, "Can't add sysfs file: %s/%s/%s\n",
+				dev->name, SYSFS_IF_BAT_SUBDIR,
+				((*bat_attr)->attr).name);
 			goto rem_attr;
 		}
 	}
