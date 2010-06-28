@@ -112,7 +112,8 @@ static void new_aggregated_packet(unsigned char *packet_buff,
 	/* own packet should always be scheduled */
 	if (!own_packet) {
 		if (!atomic_dec_not_zero(&bat_priv->batman_queue_left)) {
-			bat_dbg(DBG_BATMAN, "batman packet queue full\n");
+			bat_dbg(DBG_BATMAN, bat_priv,
+				"batman packet queue full\n");
 			return;
 		}
 	}

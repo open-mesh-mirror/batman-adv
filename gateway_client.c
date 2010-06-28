@@ -80,7 +80,7 @@ void gw_election(void)
 		rcu_read_unlock();
 
 		if (curr_gateway) {
-			bat_dbg(DBG_BATMAN,
+			bat_dbg(DBG_BATMAN, bat_priv,
 				"Removing selected gateway - "
 				"no gateway in range\n");
 			gw_deselect();
@@ -137,18 +137,18 @@ void gw_election(void)
 	spin_lock(&curr_gw_lock);
 	if (curr_gateway != curr_gw_tmp) {
 		if ((curr_gateway) && (!curr_gw_tmp))
-			bat_dbg(DBG_BATMAN,
+			bat_dbg(DBG_BATMAN, bat_priv,
 				"Removing selected gateway - "
 				"no gateway in range\n");
 		else if ((!curr_gateway) && (curr_gw_tmp))
-			bat_dbg(DBG_BATMAN,
+			bat_dbg(DBG_BATMAN, bat_priv,
 				"Adding route to gateway %pM "
 				"(gw_flags: %i, tq: %i)\n",
 				curr_gw_tmp->orig_node->orig,
 				curr_gw_tmp->orig_node->gw_flags,
 				curr_gw_tmp->orig_node->router->tq_avg);
 		else
-			bat_dbg(DBG_BATMAN,
+			bat_dbg(DBG_BATMAN, bat_priv,
 				"Changing route to gateway %pM "
 				"(gw_flags: %i, tq: %i)\n",
 				curr_gw_tmp->orig_node->orig,
@@ -200,7 +200,7 @@ void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
 	    (orig_tq_avg - gw_tq_avg < atomic_read(&bat_priv->gw_class)))
 		return;
 
-	bat_dbg(DBG_BATMAN,
+	bat_dbg(DBG_BATMAN, bat_priv,
 		"Restarting gateway selection: better gateway found (tq curr: "
 		"%i, tq new: %i)\n",
 		gw_tq_avg, orig_tq_avg);
@@ -211,6 +211,8 @@ deselect:
 
 static void gw_node_add(struct orig_node *orig_node, uint8_t new_gwflags)
 {
+	/* FIXME: each orig_node->batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node;
 	int down, up;
 
@@ -225,7 +227,7 @@ static void gw_node_add(struct orig_node *orig_node, uint8_t new_gwflags)
 	list_add_tail_rcu(&gw_node->list, &gw_list);
 
 	gw_srv_class_to_kbit(new_gwflags, &down, &up);
-	bat_dbg(DBG_BATMAN,
+	bat_dbg(DBG_BATMAN, bat_priv,
 		"Found new gateway %pM -> gw_class: %i - %i%s/%i%s\n",
 		orig_node->orig, new_gwflags,
 		(down > 2048 ? down / 1024 : down),
@@ -236,6 +238,8 @@ static void gw_node_add(struct orig_node *orig_node, uint8_t new_gwflags)
 
 void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 {
+	/* FIXME: each orig_node->batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node;
 
 	rcu_read_lock();
@@ -243,7 +247,7 @@ void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 		if (gw_node->orig_node != orig_node)
 			continue;
 
-		bat_dbg(DBG_BATMAN,
+		bat_dbg(DBG_BATMAN, bat_priv,
 			"Gateway class of originator %pM changed from "
 			"%i to %i\n",
 			orig_node->orig, gw_node->orig_node->gw_flags,
@@ -253,7 +257,7 @@ void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 
 		if (new_gwflags == 0) {
 			gw_node->deleted = jiffies;
-			bat_dbg(DBG_BATMAN,
+			bat_dbg(DBG_BATMAN, bat_priv,
 				"Gateway %pM removed from gateway list\n",
 				orig_node->orig);
 
