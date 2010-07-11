@@ -29,6 +29,7 @@
 #include "compat.h"
 #include "gateway_client.h"
 #include "hard-interface.h"
+#include "fragmentation.h"
 
 static DECLARE_DELAYED_WORK(purge_orig_wq, purge_orig);
 
@@ -97,6 +98,7 @@ static void free_orig_node(void *data)
 		kfree(neigh_node);
 	}
 
+	frag_list_free(&orig_node->frag_list);
 	hna_global_del_orig(orig_node, "originator timed out");
 
 	kfree(orig_node->bcast_own);
@@ -159,6 +161,10 @@ struct orig_node *get_orig_node(uint8_t *addr)
 
 	size = bat_priv->num_ifaces * sizeof(uint8_t);
 	orig_node->bcast_own_sum = kzalloc(size, GFP_ATOMIC);
+
+	INIT_LIST_HEAD(&orig_node->frag_list);
+	orig_node->last_frag_packet = 0;
+
 	if (!orig_node->bcast_own_sum)
 		goto free_bcast_own;
 
@@ -275,6 +281,10 @@ void purge_orig(struct work_struct *work)
 			hash_remove_bucket(orig_hash, &hashit);
 			free_orig_node(orig_node);
 		}
+
+		if (time_after(jiffies, (orig_node->last_frag_packet +
+			msecs_to_jiffies(FRAG_TIMEOUT))))
+			frag_list_free(&orig_node->frag_list);
 	}
 
 	spin_unlock_irqrestore(&orig_hash_lock, flags);

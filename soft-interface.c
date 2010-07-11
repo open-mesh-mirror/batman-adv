@@ -32,6 +32,7 @@
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include "compat.h"
+#include "fragmentation.h"
 
 static uint32_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
 				  * broadcast storms */
@@ -130,6 +131,7 @@ static int interface_change_mtu(struct net_device *dev, int new_mtu)
 int interface_tx(struct sk_buff *skb, struct net_device *dev)
 {
 	struct unicast_packet *unicast_packet;
+	struct unicast_frag_packet *ucast_frag1, *ucast_frag2;
 	struct bcast_packet *bcast_packet;
 	struct orig_node *orig_node;
 	struct neigh_node *router;
@@ -137,9 +139,11 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 	struct bat_priv *priv = netdev_priv(dev);
 	struct batman_if *batman_if;
 	struct bat_priv *bat_priv;
+	struct sk_buff *frag_skb;
 	uint8_t dstaddr[6];
 	int data_len = skb->len;
 	unsigned long flags;
+	int hdr_len;
 	bool bcast_dst = false, do_bcast = true;
 
 	if (atomic_read(&module_state) != MODULE_ACTIVE)
@@ -216,20 +220,66 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		if (batman_if->if_status != IF_ACTIVE)
 			goto dropped;
 
-		if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
-			goto dropped;
+		if (atomic_read(&bat_priv->frag_enabled) &&
+		   data_len + sizeof(struct unicast_packet) >
+		   batman_if->net_dev->mtu) {
 
-		unicast_packet = (struct unicast_packet *)skb->data;
+			hdr_len = sizeof(struct unicast_frag_packet);
 
-		unicast_packet->version = COMPAT_VERSION;
-		/* batman packet type: unicast */
-		unicast_packet->packet_type = BAT_UNICAST;
-		/* set unicast ttl */
-		unicast_packet->ttl = TTL;
-		/* copy the destination for faster routing */
-		memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
+			frag_skb = dev_alloc_skb(data_len - (data_len / 2) +
+				hdr_len);
+			skb_split(skb, frag_skb, data_len / 2);
 
-		send_skb_packet(skb, batman_if, dstaddr);
+			if (my_skb_push(frag_skb, hdr_len) < 0 ||
+				my_skb_push(skb, hdr_len) < 0) {
+
+				kfree_skb(frag_skb);
+				goto dropped;
+			}
+
+			ucast_frag1 = (struct unicast_frag_packet *)skb->data;
+			ucast_frag2 =
+				(struct unicast_frag_packet *)frag_skb->data;
+
+			ucast_frag1->version = COMPAT_VERSION;
+			ucast_frag1->packet_type = BAT_UNICAST_FRAG;
+			ucast_frag1->ttl = TTL;
+			memcpy(ucast_frag1->orig,
+				batman_if->net_dev->dev_addr, ETH_ALEN);
+			memcpy(ucast_frag1->dest, orig_node->orig, ETH_ALEN);
+
+			memcpy(ucast_frag2, ucast_frag1,
+			       sizeof(struct unicast_frag_packet));
+
+			ucast_frag1->flags |= UNI_FRAG_HEAD;
+			ucast_frag2->flags &= ~UNI_FRAG_HEAD;
+
+			ucast_frag1->seqno = htons((uint16_t)atomic_inc_return(
+				&batman_if->frag_seqno));
+
+			ucast_frag2->seqno = htons((uint16_t)atomic_inc_return(
+				&batman_if->frag_seqno));
+
+			send_skb_packet(skb, batman_if, dstaddr);
+			send_skb_packet(frag_skb, batman_if, dstaddr);
+
+		} else {
+
+			if (my_skb_push(skb, sizeof(struct unicast_packet)) < 0)
+				goto dropped;
+
+			unicast_packet = (struct unicast_packet *)skb->data;
+
+			unicast_packet->version = COMPAT_VERSION;
+			/* batman packet type: unicast */
+			unicast_packet->packet_type = BAT_UNICAST;
+			/* set unicast ttl */
+			unicast_packet->ttl = TTL;
+			/* copy the destination for faster routing */
+			memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
+
+			send_skb_packet(skb, batman_if, dstaddr);
+		}
 	}
 
 	priv->stats.tx_packets++;
@@ -309,7 +359,9 @@ void interface_setup(struct net_device *dev)
 #endif
 	dev->destructor = free_netdev;
 
-	dev->mtu = hardif_min_mtu();
+	dev->mtu = ETH_DATA_LEN;	/* can't call min_mtu, because the
+					 * needed variables have not been
+					 * initialized yet */
 	dev->hard_header_len = BAT_HEADER_LEN; /* reserve more space in the
 						* skbuff for our header */
 
