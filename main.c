@@ -132,7 +132,7 @@ end:
 	return -ENOMEM;
 }
 
-static void __init batman_exit(void)
+static void __exit batman_exit(void)
 {
 	deactivate_module();
 
