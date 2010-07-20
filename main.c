@@ -60,7 +60,7 @@ static struct packet_type batman_adv_packet_type __read_mostly = {
 
 struct workqueue_struct *bat_event_workqueue;
 
-int batman_init(void)
+static int __init batman_init(void)
 {
 	int retval;
 
@@ -132,7 +132,7 @@ end:
 	return -ENOMEM;
 }
 
-void batman_exit(void)
+static void __init batman_exit(void)
 {
 	deactivate_module();
 
