@@ -245,12 +245,4 @@ static inline struct net_device_stats *dev_get_stats(struct net_device *dev)
 
 #endif /* < KERNEL_VERSION(2, 6, 29) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
-
-#define dev_get_stats(x, y) dev_get_stats(x)
-
-#define rtnl_link_stats64 rtnl_link_stats __attribute__((unused))
-
-#endif /* < KERNEL_VERSION(2, 6, 36) */
-
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
