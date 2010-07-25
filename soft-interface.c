@@ -224,6 +224,9 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 		   data_len + sizeof(struct unicast_packet) >
 		   batman_if->net_dev->mtu) {
 
+			if (!bat_priv->primary_if)
+				goto dropped;
+
 			hdr_len = sizeof(struct unicast_frag_packet);
 
 			frag_skb = dev_alloc_skb(data_len - (data_len / 2) +
@@ -245,7 +248,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *dev)
 			ucast_frag1->packet_type = BAT_UNICAST_FRAG;
 			ucast_frag1->ttl = TTL;
 			memcpy(ucast_frag1->orig,
-				batman_if->net_dev->dev_addr, ETH_ALEN);
+			       bat_priv->primary_if->net_dev->dev_addr,
+			       ETH_ALEN);
 			memcpy(ucast_frag1->dest, orig_node->orig, ETH_ALEN);
 
 			memcpy(ucast_frag2, ucast_frag1,
