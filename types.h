@@ -142,6 +142,7 @@ struct socket_client {
 	unsigned char index;
 	spinlock_t lock;
 	wait_queue_head_t queue_wait;
+	struct bat_priv *bat_priv;
 };
 
 struct socket_packet {
