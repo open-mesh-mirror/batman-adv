@@ -784,6 +784,8 @@ int recv_bat_packet(struct sk_buff *skb,
 
 static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 {
+	/* FIXME: each batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct orig_node *orig_node;
 	struct icmp_packet_rr *icmp_packet;
 	struct ethhdr *ethhdr;
@@ -801,6 +803,9 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 		bat_socket_receive_packet(icmp_packet, icmp_len);
 		return NET_RX_DROP;
 	}
+
+	if (!bat_priv->primary_if)
+		return NET_RX_DROP;
 
 	/* answer echo request (ping) */
 	/* get routing information */
@@ -831,7 +836,8 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 		}
 
 		memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
-		memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
+		memcpy(icmp_packet->orig,
+		       bat_priv->primary_if->net_dev->dev_addr, ETH_ALEN);
 		icmp_packet->msg_type = ECHO_REPLY;
 		icmp_packet->ttl = TTL;
 
@@ -846,6 +852,8 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 
 static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 {
+	/* FIXME: each batman_if will be attached to a softif */
+	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct orig_node *orig_node;
 	struct icmp_packet *icmp_packet;
 	struct ethhdr *ethhdr;
@@ -865,6 +873,9 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 			   icmp_packet->dst);
 		return NET_RX_DROP;
 	}
+
+	if (!bat_priv->primary_if)
+		return NET_RX_DROP;
 
 	/* get routing information */
 	spin_lock_irqsave(&orig_hash_lock, flags);
@@ -893,7 +904,8 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 		}
 
 		memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
-		memcpy(icmp_packet->orig, ethhdr->h_dest, ETH_ALEN);
+		memcpy(icmp_packet->orig,
+		       bat_priv->primary_if->net_dev->dev_addr, ETH_ALEN);
 		icmp_packet->msg_type = TTL_EXCEEDED;
 		icmp_packet->ttl = TTL;
 
