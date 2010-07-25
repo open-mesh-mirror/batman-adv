@@ -31,3 +31,4 @@ void create_frag_buffer(struct list_head *head);
 struct frag_packet_list_entry *search_frag_packet(struct list_head *head,
 	struct unicast_frag_packet *up);
 void frag_list_free(struct list_head *head);
+int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv);

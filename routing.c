@@ -34,7 +34,7 @@
 #include "aggregation.h"
 #include "compat.h"
 #include "gateway_client.h"
-#include "fragmentation.h"
+#include "unicast.h"
 
 static DECLARE_WAIT_QUEUE_HEAD(thread_wait);
 
