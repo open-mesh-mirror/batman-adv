@@ -295,7 +295,8 @@ void schedule_own_packet(struct batman_if *batman_if)
 	else
 		batman_packet->flags &= ~VIS_SERVER;
 
-	if (atomic_read(&bat_priv->gw_mode) == GW_MODE_SERVER)
+	if ((batman_if == bat_priv->primary_if) &&
+	    (atomic_read(&bat_priv->gw_mode) == GW_MODE_SERVER))
 		batman_packet->gw_flags =
 				(uint8_t)atomic_read(&bat_priv->gw_class);
 	else
