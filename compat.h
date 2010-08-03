@@ -45,6 +45,17 @@
 #define skb_mac_header(_skb) \
     ((_skb)->mac.raw)
 
+#include <linux/etherdevice.h>
+static inline __be16 bat_eth_type_trans(struct sk_buff *skb,
+					struct net_device *dev)
+{
+	skb->dev = dev;
+	return eth_type_trans(skb, dev);
+}
+
+#define eth_type_trans(_skb, _dev) \
+	bat_eth_type_trans(_skb, _dev);
+
 #endif /* < KERNEL_VERSION(2,6,22) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 23)
