@@ -37,10 +37,7 @@
 #include "compat.h"
 #include "unicast.h"
 
-static uint32_t bcast_seqno = 1; /* give own bcast messages seq numbers to avoid
-				  * broadcast storms */
 
-unsigned char main_if_addr[ETH_ALEN];
 static int bat_get_settings(struct net_device *dev, struct ethtool_cmd *cmd);
 static void bat_get_drvinfo(struct net_device *dev,
 			    struct ethtool_drvinfo *info);
@@ -60,11 +57,6 @@ static const struct ethtool_ops bat_ethtool_ops = {
 	.set_rx_csum = bat_set_rx_csum
 };
 
-void set_main_if_addr(uint8_t *addr)
-{
-	memcpy(main_if_addr, addr, ETH_ALEN);
-}
-
 int my_skb_head_push(struct sk_buff *skb, unsigned int len)
 {
 	int result;
@@ -78,7 +70,6 @@ int my_skb_head_push(struct sk_buff *skb, unsigned int len)
 	 * to write freely in that area.
 	 */
 	result = skb_cow_head(skb, len);
-
 	if (result < 0)
 		return result;
 
@@ -113,7 +104,7 @@ static int interface_set_mac_addr(struct net_device *dev, void *p)
 		return -EADDRNOTAVAIL;
 
 	/* only modify hna-table if it has been initialised before */
-	if (atomic_read(&module_state) == MODULE_ACTIVE) {
+	if (atomic_read(&bat_priv->mesh_state) == MESH_ACTIVE) {
 		hna_local_remove(bat_priv, dev->dev_addr,
 				 "mac address changed");
 		hna_local_add(dev, addr->sa_data);
@@ -143,7 +134,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	int data_len = skb->len, ret;
 	bool bcast_dst = false, do_bcast = true;
 
-	if (atomic_read(&module_state) != MODULE_ACTIVE)
+	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
 		goto dropped;
 
 	soft_iface->trans_start = jiffies;
@@ -159,6 +150,9 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 
 	/* ethernet packet should be broadcasted */
 	if (bcast_dst && do_bcast) {
+		if (!bat_priv->primary_if)
+			goto dropped;
+
 		if (my_skb_head_push(skb, sizeof(struct bcast_packet)) < 0)
 			goto dropped;
 
@@ -171,14 +165,14 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 
 		/* hw address of first interface is the orig mac because only
 		 * this mac is known throughout the mesh */
-		memcpy(bcast_packet->orig, main_if_addr, ETH_ALEN);
+		memcpy(bcast_packet->orig,
+		       bat_priv->primary_if->net_dev->dev_addr, ETH_ALEN);
 
 		/* set broadcast sequence number */
-		bcast_packet->seqno = htonl(bcast_seqno);
+		bcast_packet->seqno =
+			htonl(atomic_inc_return(&bat_priv->bcast_seqno));
 
-		/* broadcast packet. on success, increase seqno. */
-		if (add_bcast_packet_to_list(bat_priv, skb) == NETDEV_TX_OK)
-			bcast_seqno++;
+		add_bcast_packet_to_list(bat_priv, skb);
 
 		/* a copy is stored in the bcast list, therefore removing
 		 * the original skb. */
@@ -187,10 +181,8 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	/* unicast packet */
 	} else {
 		ret = unicast_send_skb(skb, bat_priv);
-		if (ret != 0) {
-			bat_priv->stats.tx_dropped++;
-			goto end;
-		}
+		if (ret != 0)
+			goto dropped;
 	}
 
 	bat_priv->stats.tx_packets++;
@@ -300,7 +292,6 @@ struct net_device *softif_create(char *name)
 	}
 
 	ret = register_netdev(soft_iface);
-
 	if (ret < 0) {
 		pr_err("Unable to register the batman interface '%s': %i\n",
 		       name, ret);
@@ -320,21 +311,29 @@ struct net_device *softif_create(char *name)
 	atomic_set(&bat_priv->bcast_queue_left, BCAST_QUEUE_LEN);
 	atomic_set(&bat_priv->batman_queue_left, BATMAN_QUEUE_LEN);
 
+	atomic_set(&bat_priv->mesh_state, MESH_INACTIVE);
+	atomic_set(&bat_priv->bcast_seqno, 1);
+	atomic_set(&bat_priv->hna_local_changed, 0);
+
 	bat_priv->primary_if = NULL;
 	bat_priv->num_ifaces = 0;
 
 	ret = sysfs_add_meshif(soft_iface);
-
 	if (ret < 0)
 		goto unreg_soft_iface;
 
 	ret = debugfs_add_meshif(soft_iface);
-
 	if (ret < 0)
 		goto unreg_sysfs;
 
+	ret = mesh_init(soft_iface);
+	if (ret < 0)
+		goto unreg_debugfs;
+
 	return soft_iface;
 
+unreg_debugfs:
+	debugfs_del_meshif(soft_iface);
 unreg_sysfs:
 	sysfs_del_meshif(soft_iface);
 unreg_soft_iface:
@@ -351,6 +350,7 @@ void softif_destroy(struct net_device *soft_iface)
 {
 	debugfs_del_meshif(soft_iface);
 	sysfs_del_meshif(soft_iface);
+	mesh_free(soft_iface);
 	unregister_netdev(soft_iface);
 }
 

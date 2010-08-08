@@ -261,7 +261,7 @@ next:
 		gw_srv_class_to_kbit((uint8_t)gw_class_tmp,
 				     (int *)&down, (int *)&up);
 
-		gw_deselect();
+		gw_deselect(bat_priv);
 		bat_info(net_dev, "Changing gateway mode from: '%s' to: '%s' "
 			 "(gw_class: %ld -> propagating: %ld%s/%ld%s)\n",
 			 gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp,
@@ -280,7 +280,7 @@ next:
 	atomic_set(&bat_priv->gw_class, gw_class_tmp);
 
 	if (gw_class_tmp == 0)
-		gw_deselect();
+		gw_deselect(bat_priv);
 
 end:
 	return count;
