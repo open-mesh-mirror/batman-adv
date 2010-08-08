@@ -754,7 +754,6 @@ int recv_bat_packet(struct sk_buff *skb,
 {
 	struct ethhdr *ethhdr;
 	unsigned long flags;
-	struct sk_buff *skb_old;
 
 	/* drop packet if it has not necessary minimum size */
 	if (skb_headlen(skb) < sizeof(struct batman_packet))
@@ -770,18 +769,11 @@ int recv_bat_packet(struct sk_buff *skb,
 	if (is_bcast(ethhdr->h_source))
 		return NET_RX_DROP;
 
-	/* TODO: we use headlen instead of "length", because
-	 * only this data is paged in. */
-
 	/* create a copy of the skb, if needed, to modify it. */
-	if (!skb_clone_writable(skb, skb_headlen(skb))) {
-		skb_old = skb;
-		skb = skb_copy(skb, GFP_ATOMIC);
-		if (!skb)
-			return NET_RX_DROP;
-		ethhdr = (struct ethhdr *)skb_mac_header(skb);
-		kfree_skb(skb_old);
-	}
+	if (skb_cow(skb, 0) < 0)
+		return NET_RX_DROP;
+
+	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	spin_lock_irqsave(&orig_hash_lock, flags);
 	receive_aggr_bat_packet(ethhdr,
@@ -801,7 +793,6 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 	struct orig_node *orig_node;
 	struct icmp_packet_rr *icmp_packet;
 	struct ethhdr *ethhdr;
-	struct sk_buff *skb_old;
 	struct batman_if *batman_if;
 	int ret;
 	unsigned long flags;
@@ -836,16 +827,11 @@ static int recv_my_icmp_packet(struct sk_buff *skb, size_t icmp_len)
 		spin_unlock_irqrestore(&orig_hash_lock, flags);
 
 		/* create a copy of the skb, if needed, to modify it. */
-		skb_old = NULL;
-		if (!skb_clone_writable(skb, icmp_len)) {
-			skb_old = skb;
-			skb = skb_copy(skb, GFP_ATOMIC);
-			if (!skb)
-				return NET_RX_DROP;
-			icmp_packet = (struct icmp_packet_rr *)skb->data;
-			ethhdr = (struct ethhdr *)skb_mac_header(skb);
-			kfree_skb(skb_old);
-		}
+		if (skb_cow(skb, sizeof(struct ethhdr)) < 0)
+			return NET_RX_DROP;
+
+		icmp_packet = (struct icmp_packet_rr *)skb->data;
+		ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 		memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
 		memcpy(icmp_packet->orig,
@@ -869,7 +855,6 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 	struct orig_node *orig_node;
 	struct icmp_packet *icmp_packet;
 	struct ethhdr *ethhdr;
-	struct sk_buff *skb_old;
 	struct batman_if *batman_if;
 	int ret;
 	unsigned long flags;
@@ -905,15 +890,11 @@ static int recv_icmp_ttl_exceeded(struct sk_buff *skb, size_t icmp_len)
 		spin_unlock_irqrestore(&orig_hash_lock, flags);
 
 		/* create a copy of the skb, if needed, to modify it. */
-		if (!skb_clone_writable(skb, icmp_len)) {
-			skb_old = skb;
-			skb = skb_copy(skb, GFP_ATOMIC);
-			if (!skb)
-				return NET_RX_DROP;
-			icmp_packet = (struct icmp_packet *) skb->data;
-			ethhdr = (struct ethhdr *)skb_mac_header(skb);
-			kfree_skb(skb_old);
-		}
+		if (skb_cow(skb, sizeof(struct ethhdr)) < 0)
+			return NET_RX_DROP;
+
+		icmp_packet = (struct icmp_packet *) skb->data;
+		ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 		memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
 		memcpy(icmp_packet->orig,
@@ -936,7 +917,6 @@ int recv_icmp_packet(struct sk_buff *skb)
 	struct icmp_packet_rr *icmp_packet;
 	struct ethhdr *ethhdr;
 	struct orig_node *orig_node;
-	struct sk_buff *skb_old;
 	struct batman_if *batman_if;
 	int hdr_size = sizeof(struct icmp_packet);
 	int ret;
@@ -1002,15 +982,11 @@ int recv_icmp_packet(struct sk_buff *skb)
 		spin_unlock_irqrestore(&orig_hash_lock, flags);
 
 		/* create a copy of the skb, if needed, to modify it. */
-		if (!skb_clone_writable(skb, hdr_size)) {
-			skb_old = skb;
-			skb = skb_copy(skb, GFP_ATOMIC);
-			if (!skb)
-				return NET_RX_DROP;
-			icmp_packet = (struct icmp_packet_rr *)skb->data;
-			ethhdr = (struct ethhdr *)skb_mac_header(skb);
-			kfree_skb(skb_old);
-		}
+		if (skb_cow(skb, sizeof(struct ethhdr)) < 0)
+			return NET_RX_DROP;
+
+		icmp_packet = (struct icmp_packet_rr *)skb->data;
+		ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 		/* decrement ttl */
 		icmp_packet->ttl--;
@@ -1149,7 +1125,6 @@ static int route_unicast_packet(struct sk_buff *skb, struct batman_if *recv_if,
 	struct orig_node *orig_node;
 	struct neigh_node *router;
 	struct batman_if *batman_if;
-	struct sk_buff *skb_old;
 	uint8_t dstaddr[ETH_ALEN];
 	unsigned long flags;
 	struct unicast_packet *unicast_packet =
@@ -1185,15 +1160,11 @@ static int route_unicast_packet(struct sk_buff *skb, struct batman_if *recv_if,
 	spin_unlock_irqrestore(&orig_hash_lock, flags);
 
 	/* create a copy of the skb, if needed, to modify it. */
-	if (!skb_clone_writable(skb, hdr_size)) {
-		skb_old = skb;
-		skb = skb_copy(skb, GFP_ATOMIC);
-		if (!skb)
-			return NET_RX_DROP;
-		unicast_packet = (struct unicast_packet *) skb->data;
-		ethhdr = (struct ethhdr *)skb_mac_header(skb);
-		kfree_skb(skb_old);
-	}
+	if (skb_cow(skb, sizeof(struct ethhdr)) < 0)
+		return NET_RX_DROP;
+
+	unicast_packet = (struct unicast_packet *) skb->data;
+	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	/* decrement ttl */
 	unicast_packet->ttl--;
