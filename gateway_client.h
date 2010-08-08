@@ -23,11 +23,12 @@
 #define _NET_BATMAN_ADV_GATEWAY_CLIENT_H_
 
 void gw_deselect(void);
-void gw_election(void);
+void gw_election(struct bat_priv *bat_priv);
 void *gw_get_selected(void);
 void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node);
-void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags);
-void gw_node_delete(struct orig_node *orig_node);
+void gw_node_update(struct bat_priv *bat_priv,
+		    struct orig_node *orig_node, uint8_t new_gwflags);
+void gw_node_delete(struct bat_priv *bat_priv, struct orig_node *orig_node);
 void gw_node_purge_deleted(void);
 void gw_node_list_free(void);
 int gw_client_seq_print_text(struct seq_file *seq, void *offset);

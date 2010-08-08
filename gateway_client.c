@@ -54,10 +54,8 @@ void gw_deselect(void)
 	spin_unlock(&curr_gw_lock);
 }
 
-void gw_election(void)
+void gw_election(struct bat_priv *bat_priv)
 {
-	/* FIXME: get bat_priv */
-	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node, *curr_gw_tmp = NULL;
 	uint8_t max_tq = 0;
 	uint32_t max_gw_factor = 0, tmp_gw_factor = 0;
@@ -209,10 +207,9 @@ deselect:
 	gw_deselect();
 }
 
-static void gw_node_add(struct orig_node *orig_node, uint8_t new_gwflags)
+static void gw_node_add(struct bat_priv *bat_priv,
+			struct orig_node *orig_node, uint8_t new_gwflags)
 {
-	/* FIXME: each orig_node->batman_if will be attached to a softif */
-	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node;
 	int down, up;
 
@@ -236,10 +233,9 @@ static void gw_node_add(struct orig_node *orig_node, uint8_t new_gwflags)
 		(up > 2048 ? "MBit" : "KBit"));
 }
 
-void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
+void gw_node_update(struct bat_priv *bat_priv,
+		    struct orig_node *orig_node, uint8_t new_gwflags)
 {
-	/* FIXME: each orig_node->batman_if will be attached to a softif */
-	struct bat_priv *bat_priv = netdev_priv(soft_device);
 	struct gw_node *gw_node;
 
 	rcu_read_lock();
@@ -273,12 +269,12 @@ void gw_node_update(struct orig_node *orig_node, uint8_t new_gwflags)
 	if (new_gwflags == 0)
 		return;
 
-	gw_node_add(orig_node, new_gwflags);
+	gw_node_add(bat_priv, orig_node, new_gwflags);
 }
 
-void gw_node_delete(struct orig_node *orig_node)
+void gw_node_delete(struct bat_priv *bat_priv, struct orig_node *orig_node)
 {
-	return gw_node_update(orig_node, 0);
+	return gw_node_update(bat_priv, orig_node, 0);
 }
 
 static void gw_node_free(struct rcu_head *rcu)
