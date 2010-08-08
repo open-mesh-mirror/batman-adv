@@ -86,6 +86,8 @@ static inline int skb_cow_head(struct sk_buff *skb, unsigned int headroom)
 #define pr_warning(fmt, ...) \
        printk(KERN_WARNING pr_fmt(fmt), ##__VA_ARGS__)
 
+#define dev_get_by_name(x, y) dev_get_by_name(y)
+
 #endif /* < KERNEL_VERSION(2, 6, 24) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
