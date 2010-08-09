@@ -149,7 +149,7 @@ void frag_list_free(struct list_head *head)
 	return;
 }
 
-int unicast_send_frag_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
+static int unicast_send_frag_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 			  struct batman_if *batman_if, uint8_t dstaddr[],
 			  struct orig_node *orig_node)
 {
