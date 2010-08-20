@@ -321,7 +321,7 @@ static int _write_buffer_text(struct bat_priv *bat_priv,
 		       gw_str,
 		       gw_node->orig_node->router->tq_avg,
 		       router_str,
-		       gw_node->orig_node->router->if_incoming->dev,
+		       gw_node->orig_node->router->if_incoming->net_dev->name,
 		       gw_node->orig_node->gw_flags,
 		       (down > 2048 ? down / 1024 : down),
 		       (down > 2048 ? "MBit" : "KBit"),
@@ -358,8 +358,8 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 		   "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
 		   "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
 		   "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
-		   bat_priv->primary_if->dev, bat_priv->primary_if->addr_str,
-		   net_dev->name);
+		   bat_priv->primary_if->net_dev->name,
+		   bat_priv->primary_if->addr_str, net_dev->name);
 	rcu_read_unlock();
 
 	rcu_read_lock();
