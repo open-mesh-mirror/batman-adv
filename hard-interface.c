@@ -214,7 +214,6 @@ static void hardif_activate_interface(struct batman_if *batman_if)
 		return;
 
 	bat_priv = netdev_priv(batman_if->soft_iface);
-	dev_hold(batman_if->net_dev);
 
 	update_mac_addresses(batman_if);
 	batman_if->if_status = IF_TO_BE_ACTIVATED;
@@ -238,8 +237,6 @@ static void hardif_deactivate_interface(struct batman_if *batman_if)
 	if ((batman_if->if_status != IF_ACTIVE) &&
 	   (batman_if->if_status != IF_TO_BE_ACTIVATED))
 		return;
-
-	dev_put(batman_if->net_dev);
 
 	batman_if->if_status = IF_INACTIVE;
 
@@ -386,11 +383,13 @@ static struct batman_if *hardif_add_interface(struct net_device *net_dev)
 	if (ret != 1)
 		goto out;
 
+	dev_hold(net_dev);
+
 	batman_if = kmalloc(sizeof(struct batman_if), GFP_ATOMIC);
 	if (!batman_if) {
 		pr_err("Can't add interface (%s): out of memory\n",
 		       net_dev->name);
-		goto out;
+		goto release_dev;
 	}
 
 	ret = sysfs_add_hardif(&batman_if->hardif_obj, net_dev);
@@ -409,6 +408,8 @@ static struct batman_if *hardif_add_interface(struct net_device *net_dev)
 
 free_if:
 	kfree(batman_if);
+release_dev:
+	dev_put(net_dev);
 out:
 	return NULL;
 }
@@ -432,6 +433,7 @@ static void hardif_remove_interface(struct batman_if *batman_if)
 	batman_if->if_status = IF_TO_BE_REMOVED;
 	list_del_rcu(&batman_if->list);
 	sysfs_del_hardif(&batman_if->hardif_obj);
+	dev_put(batman_if->net_dev);
 	call_rcu(&batman_if->rcu, hardif_free_interface);
 }
 
