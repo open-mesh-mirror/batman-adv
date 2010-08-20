@@ -457,15 +457,13 @@ static int hard_if_event(struct notifier_block *this,
 	struct batman_if *batman_if = get_batman_if_by_netdev(net_dev);
 	struct bat_priv *bat_priv;
 
-	if (!batman_if)
-		batman_if = hardif_add_interface(net_dev);
+	if (!batman_if && event == NETDEV_REGISTER)
+			batman_if = hardif_add_interface(net_dev);
 
 	if (!batman_if)
 		goto out;
 
 	switch (event) {
-	case NETDEV_REGISTER:
-		break;
 	case NETDEV_UP:
 		hardif_activate_interface(batman_if);
 		break;
