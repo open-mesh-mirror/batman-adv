@@ -222,7 +222,7 @@ void interface_rx(struct net_device *soft_iface,
 	 * PACKET_OTHERHOST or PACKET_HOST */
 
 	priv->stats.rx_packets++;
-	priv->stats.rx_bytes += skb->len;
+	priv->stats.rx_bytes += skb->len + sizeof(struct ethhdr);
 
 	soft_iface->last_rx = jiffies;
 
