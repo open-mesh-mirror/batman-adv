@@ -8,7 +8,8 @@ batman-adv 2010.1.0:
 * change output of all sysfs files to single-value-only
 * reintroduce virtual file for the debug log
 * bonding and alternating added
-* change ttl of broadcasts to 32 bit
+* add ttl to broadcasts
+* change all sequence numbers to 32 bit
 * show last-seen in originator table
 * many bugs (rounding issues, locking, netdev event handler, ...) squashed
 
