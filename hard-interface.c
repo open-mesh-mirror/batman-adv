@@ -497,56 +497,27 @@ out:
 
 static int batman_skb_recv_finish(struct sk_buff *skb)
 {
-	return NF_ACCEPT;
-}
-
-/* receive a packet with the batman ethertype coming on a hard
- * interface */
-int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
-	struct packet_type *ptype, struct net_device *orig_dev)
-{
-	struct bat_priv *bat_priv;
 	struct batman_packet *batman_packet;
 	struct batman_if *batman_if;
+	struct bat_priv *bat_priv;
 	int ret;
 
-	batman_if = container_of(ptype, struct batman_if, batman_adv_ptype);
-	skb = skb_share_check(skb, GFP_ATOMIC);
-
-	/* skb was released by skb_share_check() */
-	if (!skb)
-		goto err_out;
-
-	/* if netfilter/ebtables wants to block incoming batman
-	 * packets then give them a chance to do so here */
-	ret = NF_HOOK(PF_BRIDGE, NF_BR_LOCAL_IN, skb, dev, NULL,
-		      batman_skb_recv_finish);
-	if (ret != 1)
-		goto err_out;
-
-	/* packet should hold at least type and version */
-	if (unlikely(!pskb_may_pull(skb, 2)))
-		goto err_free;
-
-	/* expect a valid ethernet header here. */
-	if (unlikely(skb->mac_len != sizeof(struct ethhdr)
-				|| !skb_mac_header(skb)))
+	batman_if = get_batman_if_by_netdev(skb->dev);
+	if (!batman_if)
 		goto err_free;
 
 	if (!batman_if->soft_iface)
-		goto err_free;
-
-	bat_priv = netdev_priv(batman_if->soft_iface);
-
-	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
 		goto err_free;
 
 	/* discard frames on not active interfaces */
 	if (batman_if->if_status != IF_ACTIVE)
 		goto err_free;
 
-	batman_packet = (struct batman_packet *)skb->data;
+	bat_priv = netdev_priv(batman_if->soft_iface);
+	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
+		goto err_free;
 
+	batman_packet = (struct batman_packet *)skb->data;
 	if (batman_packet->version != COMPAT_VERSION) {
 		bat_dbg(DBG_BATMAN, bat_priv,
 			"Drop packet: incompatible batman version (%i)\n",
@@ -592,18 +563,42 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	}
 
 	if (ret == NET_RX_DROP)
-		kfree_skb(skb);
+		goto err_free;
 
-	/* return NET_RX_SUCCESS in any case as we
-	 * most probably dropped the packet for
-	 * routing-logical reasons. */
-
-	return NET_RX_SUCCESS;
+	return 0;
 
 err_free:
 	kfree_skb(skb);
-err_out:
-	return NET_RX_DROP;
+	return 0;
+}
+
+/* receive a packet with the batman ethertype coming on a hard
+ * interface */
+int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
+	struct packet_type *ptype, struct net_device *orig_dev)
+{
+	skb = skb_share_check(skb, GFP_ATOMIC);
+
+	/* skb was released by skb_share_check() */
+	if (!skb)
+		return 0;
+
+	/* packet should hold at least type and version */
+	if (unlikely(!pskb_may_pull(skb, 2)))
+		goto err_free;
+
+	/* expect a valid ethernet header here. */
+	if (unlikely(skb->mac_len != sizeof(struct ethhdr) ||
+	    !skb_mac_header(skb)))
+		goto err_free;
+
+	/* if netfilter/ebtables wants to block incoming batman
+	 * packets then give them a chance to do so here */
+	return NF_HOOK(PF_BRIDGE, NF_BR_LOCAL_IN, skb, dev,
+		       NULL, batman_skb_recv_finish);
+err_free:
+	kfree_skb(skb);
+	return 0;
 }
 
 struct notifier_block hard_if_notifier = {
