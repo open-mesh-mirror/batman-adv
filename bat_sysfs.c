@@ -492,13 +492,18 @@ static ssize_t store_mesh_iface(struct kobject *kobj, struct attribute *attr,
 		return count;
 
 	if (status_tmp == IF_NOT_IN_USE) {
+		rtnl_lock();
 		hardif_disable_interface(batman_if);
+		rtnl_unlock();
 		return count;
 	}
 
 	/* if the interface already is in use */
-	if (batman_if->if_status != IF_NOT_IN_USE)
+	if (batman_if->if_status != IF_NOT_IN_USE) {
+		rtnl_lock();
 		hardif_disable_interface(batman_if);
+		rtnl_unlock();
+	}
 
 	return hardif_enable_interface(batman_if, buff);
 }

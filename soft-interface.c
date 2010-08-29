@@ -351,7 +351,7 @@ void softif_destroy(struct net_device *soft_iface)
 	debugfs_del_meshif(soft_iface);
 	sysfs_del_meshif(soft_iface);
 	mesh_free(soft_iface);
-	unregister_netdev(soft_iface);
+	unregister_netdevice(soft_iface);
 }
 
 /* ethtool */

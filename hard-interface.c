@@ -441,8 +441,11 @@ void hardif_remove_interfaces(void)
 {
 	struct batman_if *batman_if, *batman_if_tmp;
 
-	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list, list)
+	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list, list) {
+		rtnl_lock();
 		hardif_remove_interface(batman_if);
+		rtnl_unlock();
+	}
 }
 
 static int hard_if_event(struct notifier_block *this,
