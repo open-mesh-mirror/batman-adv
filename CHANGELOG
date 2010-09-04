@@ -12,7 +12,7 @@ batman-adv 2010.1.0:
 * show last-seen in originator table
 * many bugs (rounding issues, locking, netdev event handler, ...) squashed
 
- -- Sat, 28 Aug 2010 XX:XX:XX +0200
+ -- Sat, 04 Sep 2010 13:56:38 +0200
 
 batman-adv 2010.0.0:
 
