@@ -183,7 +183,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	} else {
 		ret = unicast_send_skb(skb, bat_priv);
 		if (ret != 0)
-			goto dropped;
+			goto dropped_freed;
 	}
 
 	bat_priv->stats.tx_packets++;
@@ -191,8 +191,9 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	goto end;
 
 dropped:
-	bat_priv->stats.tx_dropped++;
 	kfree_skb(skb);
+dropped_freed:
+	bat_priv->stats.tx_dropped++;
 end:
 	return NETDEV_TX_OK;
 }
