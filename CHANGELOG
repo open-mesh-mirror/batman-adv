@@ -1,3 +1,19 @@
+batman-adv 2010.1.0:
+
+* support latest kernels (2.6.21 - 2.6.36)
+* further cleanup of coding style
+* recording of routes for batman icmp messages
+* move of complex sysfs files to debugfs
+* change output of all sysfs files to single-value-only
+* reintroduce virtual file for the debug log
+* bonding and alternating added
+* add ttl to broadcasts
+* change all sequence numbers to 32 bit
+* show last-seen in originator table
+* many bugs (rounding issues, locking, netdev event handler, ...) squashed
+
+ -- Sat, 04 Sep 2010 13:56:38 +0200
+
 batman-adv 2010.0.0:
 
 * support latest kernels (2.6.21 - 2.6.35)
