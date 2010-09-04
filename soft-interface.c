@@ -29,6 +29,7 @@
 #include "types.h"
 #include "hash.h"
 #include "send.h"
+#include "bat_sysfs.h"
 #include <linux/slab.h>
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
