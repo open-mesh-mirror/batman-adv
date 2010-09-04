@@ -31,6 +31,7 @@
 #include "gateway_common.h"
 #include "gateway_client.h"
 #include "send.h"
+#include "bat_sysfs.h"
 #include <linux/slab.h>
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
