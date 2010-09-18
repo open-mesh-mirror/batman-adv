@@ -342,9 +342,7 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 	struct hlist_node *node;
 	int gw_count = 0;
 
-	rcu_read_lock();
 	if (!bat_priv->primary_if) {
-		rcu_read_unlock();
 
 		return seq_printf(seq, "BATMAN mesh %s disabled - please "
 				  "specify interfaces to enable it\n",
@@ -352,7 +350,6 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 	}
 
 	if (bat_priv->primary_if->if_status != IF_ACTIVE) {
-		rcu_read_unlock();
 
 		return seq_printf(seq, "BATMAN mesh %s disabled - "
 				       "primary interface not active\n",
@@ -365,7 +362,6 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 		   "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
 		   bat_priv->primary_if->net_dev->name,
 		   bat_priv->primary_if->addr_str, net_dev->name);
-	rcu_read_unlock();
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(gw_node, node, &bat_priv->gw_list, list) {
