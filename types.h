@@ -95,6 +95,7 @@ struct gw_node {
 	struct hlist_node list;
 	struct orig_node *orig_node;
 	unsigned long deleted;
+	atomic_t refcnt;
 };
 
 /**

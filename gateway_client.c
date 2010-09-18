@@ -28,6 +28,17 @@
 #include <linux/udp.h>
 #include <linux/if_vlan.h>
 
+static void gw_node_hold(struct gw_node *gw_node)
+{
+	atomic_inc(&gw_node->refcnt);
+}
+
+static void gw_node_put(struct gw_node *gw_node)
+{
+	if (atomic_dec_and_test(&gw_node->refcnt))
+		kfree(gw_node);
+}
+
 void *gw_get_selected(struct bat_priv *bat_priv)
 {
 	struct gw_node *curr_gateway_tmp = bat_priv->curr_gw;
@@ -205,6 +216,8 @@ static void gw_node_add(struct bat_priv *bat_priv,
 	memset(gw_node, 0, sizeof(struct gw_node));
 	INIT_HLIST_NODE(&gw_node->list);
 	gw_node->orig_node = orig_node;
+	atomic_set(&gw_node->refcnt, 0);
+	gw_node_hold(gw_node);
 
 	spin_lock_irqsave(&bat_priv->gw_list_lock, flags);
 	hlist_add_head_rcu(&gw_node->list, &bat_priv->gw_list);
@@ -281,7 +294,7 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 
 			hlist_del_rcu(&gw_node->list);
 			synchronize_rcu();
-			kfree(gw_node);
+			gw_node_put(gw_node);
 		}
 	}
 
@@ -300,7 +313,7 @@ void gw_node_list_free(struct bat_priv *bat_priv)
 				 &bat_priv->gw_list, list) {
 		hlist_del_rcu(&gw_node->list);
 		synchronize_rcu();
-		kfree(gw_node);
+		gw_node_put(gw_node);
 	}
 
 	gw_deselect(bat_priv);
