@@ -51,13 +51,30 @@ void *gw_get_selected(struct bat_priv *bat_priv)
 
 void gw_deselect(struct bat_priv *bat_priv)
 {
+	struct gw_node *gw_node = bat_priv->curr_gw;
+
 	bat_priv->curr_gw = NULL;
+
+	if (gw_node)
+		gw_node_put(gw_node);
+}
+
+static struct gw_node *gw_select(struct bat_priv *bat_priv,
+			  struct gw_node *new_gw_node)
+{
+	struct gw_node *curr_gw_node = bat_priv->curr_gw;
+
+	if (new_gw_node)
+		gw_node_hold(new_gw_node);
+
+	bat_priv->curr_gw = new_gw_node;
+	return curr_gw_node;
 }
 
 void gw_election(struct bat_priv *bat_priv)
 {
 	struct hlist_node *node;
-	struct gw_node *gw_node, *curr_gw_tmp = NULL;
+	struct gw_node *gw_node, *curr_gw_tmp = NULL, *old_gw_node = NULL;
 	uint8_t max_tq = 0;
 	uint32_t max_gw_factor = 0, tmp_gw_factor = 0;
 	int down, up;
@@ -131,7 +148,6 @@ void gw_election(struct bat_priv *bat_priv)
 		if (tmp_gw_factor > max_gw_factor)
 			max_gw_factor = tmp_gw_factor;
 	}
-	rcu_read_unlock();
 
 	if (bat_priv->curr_gw != curr_gw_tmp) {
 		if ((bat_priv->curr_gw) && (!curr_gw_tmp))
@@ -153,8 +169,14 @@ void gw_election(struct bat_priv *bat_priv)
 				curr_gw_tmp->orig_node->gw_flags,
 				curr_gw_tmp->orig_node->router->tq_avg);
 
-		bat_priv->curr_gw = curr_gw_tmp;
+		old_gw_node = gw_select(bat_priv, curr_gw_tmp);
 	}
+
+	rcu_read_unlock();
+
+	/* the kfree() has to be outside of the rcu lock */
+	if (old_gw_node)
+		gw_node_put(old_gw_node);
 }
 
 void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
@@ -258,8 +280,11 @@ void gw_node_update(struct bat_priv *bat_priv,
 				"Gateway %pM removed from gateway list\n",
 				orig_node->orig);
 
-			if (gw_node == bat_priv->curr_gw)
+			if (gw_node == bat_priv->curr_gw) {
+				rcu_read_unlock();
 				gw_deselect(bat_priv);
+				return;
+			}
 		}
 
 		rcu_read_unlock();
