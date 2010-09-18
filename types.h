@@ -44,7 +44,6 @@ struct batman_if {
 	unsigned char *packet_buff;
 	int packet_len;
 	struct kobject *hardif_obj;
-	struct rcu_head rcu;
 	struct packet_type batman_adv_ptype;
 	struct net_device *soft_iface;
 };
@@ -96,7 +95,6 @@ struct gw_node {
 	struct hlist_node list;
 	struct orig_node *orig_node;
 	unsigned long deleted;
-	struct rcu_head rcu;
 };
 
 /**

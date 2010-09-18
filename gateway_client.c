@@ -265,12 +265,6 @@ void gw_node_delete(struct bat_priv *bat_priv, struct orig_node *orig_node)
 	return gw_node_update(bat_priv, orig_node, 0);
 }
 
-static void gw_node_free(struct rcu_head *rcu)
-{
-	struct gw_node *gw_node = container_of(rcu, struct gw_node, rcu);
-	kfree(gw_node);
-}
-
 void gw_node_purge_deleted(struct bat_priv *bat_priv)
 {
 	struct gw_node *gw_node;
@@ -286,7 +280,8 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 		    (time_after(jiffies, gw_node->deleted + timeout))) {
 
 			hlist_del_rcu(&gw_node->list);
-			call_rcu(&gw_node->rcu, gw_node_free);
+			synchronize_rcu();
+			kfree(gw_node);
 		}
 	}
 
@@ -304,7 +299,8 @@ void gw_node_list_free(struct bat_priv *bat_priv)
 	hlist_for_each_entry_safe(gw_node, node, node_tmp,
 				 &bat_priv->gw_list, list) {
 		hlist_del_rcu(&gw_node->list);
-		call_rcu(&gw_node->rcu, gw_node_free);
+		synchronize_rcu();
+		kfree(gw_node);
 	}
 
 	gw_deselect(bat_priv);
