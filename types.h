@@ -47,6 +47,7 @@ struct batman_if {
 	struct kref refcount;
 	struct packet_type batman_adv_ptype;
 	struct net_device *soft_iface;
+	struct rcu_head rcu;
 };
 
 /**
