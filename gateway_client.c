@@ -36,6 +36,14 @@ static void gw_node_free_ref(struct kref *refcount)
 	kfree(gw_node);
 }
 
+static void gw_node_free_rcu(struct rcu_head *rcu)
+{
+	struct gw_node *gw_node;
+
+	gw_node = container_of(rcu, struct gw_node, rcu);
+	kref_put(&gw_node->refcount, gw_node_free_ref);
+}
+
 void *gw_get_selected(struct bat_priv *bat_priv)
 {
 	struct gw_node *curr_gateway_tmp = bat_priv->curr_gw;
@@ -314,8 +322,7 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 		    (time_after(jiffies, gw_node->deleted + timeout))) {
 
 			hlist_del_rcu(&gw_node->list);
-			synchronize_rcu();
-			kref_put(&gw_node->refcount, gw_node_free_ref);
+			call_rcu(&gw_node->rcu, gw_node_free_rcu);
 		}
 	}
 
@@ -333,8 +340,7 @@ void gw_node_list_free(struct bat_priv *bat_priv)
 	hlist_for_each_entry_safe(gw_node, node, node_tmp,
 				 &bat_priv->gw_list, list) {
 		hlist_del_rcu(&gw_node->list);
-		synchronize_rcu();
-		kref_put(&gw_node->refcount, gw_node_free_ref);
+		call_rcu(&gw_node->rcu, gw_node_free_rcu);
 	}
 
 	gw_deselect(bat_priv);

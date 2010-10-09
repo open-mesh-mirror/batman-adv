@@ -97,6 +97,7 @@ struct gw_node {
 	struct orig_node *orig_node;
 	unsigned long deleted;
 	struct kref refcount;
+	struct rcu_head rcu;
 };
 
 /**
