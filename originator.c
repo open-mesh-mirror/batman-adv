@@ -29,6 +29,7 @@
 #include "compat.h"
 #include "hard-interface.h"
 #include "unicast.h"
+#include "soft-interface.h"
 
 static void purge_orig(struct work_struct *work);
 
@@ -287,6 +288,7 @@ static void _purge_orig(struct bat_priv *bat_priv)
 
 	spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
 
+	softif_neigh_purge(bat_priv);
 }
 
 static void purge_orig(struct work_struct *work)
