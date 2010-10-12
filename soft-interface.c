@@ -220,7 +220,8 @@ int softif_neigh_seq_print_text(struct seq_file *seq, void *offset)
 	return 0;
 }
 
-static void softif_batman_recv(struct sk_buff *skb, struct net_device *dev, short vid)
+static void softif_batman_recv(struct sk_buff *skb, struct net_device *dev,
+			       short vid)
 {
 	struct bat_priv *bat_priv = netdev_priv(dev);
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
