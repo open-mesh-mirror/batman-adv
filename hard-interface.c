@@ -44,6 +44,7 @@ static void hardif_free_rcu(struct rcu_head *rcu)
 
 	batman_if = container_of(rcu, struct batman_if, rcu);
 	sysfs_del_hardif(&batman_if->hardif_obj);
+	dev_put(batman_if->net_dev);
 	kref_put(&batman_if->refcount, hardif_free_ref);
 }
 
