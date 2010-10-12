@@ -252,6 +252,9 @@ next_sibling:
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
 
+int bat_vscnprintf(char *buf, size_t size, const char *fmt, va_list args);
+#define vscnprintf bat_vscnprintf
+
 asmlinkage int bat_printk(const char *fmt, ...);
 #define printk bat_printk
 
