@@ -1035,7 +1035,7 @@ struct neigh_node *find_router(struct orig_node *orig_node,
 		return orig_node->router;
 
 	bat_priv = netdev_priv(recv_if->soft_iface);
-	bonding_enabled = atomic_read(&bat_priv->bonding_enabled);
+	bonding_enabled = atomic_read(&bat_priv->bonding);
 
 	if (!bonding_enabled)
 		return orig_node->router;
@@ -1184,7 +1184,7 @@ int route_unicast_packet(struct sk_buff *skb, struct batman_if *recv_if,
 	unicast_packet = (struct unicast_packet *)skb->data;
 
 	if (unicast_packet->packet_type == BAT_UNICAST &&
-	    atomic_read(&bat_priv->frag_enabled) &&
+	    atomic_read(&bat_priv->fragmentation) &&
 	    skb->len > batman_if->net_dev->mtu)
 		return frag_send_skb(skb, bat_priv, batman_if,
 				     dstaddr);
