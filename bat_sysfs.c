@@ -80,7 +80,7 @@ ssize_t store_##_name(struct kobject *kobj, struct attribute *attr,	\
 }
 
 #define BAT_ATTR_SHOW_UINT(_name)					\
-ssize_t show_##_name(struct kobject *kobj, struct attribute *attr, 	\
+ssize_t show_##_name(struct kobject *kobj, struct attribute *attr,	\
 			    char *buff)					\
 {									\
 	struct bat_priv *bat_priv = kobj_to_batpriv(kobj);		\
