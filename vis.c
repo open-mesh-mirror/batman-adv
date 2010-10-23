@@ -55,16 +55,15 @@ static void free_info(struct kref *ref)
 	struct vis_info *info = container_of(ref, struct vis_info, refcount);
 	struct bat_priv *bat_priv = info->bat_priv;
 	struct recvlist_node *entry, *tmp;
-	unsigned long flags;
 
 	list_del_init(&info->send_list);
-	spin_lock_irqsave(&bat_priv->vis_list_lock, flags);
+	spin_lock_bh(&bat_priv->vis_list_lock);
 	list_for_each_entry_safe(entry, tmp, &info->recv_list, list) {
 		list_del(&entry->list);
 		kfree(entry);
 	}
 
-	spin_unlock_irqrestore(&bat_priv->vis_list_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_list_lock);
 	kfree_skb(info->skb_packet);
 }
 
@@ -188,7 +187,6 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 	struct if_list_entry *entry;
 	struct hlist_node *pos, *n;
 	int i;
-	unsigned long flags;
 	int vis_server = atomic_read(&bat_priv->vis_mode);
 	size_t buff_pos, buf_size;
 	char *buff;
@@ -199,7 +197,7 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 
 	buf_size = 1;
 	/* Estimate length */
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 	while (hash_iterate(bat_priv->vis_hash, &hashit_count)) {
 		bucket = hlist_entry(hashit_count.walk, struct element_t,
 				     hlist);
@@ -234,7 +232,7 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 
 	buff = kmalloc(buf_size, GFP_ATOMIC);
 	if (!buff) {
-		spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+		spin_unlock_bh(&bat_priv->vis_hash_lock);
 		return -ENOMEM;
 	}
 	buff[0] = '\0';
@@ -279,7 +277,7 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 		}
 	}
 
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 
 	seq_printf(seq, "%s", buff);
 	kfree(buff);
@@ -312,16 +310,15 @@ static void recv_list_add(struct bat_priv *bat_priv,
 			  struct list_head *recv_list, char *mac)
 {
 	struct recvlist_node *entry;
-	unsigned long flags;
 
 	entry = kmalloc(sizeof(struct recvlist_node), GFP_ATOMIC);
 	if (!entry)
 		return;
 
 	memcpy(entry->mac, mac, ETH_ALEN);
-	spin_lock_irqsave(&bat_priv->vis_list_lock, flags);
+	spin_lock_bh(&bat_priv->vis_list_lock);
 	list_add_tail(&entry->list, recv_list);
-	spin_unlock_irqrestore(&bat_priv->vis_list_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_list_lock);
 }
 
 /* returns 1 if this mac is in the recv_list */
@@ -329,17 +326,15 @@ static int recv_list_is_in(struct bat_priv *bat_priv,
 			   struct list_head *recv_list, char *mac)
 {
 	struct recvlist_node *entry;
-	unsigned long flags;
 
-	spin_lock_irqsave(&bat_priv->vis_list_lock, flags);
+	spin_lock_bh(&bat_priv->vis_list_lock);
 	list_for_each_entry(entry, recv_list, list) {
 		if (memcmp(entry->mac, mac, ETH_ALEN) == 0) {
-			spin_unlock_irqrestore(&bat_priv->vis_list_lock,
-					       flags);
+			spin_unlock_bh(&bat_priv->vis_list_lock);
 			return 1;
 		}
 	}
-	spin_unlock_irqrestore(&bat_priv->vis_list_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_list_lock);
 	return 0;
 }
 
@@ -448,12 +443,11 @@ void receive_server_sync_packet(struct bat_priv *bat_priv,
 {
 	struct vis_info *info;
 	int is_new, make_broadcast;
-	unsigned long flags;
 	int vis_server = atomic_read(&bat_priv->vis_mode);
 
 	make_broadcast = (vis_server == VIS_TYPE_SERVER_SYNC);
 
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 	info = add_packet(bat_priv, vis_packet, vis_info_len,
 			  &is_new, make_broadcast);
 	if (!info)
@@ -464,7 +458,7 @@ void receive_server_sync_packet(struct bat_priv *bat_priv,
 	if (vis_server == VIS_TYPE_SERVER_SYNC && is_new)
 		send_list_add(bat_priv, info);
 end:
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 }
 
 /* handle an incoming client update packet and schedule forward if needed. */
@@ -475,7 +469,6 @@ void receive_client_update_packet(struct bat_priv *bat_priv,
 	struct vis_info *info;
 	struct vis_packet *packet;
 	int is_new;
-	unsigned long flags;
 	int vis_server = atomic_read(&bat_priv->vis_mode);
 	int are_target = 0;
 
@@ -488,7 +481,7 @@ void receive_client_update_packet(struct bat_priv *bat_priv,
 	    is_my_mac(vis_packet->target_orig))
 		are_target = 1;
 
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 	info = add_packet(bat_priv, vis_packet, vis_info_len,
 			  &is_new, are_target);
 
@@ -509,7 +502,7 @@ void receive_client_update_packet(struct bat_priv *bat_priv,
 	}
 
 end:
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 }
 
 /* Walk the originators and find the VIS server with the best tq. Set the packet
@@ -565,12 +558,11 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 	struct vis_info_entry *entry;
 	struct hna_local_entry *hna_local_entry;
 	int best_tq = -1;
-	unsigned long flags;
 
 	info->first_seen = jiffies;
 	packet->vis_type = atomic_read(&bat_priv->vis_mode);
 
-	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
+	spin_lock_bh(&bat_priv->orig_hash_lock);
 	memcpy(packet->target_orig, broadcast_addr, ETH_ALEN);
 	packet->ttl = TTL;
 	packet->seqno = htonl(ntohl(packet->seqno) + 1);
@@ -581,8 +573,7 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 		best_tq = find_best_vis_server(bat_priv, info);
 
 		if (best_tq < 0) {
-			spin_unlock_irqrestore(&bat_priv->orig_hash_lock,
-					       flags);
+			spin_unlock_bh(&bat_priv->orig_hash_lock);
 			return -1;
 		}
 	}
@@ -615,15 +606,14 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 		packet->entries++;
 
 		if (vis_packet_full(info)) {
-			spin_unlock_irqrestore(
-					&bat_priv->orig_hash_lock, flags);
+			spin_unlock_bh(&bat_priv->orig_hash_lock);
 			return 0;
 		}
 	}
 
-	spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
-	spin_lock_irqsave(&bat_priv->hna_lhash_lock, flags);
+	spin_lock_bh(&bat_priv->hna_lhash_lock);
 	while (hash_iterate(bat_priv->hna_local_hash, &hashit_local)) {
 		bucket = hlist_entry(hashit_local.walk, struct element_t,
 				     hlist);
@@ -636,13 +626,12 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 		packet->entries++;
 
 		if (vis_packet_full(info)) {
-			spin_unlock_irqrestore(&bat_priv->hna_lhash_lock,
-					       flags);
+			spin_unlock_bh(&bat_priv->hna_lhash_lock);
 			return 0;
 		}
 	}
 
-	spin_unlock_irqrestore(&bat_priv->hna_lhash_lock, flags);
+	spin_unlock_bh(&bat_priv->hna_lhash_lock);
 	return 0;
 }
 
@@ -679,12 +668,11 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 	struct orig_node *orig_node;
 	struct vis_packet *packet;
 	struct sk_buff *skb;
-	unsigned long flags;
 	struct batman_if *batman_if;
 	uint8_t dstaddr[ETH_ALEN];
 
 
-	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
+	spin_lock_bh(&bat_priv->orig_hash_lock);
 	packet = (struct vis_packet *)info->skb_packet->data;
 
 	/* send to all routers in range. */
@@ -706,17 +694,17 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 		memcpy(packet->target_orig, orig_node->orig, ETH_ALEN);
 		batman_if = orig_node->router->if_incoming;
 		memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-		spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
+		spin_unlock_bh(&bat_priv->orig_hash_lock);
 
 		skb = skb_clone(info->skb_packet, GFP_ATOMIC);
 		if (skb)
 			send_skb_packet(skb, batman_if, dstaddr);
 
-		spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
+		spin_lock_bh(&bat_priv->orig_hash_lock);
 
 	}
 
-	spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->orig_hash_lock);
 }
 
 static void unicast_vis_packet(struct bat_priv *bat_priv,
@@ -725,11 +713,10 @@ static void unicast_vis_packet(struct bat_priv *bat_priv,
 	struct orig_node *orig_node;
 	struct sk_buff *skb;
 	struct vis_packet *packet;
-	unsigned long flags;
 	struct batman_if *batman_if;
 	uint8_t dstaddr[ETH_ALEN];
 
-	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
+	spin_lock_bh(&bat_priv->orig_hash_lock);
 	packet = (struct vis_packet *)info->skb_packet->data;
 	orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
 						   compare_orig, choose_orig,
@@ -742,7 +729,7 @@ static void unicast_vis_packet(struct bat_priv *bat_priv,
 	 * copy the required data before sending */
 	batman_if = orig_node->router->if_incoming;
 	memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-	spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
 	skb = skb_clone(info->skb_packet, GFP_ATOMIC);
 	if (skb)
@@ -751,7 +738,7 @@ static void unicast_vis_packet(struct bat_priv *bat_priv,
 	return;
 
 out:
-	spin_unlock_irqrestore(&bat_priv->orig_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->orig_hash_lock);
 }
 
 /* only send one vis packet. called from send_vis_packets() */
@@ -784,9 +771,8 @@ static void send_vis_packets(struct work_struct *work)
 	struct bat_priv *bat_priv =
 		container_of(delayed_work, struct bat_priv, vis_work);
 	struct vis_info *info, *temp;
-	unsigned long flags;
 
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 	purge_vis_packets(bat_priv);
 
 	if (generate_vis_packet(bat_priv) == 0) {
@@ -798,16 +784,16 @@ static void send_vis_packets(struct work_struct *work)
 				 send_list) {
 
 		kref_get(&info->refcount);
-		spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+		spin_unlock_bh(&bat_priv->vis_hash_lock);
 
 		if (bat_priv->primary_if)
 			send_vis_packet(bat_priv, info);
 
-		spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+		spin_lock_bh(&bat_priv->vis_hash_lock);
 		send_list_del(info);
 		kref_put(&info->refcount, free_info);
 	}
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 	start_vis_timer(bat_priv);
 }
 
@@ -816,13 +802,12 @@ static void send_vis_packets(struct work_struct *work)
 int vis_init(struct bat_priv *bat_priv)
 {
 	struct vis_packet *packet;
-	unsigned long flags;
 	int hash_added;
 
 	if (bat_priv->vis_hash)
 		return 1;
 
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 
 	bat_priv->vis_hash = hash_new(256);
 	if (!bat_priv->vis_hash) {
@@ -872,7 +857,7 @@ int vis_init(struct bat_priv *bat_priv)
 		goto err;
 	}
 
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 	start_vis_timer(bat_priv);
 	return 1;
 
@@ -880,7 +865,7 @@ free_info:
 	kfree(bat_priv->my_vis_info);
 	bat_priv->my_vis_info = NULL;
 err:
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 	vis_quit(bat_priv);
 	return 0;
 }
@@ -897,18 +882,17 @@ static void free_info_ref(void *data, void *arg)
 /* shutdown vis-server */
 void vis_quit(struct bat_priv *bat_priv)
 {
-	unsigned long flags;
 	if (!bat_priv->vis_hash)
 		return;
 
 	cancel_delayed_work_sync(&bat_priv->vis_work);
 
-	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
+	spin_lock_bh(&bat_priv->vis_hash_lock);
 	/* properly remove, kill timers ... */
 	hash_delete(bat_priv->vis_hash, free_info_ref, NULL);
 	bat_priv->vis_hash = NULL;
 	bat_priv->my_vis_info = NULL;
-	spin_unlock_irqrestore(&bat_priv->vis_hash_lock, flags);
+	spin_unlock_bh(&bat_priv->vis_hash_lock);
 }
 
 /* schedule packets for (re)transmission */
