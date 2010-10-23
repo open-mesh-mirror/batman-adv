@@ -351,17 +351,14 @@ static int _write_buffer_text(struct bat_priv *bat_priv,
 			      struct seq_file *seq, struct gw_node *gw_node)
 {
 	int down, up;
-	char gw_str[ETH_STR_LEN], router_str[ETH_STR_LEN];
 
-	addr_to_string(gw_str, gw_node->orig_node->orig);
-	addr_to_string(router_str, gw_node->orig_node->router->addr);
 	gw_srv_class_to_kbit(gw_node->orig_node->gw_flags, &down, &up);
 
-	return seq_printf(seq, "%s %-17s (%3i) %17s [%10s]: %3i - %i%s/%i%s\n",
+	return seq_printf(seq, "%s %pM (%3i) %pM [%10s]: %3i - %i%s/%i%s\n",
 		       (bat_priv->curr_gw == gw_node ? "=>" : "  "),
-		       gw_str,
+		       gw_node->orig_node->orig,
 		       gw_node->orig_node->router->tq_avg,
-		       router_str,
+		       gw_node->orig_node->router->addr,
 		       gw_node->orig_node->router->if_incoming->net_dev->name,
 		       gw_node->orig_node->gw_flags,
 		       (down > 2048 ? down / 1024 : down),
@@ -393,11 +390,11 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 	}
 
 	seq_printf(seq, "      %-12s (%s/%i) %17s [%10s]: gw_class ... "
-		   "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%s (%s)]\n",
+		   "[B.A.T.M.A.N. adv %s%s, MainIF/MAC: %s/%pM (%s)]\n",
 		   "Gateway", "#", TQ_MAX_VALUE, "Nexthop",
 		   "outgoingIF", SOURCE_VERSION, REVISION_VERSION_STR,
 		   bat_priv->primary_if->net_dev->name,
-		   bat_priv->primary_if->addr_str, net_dev->name);
+		   bat_priv->primary_if->net_dev->dev_addr, net_dev->name);
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(gw_node, node, &bat_priv->gw_list, list) {

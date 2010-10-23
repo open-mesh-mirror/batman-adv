@@ -56,7 +56,6 @@
 
 #define PACKBUFF_SIZE 2000
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
-#define ETH_STR_LEN 20
 
 #define VIS_INTERVAL 5000	/* 5 seconds */
 
@@ -136,7 +135,6 @@ int mesh_init(struct net_device *soft_iface);
 void mesh_free(struct net_device *soft_iface);
 void inc_module_count(void);
 void dec_module_count(void);
-int addr_to_string(char *buff, uint8_t *addr);
 int is_my_mac(uint8_t *addr);
 int is_bcast(uint8_t *addr);
 int is_mcast(uint8_t *addr);

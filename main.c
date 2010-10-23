@@ -154,11 +154,6 @@ void dec_module_count(void)
 	module_put(THIS_MODULE);
 }
 
-int addr_to_string(char *buff, uint8_t *addr)
-{
-	return sprintf(buff, "%pM", addr);
-}
-
 int is_my_mac(uint8_t *addr)
 {
 	struct batman_if *batman_if;
