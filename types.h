@@ -131,6 +131,7 @@ struct bat_priv {
 	atomic_t gw_mode;		/* GW_MODE_* */
 	atomic_t gw_class;		/* uint */
 	atomic_t orig_interval;		/* uint */
+	atomic_t hop_penalty;		/* uint */
 	atomic_t log_level;		/* uint */
 	atomic_t bcast_seqno;
 	atomic_t bcast_queue_left;
