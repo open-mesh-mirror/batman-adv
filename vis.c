@@ -183,6 +183,7 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 {
 	HASHIT(hashit);
 	HASHIT(hashit_count);
+	struct element_t *bucket;
 	struct vis_info *info;
 	struct vis_packet *packet;
 	struct vis_info_entry *entries;
@@ -206,7 +207,9 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 	/* Estimate length */
 	spin_lock_irqsave(&bat_priv->vis_hash_lock, flags);
 	while (hash_iterate(bat_priv->vis_hash, &hashit_count)) {
-		info = hashit_count.bucket->data;
+		bucket = hlist_entry(hashit_count.walk, struct element_t,
+				     hlist);
+		info = bucket->data;
 		packet = (struct vis_packet *)info->skb_packet->data;
 		entries = (struct vis_info_entry *)
 			  ((char *)packet + sizeof(struct vis_packet));
@@ -244,7 +247,8 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 	buff_pos = 0;
 
 	while (hash_iterate(bat_priv->vis_hash, &hashit)) {
-		info = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		info = bucket->data;
 		packet = (struct vis_packet *)info->skb_packet->data;
 		entries = (struct vis_info_entry *)
 			  ((char *)packet + sizeof(struct vis_packet));
@@ -523,6 +527,7 @@ static int find_best_vis_server(struct bat_priv *bat_priv,
 				struct vis_info *info)
 {
 	HASHIT(hashit);
+	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct vis_packet *packet;
 	int best_tq = -1;
@@ -530,7 +535,8 @@ static int find_best_vis_server(struct bat_priv *bat_priv,
 	packet = (struct vis_packet *)info->skb_packet->data;
 
 	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		orig_node = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		orig_node = bucket->data;
 		if ((orig_node) && (orig_node->router) &&
 		    (orig_node->flags & VIS_SERVER) &&
 		    (orig_node->router->tq_avg > best_tq)) {
@@ -559,6 +565,7 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 {
 	HASHIT(hashit_local);
 	HASHIT(hashit_global);
+	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct vis_info *info = (struct vis_info *)bat_priv->my_vis_info;
 	struct vis_packet *packet = (struct vis_packet *)info->skb_packet->data;
@@ -588,7 +595,9 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 	}
 
 	while (hash_iterate(bat_priv->orig_hash, &hashit_global)) {
-		orig_node = hashit_global.bucket->data;
+		bucket = hlist_entry(hashit_global.walk, struct element_t,
+				     hlist);
+		orig_node = bucket->data;
 
 		if (!orig_node->router)
 			continue;
@@ -623,7 +632,9 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 
 	spin_lock_irqsave(&bat_priv->hna_lhash_lock, flags);
 	while (hash_iterate(bat_priv->hna_local_hash, &hashit_local)) {
-		hna_local_entry = hashit_local.bucket->data;
+		bucket = hlist_entry(hashit_local.walk, struct element_t,
+				     hlist);
+		hna_local_entry = bucket->data;
 		entry = (struct vis_info_entry *)skb_put(info->skb_packet,
 							 sizeof(*entry));
 		memset(entry->src, 0, ETH_ALEN);
@@ -647,10 +658,12 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 static void purge_vis_packets(struct bat_priv *bat_priv)
 {
 	HASHIT(hashit);
+	struct element_t *bucket;
 	struct vis_info *info;
 
 	while (hash_iterate(bat_priv->vis_hash, &hashit)) {
-		info = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		info = bucket->data;
 
 		/* never purge own data. */
 		if (info == bat_priv->my_vis_info)
@@ -669,6 +682,7 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 				 struct vis_info *info)
 {
 	HASHIT(hashit);
+	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct vis_packet *packet;
 	struct sk_buff *skb;
@@ -682,7 +696,8 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 
 	/* send to all routers in range. */
 	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		orig_node = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		orig_node = bucket->data;
 
 		/* if it's a vis server and reachable, send it. */
 		if ((!orig_node) || (!orig_node->router))
