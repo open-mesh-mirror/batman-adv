@@ -812,7 +812,7 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 	/* get routing information */
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
-						   compare_orig,
+						   compare_orig, choose_orig,
 						   icmp_packet->orig));
 	ret = NET_RX_DROP;
 
@@ -875,7 +875,7 @@ static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
 	/* get routing information */
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)
-		     hash_find(bat_priv->orig_hash, compare_orig,
+		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       icmp_packet->orig));
 	ret = NET_RX_DROP;
 
@@ -970,7 +970,7 @@ int recv_icmp_packet(struct sk_buff *skb, struct batman_if *recv_if)
 	/* get routing information */
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)
-		     hash_find(bat_priv->orig_hash, compare_orig,
+		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       icmp_packet->dst));
 
 	if ((orig_node != NULL) &&
@@ -1043,7 +1043,8 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 		primary_orig_node = router_orig;
 	} else {
 		primary_orig_node = hash_find(bat_priv->orig_hash, compare_orig,
-						router_orig->primary_addr);
+					       choose_orig,
+					       router_orig->primary_addr);
 
 		if (!primary_orig_node)
 			return orig_node->router;
@@ -1148,7 +1149,7 @@ int route_unicast_packet(struct sk_buff *skb, struct batman_if *recv_if,
 	/* get routing information */
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)
-		     hash_find(bat_priv->orig_hash, compare_orig,
+		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       unicast_packet->dest));
 
 	router = find_router(bat_priv, orig_node, recv_if);
@@ -1295,7 +1296,7 @@ int recv_bcast_packet(struct sk_buff *skb, struct batman_if *recv_if)
 
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)
-		     hash_find(bat_priv->orig_hash, compare_orig,
+		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       bcast_packet->orig));
 
 	if (orig_node == NULL) {
