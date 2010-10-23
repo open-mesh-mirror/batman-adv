@@ -234,7 +234,6 @@ static void gw_node_add(struct bat_priv *bat_priv,
 {
 	struct gw_node *gw_node;
 	int down, up;
-	unsigned long flags;
 
 	gw_node = kmalloc(sizeof(struct gw_node), GFP_ATOMIC);
 	if (!gw_node)
@@ -245,9 +244,9 @@ static void gw_node_add(struct bat_priv *bat_priv,
 	gw_node->orig_node = orig_node;
 	kref_init(&gw_node->refcount);
 
-	spin_lock_irqsave(&bat_priv->gw_list_lock, flags);
+	spin_lock_bh(&bat_priv->gw_list_lock);
 	hlist_add_head_rcu(&gw_node->list, &bat_priv->gw_list);
-	spin_unlock_irqrestore(&bat_priv->gw_list_lock, flags);
+	spin_unlock_bh(&bat_priv->gw_list_lock);
 
 	gw_srv_class_to_kbit(new_gwflags, &down, &up);
 	bat_dbg(DBG_BATMAN, bat_priv,
@@ -312,9 +311,8 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 	struct gw_node *gw_node;
 	struct hlist_node *node, *node_tmp;
 	unsigned long timeout = 2 * PURGE_TIMEOUT * HZ;
-	unsigned long flags;
 
-	spin_lock_irqsave(&bat_priv->gw_list_lock, flags);
+	spin_lock_bh(&bat_priv->gw_list_lock);
 
 	hlist_for_each_entry_safe(gw_node, node, node_tmp,
 						&bat_priv->gw_list, list) {
@@ -326,16 +324,15 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 		}
 	}
 
-	spin_unlock_irqrestore(&bat_priv->gw_list_lock, flags);
+	spin_unlock_bh(&bat_priv->gw_list_lock);
 }
 
 void gw_node_list_free(struct bat_priv *bat_priv)
 {
 	struct gw_node *gw_node;
 	struct hlist_node *node, *node_tmp;
-	unsigned long flags;
 
-	spin_lock_irqsave(&bat_priv->gw_list_lock, flags);
+	spin_lock_bh(&bat_priv->gw_list_lock);
 
 	hlist_for_each_entry_safe(gw_node, node, node_tmp,
 				 &bat_priv->gw_list, list) {
@@ -344,7 +341,7 @@ void gw_node_list_free(struct bat_priv *bat_priv)
 	}
 
 	gw_deselect(bat_priv);
-	spin_unlock_irqrestore(&bat_priv->gw_list_lock, flags);
+	spin_unlock_bh(&bat_priv->gw_list_lock);
 }
 
 static int _write_buffer_text(struct bat_priv *bat_priv,
