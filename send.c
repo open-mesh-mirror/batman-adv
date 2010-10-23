@@ -29,6 +29,7 @@
 #include "vis.h"
 #include "aggregation.h"
 #include "gateway_common.h"
+#include "originator.h"
 
 #include "compat.h"
 

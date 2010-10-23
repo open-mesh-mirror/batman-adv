@@ -24,6 +24,7 @@
 #include "send.h"
 #include "soft-interface.h"
 #include "gateway_client.h"
+#include "originator.h"
 #include "hash.h"
 #include "translation-table.h"
 #include "routing.h"
@@ -180,7 +181,8 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 	*new_skb = NULL;
 	spin_lock_irqsave(&bat_priv->orig_hash_lock, flags);
 	orig_node = ((struct orig_node *)
-		    hash_find(bat_priv->orig_hash, unicast_packet->orig));
+		    hash_find(bat_priv->orig_hash, compare_orig,
+			      unicast_packet->orig));
 
 	if (!orig_node) {
 		pr_debug("couldn't find originator in orig_hash\n");
@@ -287,6 +289,7 @@ int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 		orig_node = (struct orig_node *)gw_get_selected(bat_priv);
 	else
 		orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
+							   compare_orig,
 							   ethhdr->h_dest));
 
 	/* check for hna host */
