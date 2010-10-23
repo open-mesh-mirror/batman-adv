@@ -117,8 +117,7 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 
 	if (bat_priv->hna_local_hash->elements * 4 >
 					bat_priv->hna_local_hash->size) {
-		swaphash = hash_resize(bat_priv->hna_local_hash, compare_orig,
-				       choose_orig,
+		swaphash = hash_resize(bat_priv->hna_local_hash, choose_orig,
 				       bat_priv->hna_local_hash->size * 2);
 
 		if (!swaphash)
@@ -147,6 +146,7 @@ int hna_local_fill_buffer(struct bat_priv *bat_priv,
 			  unsigned char *buff, int buff_len)
 {
 	struct hna_local_entry *hna_local_entry;
+	struct element_t *bucket;
 	HASHIT(hashit);
 	int i = 0;
 	unsigned long flags;
@@ -158,7 +158,8 @@ int hna_local_fill_buffer(struct bat_priv *bat_priv,
 		if (buff_len < (i + 1) * ETH_ALEN)
 			break;
 
-		hna_local_entry = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		hna_local_entry = bucket->data;
 		memcpy(buff + (i * ETH_ALEN), hna_local_entry->addr, ETH_ALEN);
 
 		i++;
@@ -179,6 +180,7 @@ int hna_local_seq_print_text(struct seq_file *seq, void *offset)
 	struct hna_local_entry *hna_local_entry;
 	HASHIT(hashit);
 	HASHIT(hashit_count);
+	struct element_t *bucket;
 	unsigned long flags;
 	size_t buf_size, pos;
 	char *buff;
@@ -209,7 +211,8 @@ int hna_local_seq_print_text(struct seq_file *seq, void *offset)
 	pos = 0;
 
 	while (hash_iterate(bat_priv->hna_local_hash, &hashit)) {
-		hna_local_entry = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		hna_local_entry = bucket->data;
 
 		pos += snprintf(buff + pos, 22, " * %pM\n",
 				hna_local_entry->addr);
@@ -268,13 +271,15 @@ static void hna_local_purge(struct work_struct *work)
 		container_of(delayed_work, struct bat_priv, hna_work);
 	struct hna_local_entry *hna_local_entry;
 	HASHIT(hashit);
+	struct element_t *bucket;
 	unsigned long flags;
 	unsigned long timeout;
 
 	spin_lock_irqsave(&bat_priv->hna_lhash_lock, flags);
 
 	while (hash_iterate(bat_priv->hna_local_hash, &hashit)) {
-		hna_local_entry = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		hna_local_entry = bucket->data;
 
 		timeout = hna_local_entry->last_seen + LOCAL_HNA_TIMEOUT * HZ;
 
@@ -390,8 +395,7 @@ void hna_global_add_orig(struct bat_priv *bat_priv,
 
 	if (bat_priv->hna_global_hash->elements * 4 >
 					bat_priv->hna_global_hash->size) {
-		swaphash = hash_resize(bat_priv->hna_global_hash, compare_orig,
-				       choose_orig,
+		swaphash = hash_resize(bat_priv->hna_global_hash, choose_orig,
 				       bat_priv->hna_global_hash->size * 2);
 
 		if (!swaphash)
@@ -410,6 +414,7 @@ int hna_global_seq_print_text(struct seq_file *seq, void *offset)
 	struct hna_global_entry *hna_global_entry;
 	HASHIT(hashit);
 	HASHIT(hashit_count);
+	struct element_t *bucket;
 	unsigned long flags;
 	size_t buf_size, pos;
 	char *buff;
@@ -439,7 +444,8 @@ int hna_global_seq_print_text(struct seq_file *seq, void *offset)
 	pos = 0;
 
 	while (hash_iterate(bat_priv->hna_global_hash, &hashit)) {
-		hna_global_entry = hashit.bucket->data;
+		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
+		hna_global_entry = bucket->data;
 
 		pos += snprintf(buff + pos, 44,
 				" * %pM via %pM\n", hna_global_entry->addr,
