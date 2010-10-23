@@ -57,7 +57,6 @@ static int fdebug_log(struct debug_log *debug_log, char *fmt, ...)
 	va_list args;
 	static char debug_log_buf[256];
 	char *p;
-	unsigned long flags;
 
 	if (!debug_log)
 		return 0;
@@ -113,7 +112,6 @@ static ssize_t log_read(struct file *file, char __user *buf,
 	struct debug_log *debug_log = bat_priv->debug_log;
 	int error, i = 0;
 	char c;
-	unsigned long flags;
 
 	if ((file->f_flags & O_NONBLOCK) &&
 	    !(debug_log->log_end - debug_log->log_start))
