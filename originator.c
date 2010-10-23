@@ -174,7 +174,7 @@ struct orig_node *get_orig_node(struct bat_priv *bat_priv, uint8_t *addr)
 		goto free_bcast_own_sum;
 
 	if (bat_priv->orig_hash->elements * 4 > bat_priv->orig_hash->size) {
-		swaphash = hash_resize(bat_priv->orig_hash,choose_orig,
+		swaphash = hash_resize(bat_priv->orig_hash, choose_orig,
 				       bat_priv->orig_hash->size * 2);
 
 		if (!swaphash)
