@@ -934,3 +934,21 @@ int bat_snprintf(char *buf, size_t size, const char *fmt, ...)
 
 	return i;
 }
+
+int bat_seq_printf(struct seq_file *m, const char *f, ...)
+{
+	va_list args;
+	int len;
+
+	if (m->count < m->size) {
+		va_start(args, f);
+		len = bat_vsnprintf(m->buf + m->count, m->size - m->count, f, args);
+		va_end(args);
+		if (m->count + len < m->size) {
+			m->count += len;
+			return 0;
+		}
+	}
+	m->count = m->size;
+	return -1;
+}

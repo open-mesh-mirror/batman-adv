@@ -264,6 +264,9 @@ int bat_sprintf(char *buf, const char *fmt, ...);
 int bat_snprintf(char *buf, size_t size, const char *fmt, ...);
 #define snprintf bat_snprintf
 
+int bat_seq_printf(struct seq_file *m, const char *f, ...);
+#define seq_printf bat_seq_printf
+
 static inline struct net_device_stats *dev_get_stats(struct net_device *dev)
 {
 	if (dev->get_stats)
