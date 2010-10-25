@@ -32,7 +32,6 @@
 #include "types.h"
 #include "vis.h"
 #include "hash.h"
-#include "compat.h"
 
 struct list_head if_list;
 

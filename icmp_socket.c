@@ -29,9 +29,6 @@
 #include "originator.h"
 #include "hard-interface.h"
 
-#include "compat.h"
-
-
 static struct socket_client *socket_client_hash[256];
 
 static void bat_socket_add_packet(struct socket_client *socket_client,

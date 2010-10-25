@@ -34,7 +34,8 @@
 #include <asm/page.h>		/* for PAGE_SIZE */
 #include <asm/div64.h>
 #include <asm/sections.h>	/* for dereference_function_descriptor() */
-#include "compat.h"
+
+#include "main.h"
 
 /* Works only for digits and letters, but small and fast */
 #define TOLOWER(x) ((x) | 0x20)

@@ -32,7 +32,6 @@
 #include "ring_buffer.h"
 #include "vis.h"
 #include "aggregation.h"
-#include "compat.h"
 #include "unicast.h"
 
 void slide_own_bcast_window(struct batman_if *batman_if)

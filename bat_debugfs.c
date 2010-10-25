@@ -30,7 +30,6 @@
 #include "soft-interface.h"
 #include "vis.h"
 #include "icmp_socket.h"
-#include "compat.h"
 
 static struct dentry *bat_debugfs;
 

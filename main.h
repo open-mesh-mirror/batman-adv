@@ -85,6 +85,9 @@
 /*
  * Debug Messages
  */
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt /* Append 'batman-adv: ' before
 					     * kernel messages */
 
@@ -119,6 +122,8 @@
 #include <linux/jiffies.h>
 #include <linux/seq_file.h>
 #include "types.h"
+
+#include "compat.h"
 
 #ifndef REVISION_VERSION
 #define REVISION_VERSION_STR ""

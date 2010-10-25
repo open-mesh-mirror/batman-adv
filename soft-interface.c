@@ -34,7 +34,6 @@
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>
-#include "compat.h"
 #include "unicast.h"
 #include "routing.h"
 
