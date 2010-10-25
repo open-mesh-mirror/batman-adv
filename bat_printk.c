@@ -1,3 +1,7 @@
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
+
 /*
  *  linux/lib/vsprintf.c
  *
@@ -953,3 +957,5 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...)
 	m->count = m->size;
 	return -1;
 }
+
+#endif /* < KERNEL_VERSION(2, 6, 29) */
