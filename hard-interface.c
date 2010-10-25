@@ -31,8 +31,6 @@
 
 #include <linux/if_arp.h>
 
-#include "compat.h"
-
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 /* protect update critical side of if_list - but not the content */

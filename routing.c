@@ -32,7 +32,6 @@
 #include "ring_buffer.h"
 #include "vis.h"
 #include "aggregation.h"
-#include "compat.h"
 #include "gateway_client.h"
 #include "unicast.h"
 

@@ -26,7 +26,6 @@
 #include "hash.h"
 #include "translation-table.h"
 #include "routing.h"
-#include "compat.h"
 #include "gateway_client.h"
 #include "hard-interface.h"
 #include "unicast.h"

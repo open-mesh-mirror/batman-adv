@@ -31,8 +31,6 @@
 #include "gateway_common.h"
 #include "originator.h"
 
-#include "compat.h"
-
 static void send_outstanding_bcast_packet(struct work_struct *work);
 
 /* apply hop penalty for a normal link */

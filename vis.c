@@ -27,7 +27,6 @@
 #include "hard-interface.h"
 #include "hash.h"
 #include "originator.h"
-#include "compat.h"
 
 #define MAX_VIS_PACKET_SIZE 1000
 

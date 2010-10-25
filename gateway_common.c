@@ -22,7 +22,6 @@
 #include "main.h"
 #include "gateway_common.h"
 #include "gateway_client.h"
-#include "compat.h"
 
 /* calculates the gateway class from kbit */
 static void kbit_to_gw_srv_class(int down, int up, long *gw_srv_class)

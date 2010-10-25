@@ -25,7 +25,6 @@
 #include "types.h"
 #include "hash.h"
 #include "originator.h"
-#include "compat.h"
 
 static void hna_local_purge(struct work_struct *work);
 static void _hna_global_del_orig(struct bat_priv *bat_priv,
