@@ -259,6 +259,9 @@ int bat_sprintf(char *buf, const char *fmt, ...);
 int bat_snprintf(char *buf, size_t size, const char *fmt, ...);
 #define snprintf bat_snprintf
 
+int bat_seq_printf(struct seq_file *m, const char *f, ...);
+#define seq_printf bat_seq_printf
+
 #endif /* < KERNEL_VERSION(2, 6, 29) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
