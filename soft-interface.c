@@ -114,7 +114,6 @@ void softif_neigh_purge(struct bat_priv *bat_priv)
 		hlist_del_rcu(&softif_neigh->list);
 
 		if (bat_priv->softif_neigh == softif_neigh) {
-			bat_priv->softif_neigh = NULL;
 			bat_dbg(DBG_ROUTES, bat_priv,
 				 "Current mesh exit point '%pM' vanished "
 				 "(vid: %d).\n",
