@@ -41,7 +41,6 @@ static void hardif_free_rcu(struct rcu_head *rcu)
 	struct batman_if *batman_if;
 
 	batman_if = container_of(rcu, struct batman_if, rcu);
-	sysfs_del_hardif(&batman_if->hardif_obj);
 	dev_put(batman_if->net_dev);
 	kref_put(&batman_if->refcount, hardif_free_ref);
 }
@@ -470,6 +469,7 @@ static void hardif_remove_interface(struct batman_if *batman_if)
 
 	/* caller must take if_list_lock */
 	list_del_rcu(&batman_if->list);
+	sysfs_del_hardif(&batman_if->hardif_obj);
 	call_rcu(&batman_if->rcu, hardif_free_rcu);
 }
 
