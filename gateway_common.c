@@ -236,12 +236,15 @@ next:
 
 	switch (gw_mode_tmp) {
 	case GW_MODE_CLIENT:
+		gw_class_tmp = atomic_read(&bat_priv->gw_sel_class);
 		if ((gw_mode_tmp == GW_MODE_CLIENT) && (!gw_class_tmp))
 			gw_class_tmp = 20;
 
 		bat_info(net_dev, "Changing gateway mode from: '%s' to: '%s' "
-			 "(gw_class: %ld)\n",
+			 "(gw_sel_class: %ld)\n",
 			 gw_mode_curr_str, gw_mode_tmp_str, gw_class_tmp);
+
+		atomic_set(&bat_priv->gw_sel_class, gw_class_tmp);
 		break;
 	case GW_MODE_SERVER:
 		if (!down)

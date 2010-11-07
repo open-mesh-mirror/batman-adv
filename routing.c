@@ -32,6 +32,7 @@
 #include "ring_buffer.h"
 #include "vis.h"
 #include "aggregation.h"
+#include "gateway_common.h"
 #include "gateway_client.h"
 #include "unicast.h"
 
@@ -330,7 +331,9 @@ update_gw:
 	orig_node->gw_flags = batman_packet->gw_flags;
 
 	/* restart gateway selection if fast or late switching was enabled */
-	if ((orig_node->gw_flags) && (atomic_read(&bat_priv->gw_class) > 2))
+	if ((orig_node->gw_flags) &&
+	    (atomic_read(&bat_priv->gw_mode) == GW_MODE_CLIENT) &&
+	    (atomic_read(&bat_priv->gw_sel_class) > 2))
 		gw_check_election(bat_priv, orig_node);
 }
 

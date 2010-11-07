@@ -116,7 +116,7 @@ void gw_election(struct bat_priv *bat_priv)
 		if (gw_node->deleted)
 			continue;
 
-		switch (atomic_read(&bat_priv->gw_class)) {
+		switch (atomic_read(&bat_priv->gw_sel_class)) {
 		case 1: /* fast connection */
 			gw_srv_class_to_kbit(gw_node->orig_node->gw_flags,
 					     &down, &up);
@@ -215,8 +215,8 @@ void gw_check_election(struct bat_priv *bat_priv, struct orig_node *orig_node)
 	 * if the routing class is greater than 3 the value tells us how much
 	 * greater the TQ value of the new gateway must be
 	 **/
-	if ((atomic_read(&bat_priv->gw_class) > 3) &&
-	    (orig_tq_avg - gw_tq_avg < atomic_read(&bat_priv->gw_class)))
+	if ((atomic_read(&bat_priv->gw_sel_class) > 3) &&
+	    (orig_tq_avg - gw_tq_avg < atomic_read(&bat_priv->gw_sel_class)))
 		return;
 
 	bat_dbg(DBG_BATMAN, bat_priv,
