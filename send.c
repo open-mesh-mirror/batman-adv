@@ -287,7 +287,7 @@ void schedule_own_packet(struct batman_if *batman_if)
 	if ((batman_if == bat_priv->primary_if) &&
 	    (atomic_read(&bat_priv->gw_mode) == GW_MODE_SERVER))
 		batman_packet->gw_flags =
-				(uint8_t)atomic_read(&bat_priv->gw_class);
+				(uint8_t)atomic_read(&bat_priv->gw_bandwidth);
 	else
 		batman_packet->gw_flags = 0;
 

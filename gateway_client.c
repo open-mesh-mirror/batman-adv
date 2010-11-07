@@ -118,7 +118,7 @@ void gw_election(struct bat_priv *bat_priv)
 
 		switch (atomic_read(&bat_priv->gw_sel_class)) {
 		case 1: /* fast connection */
-			gw_srv_class_to_kbit(gw_node->orig_node->gw_flags,
+			gw_bandwidth_to_kbit(gw_node->orig_node->gw_flags,
 					     &down, &up);
 
 			tmp_gw_factor = (gw_node->orig_node->router->tq_avg *
@@ -247,7 +247,7 @@ static void gw_node_add(struct bat_priv *bat_priv,
 	hlist_add_head_rcu(&gw_node->list, &bat_priv->gw_list);
 	spin_unlock_bh(&bat_priv->gw_list_lock);
 
-	gw_srv_class_to_kbit(new_gwflags, &down, &up);
+	gw_bandwidth_to_kbit(new_gwflags, &down, &up);
 	bat_dbg(DBG_BATMAN, bat_priv,
 		"Found new gateway %pM -> gw_class: %i - %i%s/%i%s\n",
 		orig_node->orig, new_gwflags,
@@ -336,7 +336,7 @@ static int _write_buffer_text(struct bat_priv *bat_priv,
 {
 	int down, up;
 
-	gw_srv_class_to_kbit(gw_node->orig_node->gw_flags, &down, &up);
+	gw_bandwidth_to_kbit(gw_node->orig_node->gw_flags, &down, &up);
 
 	return seq_printf(seq, "%s %pM (%3i) %pM [%10s]: %3i - %i%s/%i%s\n",
 		       (bat_priv->curr_gw == gw_node ? "=>" : "  "),

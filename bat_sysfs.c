@@ -262,8 +262,7 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 {
 	struct bat_priv *bat_priv = kobj_to_batpriv(kobj);
 	int down, up, bytes_written;
-	int gw_mode = atomic_read(&bat_priv->gw_mode);
-	int gw_class = atomic_read(&bat_priv->gw_class);
+	int gw_class, gw_mode = atomic_read(&bat_priv->gw_mode);
 
 	switch (gw_mode) {
 	case GW_MODE_CLIENT:
@@ -272,7 +271,8 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 					GW_MODE_CLIENT_NAME, gw_class);
 		break;
 	case GW_MODE_SERVER:
-		gw_srv_class_to_kbit(gw_class, &down, &up);
+		gw_class = atomic_read(&bat_priv->gw_bandwidth);
+		gw_bandwidth_to_kbit(gw_class, &down, &up);
 		bytes_written = sprintf(buff,
 					"%s (gw_class: %i "
 					"-> propagating: %i%s/%i%s)\n",
@@ -292,10 +292,36 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 }
 
 static ssize_t store_gw_mode(struct kobject *kobj, struct attribute *attr,
-			      char *buff, size_t count)
+			     char *buff, size_t count)
 {
 	struct net_device *net_dev = kobj_to_netdev(kobj);
 	return gw_mode_set(net_dev, buff, count);
+}
+
+static ssize_t show_gw_bwidth(struct kobject *kobj, struct attribute *attr,
+			      char *buff)
+{
+	struct bat_priv *bat_priv = kobj_to_batpriv(kobj);
+	int down, up;
+	int gw_bandwidth = atomic_read(&bat_priv->gw_bandwidth);
+
+	gw_bandwidth_to_kbit(gw_bandwidth, &down, &up);
+	return sprintf(buff, "%i%s/%i%s\n",
+		       (down > 2048 ? down / 1024 : down),
+		       (down > 2048 ? "MBit" : "KBit"),
+		       (up > 2048 ? up / 1024 : up),
+		       (up > 2048 ? "MBit" : "KBit"));
+}
+
+static ssize_t store_gw_bwidth(struct kobject *kobj, struct attribute *attr,
+			       char *buff, size_t count)
+{
+	struct net_device *net_dev = kobj_to_netdev(kobj);
+
+	if (buff[count - 1] == '\n')
+		buff[count - 1] = '\0';
+
+	return gw_bandwidth_set(net_dev, buff, count);
 }
 
 BAT_ATTR_BOOL(aggregated_ogms, S_IRUGO | S_IWUSR, NULL);
@@ -307,6 +333,8 @@ BAT_ATTR_UINT(orig_interval, S_IRUGO | S_IWUSR, 2 * JITTER, INT_MAX, NULL);
 BAT_ATTR_UINT(hop_penalty, S_IRUGO | S_IWUSR, 0, TQ_MAX_VALUE, NULL);
 BAT_ATTR_UINT(gw_sel_class, S_IRUGO | S_IWUSR, 1, TQ_MAX_VALUE,
 	      post_gw_deselect);
+static BAT_ATTR(gw_bandwidth, S_IRUGO | S_IWUSR, show_gw_bwidth,
+		store_gw_bwidth);
 #ifdef CONFIG_BATMAN_ADV_DEBUG
 BAT_ATTR_UINT(log_level, S_IRUGO | S_IWUSR, 0, 3, NULL);
 #endif
@@ -320,6 +348,7 @@ static struct bat_attribute *mesh_attrs[] = {
 	&bat_attr_orig_interval,
 	&bat_attr_hop_penalty,
 	&bat_attr_gw_sel_class,
+	&bat_attr_gw_bandwidth,
 #ifdef CONFIG_BATMAN_ADV_DEBUG
 	&bat_attr_log_level,
 #endif
