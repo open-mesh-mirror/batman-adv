@@ -399,54 +399,57 @@ int gw_client_seq_print_text(struct seq_file *seq, void *offset)
 	return 0;
 }
 
-bool gw_is_target(struct bat_priv *bat_priv, struct sk_buff *skb)
+int gw_is_target(struct bat_priv *bat_priv, struct sk_buff *skb)
 {
 	struct ethhdr *ethhdr;
 	struct iphdr *iphdr;
 	struct udphdr *udphdr;
 	unsigned int header_len = 0;
 
-	if (atomic_read(&bat_priv->gw_mode) != GW_MODE_CLIENT)
-		return false;
-
-	if (!bat_priv->curr_gw)
-		return false;
+	if (atomic_read(&bat_priv->gw_mode) == GW_MODE_OFF)
+		return 0;
 
 	/* check for ethernet header */
 	if (!pskb_may_pull(skb, header_len + ETH_HLEN))
-		return false;
+		return 0;
 	ethhdr = (struct ethhdr *)skb->data;
 	header_len += ETH_HLEN;
 
 	/* check for initial vlan header */
 	if (ntohs(ethhdr->h_proto) == ETH_P_8021Q) {
 		if (!pskb_may_pull(skb, header_len + VLAN_HLEN))
-			return false;
+			return 0;
 		ethhdr = (struct ethhdr *)(skb->data + VLAN_HLEN);
 		header_len += VLAN_HLEN;
 	}
 
 	/* check for ip header */
 	if (ntohs(ethhdr->h_proto) != ETH_P_IP)
-		return false;
+		return 0;
 
 	if (!pskb_may_pull(skb, header_len + sizeof(struct iphdr)))
-		return false;
+		return 0;
 	iphdr = (struct iphdr *)(skb->data + header_len);
 	header_len += iphdr->ihl * 4;
 
 	/* check for udp header */
 	if (iphdr->protocol != IPPROTO_UDP)
-		return false;
+		return 0;
 
 	if (!pskb_may_pull(skb, header_len + sizeof(struct udphdr)))
-		return false;
+		return 0;
 	udphdr = (struct udphdr *)(skb->data + header_len);
 	header_len += sizeof(struct udphdr);
 
 	/* check for bootp port */
 	if (ntohs(udphdr->dest) != 67)
-		return false;
+		return 0;
 
-	return true;
+	if (atomic_read(&bat_priv->gw_mode) == GW_MODE_SERVER)
+		return -1;
+
+	if (!bat_priv->curr_gw)
+		return 0;
+
+	return 1;
 }

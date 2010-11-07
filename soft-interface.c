@@ -347,7 +347,7 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	struct vlan_ethhdr *vhdr;
 	int data_len = skb->len, ret;
 	short vid = -1;
-	bool bcast_dst = false, do_bcast = true;
+	bool do_bcast = false;
 
 	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
 		goto dropped;
@@ -378,14 +378,18 @@ int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	/* TODO: check this for locks */
 	hna_local_add(soft_iface, ethhdr->h_source);
 
-	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest))
-		bcast_dst = true;
+	if (is_bcast(ethhdr->h_dest) || is_mcast(ethhdr->h_dest)) {
+		ret = gw_is_target(bat_priv, skb);
 
-	if ((bcast_dst) && gw_is_target(bat_priv, skb))
-		do_bcast = false;
+		if (ret < 0)
+			goto dropped;
+
+		if (ret == 0)
+			do_bcast = true;
+	}
 
 	/* ethernet packet should be broadcasted */
-	if (bcast_dst && do_bcast) {
+	if (do_bcast) {
 		if (!bat_priv->primary_if)
 			goto dropped;
 
