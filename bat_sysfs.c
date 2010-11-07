@@ -261,30 +261,17 @@ static ssize_t show_gw_mode(struct kobject *kobj, struct attribute *attr,
 			    char *buff)
 {
 	struct bat_priv *bat_priv = kobj_to_batpriv(kobj);
-	int down, up, bytes_written;
-	int gw_class, gw_mode = atomic_read(&bat_priv->gw_mode);
+	int bytes_written;
 
-	switch (gw_mode) {
+	switch (atomic_read(&bat_priv->gw_mode)) {
 	case GW_MODE_CLIENT:
-		gw_class = atomic_read(&bat_priv->gw_sel_class);
-		bytes_written = sprintf(buff, "%s (gw_class: %i)\n",
-					GW_MODE_CLIENT_NAME, gw_class);
+		bytes_written = sprintf(buff, "%s\n", GW_MODE_CLIENT_NAME);
 		break;
 	case GW_MODE_SERVER:
-		gw_class = atomic_read(&bat_priv->gw_bandwidth);
-		gw_bandwidth_to_kbit(gw_class, &down, &up);
-		bytes_written = sprintf(buff,
-					"%s (gw_class: %i "
-					"-> propagating: %i%s/%i%s)\n",
-					GW_MODE_SERVER_NAME, gw_class,
-					(down > 2048 ? down / 1024 : down),
-					(down > 2048 ? "MBit" : "KBit"),
-					(up > 2048 ? up / 1024 : up),
-					(up > 2048 ? "MBit" : "KBit"));
+		bytes_written = sprintf(buff, "%s\n", GW_MODE_SERVER_NAME);
 		break;
 	default:
-		bytes_written = sprintf(buff, "%s\n",
-					GW_MODE_OFF_NAME);
+		bytes_written = sprintf(buff, "%s\n", GW_MODE_OFF_NAME);
 		break;
 	}
 
@@ -295,7 +282,52 @@ static ssize_t store_gw_mode(struct kobject *kobj, struct attribute *attr,
 			     char *buff, size_t count)
 {
 	struct net_device *net_dev = kobj_to_netdev(kobj);
-	return gw_mode_set(net_dev, buff, count);
+	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	char *curr_gw_mode_str;
+	int gw_mode_tmp = -1;
+
+	if (buff[count - 1] == '\n')
+		buff[count - 1] = '\0';
+
+	if (strncmp(buff, GW_MODE_OFF_NAME, strlen(GW_MODE_OFF_NAME)) == 0)
+		gw_mode_tmp = GW_MODE_OFF;
+
+	if (strncmp(buff, GW_MODE_CLIENT_NAME,
+		   strlen(GW_MODE_CLIENT_NAME)) == 0)
+		gw_mode_tmp = GW_MODE_CLIENT;
+
+	if (strncmp(buff, GW_MODE_SERVER_NAME,
+		   strlen(GW_MODE_SERVER_NAME)) == 0)
+		gw_mode_tmp = GW_MODE_SERVER;
+
+	if (gw_mode_tmp < 0) {
+		bat_info(net_dev,
+			 "Invalid parameter for 'gw mode' setting received: "
+			 "%s\n", buff);
+		return -EINVAL;
+	}
+
+	if (atomic_read(&bat_priv->gw_mode) == gw_mode_tmp)
+		return count;
+
+	switch (atomic_read(&bat_priv->gw_mode)) {
+	case GW_MODE_CLIENT:
+		curr_gw_mode_str = GW_MODE_CLIENT_NAME;
+		break;
+	case GW_MODE_SERVER:
+		curr_gw_mode_str = GW_MODE_SERVER_NAME;
+		break;
+	default:
+		curr_gw_mode_str = GW_MODE_OFF_NAME;
+		break;
+	}
+
+	bat_info(net_dev, "Changing gw mode from: %s to: %s\n",
+		 curr_gw_mode_str, buff);
+
+	gw_deselect(bat_priv);
+	atomic_set(&bat_priv->gw_mode, (unsigned)gw_mode_tmp);
+	return count;
 }
 
 static ssize_t show_gw_bwidth(struct kobject *kobj, struct attribute *attr,

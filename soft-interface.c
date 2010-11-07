@@ -591,8 +591,8 @@ struct net_device *softif_create(char *name)
 	atomic_set(&bat_priv->bonding, 0);
 	atomic_set(&bat_priv->vis_mode, VIS_TYPE_CLIENT_UPDATE);
 	atomic_set(&bat_priv->gw_mode, GW_MODE_OFF);
-	atomic_set(&bat_priv->gw_sel_class, 0);
-	atomic_set(&bat_priv->gw_bandwidth, 0);
+	atomic_set(&bat_priv->gw_sel_class, 20);
+	atomic_set(&bat_priv->gw_bandwidth, 41);
 	atomic_set(&bat_priv->orig_interval, 1000);
 	atomic_set(&bat_priv->hop_penalty, 10);
 	atomic_set(&bat_priv->log_level, 0);
