@@ -305,7 +305,7 @@ void gw_node_delete(struct bat_priv *bat_priv, struct orig_node *orig_node)
 	return gw_node_update(bat_priv, orig_node, 0);
 }
 
-void gw_node_purge_deleted(struct bat_priv *bat_priv)
+void gw_node_purge(struct bat_priv *bat_priv)
 {
 	struct gw_node *gw_node;
 	struct hlist_node *node, *node_tmp;
@@ -314,32 +314,20 @@ void gw_node_purge_deleted(struct bat_priv *bat_priv)
 	spin_lock_bh(&bat_priv->gw_list_lock);
 
 	hlist_for_each_entry_safe(gw_node, node, node_tmp,
-						&bat_priv->gw_list, list) {
-		if ((gw_node->deleted) &&
-		    (time_after(jiffies, gw_node->deleted + timeout))) {
+				  &bat_priv->gw_list, list) {
+		if (((!gw_node->deleted) ||
+		     (time_before(jiffies, gw_node->deleted + timeout))) &&
+		    atomic_read(&bat_priv->mesh_state) == MESH_ACTIVE)
+			continue;
 
-			hlist_del_rcu(&gw_node->list);
-			call_rcu(&gw_node->rcu, gw_node_free_rcu);
-		}
-	}
+		if (bat_priv->curr_gw == gw_node)
+			gw_deselect(bat_priv);
 
-	spin_unlock_bh(&bat_priv->gw_list_lock);
-}
-
-void gw_node_list_free(struct bat_priv *bat_priv)
-{
-	struct gw_node *gw_node;
-	struct hlist_node *node, *node_tmp;
-
-	spin_lock_bh(&bat_priv->gw_list_lock);
-
-	hlist_for_each_entry_safe(gw_node, node, node_tmp,
-				 &bat_priv->gw_list, list) {
 		hlist_del_rcu(&gw_node->list);
 		call_rcu(&gw_node->rcu, gw_node_free_rcu);
 	}
 
-	gw_deselect(bat_priv);
+
 	spin_unlock_bh(&bat_priv->gw_list_lock);
 }
 

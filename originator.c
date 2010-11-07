@@ -293,7 +293,7 @@ static void _purge_orig(struct bat_priv *bat_priv)
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
-	gw_node_purge_deleted(bat_priv);
+	gw_node_purge(bat_priv);
 	gw_election(bat_priv);
 
 	softif_neigh_purge(bat_priv);

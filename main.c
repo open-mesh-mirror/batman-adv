@@ -132,7 +132,7 @@ void mesh_free(struct net_device *soft_iface)
 
 	vis_quit(bat_priv);
 
-	gw_node_list_free(bat_priv);
+	gw_node_purge(bat_priv);
 	originator_free(bat_priv);
 
 	hna_local_free(bat_priv);
