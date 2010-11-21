@@ -465,9 +465,6 @@ static void hardif_remove_interface(struct batman_if *batman_if)
 		return;
 
 	batman_if->if_status = IF_TO_BE_REMOVED;
-
-	/* caller must take if_list_lock */
-	list_del_rcu(&batman_if->list);
 	synchronize_rcu();
 	sysfs_del_hardif(&batman_if->hardif_obj);
 	hardif_put(batman_if);
@@ -476,13 +473,21 @@ static void hardif_remove_interface(struct batman_if *batman_if)
 void hardif_remove_interfaces(void)
 {
 	struct batman_if *batman_if, *batman_if_tmp;
+	struct list_head if_list_queue;
 
-	rtnl_lock();
+	INIT_LIST_HEAD(&if_list_queue);
+
 	spin_lock(&if_list_lock);
 	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list, list) {
-		hardif_remove_interface(batman_if);
+		list_del_rcu(&batman_if->list);
+		list_add_tail(&batman_if->list, &if_list_queue);
 	}
 	spin_unlock(&if_list_lock);
+
+	rtnl_lock();
+	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list_queue, list) {
+		hardif_remove_interface(batman_if);
+	}
 	rtnl_unlock();
 }
 
@@ -509,8 +514,10 @@ static int hard_if_event(struct notifier_block *this,
 		break;
 	case NETDEV_UNREGISTER:
 		spin_lock(&if_list_lock);
-		hardif_remove_interface(batman_if);
+		list_del_rcu(&batman_if->list);
 		spin_unlock(&if_list_lock);
+
+		hardif_remove_interface(batman_if);
 		break;
 	case NETDEV_CHANGEMTU:
 		if (batman_if->soft_iface)
