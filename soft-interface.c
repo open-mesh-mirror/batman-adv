@@ -203,6 +203,8 @@ void interface_rx(struct net_device *soft_iface,
 /*	skb_set_mac_header(skb, -sizeof(struct ethhdr));*/
 
 	/* skb->dev & skb->pkt_type are set here */
+	if (unlikely(!pskb_may_pull(skb, ETH_HLEN)))
+		goto dropped;
 	skb->protocol = eth_type_trans(skb, soft_iface);
 
 	/* should not be neccesary anymore as we use skb_pull_rcsum()
