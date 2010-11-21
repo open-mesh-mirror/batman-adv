@@ -1,3 +1,16 @@
+batman-adv 2010.2.0:
+
+* support latest kernels (2.6.21 - 2.6.37)
+* further cleanup of coding style
+* new rcu and referenced based interface management
+* support for multiple mesh clouds
+* create packets directly in socket buffers
+* add layer2 unicast packet fragmentation
+* usage of optimised kernel functionality for ogm counting
+* many bugs (false warnings, processing of big ogms, ...) squashed
+
+ -- Sun, 21 Nov 2010 21:02:40 +0100
+
 batman-adv 2010.1.0:
 
 * support latest kernels (2.6.21 - 2.6.36)
