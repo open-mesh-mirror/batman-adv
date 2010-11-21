@@ -476,19 +476,19 @@ static void hardif_remove_interface(struct batman_if *batman_if)
 void hardif_remove_interfaces(void)
 {
 	struct batman_if *batman_if, *batman_if_tmp;
-	struct list_head if_list_queue;
+	struct list_head if_queue;
 
-	INIT_LIST_HEAD(&if_list_queue);
+	INIT_LIST_HEAD(&if_queue);
 
 	spin_lock(&if_list_lock);
 	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list, list) {
 		list_del_rcu(&batman_if->list);
-		list_add_tail(&batman_if->list, &if_list_queue);
+		list_add_tail(&batman_if->list, &if_queue);
 	}
 	spin_unlock(&if_list_lock);
 
 	rtnl_lock();
-	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_list_queue, list) {
+	list_for_each_entry_safe(batman_if, batman_if_tmp, &if_queue, list) {
 		hardif_remove_interface(batman_if);
 	}
 	rtnl_unlock();
