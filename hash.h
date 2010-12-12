@@ -53,7 +53,6 @@ struct hash_it_t {
 
 struct hashtable_t {
 	struct hlist_head *table;   /* the hashtable itself, with the buckets */
-	int elements;		    /* number of elements registered */
 	int size;		    /* size of hashtable */
 };
 
@@ -127,7 +126,6 @@ static inline int hash_add(struct hashtable_t *hash,
 	bucket->data = data;
 	hlist_add_head(&bucket->hlist, head);
 
-	hash->elements++;
 	return 0;
 }
 
@@ -179,44 +177,6 @@ static inline void *hash_find(struct hashtable_t *hash,
 	}
 
 	return NULL;
-}
-
-/* resize the hash, returns the pointer to the new hash or NULL on
- * error. removes the old hash on success */
-static inline struct hashtable_t *hash_resize(struct hashtable_t *hash,
-					      hashdata_choose_cb choose,
-					      int size)
-{
-	struct hashtable_t *new_hash;
-	struct hlist_head *head, *new_head;
-	struct hlist_node *walk, *safe;
-	struct element_t *bucket;
-	int i, new_index;
-
-	/* initialize a new hash with the new size */
-	new_hash = hash_new(size);
-
-	if (new_hash == NULL)
-		return NULL;
-
-	/* copy the elements */
-	for (i = 0; i < hash->size; i++) {
-		head = &hash->table[i];
-
-		hlist_for_each_safe(walk, safe, head) {
-			bucket = hlist_entry(walk, struct element_t, hlist);
-
-			new_index = choose(bucket->data, size);
-			new_head = &new_hash->table[new_index];
-
-			hlist_del(walk);
-			hlist_add_head(walk, new_head);
-		}
-	}
-
-	hash_destroy(hash);
-
-	return new_hash;
 }
 
 /* iterate though the hash. First element is selected if an iterator
