@@ -68,7 +68,7 @@ struct orig_node {
 	uint8_t orig[ETH_ALEN];
 	uint8_t primary_addr[ETH_ALEN];
 	struct neigh_node *router;
-	TYPE_OF_WORD *bcast_own;
+	unsigned long *bcast_own;
 	uint8_t *bcast_own_sum;
 	uint8_t tq_own;
 	int tq_asym_penalty;
@@ -81,7 +81,7 @@ struct orig_node {
 	int16_t hna_buff_len;
 	uint32_t last_real_seqno;
 	uint8_t last_ttl;
-	TYPE_OF_WORD bcast_bits[NUM_WORDS];
+	unsigned long bcast_bits[NUM_WORDS];
 	uint32_t last_bcast_seqno;
 	struct hlist_head neigh_list;
 	struct list_head frag_list;
@@ -115,7 +115,7 @@ struct neigh_node {
 	uint8_t last_ttl;
 	struct neigh_node *next_bond_candidate;
 	unsigned long last_valid;
-	TYPE_OF_WORD real_bits[NUM_WORDS];
+	unsigned long real_bits[NUM_WORDS];
 	struct kref refcount;
 	struct rcu_head rcu;
 	struct orig_node *orig_node;

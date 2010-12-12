@@ -26,7 +26,7 @@
 
 /* returns true if the corresponding bit in the given seq_bits indicates true
  * and curr_seqno is within range of last_seqno */
-uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint32_t last_seqno,
+uint8_t get_bit_status(unsigned long *seq_bits, uint32_t last_seqno,
 		       uint32_t curr_seqno)
 {
 	int32_t diff, word_offset, word_num;
@@ -48,7 +48,7 @@ uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint32_t last_seqno,
 }
 
 /* turn corresponding bit on, so we can remember that we got the packet */
-void bit_mark(TYPE_OF_WORD *seq_bits, int32_t n)
+void bit_mark(unsigned long *seq_bits, int32_t n)
 {
 	int32_t word_offset, word_num;
 
@@ -65,7 +65,7 @@ void bit_mark(TYPE_OF_WORD *seq_bits, int32_t n)
 }
 
 /* shift the packet array by n places. */
-static void bit_shift(TYPE_OF_WORD *seq_bits, int32_t n)
+static void bit_shift(unsigned long *seq_bits, int32_t n)
 {
 	int32_t word_offset, word_num;
 	int32_t i;
@@ -113,7 +113,7 @@ static void bit_shift(TYPE_OF_WORD *seq_bits, int32_t n)
 		seq_bits[i] = 0;
 }
 
-static void bit_reset_window(TYPE_OF_WORD *seq_bits)
+static void bit_reset_window(unsigned long *seq_bits)
 {
 	int i;
 	for (i = 0; i < NUM_WORDS; i++)
@@ -127,7 +127,7 @@ static void bit_reset_window(TYPE_OF_WORD *seq_bits)
  *  1 if the window was moved (either new or very old)
  *  0 if the window was not moved/shifted.
  */
-char bit_get_packet(void *priv, TYPE_OF_WORD *seq_bits,
+char bit_get_packet(void *priv, unsigned long *seq_bits,
 		    int32_t seq_num_diff, int8_t set_mark)
 {
 	struct bat_priv *bat_priv = (struct bat_priv *)priv;
@@ -190,7 +190,7 @@ char bit_get_packet(void *priv, TYPE_OF_WORD *seq_bits,
 /* count the hamming weight, how many good packets did we receive? just count
  * the 1's.
  */
-int bit_packet_count(TYPE_OF_WORD *seq_bits)
+int bit_packet_count(unsigned long *seq_bits)
 {
 	int i, hamming = 0;
 

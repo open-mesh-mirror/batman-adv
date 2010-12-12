@@ -44,7 +44,7 @@ void slide_own_bcast_window(struct batman_if *batman_if)
 	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
-	TYPE_OF_WORD *word;
+	unsigned long *word;
 	int i;
 	size_t word_index;
 
@@ -661,7 +661,7 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 	}
 
 	if (is_my_orig) {
-		TYPE_OF_WORD *word;
+		unsigned long *word;
 		int offset;
 
 		orig_neigh_node = get_orig_node(bat_priv, ethhdr->h_source);
