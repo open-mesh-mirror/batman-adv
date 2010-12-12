@@ -40,7 +40,7 @@ uint8_t get_bit_status(TYPE_OF_WORD *seq_bits, uint32_t last_seqno,
 		/* which position in the selected word */
 		word_offset = (last_seqno - curr_seqno) % WORD_BIT_SIZE;
 
-		if (seq_bits[word_num] & 1 << word_offset)
+		if (test_bit(word_offset, &seq_bits[word_num]))
 			return 1;
 		else
 			return 0;
@@ -61,7 +61,7 @@ void bit_mark(TYPE_OF_WORD *seq_bits, int32_t n)
 	/* which position in the selected word */
 	word_offset = n % WORD_BIT_SIZE;
 
-	seq_bits[word_num] |= 1 << word_offset;	/* turn the position on */
+	set_bit(word_offset, &seq_bits[word_num]);	/* turn the position on */
 }
 
 /* shift the packet array by n places. */

@@ -24,6 +24,10 @@
 
 /* you should choose something big, if you don't want to waste cpu
  * and keep the type in sync with bit_packet_count */
+
+/* don't change 'unsigned long' as test_bit()/set_bit()/hweight_long()
+ * expect this length
+ */
 #define TYPE_OF_WORD unsigned long
 #define WORD_BIT_SIZE (sizeof(TYPE_OF_WORD) * 8)
 
