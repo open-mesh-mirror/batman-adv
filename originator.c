@@ -256,27 +256,37 @@ static bool purge_orig_node(struct bat_priv *bat_priv,
 
 static void _purge_orig(struct bat_priv *bat_priv)
 {
-	HASHIT(hashit);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk, *safe;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
+	int i;
+
+	if (!hash)
+		return;
 
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 
 	/* for all origins... */
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		if (purge_orig_node(bat_priv, orig_node)) {
-			if (orig_node->gw_flags)
-				gw_node_delete(bat_priv, orig_node);
-			hash_remove_bucket(bat_priv->orig_hash, &hashit);
-			free_orig_node(orig_node, bat_priv);
+		hlist_for_each_entry_safe(bucket, walk, safe, head, hlist) {
+			orig_node = bucket->data;
+
+			if (purge_orig_node(bat_priv, orig_node)) {
+				if (orig_node->gw_flags)
+					gw_node_delete(bat_priv, orig_node);
+				hlist_del(walk);
+				kfree(bucket);
+				free_orig_node(orig_node, bat_priv);
+			}
+
+			if (time_after(jiffies, orig_node->last_frag_packet +
+						msecs_to_jiffies(FRAG_TIMEOUT)))
+				frag_list_free(&orig_node->frag_list);
 		}
-
-		if (time_after(jiffies, (orig_node->last_frag_packet +
-					msecs_to_jiffies(FRAG_TIMEOUT))))
-			frag_list_free(&orig_node->frag_list);
 	}
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);
@@ -305,15 +315,18 @@ void purge_orig_ref(struct bat_priv *bat_priv)
 
 int orig_seq_print_text(struct seq_file *seq, void *offset)
 {
-	HASHIT(hashit);
-	struct element_t *bucket;
 	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
+	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
 	int batman_count = 0;
 	int last_seen_secs;
 	int last_seen_msecs;
+	int i;
 
 	if ((!bat_priv->primary_if) ||
 	    (bat_priv->primary_if->if_status != IF_ACTIVE)) {
@@ -337,33 +350,39 @@ int orig_seq_print_text(struct seq_file *seq, void *offset)
 
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		if (!orig_node->router)
-			continue;
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
 
-		if (orig_node->router->tq_avg == 0)
-			continue;
+			if (!orig_node->router)
+				continue;
 
-		last_seen_secs = jiffies_to_msecs(jiffies -
+			if (orig_node->router->tq_avg == 0)
+				continue;
+
+			last_seen_secs = jiffies_to_msecs(jiffies -
 						orig_node->last_valid) / 1000;
-		last_seen_msecs = jiffies_to_msecs(jiffies -
+			last_seen_msecs = jiffies_to_msecs(jiffies -
 						orig_node->last_valid) % 1000;
 
-		seq_printf(seq, "%pM %4i.%03is   (%3i) %pM [%10s]:",
-			   orig_node->orig, last_seen_secs, last_seen_msecs,
-			   orig_node->router->tq_avg, orig_node->router->addr,
-			   orig_node->router->if_incoming->net_dev->name);
+			neigh_node = orig_node->router;
+			seq_printf(seq, "%pM %4i.%03is   (%3i) %pM [%10s]:",
+				   orig_node->orig, last_seen_secs,
+				   last_seen_msecs, neigh_node->tq_avg,
+				   neigh_node->addr,
+				   neigh_node->if_incoming->net_dev->name);
 
-		list_for_each_entry(neigh_node, &orig_node->neigh_list, list) {
-			seq_printf(seq, " %pM (%3i)", neigh_node->addr,
-					   neigh_node->tq_avg);
+			list_for_each_entry(neigh_node, &orig_node->neigh_list,
+					    list) {
+				seq_printf(seq, " %pM (%3i)", neigh_node->addr,
+						neigh_node->tq_avg);
+			}
+
+			seq_printf(seq, "\n");
+			batman_count++;
 		}
-
-		seq_printf(seq, "\n");
-		batman_count++;
 	}
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);
@@ -407,20 +426,26 @@ static int orig_node_add_if(struct orig_node *orig_node, int max_if_num)
 int orig_hash_add_if(struct batman_if *batman_if, int max_if_num)
 {
 	struct bat_priv *bat_priv = netdev_priv(batman_if->soft_iface);
-	struct orig_node *orig_node;
-	HASHIT(hashit);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
+	struct orig_node *orig_node;
+	int i;
 
 	/* resize all orig nodes because orig_node->bcast_own(_sum) depend on
 	 * if_num */
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		if (orig_node_add_if(orig_node, max_if_num) == -1)
-			goto err;
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
+
+			if (orig_node_add_if(orig_node, max_if_num) == -1)
+				goto err;
+		}
 	}
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);
@@ -486,25 +511,30 @@ free_own_sum:
 int orig_hash_del_if(struct batman_if *batman_if, int max_if_num)
 {
 	struct bat_priv *bat_priv = netdev_priv(batman_if->soft_iface);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
+	struct element_t *bucket;
 	struct batman_if *batman_if_tmp;
 	struct orig_node *orig_node;
-	HASHIT(hashit);
-	struct element_t *bucket;
-	int ret;
+	int i, ret;
 
 	/* resize all orig nodes because orig_node->bcast_own(_sum) depend on
 	 * if_num */
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		ret = orig_node_del_if(orig_node, max_if_num,
-				       batman_if->if_num);
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
 
-		if (ret == -1)
-			goto err;
+			ret = orig_node_del_if(orig_node, max_if_num,
+					batman_if->if_num);
+
+			if (ret == -1)
+				goto err;
+		}
 	}
 
 	/* renumber remaining batman interfaces _inside_ of orig_hash_lock */
