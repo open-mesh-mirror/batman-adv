@@ -61,7 +61,7 @@ void bit_mark(TYPE_OF_WORD *seq_bits, int32_t n)
 	/* which position in the selected word */
 	word_offset = n % WORD_BIT_SIZE;
 
-	set_bit(word_offset, &seq_bits[word_num]);	/* turn the position on */
+	set_bit(word_offset, &seq_bits[word_num]); /* turn the position on */
 }
 
 /* shift the packet array by n places. */
