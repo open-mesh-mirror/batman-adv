@@ -60,21 +60,3 @@ struct hashtable_t *hash_new(int size)
 
 	return hash;
 }
-
-/* remove bucket (this might be used in hash_iterate() if you already found the
- * bucket you want to delete and don't need the overhead to find it again with
- * hash_remove(). But usually, you don't want to use this function, as it
- * fiddles with hash-internals. */
-void *hash_remove_bucket(struct hashtable_t *hash, struct hash_it_t *hash_it_t)
-{
-	void *data_save;
-	struct element_t *bucket;
-
-	bucket = hlist_entry(hash_it_t->walk, struct element_t, hlist);
-	data_save = bucket->data;
-
-	hlist_del(hash_it_t->walk);
-	kfree(bucket);
-
-	return data_save;
-}

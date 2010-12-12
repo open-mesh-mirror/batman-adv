@@ -39,21 +39,29 @@
 void slide_own_bcast_window(struct batman_if *batman_if)
 {
 	struct bat_priv *bat_priv = netdev_priv(batman_if->soft_iface);
-	HASHIT(hashit);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
 	TYPE_OF_WORD *word;
+	int i;
+	size_t word_index;
 
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
-		word = &(orig_node->bcast_own[batman_if->if_num * NUM_WORDS]);
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		bit_get_packet(bat_priv, word, 1, 0);
-		orig_node->bcast_own_sum[batman_if->if_num] =
-			bit_packet_count(word);
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
+			word_index = batman_if->if_num * NUM_WORDS;
+			word = &(orig_node->bcast_own[word_index]);
+
+			bit_get_packet(bat_priv, word, 1, 0);
+			orig_node->bcast_own_sum[batman_if->if_num] =
+				bit_packet_count(word);
+		}
 	}
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);

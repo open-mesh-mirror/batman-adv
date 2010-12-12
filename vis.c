@@ -174,21 +174,23 @@ static ssize_t vis_data_read_entry(char *buff, struct vis_info_entry *entry,
 
 int vis_seq_print_text(struct seq_file *seq, void *offset)
 {
-	HASHIT(hashit);
-	HASHIT(hashit_count);
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct vis_info *info;
 	struct vis_packet *packet;
 	struct vis_info_entry *entries;
 	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	struct hashtable_t *hash = bat_priv->vis_hash;
 	HLIST_HEAD(vis_if_list);
 	struct if_list_entry *entry;
 	struct hlist_node *pos, *n;
-	int i;
+	int i, j;
 	int vis_server = atomic_read(&bat_priv->vis_mode);
 	size_t buff_pos, buf_size;
 	char *buff;
+	int compare;
 
 	if ((!bat_priv->primary_if) ||
 	    (vis_server == VIS_TYPE_CLIENT_UPDATE))
@@ -197,35 +199,41 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 	buf_size = 1;
 	/* Estimate length */
 	spin_lock_bh(&bat_priv->vis_hash_lock);
-	while (hash_iterate(bat_priv->vis_hash, &hashit_count)) {
-		bucket = hlist_entry(hashit_count.walk, struct element_t,
-				     hlist);
-		info = bucket->data;
-		packet = (struct vis_packet *)info->skb_packet->data;
-		entries = (struct vis_info_entry *)
-			  ((char *)packet + sizeof(struct vis_packet));
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		for (i = 0; i < packet->entries; i++) {
-			if (entries[i].quality == 0)
-				continue;
-			vis_data_insert_interface(entries[i].src, &vis_if_list,
-				compare_orig(entries[i].src, packet->vis_orig));
-		}
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			info = bucket->data;
+			packet = (struct vis_packet *)info->skb_packet->data;
+			entries = (struct vis_info_entry *)
+				((char *)packet + sizeof(struct vis_packet));
 
-		hlist_for_each_entry(entry, pos, &vis_if_list, list) {
-			buf_size += 18 + 26 * packet->entries;
+			for (j = 0; j < packet->entries; j++) {
+				if (entries[j].quality == 0)
+					continue;
+				compare =
+				 compare_orig(entries[j].src, packet->vis_orig);
+				vis_data_insert_interface(entries[j].src,
+							  &vis_if_list,
+							  compare);
+			}
 
-			/* add primary/secondary records */
-			if (compare_orig(entry->addr, packet->vis_orig))
-				buf_size +=
-					vis_data_count_prim_sec(&vis_if_list);
+			hlist_for_each_entry(entry, pos, &vis_if_list, list) {
+				buf_size += 18 + 26 * packet->entries;
 
-			buf_size += 1;
-		}
+				/* add primary/secondary records */
+				if (compare_orig(entry->addr, packet->vis_orig))
+					buf_size +=
+					  vis_data_count_prim_sec(&vis_if_list);
 
-		hlist_for_each_entry_safe(entry, pos, n, &vis_if_list, list) {
-			hlist_del(&entry->list);
-			kfree(entry);
+				buf_size += 1;
+			}
+
+			hlist_for_each_entry_safe(entry, pos, n, &vis_if_list,
+						  list) {
+				hlist_del(&entry->list);
+				kfree(entry);
+			}
 		}
 	}
 
@@ -237,42 +245,50 @@ int vis_seq_print_text(struct seq_file *seq, void *offset)
 	buff[0] = '\0';
 	buff_pos = 0;
 
-	while (hash_iterate(bat_priv->vis_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		info = bucket->data;
-		packet = (struct vis_packet *)info->skb_packet->data;
-		entries = (struct vis_info_entry *)
-			  ((char *)packet + sizeof(struct vis_packet));
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		for (i = 0; i < packet->entries; i++) {
-			if (entries[i].quality == 0)
-				continue;
-			vis_data_insert_interface(entries[i].src, &vis_if_list,
-				compare_orig(entries[i].src, packet->vis_orig));
-		}
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			info = bucket->data;
+			packet = (struct vis_packet *)info->skb_packet->data;
+			entries = (struct vis_info_entry *)
+				((char *)packet + sizeof(struct vis_packet));
 
-		hlist_for_each_entry(entry, pos, &vis_if_list, list) {
-			buff_pos += sprintf(buff + buff_pos, "%pM,",
-					    entry->addr);
+			for (j = 0; j < packet->entries; j++) {
+				if (entries[j].quality == 0)
+					continue;
+				compare =
+				 compare_orig(entries[j].src, packet->vis_orig);
+				vis_data_insert_interface(entries[j].src,
+							  &vis_if_list,
+							  compare);
+			}
 
-			for (i = 0; i < packet->entries; i++)
-				buff_pos += vis_data_read_entry(buff + buff_pos,
-								&entries[i],
-								entry->addr,
-								entry->primary);
+			hlist_for_each_entry(entry, pos, &vis_if_list, list) {
+				buff_pos += sprintf(buff + buff_pos, "%pM,",
+						entry->addr);
 
-			/* add primary/secondary records */
-			if (compare_orig(entry->addr, packet->vis_orig))
-				buff_pos +=
-					vis_data_read_prim_sec(buff + buff_pos,
-							       &vis_if_list);
+				for (i = 0; i < packet->entries; i++)
+					buff_pos += vis_data_read_entry(
+							buff + buff_pos,
+							&entries[i],
+							entry->addr,
+							entry->primary);
 
-			buff_pos += sprintf(buff + buff_pos, "\n");
-		}
+				/* add primary/secondary records */
+				if (compare_orig(entry->addr, packet->vis_orig))
+					buff_pos +=
+					 vis_data_read_prim_sec(buff + buff_pos,
+								&vis_if_list);
 
-		hlist_for_each_entry_safe(entry, pos, n, &vis_if_list, list) {
-			hlist_del(&entry->list);
-			kfree(entry);
+				buff_pos += sprintf(buff + buff_pos, "\n");
+			}
+
+			hlist_for_each_entry_safe(entry, pos, n, &vis_if_list,
+						  list) {
+				hlist_del(&entry->list);
+				kfree(entry);
+			}
 		}
 	}
 
@@ -511,24 +527,31 @@ end:
 static int find_best_vis_server(struct bat_priv *bat_priv,
 				struct vis_info *info)
 {
-	HASHIT(hashit);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct vis_packet *packet;
-	int best_tq = -1;
+	int best_tq = -1, i;
 
 	packet = (struct vis_packet *)info->skb_packet->data;
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
-		if ((orig_node) && (orig_node->router) &&
-		    (orig_node->flags & VIS_SERVER) &&
-		    (orig_node->router->tq_avg > best_tq)) {
-			best_tq = orig_node->router->tq_avg;
-			memcpy(packet->target_orig, orig_node->orig, ETH_ALEN);
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
+
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
+			if ((orig_node) && (orig_node->router) &&
+			(orig_node->flags & VIS_SERVER) &&
+			(orig_node->router->tq_avg > best_tq)) {
+				best_tq = orig_node->router->tq_avg;
+				memcpy(packet->target_orig, orig_node->orig,
+				       ETH_ALEN);
+			}
 		}
 	}
+
 	return best_tq;
 }
 
@@ -548,15 +571,17 @@ static bool vis_packet_full(struct vis_info *info)
  * returns 0 on success, -1 if no packet could be generated */
 static int generate_vis_packet(struct bat_priv *bat_priv)
 {
-	HASHIT(hashit_local);
-	HASHIT(hashit_global);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
+	struct neigh_node *neigh_node;
 	struct vis_info *info = (struct vis_info *)bat_priv->my_vis_info;
 	struct vis_packet *packet = (struct vis_packet *)info->skb_packet->data;
 	struct vis_info_entry *entry;
 	struct hna_local_entry *hna_local_entry;
-	int best_tq = -1;
+	int best_tq = -1, i;
 
 	info->first_seen = jiffies;
 	packet->vis_type = atomic_read(&bat_priv->vis_mode);
@@ -577,56 +602,64 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 		}
 	}
 
-	while (hash_iterate(bat_priv->orig_hash, &hashit_global)) {
-		bucket = hlist_entry(hashit_global.walk, struct element_t,
-				     hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		if (!orig_node->router)
-			continue;
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
+			neigh_node = orig_node->router;
 
-		if (!compare_orig(orig_node->router->addr, orig_node->orig))
-			continue;
+			if (!neigh_node)
+				continue;
 
-		if (orig_node->router->if_incoming->if_status != IF_ACTIVE)
-			continue;
+			if (!compare_orig(neigh_node->addr, orig_node->orig))
+				continue;
 
-		if (orig_node->router->tq_avg < 1)
-			continue;
+			if (neigh_node->if_incoming->if_status != IF_ACTIVE)
+				continue;
 
-		/* fill one entry into buffer. */
-		entry = (struct vis_info_entry *)
-				skb_put(info->skb_packet, sizeof(*entry));
-		memcpy(entry->src,
-		       orig_node->router->if_incoming->net_dev->dev_addr,
-		       ETH_ALEN);
-		memcpy(entry->dest, orig_node->orig, ETH_ALEN);
-		entry->quality = orig_node->router->tq_avg;
-		packet->entries++;
+			if (neigh_node->tq_avg < 1)
+				continue;
 
-		if (vis_packet_full(info)) {
-			spin_unlock_bh(&bat_priv->orig_hash_lock);
-			return 0;
+			/* fill one entry into buffer. */
+			entry = (struct vis_info_entry *)
+				      skb_put(info->skb_packet, sizeof(*entry));
+			memcpy(entry->src,
+			       neigh_node->if_incoming->net_dev->dev_addr,
+			       ETH_ALEN);
+			memcpy(entry->dest, orig_node->orig, ETH_ALEN);
+			entry->quality = neigh_node->tq_avg;
+			packet->entries++;
+
+			if (vis_packet_full(info)) {
+				spin_unlock_bh(&bat_priv->orig_hash_lock);
+				return 0;
+			}
 		}
 	}
 
 	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
-	spin_lock_bh(&bat_priv->hna_lhash_lock);
-	while (hash_iterate(bat_priv->hna_local_hash, &hashit_local)) {
-		bucket = hlist_entry(hashit_local.walk, struct element_t,
-				     hlist);
-		hna_local_entry = bucket->data;
-		entry = (struct vis_info_entry *)skb_put(info->skb_packet,
-							 sizeof(*entry));
-		memset(entry->src, 0, ETH_ALEN);
-		memcpy(entry->dest, hna_local_entry->addr, ETH_ALEN);
-		entry->quality = 0; /* 0 means HNA */
-		packet->entries++;
+	hash = bat_priv->hna_local_hash;
 
-		if (vis_packet_full(info)) {
-			spin_unlock_bh(&bat_priv->hna_lhash_lock);
-			return 0;
+	spin_lock_bh(&bat_priv->hna_lhash_lock);
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
+
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			hna_local_entry = bucket->data;
+			entry = (struct vis_info_entry *)
+					skb_put(info->skb_packet,
+						sizeof(*entry));
+			memset(entry->src, 0, ETH_ALEN);
+			memcpy(entry->dest, hna_local_entry->addr, ETH_ALEN);
+			entry->quality = 0; /* 0 means HNA */
+			packet->entries++;
+
+			if (vis_packet_full(info)) {
+				spin_unlock_bh(&bat_priv->hna_lhash_lock);
+				return 0;
+			}
 		}
 	}
 
@@ -638,23 +671,30 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
  * held */
 static void purge_vis_packets(struct bat_priv *bat_priv)
 {
-	HASHIT(hashit);
+	int i;
+	struct hashtable_t *hash = bat_priv->vis_hash;
+	struct hlist_node *walk, *safe;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct vis_info *info;
 
-	while (hash_iterate(bat_priv->vis_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		info = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		/* never purge own data. */
-		if (info == bat_priv->my_vis_info)
-			continue;
+		hlist_for_each_entry_safe(bucket, walk, safe, head, hlist) {
+			info = bucket->data;
 
-		if (time_after(jiffies,
-			       info->first_seen + VIS_TIMEOUT * HZ)) {
-			hash_remove_bucket(bat_priv->vis_hash, &hashit);
-			send_list_del(info);
-			kref_put(&info->refcount, free_info);
+			/* never purge own data. */
+			if (info == bat_priv->my_vis_info)
+				continue;
+
+			if (time_after(jiffies,
+				       info->first_seen + VIS_TIMEOUT * HZ)) {
+				hlist_del(walk);
+				kfree(bucket);
+				send_list_del(info);
+				kref_put(&info->refcount, free_info);
+			}
 		}
 	}
 }
@@ -662,44 +702,50 @@ static void purge_vis_packets(struct bat_priv *bat_priv)
 static void broadcast_vis_packet(struct bat_priv *bat_priv,
 				 struct vis_info *info)
 {
-	HASHIT(hashit);
+	struct hashtable_t *hash = bat_priv->orig_hash;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	struct orig_node *orig_node;
 	struct vis_packet *packet;
 	struct sk_buff *skb;
 	struct batman_if *batman_if;
 	uint8_t dstaddr[ETH_ALEN];
+	int i;
 
 
 	spin_lock_bh(&bat_priv->orig_hash_lock);
 	packet = (struct vis_packet *)info->skb_packet->data;
 
 	/* send to all routers in range. */
-	while (hash_iterate(bat_priv->orig_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		orig_node = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		/* if it's a vis server and reachable, send it. */
-		if ((!orig_node) || (!orig_node->router))
-			continue;
-		if (!(orig_node->flags & VIS_SERVER))
-			continue;
-		/* don't send it if we already received the packet from
-		 * this node. */
-		if (recv_list_is_in(bat_priv, &info->recv_list,
-							orig_node->orig))
-			continue;
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			orig_node = bucket->data;
 
-		memcpy(packet->target_orig, orig_node->orig, ETH_ALEN);
-		batman_if = orig_node->router->if_incoming;
-		memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-		spin_unlock_bh(&bat_priv->orig_hash_lock);
+			/* if it's a vis server and reachable, send it. */
+			if ((!orig_node) || (!orig_node->router))
+				continue;
+			if (!(orig_node->flags & VIS_SERVER))
+				continue;
+			/* don't send it if we already received the packet from
+			* this node. */
+			if (recv_list_is_in(bat_priv, &info->recv_list,
+					    orig_node->orig))
+				continue;
 
-		skb = skb_clone(info->skb_packet, GFP_ATOMIC);
-		if (skb)
-			send_skb_packet(skb, batman_if, dstaddr);
+			memcpy(packet->target_orig, orig_node->orig, ETH_ALEN);
+			batman_if = orig_node->router->if_incoming;
+			memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
+			spin_unlock_bh(&bat_priv->orig_hash_lock);
 
-		spin_lock_bh(&bat_priv->orig_hash_lock);
+			skb = skb_clone(info->skb_packet, GFP_ATOMIC);
+			if (skb)
+				send_skb_packet(skb, batman_if, dstaddr);
+
+			spin_lock_bh(&bat_priv->orig_hash_lock);
+		}
 
 	}
 

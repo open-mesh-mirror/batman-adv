@@ -24,10 +24,6 @@
 
 #include <linux/list.h>
 
-#define HASHIT(name) struct hash_it_t name = { \
-		.index = 0, .walk = NULL, \
-		.safe = NULL}
-
 /* callback to a compare function.  should
  * compare 2 element datas for their keys,
  * return 0 if same and not 0 if not
@@ -45,12 +41,6 @@ struct element_t {
 	struct hlist_node hlist;	/* bucket list pointer */
 };
 
-struct hash_it_t {
-	size_t index;
-	struct hlist_node *walk;
-	struct hlist_node *safe;
-};
-
 struct hashtable_t {
 	struct hlist_head *table;   /* the hashtable itself, with the buckets */
 	int size;		    /* size of hashtable */
@@ -59,11 +49,10 @@ struct hashtable_t {
 /* allocates and clears the hash */
 struct hashtable_t *hash_new(int size);
 
-/* remove bucket (this might be used in hash_iterate() if you already found the
- * bucket you want to delete and don't need the overhead to find it again with
- * hash_remove().  But usually, you don't want to use this function, as it
- * fiddles with hash-internals. */
-void *hash_remove_bucket(struct hashtable_t *hash, struct hash_it_t *hash_it_t);
+/* remove element if you already found the element you want to delete and don't
+ * need the overhead to find it again with hash_remove().  But usually, you
+ * don't want to use this function, as it fiddles with hash-internals. */
+void *hash_remove_element(struct hashtable_t *hash, struct element_t *elem);
 
 /* free only the hashtable and the hash itself. */
 void hash_destroy(struct hashtable_t *hash);
@@ -137,17 +126,22 @@ static inline void *hash_remove(struct hashtable_t *hash,
 				hashdata_compare_cb compare,
 				hashdata_choose_cb choose, void *data)
 {
-	struct hash_it_t hash_it_t;
+	size_t index;
+	struct hlist_node *walk;
 	struct element_t *bucket;
 	struct hlist_head *head;
+	void *data_save;
 
-	hash_it_t.index = choose(data, hash->size);
-	head = &hash->table[hash_it_t.index];
+	index = choose(data, hash->size);
+	head = &hash->table[index];
 
-	hlist_for_each(hash_it_t.walk, head) {
-		bucket = hlist_entry(hash_it_t.walk, struct element_t, hlist);
-		if (compare(bucket->data, data))
-			return hash_remove_bucket(hash, &hash_it_t);
+	hlist_for_each_entry(bucket, walk, head, hlist) {
+		if (compare(bucket->data, data)) {
+			data_save = bucket->data;
+			hlist_del(walk);
+			kfree(bucket);
+			return data_save;
+		}
 	}
 
 	return NULL;
@@ -177,43 +171,6 @@ static inline void *hash_find(struct hashtable_t *hash,
 	}
 
 	return NULL;
-}
-
-/* iterate though the hash. First element is selected if an iterator
- * initialized with HASHIT() is supplied as iter. Use the returned
- * (or supplied) iterator to access the elements until hash_iterate returns
- * NULL. */
-static inline struct hash_it_t *hash_iterate(struct hashtable_t *hash,
-					     struct hash_it_t *iter)
-{
-	if (!hash)
-		return NULL;
-	if (!iter)
-		return NULL;
-
-	iter->walk = iter->safe;
-
-	/* we search for the next head with list entries */
-	if (!iter->walk) {
-		while (iter->index < hash->size) {
-			if (hlist_empty(&hash->table[iter->index]))
-				iter->index++;
-			else {
-				iter->walk = hash->table[iter->index].first;
-
-				/* search next time */
-				++iter->index;
-				break;
-			}
-		}
-	}
-
-	/* return iter when we found bucket otherwise null */
-	if (!iter->walk)
-		return NULL;
-
-	iter->safe = iter->walk->next;
-	return iter;
 }
 
 #endif /* _NET_BATMAN_ADV_HASH_H_ */

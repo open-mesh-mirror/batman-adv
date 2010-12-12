@@ -131,27 +131,34 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 int hna_local_fill_buffer(struct bat_priv *bat_priv,
 			  unsigned char *buff, int buff_len)
 {
+	struct hashtable_t *hash = bat_priv->hna_local_hash;
 	struct hna_local_entry *hna_local_entry;
 	struct element_t *bucket;
-	HASHIT(hashit);
-	int i = 0;
+	int i;
+	struct hlist_node *walk;
+	struct hlist_head *head;
+	int count = 0;
 
 	spin_lock_bh(&bat_priv->hna_lhash_lock);
 
-	while (hash_iterate(bat_priv->hna_local_hash, &hashit)) {
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		if (buff_len < (i + 1) * ETH_ALEN)
-			break;
+		hlist_for_each_entry(bucket, walk, head, hlist) {
 
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		hna_local_entry = bucket->data;
-		memcpy(buff + (i * ETH_ALEN), hna_local_entry->addr, ETH_ALEN);
+			if (buff_len < (count + 1) * ETH_ALEN)
+				break;
 
-		i++;
+			hna_local_entry = bucket->data;
+			memcpy(buff + (count * ETH_ALEN), hna_local_entry->addr,
+			       ETH_ALEN);
+
+			count++;
+		}
 	}
 
 	/* if we did not get all new local hnas see you next time  ;-) */
-	if (i == bat_priv->num_local_hna)
+	if (count == bat_priv->num_local_hna)
 		atomic_set(&bat_priv->hna_local_changed, 0);
 
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
@@ -162,9 +169,11 @@ int hna_local_seq_print_text(struct seq_file *seq, void *offset)
 {
 	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	struct hashtable_t *hash = bat_priv->hna_local_hash;
 	struct hna_local_entry *hna_local_entry;
-	HASHIT(hashit);
-	HASHIT(hashit_count);
+	int i;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	size_t buf_size, pos;
 	char *buff;
@@ -183,8 +192,12 @@ int hna_local_seq_print_text(struct seq_file *seq, void *offset)
 
 	buf_size = 1;
 	/* Estimate length for: " * xx:xx:xx:xx:xx:xx\n" */
-	while (hash_iterate(bat_priv->hna_local_hash, &hashit_count))
-		buf_size += 21;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
+
+		hlist_for_each(walk, head)
+			buf_size += 21;
+	}
 
 	buff = kmalloc(buf_size, GFP_ATOMIC);
 	if (!buff) {
@@ -194,12 +207,15 @@ int hna_local_seq_print_text(struct seq_file *seq, void *offset)
 	buff[0] = '\0';
 	pos = 0;
 
-	while (hash_iterate(bat_priv->hna_local_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		hna_local_entry = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		pos += snprintf(buff + pos, 22, " * %pM\n",
-				hna_local_entry->addr);
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			hna_local_entry = bucket->data;
+
+			pos += snprintf(buff + pos, 22, " * %pM\n",
+					hna_local_entry->addr);
+		}
 	}
 
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
@@ -240,6 +256,7 @@ void hna_local_remove(struct bat_priv *bat_priv,
 	hna_local_entry = (struct hna_local_entry *)
 		hash_find(bat_priv->hna_local_hash, compare_orig, choose_orig,
 			  addr);
+
 	if (hna_local_entry)
 		hna_local_del(bat_priv, hna_local_entry, message);
 
@@ -252,23 +269,30 @@ static void hna_local_purge(struct work_struct *work)
 		container_of(work, struct delayed_work, work);
 	struct bat_priv *bat_priv =
 		container_of(delayed_work, struct bat_priv, hna_work);
+	struct hashtable_t *hash = bat_priv->hna_local_hash;
 	struct hna_local_entry *hna_local_entry;
-	HASHIT(hashit);
+	int i;
+	struct hlist_node *walk, *safe;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	unsigned long timeout;
 
 	spin_lock_bh(&bat_priv->hna_lhash_lock);
 
-	while (hash_iterate(bat_priv->hna_local_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		hna_local_entry = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		timeout = hna_local_entry->last_seen + LOCAL_HNA_TIMEOUT * HZ;
+		hlist_for_each_entry_safe(bucket, walk, safe, head, hlist) {
+			hna_local_entry = bucket->data;
 
-		if ((!hna_local_entry->never_purge) &&
-		    time_after(jiffies, timeout))
-			hna_local_del(bat_priv, hna_local_entry,
-				      "address timed out");
+			timeout = hna_local_entry->last_seen;
+			timeout += LOCAL_HNA_TIMEOUT * HZ;
+
+			if ((!hna_local_entry->never_purge) &&
+			    time_after(jiffies, timeout))
+				hna_local_del(bat_priv, hna_local_entry,
+					"address timed out");
+		}
 	}
 
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
@@ -375,9 +399,11 @@ int hna_global_seq_print_text(struct seq_file *seq, void *offset)
 {
 	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct bat_priv *bat_priv = netdev_priv(net_dev);
+	struct hashtable_t *hash = bat_priv->hna_global_hash;
 	struct hna_global_entry *hna_global_entry;
-	HASHIT(hashit);
-	HASHIT(hashit_count);
+	int i;
+	struct hlist_node *walk;
+	struct hlist_head *head;
 	struct element_t *bucket;
 	size_t buf_size, pos;
 	char *buff;
@@ -395,8 +421,12 @@ int hna_global_seq_print_text(struct seq_file *seq, void *offset)
 
 	buf_size = 1;
 	/* Estimate length for: " * xx:xx:xx:xx:xx:xx via xx:xx:xx:xx:xx:xx\n"*/
-	while (hash_iterate(bat_priv->hna_global_hash, &hashit_count))
-		buf_size += 43;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
+
+		hlist_for_each(walk, head)
+			buf_size += 43;
+	}
 
 	buff = kmalloc(buf_size, GFP_ATOMIC);
 	if (!buff) {
@@ -406,13 +436,17 @@ int hna_global_seq_print_text(struct seq_file *seq, void *offset)
 	buff[0] = '\0';
 	pos = 0;
 
-	while (hash_iterate(bat_priv->hna_global_hash, &hashit)) {
-		bucket = hlist_entry(hashit.walk, struct element_t, hlist);
-		hna_global_entry = bucket->data;
+	for (i = 0; i < hash->size; i++) {
+		head = &hash->table[i];
 
-		pos += snprintf(buff + pos, 44,
-				" * %pM via %pM\n", hna_global_entry->addr,
-				hna_global_entry->orig_node->orig);
+		hlist_for_each_entry(bucket, walk, head, hlist) {
+			hna_global_entry = bucket->data;
+
+			pos += snprintf(buff + pos, 44,
+					" * %pM via %pM\n",
+					hna_global_entry->addr,
+					hna_global_entry->orig_node->orig);
+		}
 	}
 
 	spin_unlock_bh(&bat_priv->hna_ghash_lock);
