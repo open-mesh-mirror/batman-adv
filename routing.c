@@ -154,14 +154,16 @@ static int is_bidirectional_neigh(struct orig_node *orig_node,
 	unsigned char total_count;
 
 	if (orig_node == orig_neigh_node) {
-		hlist_for_each_entry(tmp_neigh_node, node,
-				     &orig_node->neigh_list, list) {
+		rcu_read_lock();
+		hlist_for_each_entry_rcu(tmp_neigh_node, node,
+					 &orig_node->neigh_list, list) {
 
 			if (compare_orig(tmp_neigh_node->addr,
 					 orig_neigh_node->orig) &&
 			    (tmp_neigh_node->if_incoming == if_incoming))
 				neigh_node = tmp_neigh_node;
 		}
+		rcu_read_unlock();
 
 		if (!neigh_node)
 			neigh_node = create_neighbor(orig_node,
@@ -175,14 +177,16 @@ static int is_bidirectional_neigh(struct orig_node *orig_node,
 		neigh_node->last_valid = jiffies;
 	} else {
 		/* find packet count of corresponding one hop neighbor */
-		hlist_for_each_entry(tmp_neigh_node, node,
-				     &orig_neigh_node->neigh_list, list) {
+		rcu_read_lock();
+		hlist_for_each_entry_rcu(tmp_neigh_node, node,
+					 &orig_neigh_node->neigh_list, list) {
 
 			if (compare_orig(tmp_neigh_node->addr,
 					 orig_neigh_node->orig) &&
 			    (tmp_neigh_node->if_incoming == if_incoming))
 				neigh_node = tmp_neigh_node;
 		}
+		rcu_read_unlock();
 
 		if (!neigh_node)
 			neigh_node = create_neighbor(orig_neigh_node,
@@ -267,8 +271,9 @@ static void update_orig(struct bat_priv *bat_priv,
 	bat_dbg(DBG_BATMAN, bat_priv, "update_originator(): "
 		"Searching and updating originator entry of received packet\n");
 
-	hlist_for_each_entry(tmp_neigh_node, node,
-			     &orig_node->neigh_list, list) {
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_neigh_node, node,
+				 &orig_node->neigh_list, list) {
 		if (compare_orig(tmp_neigh_node->addr, ethhdr->h_source) &&
 		    (tmp_neigh_node->if_incoming == if_incoming)) {
 			neigh_node = tmp_neigh_node;
@@ -283,6 +288,7 @@ static void update_orig(struct bat_priv *bat_priv,
 		tmp_neigh_node->tq_avg =
 			ring_buffer_avg(tmp_neigh_node->tq_recv);
 	}
+	rcu_read_unlock();
 
 	if (!neigh_node) {
 		struct orig_node *orig_tmp;
@@ -411,8 +417,9 @@ static char count_real_packets(struct ethhdr *ethhdr,
 			     &orig_node->batman_seqno_reset))
 		return -1;
 
-	hlist_for_each_entry(tmp_neigh_node, node,
-			     &orig_node->neigh_list, list) {
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_neigh_node, node,
+				 &orig_node->neigh_list, list) {
 
 		is_duplicate |= get_bit_status(tmp_neigh_node->real_bits,
 					       orig_node->last_real_seqno,
@@ -432,6 +439,7 @@ static char count_real_packets(struct ethhdr *ethhdr,
 		tmp_neigh_node->real_packet_count =
 			bit_packet_count(tmp_neigh_node->real_bits);
 	}
+	rcu_read_unlock();
 
 	if (need_update) {
 		bat_dbg(DBG_BATMAN, bat_priv,
@@ -484,15 +492,19 @@ void update_bonding_candidates(struct bat_priv *bat_priv,
 	 * as "bonding partner" */
 
 	/* first, zero the list */
-	hlist_for_each_entry(tmp_neigh_node, node,
-			     &orig_node->neigh_list, list) {
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_neigh_node, node,
+				 &orig_node->neigh_list, list) {
 		tmp_neigh_node->next_bond_candidate = NULL;
 	}
+	rcu_read_unlock();
 
 	first_candidate = NULL;
 	last_candidate = NULL;
-	hlist_for_each_entry(tmp_neigh_node, node,
-			     &orig_node->neigh_list, list) {
+
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_neigh_node, node,
+				 &orig_node->neigh_list, list) {
 
 		/* only consider if it has the same primary address ...  */
 		if (memcmp(orig_node->orig,
@@ -509,8 +521,8 @@ void update_bonding_candidates(struct bat_priv *bat_priv,
 		 * select this candidate because of possible interference. */
 
 		interference_candidate = 0;
-		hlist_for_each_entry(tmp_neigh_node2, node2,
-				     &orig_node->neigh_list, list) {
+		hlist_for_each_entry_rcu(tmp_neigh_node2, node2,
+					 &orig_node->neigh_list, list) {
 
 			if (tmp_neigh_node2 == tmp_neigh_node)
 				continue;
@@ -544,6 +556,7 @@ void update_bonding_candidates(struct bat_priv *bat_priv,
 
 		candidates++;
 	}
+	rcu_read_unlock();
 
 	if (candidates > 0) {
 		first_candidate->next_bond_candidate = last_candidate;
