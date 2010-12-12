@@ -90,6 +90,8 @@ static void update_route(struct bat_priv *bat_priv,
 			 struct neigh_node *neigh_node,
 			 unsigned char *hna_buff, int hna_buff_len)
 {
+	struct neigh_node *neigh_node_tmp;
+
 	/* route deleted */
 	if ((orig_node->router != NULL) && (neigh_node == NULL)) {
 
@@ -116,7 +118,12 @@ static void update_route(struct bat_priv *bat_priv,
 			orig_node->router->addr);
 	}
 
+	if (neigh_node)
+		kref_get(&neigh_node->refcount);
+	neigh_node_tmp = orig_node->router;
 	orig_node->router = neigh_node;
+	if (neigh_node_tmp)
+		kref_put(&neigh_node_tmp->refcount, neigh_node_free_ref);
 }
 
 
