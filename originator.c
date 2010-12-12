@@ -45,7 +45,7 @@ int originator_init(struct bat_priv *bat_priv)
 		return 1;
 
 	spin_lock_bh(&bat_priv->orig_hash_lock);
-	bat_priv->orig_hash = hash_new(128);
+	bat_priv->orig_hash = hash_new(1024);
 
 	if (!bat_priv->orig_hash)
 		goto err;
@@ -124,7 +124,6 @@ void originator_free(struct bat_priv *bat_priv)
 struct orig_node *get_orig_node(struct bat_priv *bat_priv, uint8_t *addr)
 {
 	struct orig_node *orig_node;
-	struct hashtable_t *swaphash;
 	int size;
 	int hash_added;
 
@@ -171,17 +170,6 @@ struct orig_node *get_orig_node(struct bat_priv *bat_priv, uint8_t *addr)
 			      orig_node);
 	if (hash_added < 0)
 		goto free_bcast_own_sum;
-
-	if (bat_priv->orig_hash->elements * 4 > bat_priv->orig_hash->size) {
-		swaphash = hash_resize(bat_priv->orig_hash, choose_orig,
-				       bat_priv->orig_hash->size * 2);
-
-		if (!swaphash)
-			bat_dbg(DBG_BATMAN, bat_priv,
-				"Couldn't resize orig hash table\n");
-		else
-			bat_priv->orig_hash = swaphash;
-	}
 
 	return orig_node;
 free_bcast_own_sum:

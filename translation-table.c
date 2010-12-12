@@ -42,7 +42,7 @@ int hna_local_init(struct bat_priv *bat_priv)
 	if (bat_priv->hna_local_hash)
 		return 1;
 
-	bat_priv->hna_local_hash = hash_new(128);
+	bat_priv->hna_local_hash = hash_new(1024);
 
 	if (!bat_priv->hna_local_hash)
 		return 0;
@@ -58,7 +58,6 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 	struct bat_priv *bat_priv = netdev_priv(soft_iface);
 	struct hna_local_entry *hna_local_entry;
 	struct hna_global_entry *hna_global_entry;
-	struct hashtable_t *swaphash;
 	int required_bytes;
 
 	spin_lock_bh(&bat_priv->hna_lhash_lock);
@@ -112,17 +111,6 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 		 hna_local_entry);
 	bat_priv->num_local_hna++;
 	atomic_set(&bat_priv->hna_local_changed, 1);
-
-	if (bat_priv->hna_local_hash->elements * 4 >
-					bat_priv->hna_local_hash->size) {
-		swaphash = hash_resize(bat_priv->hna_local_hash, choose_orig,
-				       bat_priv->hna_local_hash->size * 2);
-
-		if (!swaphash)
-			pr_err("Couldn't resize local hna hash table\n");
-		else
-			bat_priv->hna_local_hash = swaphash;
-	}
 
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
 
@@ -302,7 +290,7 @@ int hna_global_init(struct bat_priv *bat_priv)
 	if (bat_priv->hna_global_hash)
 		return 1;
 
-	bat_priv->hna_global_hash = hash_new(128);
+	bat_priv->hna_global_hash = hash_new(1024);
 
 	if (!bat_priv->hna_global_hash)
 		return 0;
@@ -316,7 +304,6 @@ void hna_global_add_orig(struct bat_priv *bat_priv,
 {
 	struct hna_global_entry *hna_global_entry;
 	struct hna_local_entry *hna_local_entry;
-	struct hashtable_t *swaphash;
 	int hna_buff_count = 0;
 	unsigned char *hna_ptr;
 
@@ -382,21 +369,6 @@ void hna_global_add_orig(struct bat_priv *bat_priv,
 			orig_node->hna_buff_len = hna_buff_len;
 		}
 	}
-
-	spin_lock_bh(&bat_priv->hna_ghash_lock);
-
-	if (bat_priv->hna_global_hash->elements * 4 >
-					bat_priv->hna_global_hash->size) {
-		swaphash = hash_resize(bat_priv->hna_global_hash, choose_orig,
-				       bat_priv->hna_global_hash->size * 2);
-
-		if (!swaphash)
-			pr_err("Couldn't resize global hna hash table\n");
-		else
-			bat_priv->hna_global_hash = swaphash;
-	}
-
-	spin_unlock_bh(&bat_priv->hna_ghash_lock);
 }
 
 int hna_global_seq_print_text(struct seq_file *seq, void *offset)

@@ -27,8 +27,6 @@ static void hash_init(struct hashtable_t *hash)
 {
 	int i;
 
-	hash->elements = 0;
-
 	for (i = 0 ; i < hash->size; i++)
 		INIT_HLIST_HEAD(&hash->table[i]);
 }
@@ -77,7 +75,6 @@ void *hash_remove_bucket(struct hashtable_t *hash, struct hash_it_t *hash_it_t)
 
 	hlist_del(hash_it_t->walk);
 	kfree(bucket);
-	hash->elements--;
 
 	return data_save;
 }
