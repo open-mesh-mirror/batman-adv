@@ -79,7 +79,7 @@ static void update_HNA(struct bat_priv *bat_priv, struct orig_node *orig_node,
 			hna_global_del_orig(bat_priv, orig_node,
 					    "originator changed hna");
 
-		if ((hna_buff_len > 0) && (hna_buff != NULL))
+		if ((hna_buff_len > 0) && (hna_buff))
 			hna_global_add_orig(bat_priv, orig_node,
 					    hna_buff, hna_buff_len);
 	}
@@ -91,7 +91,7 @@ static void update_route(struct bat_priv *bat_priv,
 			 unsigned char *hna_buff, int hna_buff_len)
 {
 	/* route deleted */
-	if ((orig_node->router != NULL) && (neigh_node == NULL)) {
+	if ((orig_node->router) && (!neigh_node)) {
 
 		bat_dbg(DBG_ROUTES, bat_priv, "Deleting route towards: %pM\n",
 			orig_node->orig);
@@ -99,7 +99,7 @@ static void update_route(struct bat_priv *bat_priv,
 				    "originator timed out");
 
 		/* route added */
-	} else if ((orig_node->router == NULL) && (neigh_node != NULL)) {
+	} else if ((!orig_node->router) && (neigh_node)) {
 
 		bat_dbg(DBG_ROUTES, bat_priv,
 			"Adding route towards: %pM (via %pM)\n",
@@ -125,7 +125,7 @@ void update_routes(struct bat_priv *bat_priv, struct orig_node *orig_node,
 		   int hna_buff_len)
 {
 
-	if (orig_node == NULL)
+	if (!orig_node)
 		return;
 
 	if (orig_node->router != neigh_node)
@@ -391,7 +391,7 @@ static char count_real_packets(struct ethhdr *ethhdr,
 	int set_mark;
 
 	orig_node = get_orig_node(bat_priv, batman_packet->orig);
-	if (orig_node == NULL)
+	if (!orig_node)
 		return 0;
 
 	seq_diff = batman_packet->seqno - orig_node->last_real_seqno;
@@ -503,7 +503,7 @@ void update_bonding_candidates(struct bat_priv *bat_priv,
 
 			/* we only care if the other candidate is even
 			 * considered as candidate. */
-			if (tmp_neigh_node2->next_bond_candidate == NULL)
+			if (!tmp_neigh_node2->next_bond_candidate)
 				continue;
 
 
@@ -520,7 +520,7 @@ void update_bonding_candidates(struct bat_priv *bat_priv,
 		if (interference_candidate)
 			continue;
 
-		if (first_candidate == NULL) {
+		if (!first_candidate) {
 			first_candidate = tmp_neigh_node;
 			tmp_neigh_node->next_bond_candidate = first_candidate;
 		} else
@@ -670,7 +670,7 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 	}
 
 	orig_node = get_orig_node(bat_priv, batman_packet->orig);
-	if (orig_node == NULL)
+	if (!orig_node)
 		return;
 
 	is_duplicate = count_real_packets(ethhdr, batman_packet, if_incoming);
@@ -707,13 +707,12 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 	orig_neigh_node = (is_single_hop_neigh ?
 			   orig_node :
 			   get_orig_node(bat_priv, ethhdr->h_source));
-	if (orig_neigh_node == NULL)
+	if (!orig_neigh_node)
 		return;
 
 	/* drop packet if sender is not a direct neighbor and if we
 	 * don't route towards it */
-	if (!is_single_hop_neigh &&
-	    (orig_neigh_node->router == NULL)) {
+	if (!is_single_hop_neigh && (!orig_neigh_node->router)) {
 		bat_dbg(DBG_BATMAN, bat_priv,
 			"Drop packet: OGM via unknown neighbor!\n");
 		return;
@@ -836,8 +835,7 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 						   icmp_packet->orig));
 	ret = NET_RX_DROP;
 
-	if ((orig_node != NULL) &&
-	    (orig_node->router != NULL)) {
+	if ((orig_node) && (orig_node->router)) {
 
 		/* don't lock while sending the packets ... we therefore
 		 * copy the required data before sending */
@@ -898,8 +896,7 @@ static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
 			       icmp_packet->orig));
 	ret = NET_RX_DROP;
 
-	if ((orig_node != NULL) &&
-	    (orig_node->router != NULL)) {
+	if ((orig_node) && (orig_node->router)) {
 
 		/* don't lock while sending the packets ... we therefore
 		 * copy the required data before sending */
@@ -991,8 +988,7 @@ int recv_icmp_packet(struct sk_buff *skb, struct batman_if *recv_if)
 		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       icmp_packet->dst));
 
-	if ((orig_node != NULL) &&
-	    (orig_node->router != NULL)) {
+	if ((orig_node) && (orig_node->router)) {
 
 		/* don't lock while sending the packets ... we therefore
 		 * copy the required data before sending */
@@ -1315,7 +1311,7 @@ int recv_bcast_packet(struct sk_buff *skb, struct batman_if *recv_if)
 		     hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			       bcast_packet->orig));
 
-	if (orig_node == NULL) {
+	if (!orig_node) {
 		spin_unlock_bh(&bat_priv->orig_hash_lock);
 		return NET_RX_DROP;
 	}

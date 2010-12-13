@@ -384,7 +384,7 @@ static struct vis_info *add_packet(struct bat_priv *bat_priv,
 			     &search_elem);
 	kfree_skb(search_elem.skb_packet);
 
-	if (old_info != NULL) {
+	if (old_info) {
 		old_packet = (struct vis_packet *)old_info->skb_packet->data;
 		if (!seq_after(ntohl(vis_packet->seqno),
 			       ntohl(old_packet->seqno))) {

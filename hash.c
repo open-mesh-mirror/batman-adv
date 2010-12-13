@@ -45,13 +45,13 @@ struct hashtable_t *hash_new(int size)
 
 	hash = kmalloc(sizeof(struct hashtable_t) , GFP_ATOMIC);
 
-	if (hash == NULL)
+	if (!hash)
 		return NULL;
 
 	hash->size = size;
 	hash->table = kmalloc(sizeof(struct element_t *) * size, GFP_ATOMIC);
 
-	if (hash->table == NULL) {
+	if (!hash->table) {
 		kfree(hash);
 		return NULL;
 	}

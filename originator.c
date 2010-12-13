@@ -218,7 +218,7 @@ static bool purge_orig_neighbors(struct bat_priv *bat_priv,
 			list_del(list_pos);
 			kfree(neigh_node);
 		} else {
-			if ((*best_neigh_node == NULL) ||
+			if ((!*best_neigh_node) ||
 			    (neigh_node->tq_avg > (*best_neigh_node)->tq_avg))
 				*best_neigh_node = neigh_node;
 		}
