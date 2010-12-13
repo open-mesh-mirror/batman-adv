@@ -245,7 +245,7 @@ static bool purge_orig_neighbors(struct bat_priv *bat_priv,
 			hlist_del_rcu(&neigh_node->list);
 			call_rcu(&neigh_node->rcu, neigh_node_free_rcu);
 		} else {
-			if ((*best_neigh_node == NULL) ||
+			if ((!*best_neigh_node) ||
 			    (neigh_node->tq_avg > (*best_neigh_node)->tq_avg))
 				*best_neigh_node = neigh_node;
 		}

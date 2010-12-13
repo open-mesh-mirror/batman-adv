@@ -73,7 +73,7 @@ static inline void hash_delete(struct hashtable_t *hash,
 
 		hlist_for_each_safe(walk, safe, head) {
 			bucket = hlist_entry(walk, struct element_t, hlist);
-			if (free_cb != NULL)
+			if (free_cb)
 				free_cb(bucket->data, arg);
 
 			hlist_del(walk);
@@ -109,7 +109,7 @@ static inline int hash_add(struct hashtable_t *hash,
 	/* no duplicate found in list, add new element */
 	bucket = kmalloc(sizeof(struct element_t), GFP_ATOMIC);
 
-	if (bucket == NULL)
+	if (!bucket)
 		return -1;
 
 	bucket->data = data;
