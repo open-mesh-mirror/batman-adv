@@ -452,8 +452,7 @@ static char count_real_packets(struct ethhdr *ethhdr,
 }
 
 /* copy primary address for bonding */
-static void mark_bonding_address(struct bat_priv *bat_priv,
-				 struct orig_node *orig_node,
+static void mark_bonding_address(struct orig_node *orig_node,
 				 struct orig_node *orig_neigh_node,
 				 struct batman_packet *batman_packet)
 
@@ -466,8 +465,7 @@ static void mark_bonding_address(struct bat_priv *bat_priv,
 }
 
 /* mark possible bond.candidates in the neighbor list */
-void update_bonding_candidates(struct bat_priv *bat_priv,
-			       struct orig_node *orig_node)
+void update_bonding_candidates(struct orig_node *orig_node)
 {
 	int candidates;
 	int interference_candidate;
@@ -757,9 +755,8 @@ void receive_bat_packet(struct ethhdr *ethhdr,
 		update_orig(bat_priv, orig_node, ethhdr, batman_packet,
 			    if_incoming, hna_buff, hna_buff_len, is_duplicate);
 
-	mark_bonding_address(bat_priv, orig_node,
-			     orig_neigh_node, batman_packet);
-	update_bonding_candidates(bat_priv, orig_node);
+	mark_bonding_address(orig_node, orig_neigh_node, batman_packet);
+	update_bonding_candidates(orig_node);
 
 	/* is single hop (direct) neighbor */
 	if (is_single_hop_neigh) {
@@ -893,7 +890,7 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 }
 
 static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
-				  struct sk_buff *skb, size_t icmp_len)
+				  struct sk_buff *skb)
 {
 	struct orig_node *orig_node;
 	struct icmp_packet *icmp_packet;
@@ -1005,7 +1002,7 @@ int recv_icmp_packet(struct sk_buff *skb, struct batman_if *recv_if)
 
 	/* TTL exceeded */
 	if (icmp_packet->ttl < 2)
-		return recv_icmp_ttl_exceeded(bat_priv, skb, hdr_size);
+		return recv_icmp_ttl_exceeded(bat_priv, skb);
 
 	ret = NET_RX_DROP;
 
