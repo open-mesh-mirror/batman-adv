@@ -178,17 +178,16 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 		(struct unicast_frag_packet *)skb->data;
 
 	*new_skb = NULL;
-	spin_lock_bh(&bat_priv->orig_hash_lock);
+
 	rcu_read_lock();
 	orig_node = ((struct orig_node *)
 		    hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			      unicast_packet->orig));
-	rcu_read_unlock();
+	if (!orig_node)
+		goto unlock;
 
-	if (!orig_node) {
-		pr_debug("couldn't find originator in orig_hash\n");
-		goto out;
-	}
+	kref_get(&orig_node->refcount);
+	rcu_read_unlock();
 
 	orig_node->last_frag_packet = jiffies;
 
@@ -212,9 +211,14 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 	/* if not, merge failed */
 	if (*new_skb)
 		ret = NET_RX_SUCCESS;
-out:
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
+	goto out;
+
+unlock:
+	rcu_read_unlock();
+out:
+	if (orig_node)
+		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return ret;
 }
 
@@ -279,47 +283,54 @@ int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
 	struct unicast_packet *unicast_packet;
 	struct orig_node *orig_node;
-	struct batman_if *batman_if;
-	struct neigh_node *router;
+	struct neigh_node *neigh_node;
 	int data_len = skb->len;
-	uint8_t dstaddr[6];
-
-	spin_lock_bh(&bat_priv->orig_hash_lock);
+	int ret = 1;
 
 	/* get routing information */
-	if (is_multicast_ether_addr(ethhdr->h_dest))
+	if (is_multicast_ether_addr(ethhdr->h_dest)) {
 		orig_node = (struct orig_node *)gw_get_selected(bat_priv);
-	else {
+		if (!orig_node)
+			goto trans_search;
+
+		kref_get(&orig_node->refcount);
+		goto find_router;
+	} else {
 		rcu_read_lock();
 		orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
 							   compare_orig,
 							   choose_orig,
 							   ethhdr->h_dest));
+		if (!orig_node) {
+			rcu_read_unlock();
+			goto trans_search;
+		}
+
+		kref_get(&orig_node->refcount);
 		rcu_read_unlock();
+		goto find_router;
 	}
 
-	/* check for hna host */
-	if (!orig_node)
-		orig_node = transtable_search(bat_priv, ethhdr->h_dest);
+trans_search:
+	/* check for hna host - increases orig_node refcount */
+	orig_node = transtable_search(bat_priv, ethhdr->h_dest);
 
-	/* find_router() increases neigh_nodes refcount if found. */
-	router = find_router(bat_priv, orig_node, NULL);
+find_router:
+	/**
+	 * find_router():
+	 *  - if orig_node is NULL it returns NULL
+	 *  - increases neigh_nodes refcount if found.
+	 */
+	neigh_node = find_router(bat_priv, orig_node, NULL);
 
-	if (!router)
-		goto unlock;
+	if (!neigh_node)
+		goto out;
 
-	/* don't lock while sending the packets ... we therefore
-		* copy the required data before sending */
-	batman_if = router->if_incoming;
-	memcpy(dstaddr, router->addr, ETH_ALEN);
-
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
-
-	if (batman_if->if_status != IF_ACTIVE)
-		goto dropped;
+	if (neigh_node->if_incoming->if_status != IF_ACTIVE)
+		goto out;
 
 	if (my_skb_head_push(skb, sizeof(struct unicast_packet)) < 0)
-		goto dropped;
+		goto out;
 
 	unicast_packet = (struct unicast_packet *)skb->data;
 
@@ -333,18 +344,24 @@ int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 
 	if (atomic_read(&bat_priv->fragmentation) &&
 	    data_len + sizeof(struct unicast_packet) >
-	    batman_if->net_dev->mtu) {
+				neigh_node->if_incoming->net_dev->mtu) {
 		/* send frag skb decreases ttl */
 		unicast_packet->ttl++;
-		return frag_send_skb(skb, bat_priv, batman_if,
-				     dstaddr);
+		ret = frag_send_skb(skb, bat_priv,
+				    neigh_node->if_incoming, neigh_node->addr);
+		goto out;
 	}
-	send_skb_packet(skb, batman_if, dstaddr);
-	return 0;
 
-unlock:
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
-dropped:
-	kfree_skb(skb);
-	return 1;
+	send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
+	ret = 0;
+	goto out;
+
+out:
+	if (neigh_node)
+		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+	if (orig_node)
+		kref_put(&orig_node->refcount, orig_node_free_ref);
+	if (ret == 1)
+		kfree_skb(skb);
+	return ret;
 }

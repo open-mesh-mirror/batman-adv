@@ -538,6 +538,10 @@ struct orig_node *transtable_search(struct bat_priv *bat_priv, uint8_t *addr)
 	hna_global_entry = (struct hna_global_entry *)
 				hash_find(bat_priv->hna_global_hash,
 					  compare_orig, choose_orig, addr);
+
+	if (hna_global_entry)
+		kref_get(&hna_global_entry->orig_node->refcount);
+
 	rcu_read_unlock();
 	spin_unlock_bh(&bat_priv->hna_ghash_lock);
 

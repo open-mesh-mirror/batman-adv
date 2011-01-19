@@ -590,7 +590,6 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 	info->first_seen = jiffies;
 	packet->vis_type = atomic_read(&bat_priv->vis_mode);
 
-	spin_lock_bh(&bat_priv->orig_hash_lock);
 	memcpy(packet->target_orig, broadcast_addr, ETH_ALEN);
 	packet->ttl = TTL;
 	packet->seqno = htonl(ntohl(packet->seqno) + 1);
@@ -600,10 +599,8 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 	if (packet->vis_type == VIS_TYPE_CLIENT_UPDATE) {
 		best_tq = find_best_vis_server(bat_priv, info);
 
-		if (best_tq < 0) {
-			spin_unlock_bh(&bat_priv->orig_hash_lock);
+		if (best_tq < 0)
 			return -1;
-		}
 	}
 
 	for (i = 0; i < hash->size; i++) {
@@ -636,16 +633,11 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 			entry->quality = neigh_node->tq_avg;
 			packet->entries++;
 
-			if (vis_packet_full(info)) {
-				rcu_read_unlock();
-				spin_unlock_bh(&bat_priv->orig_hash_lock);
-				return 0;
-			}
+			if (vis_packet_full(info))
+				goto unlock;
 		}
 		rcu_read_unlock();
 	}
-
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
 	hash = bat_priv->hna_local_hash;
 
@@ -671,6 +663,10 @@ static int generate_vis_packet(struct bat_priv *bat_priv)
 	}
 
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
+	return 0;
+
+unlock:
+	rcu_read_unlock();
 	return 0;
 }
 
@@ -721,7 +717,6 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 	int i;
 
 
-	spin_lock_bh(&bat_priv->orig_hash_lock);
 	packet = (struct vis_packet *)info->skb_packet->data;
 
 	/* send to all routers in range. */
@@ -746,54 +741,58 @@ static void broadcast_vis_packet(struct bat_priv *bat_priv,
 			memcpy(packet->target_orig, orig_node->orig, ETH_ALEN);
 			batman_if = orig_node->router->if_incoming;
 			memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-			spin_unlock_bh(&bat_priv->orig_hash_lock);
 
 			skb = skb_clone(info->skb_packet, GFP_ATOMIC);
 			if (skb)
 				send_skb_packet(skb, batman_if, dstaddr);
 
-			spin_lock_bh(&bat_priv->orig_hash_lock);
 		}
 		rcu_read_unlock();
 	}
-
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
 }
 
 static void unicast_vis_packet(struct bat_priv *bat_priv,
 			       struct vis_info *info)
 {
 	struct orig_node *orig_node;
+	struct neigh_node *neigh_node = NULL;
 	struct sk_buff *skb;
 	struct vis_packet *packet;
-	struct batman_if *batman_if;
-	uint8_t dstaddr[ETH_ALEN];
 
-	spin_lock_bh(&bat_priv->orig_hash_lock);
 	packet = (struct vis_packet *)info->skb_packet->data;
+
 	rcu_read_lock();
 	orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
 						   compare_orig, choose_orig,
 						   packet->target_orig));
+
+	if (!orig_node)
+		goto unlock;
+
+	kref_get(&orig_node->refcount);
+	neigh_node = orig_node->router;
+
+	if (!neigh_node)
+		goto unlock;
+
+	kref_get(&neigh_node->refcount);
 	rcu_read_unlock();
-
-	if ((!orig_node) || (!orig_node->router))
-		goto out;
-
-	/* don't lock while sending the packets ... we therefore
-	 * copy the required data before sending */
-	batman_if = orig_node->router->if_incoming;
-	memcpy(dstaddr, orig_node->router->addr, ETH_ALEN);
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
 
 	skb = skb_clone(info->skb_packet, GFP_ATOMIC);
 	if (skb)
-		send_skb_packet(skb, batman_if, dstaddr);
+		send_skb_packet(skb, neigh_node->if_incoming,
+				neigh_node->addr);
 
-	return;
+	goto out;
 
+unlock:
+	rcu_read_unlock();
 out:
-	spin_unlock_bh(&bat_priv->orig_hash_lock);
+	if (neigh_node)
+		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+	if (orig_node)
+		kref_put(&orig_node->refcount, orig_node_free_ref);
+	return;
 }
 
 /* only send one vis packet. called from send_vis_packets() */
