@@ -61,10 +61,12 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 	int required_bytes;
 
 	spin_lock_bh(&bat_priv->hna_lhash_lock);
+	rcu_read_lock();
 	hna_local_entry =
 		((struct hna_local_entry *)hash_find(bat_priv->hna_local_hash,
 						     compare_orig, choose_orig,
 						     addr));
+	rcu_read_unlock();
 	spin_unlock_bh(&bat_priv->hna_lhash_lock);
 
 	if (hna_local_entry) {
@@ -117,9 +119,11 @@ void hna_local_add(struct net_device *soft_iface, uint8_t *addr)
 	/* remove address from global hash if present */
 	spin_lock_bh(&bat_priv->hna_ghash_lock);
 
+	rcu_read_lock();
 	hna_global_entry = ((struct hna_global_entry *)
 				hash_find(bat_priv->hna_global_hash,
 					  compare_orig, choose_orig, addr));
+	rcu_read_unlock();
 
 	if (hna_global_entry)
 		_hna_global_del_orig(bat_priv, hna_global_entry,
@@ -253,9 +257,11 @@ void hna_local_remove(struct bat_priv *bat_priv,
 
 	spin_lock_bh(&bat_priv->hna_lhash_lock);
 
+	rcu_read_lock();
 	hna_local_entry = (struct hna_local_entry *)
 		hash_find(bat_priv->hna_local_hash, compare_orig, choose_orig,
 			  addr);
+	rcu_read_unlock();
 
 	if (hna_local_entry)
 		hna_local_del(bat_priv, hna_local_entry, message);
@@ -335,9 +341,11 @@ void hna_global_add_orig(struct bat_priv *bat_priv,
 		spin_lock_bh(&bat_priv->hna_ghash_lock);
 
 		hna_ptr = hna_buff + (hna_buff_count * ETH_ALEN);
+		rcu_read_lock();
 		hna_global_entry = (struct hna_global_entry *)
 			hash_find(bat_priv->hna_global_hash, compare_orig,
 				  choose_orig, hna_ptr);
+		rcu_read_unlock();
 
 		if (!hna_global_entry) {
 			spin_unlock_bh(&bat_priv->hna_ghash_lock);
@@ -369,9 +377,11 @@ void hna_global_add_orig(struct bat_priv *bat_priv,
 		spin_lock_bh(&bat_priv->hna_lhash_lock);
 
 		hna_ptr = hna_buff + (hna_buff_count * ETH_ALEN);
+		rcu_read_lock();
 		hna_local_entry = (struct hna_local_entry *)
 			hash_find(bat_priv->hna_local_hash, compare_orig,
 				  choose_orig, hna_ptr);
+		rcu_read_unlock();
 
 		if (hna_local_entry)
 			hna_local_del(bat_priv, hna_local_entry,
@@ -484,9 +494,11 @@ void hna_global_del_orig(struct bat_priv *bat_priv,
 
 	while ((hna_buff_count + 1) * ETH_ALEN <= orig_node->hna_buff_len) {
 		hna_ptr = orig_node->hna_buff + (hna_buff_count * ETH_ALEN);
+		rcu_read_lock();
 		hna_global_entry = (struct hna_global_entry *)
 			hash_find(bat_priv->hna_global_hash, compare_orig,
 				  choose_orig, hna_ptr);
+		rcu_read_unlock();
 
 		if ((hna_global_entry) &&
 		    (hna_global_entry->orig_node == orig_node))
@@ -522,9 +534,11 @@ struct orig_node *transtable_search(struct bat_priv *bat_priv, uint8_t *addr)
 	struct hna_global_entry *hna_global_entry;
 
 	spin_lock_bh(&bat_priv->hna_ghash_lock);
+	rcu_read_lock();
 	hna_global_entry = (struct hna_global_entry *)
 				hash_find(bat_priv->hna_global_hash,
 					  compare_orig, choose_orig, addr);
+	rcu_read_unlock();
 	spin_unlock_bh(&bat_priv->hna_ghash_lock);
 
 	if (!hna_global_entry)

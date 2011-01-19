@@ -179,9 +179,11 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 
 	*new_skb = NULL;
 	spin_lock_bh(&bat_priv->orig_hash_lock);
+	rcu_read_lock();
 	orig_node = ((struct orig_node *)
 		    hash_find(bat_priv->orig_hash, compare_orig, choose_orig,
 			      unicast_packet->orig));
+	rcu_read_unlock();
 
 	if (!orig_node) {
 		pr_debug("couldn't find originator in orig_hash\n");
@@ -287,11 +289,14 @@ int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 	/* get routing information */
 	if (is_multicast_ether_addr(ethhdr->h_dest))
 		orig_node = (struct orig_node *)gw_get_selected(bat_priv);
-	else
+	else {
+		rcu_read_lock();
 		orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
 							   compare_orig,
 							   choose_orig,
 							   ethhdr->h_dest));
+		rcu_read_unlock();
+	}
 
 	/* check for hna host */
 	if (!orig_node)
