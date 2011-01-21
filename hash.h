@@ -70,7 +70,7 @@ static inline void hash_delete(struct hashtable_t *hash,
 	struct hlist_head *head;
 	struct hlist_node *walk, *safe;
 	struct element_t *bucket;
-	spinlock_t *list_lock;
+	spinlock_t *list_lock; /* spinlock to protect write access */
 	int i;
 
 	for (i = 0; i < hash->size; i++) {
@@ -100,7 +100,7 @@ static inline int hash_add(struct hashtable_t *hash,
 	struct hlist_head *head;
 	struct hlist_node *walk, *safe;
 	struct element_t *bucket;
-	spinlock_t *list_lock;
+	spinlock_t *list_lock; /* spinlock to protect write access */
 
 	if (!hash)
 		goto err;

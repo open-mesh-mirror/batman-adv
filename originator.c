@@ -150,7 +150,7 @@ void originator_free(struct bat_priv *bat_priv)
 	struct hlist_node *walk, *safe;
 	struct hlist_head *head;
 	struct element_t *bucket;
-	spinlock_t *list_lock;
+	spinlock_t *list_lock; /* spinlock to protect write access */
 	struct orig_node *orig_node;
 	int i;
 
@@ -353,7 +353,7 @@ static void _purge_orig(struct bat_priv *bat_priv)
 	struct hlist_node *walk, *safe;
 	struct hlist_head *head;
 	struct element_t *bucket;
-	spinlock_t *list_lock;
+	spinlock_t *list_lock; /* spinlock to protect write access */
 	struct orig_node *orig_node;
 	int i;
 
