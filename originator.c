@@ -179,7 +179,7 @@ void originator_free(struct bat_priv *bat_priv)
 	hash_destroy(hash);
 }
 
-void bucket_free_orig_rcu(struct rcu_head *rcu)
+static void bucket_free_orig_rcu(struct rcu_head *rcu)
 {
 	struct element_t *bucket;
 	struct orig_node *orig_node;
