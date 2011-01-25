@@ -1427,27 +1427,31 @@ int recv_bcast_packet(struct sk_buff *skb, struct batman_if *recv_if)
 			       bcast_packet->orig));
 
 	if (!orig_node)
-		goto unlock;
+		goto rcu_unlock;
 
 	kref_get(&orig_node->refcount);
 	rcu_read_unlock();
 
+	spin_lock_bh(&orig_node->bcast_seqno_lock);
+
 	/* check whether the packet is a duplicate */
 	if (get_bit_status(orig_node->bcast_bits, orig_node->last_bcast_seqno,
 			   ntohl(bcast_packet->seqno)))
-		goto out;
+		goto spin_unlock;
 
 	seq_diff = ntohl(bcast_packet->seqno) - orig_node->last_bcast_seqno;
 
 	/* check whether the packet is old and the host just restarted. */
 	if (window_protected(bat_priv, seq_diff,
 			     &orig_node->bcast_seqno_reset))
-		goto out;
+		goto spin_unlock;
 
 	/* mark broadcast in flood history, update window position
 	 * if required. */
 	if (bit_get_packet(bat_priv, orig_node->bcast_bits, seq_diff, 1))
 		orig_node->last_bcast_seqno = ntohl(bcast_packet->seqno);
+
+	spin_unlock_bh(&orig_node->bcast_seqno_lock);
 
 	/* rebroadcast packet */
 	add_bcast_packet_to_list(bat_priv, skb);
@@ -1457,8 +1461,11 @@ int recv_bcast_packet(struct sk_buff *skb, struct batman_if *recv_if)
 	ret = NET_RX_SUCCESS;
 	goto out;
 
-unlock:
+rcu_unlock:
 	rcu_read_unlock();
+	goto out;
+spin_unlock:
+	spin_unlock_bh(&orig_node->bcast_seqno_lock);
 out:
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
