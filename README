@@ -1,4 +1,4 @@
-[state: 21-11-2010]
+[state: 27-01-2011]
 
 BATMAN-ADV
 ----------
@@ -18,7 +18,7 @@ Batman advanced was implemented as a Linux kernel driver  to  re-
 duce the overhead to a minimum. It does not depend on any (other)
 network driver, and can be used on wifi as well as ethernet  lan,
 vpn,  etc ... (anything with ethernet-style layer 2). It compiles
-against and should work with Linux 2.6.21 -  2.6.37.   Supporting
+against and should work with Linux 2.6.21 -  2.6.38.   Supporting
 older versions is not planned, but it's probably easy to backport
 it.  If you work on a backport, feel free to contact us.  :-)
 
@@ -83,15 +83,16 @@ All  mesh  wide  settings  can be found in batman's own interface
 folder:
 
 #  ls  /sys/class/net/bat0/mesh/
-#  aggregated_ogms  bonding  fragmentation  orig_interval
-#  vis_mode
+#  aggregated_ogms  gw_bandwidth  hop_penalty
+#  bonding          gw_mode       orig_interval
+#  fragmentation    gw_sel_class  vis_mode
 
 
 There is a special folder for debugging informations:
 
 #  ls /sys/kernel/debug/batman_adv/bat0/
-#  originators  socket  transtable_global  transtable_local
-#  vis_data
+#  gateways     socket        transtable_global  vis_data
+#  originators  softif_neigh  transtable_local
 
 
 Some of the files contain all sort of status information  regard-
@@ -250,7 +251,7 @@ CONTACT
 Please send us comments, experiences, questions, anything :)
 
 IRC:            #batman   on   irc.freenode.org
-Mailing-list:   b.a.t.m.a.n@open-mesh.net (optional  subscription
+Mailing-list:   b.a.t.m.a.n@open-mesh.org (optional  subscription
           at https://lists.open-mesh.org/mm/listinfo/b.a.t.m.a.n)
 
 You can also contact the Authors:
