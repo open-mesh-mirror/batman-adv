@@ -1,3 +1,16 @@
+batman-adv 2011.0.0:
+
+* support latest kernels (2.6.21 - 2.6.38)
+* conversion of reference counting to kref
+* allow merging and refragmentation of unicast packets during transfers
+* add softif bridge loop detection
+* make hop_penalty configurable through sysfs
+* reimplement most of the batman-adv hash functionality
+* support for optimized DHCP based gateway selection
+* cleanup of the sysfs code
+
+ -- Sat, 29 Jan 2011 20:08:05 +0100
+
 batman-adv 2010.2.0:
 
 * support latest kernels (2.6.21 - 2.6.37)
