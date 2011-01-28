@@ -866,11 +866,9 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 	struct orig_node *orig_node = NULL;
 	struct neigh_node *neigh_node = NULL;
 	struct icmp_packet_rr *icmp_packet;
-	struct ethhdr *ethhdr;
 	int ret = NET_RX_DROP;
 
 	icmp_packet = (struct icmp_packet_rr *)skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	/* add data to device queue */
 	if (icmp_packet->msg_type != ECHO_REQUEST) {
@@ -904,7 +902,6 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 		goto out;
 
 	icmp_packet = (struct icmp_packet_rr *)skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
 	memcpy(icmp_packet->orig,
@@ -932,11 +929,9 @@ static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
 	struct orig_node *orig_node = NULL;
 	struct neigh_node *neigh_node = NULL;
 	struct icmp_packet *icmp_packet;
-	struct ethhdr *ethhdr;
 	int ret = NET_RX_DROP;
 
 	icmp_packet = (struct icmp_packet *)skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	/* send TTL exceeded if packet is an echo request (traceroute) */
 	if (icmp_packet->msg_type != ECHO_REQUEST) {
@@ -971,7 +966,6 @@ static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
 		goto out;
 
 	icmp_packet = (struct icmp_packet *)skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	memcpy(icmp_packet->dst, icmp_packet->orig, ETH_ALEN);
 	memcpy(icmp_packet->orig,
@@ -1068,7 +1062,6 @@ int recv_icmp_packet(struct sk_buff *skb, struct batman_if *recv_if)
 		goto out;
 
 	icmp_packet = (struct icmp_packet_rr *)skb->data;
-	ethhdr = (struct ethhdr *)skb_mac_header(skb);
 
 	/* decrement ttl */
 	icmp_packet->ttl--;
@@ -1100,7 +1093,6 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 	struct neigh_node *router, *first_candidate, *tmp_neigh_node;
 	static uint8_t zero_mac[ETH_ALEN] = {0, 0, 0, 0, 0, 0};
 	int bonding_enabled;
-	int best_router_tq;
 
 	if (!orig_node)
 		return NULL;
@@ -1190,7 +1182,6 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 		/* if bonding is disabled, use the best of the
 		 * remaining candidates which are not using
 		 * this interface. */
-		best_router_tq = 0;
 		list_for_each_entry_rcu(tmp_neigh_node,
 			&primary_orig_node->bond_list, bonding_list) {
 			if (!first_candidate)
@@ -1203,7 +1194,6 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 				if ((!router) ||
 				(tmp_neigh_node->tq_avg > router->tq_avg)) {
 					router = tmp_neigh_node;
-					best_router_tq = 0;
 				}
 		}
 
