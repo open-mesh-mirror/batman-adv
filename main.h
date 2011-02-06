@@ -114,9 +114,9 @@
 #include <net/sock.h>		/* struct sock */
 #include <linux/jiffies.h>
 #include <linux/seq_file.h>
-#include "types.h"
-
 #include "compat.h"
+
+#include "types.h"
 
 #ifndef REVISION_VERSION
 #define REVISION_VERSION_STR ""
