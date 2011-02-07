@@ -300,28 +300,12 @@ int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 	/* get routing information */
 	if (is_multicast_ether_addr(ethhdr->h_dest)) {
 		orig_node = (struct orig_node *)gw_get_selected(bat_priv);
-		if (!orig_node)
-			goto trans_search;
-
-		kref_get(&orig_node->refcount);
-		goto find_router;
-	} else {
-		rcu_read_lock();
-		orig_node = ((struct orig_node *)hash_find(bat_priv->orig_hash,
-							   compare_orig,
-							   choose_orig,
-							   ethhdr->h_dest));
-		if (!orig_node) {
-			rcu_read_unlock();
-			goto trans_search;
+		if (orig_node) {
+			kref_get(&orig_node->refcount);
+			goto find_router;
 		}
-
-		kref_get(&orig_node->refcount);
-		rcu_read_unlock();
-		goto find_router;
 	}
 
-trans_search:
 	/* check for hna host - increases orig_node refcount */
 	orig_node = transtable_search(bat_priv, ethhdr->h_dest);
 
