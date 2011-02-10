@@ -117,12 +117,12 @@ static void update_route(struct bat_priv *bat_priv,
 			orig_node->router->addr);
 	}
 
-	if (neigh_node)
-		kref_get(&neigh_node->refcount);
+	if (neigh_node && !atomic_inc_not_zero(&neigh_node->refcount))
+		neigh_node = NULL;
 	neigh_node_tmp = orig_node->router;
 	orig_node->router = neigh_node;
 	if (neigh_node_tmp)
-		kref_put(&neigh_node_tmp->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node_tmp);
 }
 
 
@@ -174,7 +174,11 @@ static int is_bidirectional_neigh(struct orig_node *orig_node,
 		if (!neigh_node)
 			goto unlock;
 
-		kref_get(&neigh_node->refcount);
+		if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+			neigh_node = NULL;
+			goto unlock;
+		}
+
 		rcu_read_unlock();
 
 		neigh_node->last_valid = jiffies;
@@ -199,7 +203,11 @@ static int is_bidirectional_neigh(struct orig_node *orig_node,
 		if (!neigh_node)
 			goto unlock;
 
-		kref_get(&neigh_node->refcount);
+		if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+			neigh_node = NULL;
+			goto unlock;
+		}
+
 		rcu_read_unlock();
 	}
 
@@ -261,7 +269,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	return ret;
 }
 
@@ -274,8 +282,8 @@ void bonding_candidate_del(struct orig_node *orig_node,
 		goto out;
 
 	list_del_rcu(&neigh_node->bonding_list);
-	call_rcu(&neigh_node->rcu_bond, neigh_node_free_rcu_bond);
 	INIT_LIST_HEAD(&neigh_node->bonding_list);
+	neigh_node_free_ref(neigh_node);
 	atomic_dec(&orig_node->bond_candidates);
 
 out:
@@ -336,8 +344,10 @@ static void bonding_candidate_add(struct orig_node *orig_node,
 	if (!list_empty(&neigh_node->bonding_list))
 		goto out;
 
+	if (!atomic_inc_not_zero(&neigh_node->refcount))
+		goto out;
+
 	list_add_rcu(&neigh_node->bonding_list, &orig_node->bond_list);
-	kref_get(&neigh_node->refcount);
 	atomic_inc(&orig_node->bond_candidates);
 	goto out;
 
@@ -381,7 +391,10 @@ static void update_orig(struct bat_priv *bat_priv,
 	hlist_for_each_entry_rcu(tmp_neigh_node, node,
 				 &orig_node->neigh_list, list) {
 		if (compare_orig(tmp_neigh_node->addr, ethhdr->h_source) &&
-		    (tmp_neigh_node->if_incoming == if_incoming)) {
+		    (tmp_neigh_node->if_incoming == if_incoming) &&
+		     atomic_inc_not_zero(&tmp_neigh_node->refcount)) {
+			if (neigh_node)
+				neigh_node_free_ref(neigh_node);
 			neigh_node = tmp_neigh_node;
 			continue;
 		}
@@ -408,11 +421,15 @@ static void update_orig(struct bat_priv *bat_priv,
 		kref_put(&orig_tmp->refcount, orig_node_free_ref);
 		if (!neigh_node)
 			goto unlock;
+
+		if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+			neigh_node = NULL;
+			goto unlock;
+		}
 	} else
 		bat_dbg(DBG_BATMAN, bat_priv,
 			"Updating existing last-hop neighbor of originator\n");
 
-	kref_get(&neigh_node->refcount);
 	rcu_read_unlock();
 
 	orig_node->flags = batman_packet->flags;
@@ -489,7 +506,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 }
 
 /* checks whether the host restarted and is in the protection time.
@@ -893,7 +910,11 @@ static int recv_my_icmp_packet(struct bat_priv *bat_priv,
 	if (!neigh_node)
 		goto unlock;
 
-	kref_get(&neigh_node->refcount);
+	if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+		neigh_node = NULL;
+		goto unlock;
+	}
+
 	rcu_read_unlock();
 
 	/* create a copy of the skb, if needed, to modify it. */
@@ -916,7 +937,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return ret;
@@ -957,7 +978,11 @@ static int recv_icmp_ttl_exceeded(struct bat_priv *bat_priv,
 	if (!neigh_node)
 		goto unlock;
 
-	kref_get(&neigh_node->refcount);
+	if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+		neigh_node = NULL;
+		goto unlock;
+	}
+
 	rcu_read_unlock();
 
 	/* create a copy of the skb, if needed, to modify it. */
@@ -980,7 +1005,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return ret;
@@ -1053,7 +1078,11 @@ int recv_icmp_packet(struct sk_buff *skb, struct batman_if *recv_if)
 	if (!neigh_node)
 		goto unlock;
 
-	kref_get(&neigh_node->refcount);
+	if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+		neigh_node = NULL;
+		goto unlock;
+	}
+
 	rcu_read_unlock();
 
 	/* create a copy of the skb, if needed, to modify it. */
@@ -1074,7 +1103,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return ret;
@@ -1107,11 +1136,10 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 	/* select default router to output */
 	router = orig_node->router;
 	router_orig = orig_node->router->orig_node;
-	if (!router_orig) {
+	if (!router_orig || !atomic_inc_not_zero(&router->refcount)) {
 		rcu_read_unlock();
 		return NULL;
 	}
-
 
 	if ((!recv_if) && (!bonding_enabled))
 		goto return_router;
@@ -1145,6 +1173,7 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 	 * is is not on the interface where the packet came
 	 * in. */
 
+	neigh_node_free_ref(router);
 	first_candidate = NULL;
 	router = NULL;
 
@@ -1157,15 +1186,22 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 			if (!first_candidate)
 				first_candidate = tmp_neigh_node;
 			/* recv_if == NULL on the first node. */
-			if (tmp_neigh_node->if_incoming != recv_if) {
+			if (tmp_neigh_node->if_incoming != recv_if &&
+			    atomic_inc_not_zero(&tmp_neigh_node->refcount)) {
 				router = tmp_neigh_node;
 				break;
 			}
 		}
 
 		/* use the first candidate if nothing was found. */
-		if (!router)
+		if (!router && first_candidate &&
+		    atomic_inc_not_zero(&first_candidate->refcount))
 			router = first_candidate;
+
+		if (!router) {
+			rcu_read_unlock();
+			return NULL;
+		}
 
 		/* selected should point to the next element
 		 * after the current router */
@@ -1187,21 +1223,34 @@ struct neigh_node *find_router(struct bat_priv *bat_priv,
 				first_candidate = tmp_neigh_node;
 
 			/* recv_if == NULL on the first node. */
-			if (tmp_neigh_node->if_incoming != recv_if)
-				/* if we don't have a router yet
-				 * or this one is better, choose it. */
-				if ((!router) ||
-				(tmp_neigh_node->tq_avg > router->tq_avg)) {
-					router = tmp_neigh_node;
-				}
+			if (tmp_neigh_node->if_incoming == recv_if)
+				continue;
+
+			if (!atomic_inc_not_zero(&tmp_neigh_node->refcount))
+				continue;
+
+			/* if we don't have a router yet
+			 * or this one is better, choose it. */
+			if ((!router) ||
+			    (tmp_neigh_node->tq_avg > router->tq_avg)) {
+				/* decrement refcount of
+				 * previously selected router */
+				if (router)
+					neigh_node_free_ref(router);
+
+				router = tmp_neigh_node;
+				atomic_inc_not_zero(&router->refcount);
+			}
+
+			neigh_node_free_ref(tmp_neigh_node);
 		}
 
 		/* use the first candidate if nothing was found. */
-		if (!router)
+		if (!router && first_candidate &&
+		    atomic_inc_not_zero(&first_candidate->refcount))
 			router = first_candidate;
 	}
 return_router:
-	kref_get(&router->refcount);
 	rcu_read_unlock();
 	return router;
 }
@@ -1314,7 +1363,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return ret;

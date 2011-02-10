@@ -776,7 +776,11 @@ static void unicast_vis_packet(struct bat_priv *bat_priv,
 	if (!neigh_node)
 		goto unlock;
 
-	kref_get(&neigh_node->refcount);
+	if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+		neigh_node = NULL;
+		goto unlock;
+	}
+
 	rcu_read_unlock();
 
 	skb = skb_clone(info->skb_packet, GFP_ATOMIC);
@@ -790,7 +794,7 @@ unlock:
 	rcu_read_unlock();
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return;

@@ -232,7 +232,11 @@ static ssize_t bat_socket_write(struct file *file, const char __user *buff,
 	if (!neigh_node)
 		goto unlock;
 
-	kref_get(&neigh_node->refcount);
+	if (!atomic_inc_not_zero(&neigh_node->refcount)) {
+		neigh_node = NULL;
+		goto unlock;
+	}
+
 	rcu_read_unlock();
 
 	if (!neigh_node->if_incoming)
@@ -260,7 +264,7 @@ free_skb:
 	kfree_skb(skb);
 out:
 	if (neigh_node)
-		kref_put(&neigh_node->refcount, neigh_node_free_ref);
+		neigh_node_free_ref(neigh_node);
 	if (orig_node)
 		kref_put(&orig_node->refcount, orig_node_free_ref);
 	return len;
