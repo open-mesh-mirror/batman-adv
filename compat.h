@@ -270,4 +270,10 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...);
 
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+
+#define __rcu
+
+#endif /* < KERNEL_VERSION(2, 6, 36) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
