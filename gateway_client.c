@@ -123,8 +123,7 @@ void gw_election(struct bat_priv *bat_priv)
 				"Removing selected gateway - "
 				"no gateway in range\n");
 			gw_deselect(bat_priv);
-		}
-		else
+		} else
 			rcu_read_unlock();
 
 		return;
