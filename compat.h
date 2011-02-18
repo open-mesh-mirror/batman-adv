@@ -270,6 +270,18 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...);
 
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 34)
+
+#define hlist_first_rcu(head) (*((struct hlist_node **)(&(head)->first)))
+#define hlist_next_rcu(node) (*((struct hlist_node **)(&(node)->next)))
+
+#define __hlist_for_each_rcu(pos, head) \
+	for (pos = rcu_dereference(hlist_first_rcu(head)); \
+	pos && ({ prefetch(pos->next); 1; }); \
+	pos = rcu_dereference(hlist_next_rcu(pos)))
+
+#endif /* < KERNEL_VERSION(2, 6, 34) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 
 #define __rcu
