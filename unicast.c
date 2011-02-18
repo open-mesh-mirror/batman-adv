@@ -211,11 +211,9 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 	if (*new_skb)
 		ret = NET_RX_SUCCESS;
 
-	goto out;
-
 out:
 	if (orig_node)
-		kref_put(&orig_node->refcount, orig_node_free_ref);
+		orig_node_free_ref(orig_node);
 	return ret;
 }
 
@@ -344,7 +342,7 @@ out:
 	if (neigh_node)
 		neigh_node_free_ref(neigh_node);
 	if (orig_node)
-		kref_put(&orig_node->refcount, orig_node_free_ref);
+		orig_node_free_ref(orig_node);
 	if (ret == 1)
 		kfree_skb(skb);
 	return ret;
