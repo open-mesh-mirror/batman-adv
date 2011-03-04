@@ -349,6 +349,7 @@ static void _purge_orig(struct bat_priv *bat_priv)
 				if (orig_node->gw_flags)
 					gw_node_delete(bat_priv, orig_node);
 				hlist_del_rcu(node);
+				orig_node_free_ref(orig_node);
 				continue;
 			}
 
