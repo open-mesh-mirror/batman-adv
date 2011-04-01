@@ -337,19 +337,20 @@ void gw_node_update(struct bat_priv *bat_priv,
 				goto deselect;
 		}
 
-		goto out;
+		goto unlock;
 	}
 
 	if (new_gwflags == 0)
-		goto out;
+		goto unlock;
 
 	gw_node_add(bat_priv, orig_node, new_gwflags);
-	goto out;
+	goto unlock;
 
 deselect:
 	gw_deselect(bat_priv);
-out:
+unlock:
 	rcu_read_unlock();
+out:
 	if (curr_gw)
 		gw_node_free_ref(curr_gw);
 }
