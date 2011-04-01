@@ -123,7 +123,7 @@ static void softif_neigh_select(struct bat_priv *bat_priv,
 	spin_unlock_bh(&bat_priv->softif_neigh_lock);
 }
 
-void softif_neigh_deselect(struct bat_priv *bat_priv)
+static void softif_neigh_deselect(struct bat_priv *bat_priv)
 {
 	softif_neigh_select(bat_priv, NULL);
 }
