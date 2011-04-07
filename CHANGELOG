@@ -1,3 +1,13 @@
+batman-adv 2011.1.0:
+
+* support latest kernels (2.6.21 - 2.6.39)
+* cleanup of coding style
+* removal of the big orig_hash lock and usage of fine grained locking
+* many bug fixes (fragmented packets linearisation, fragments numbering,
+  verification of added interfaces, ...)
+
+ -- Sat, Sun, 17 Apr 2011 17:41:53 +0200
+
 batman-adv 2011.0.0:
 
 * support latest kernels (2.6.21 - 2.6.38)
