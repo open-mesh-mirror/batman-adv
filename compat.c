@@ -1015,4 +1015,20 @@ void free_rcu_softif_neigh(struct rcu_head *rcu)
 	kfree(softif_neigh);
 }
 
+void free_rcu_tt_local_entry(struct rcu_head *rcu)
+{
+	struct tt_local_entry *tt_local_entry;
+
+	tt_local_entry = container_of(rcu, struct tt_local_entry, rcu);
+	kfree(tt_local_entry);
+}
+
+void free_rcu_tt_global_entry(struct rcu_head *rcu)
+{
+	struct tt_global_entry *tt_global_entry;
+
+	tt_global_entry = container_of(rcu, struct tt_global_entry, rcu);
+	kfree(tt_global_entry);
+}
+
 #endif /* < KERNEL_VERSION(2, 6, 40) */
