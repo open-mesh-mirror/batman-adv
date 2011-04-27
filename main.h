@@ -46,10 +46,18 @@
 /* sliding packet range of received originator messages in squence numbers
  * (should be a multiple of our word size) */
 #define TQ_LOCAL_WINDOW_SIZE 64
+#define TT_REQUEST_TIMEOUT 3 /* seconds we have to keep pending tt_req */
+
 #define TQ_GLOBAL_WINDOW_SIZE 5
 #define TQ_LOCAL_BIDRECT_SEND_MINIMUM 1
 #define TQ_LOCAL_BIDRECT_RECV_MINIMUM 1
 #define TQ_TOTAL_BIDRECT_LIMIT 1
+
+#define TT_OGM_APPEND_MAX 3 /* number of OGMs sent with the last tt diff */
+
+/* Transtable change flags */
+#define TT_CHANGE_ADD 0x00
+#define TT_CHANGE_DEL 0x01
 
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 
@@ -90,9 +98,9 @@
 
 /* all messages related to routing / flooding / broadcasting / etc */
 #define DBG_BATMAN 1
-/* route or tt entry added / changed / deleted */
-#define DBG_ROUTES 2
-#define DBG_ALL 3
+#define DBG_ROUTES 2	/* route added / changed / deleted */
+#define DBG_TT 4	/* translation table operations */
+#define DBG_ALL 7
 
 
 /*
