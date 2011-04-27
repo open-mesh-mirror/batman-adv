@@ -31,6 +31,7 @@
 #define BAT_VIS          0x05
 #define BAT_UNICAST_FRAG 0x06
 #define BAT_TT_QUERY     0x07
+#define BAT_ROAM_ADV     0x08
 
 /* this file is included by batctl which needs these defines */
 #define COMPAT_VERSION 14
@@ -167,6 +168,16 @@ struct tt_query_packet {
 	 *		  ttvn
 	 * if TT_RESPONSE: table_size */
 	uint16_t tt_data;
+} __packed;
+
+struct roam_adv_packet {
+	uint8_t  packet_type;
+	uint8_t  version;
+	uint8_t  ttl;
+	uint8_t  reserved;
+	uint8_t  dst[ETH_ALEN];
+	uint8_t  src[ETH_ALEN];
+	uint8_t  client[ETH_ALEN];
 } __packed;
 
 #endif /* _NET_BATMAN_ADV_PACKET_H_ */
