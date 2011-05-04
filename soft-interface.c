@@ -175,12 +175,12 @@ static struct softif_neigh *softif_neigh_get(struct bat_priv *bat_priv,
 			continue;
 
 		softif_neigh->last_seen = jiffies;
-		goto out;
+		goto unlock;
 	}
 
 	softif_neigh = kzalloc(sizeof(struct softif_neigh), GFP_ATOMIC);
 	if (!softif_neigh)
-		goto out;
+		goto unlock;
 
 	memcpy(softif_neigh->addr, addr, ETH_ALEN);
 	softif_neigh->last_seen = jiffies;
@@ -193,8 +193,9 @@ static struct softif_neigh *softif_neigh_get(struct bat_priv *bat_priv,
 			   &softif_neigh_vid->softif_neigh_list);
 	spin_unlock_bh(&bat_priv->softif_neigh_lock);
 
-out:
+unlock:
 	rcu_read_unlock();
+out:
 	if (softif_neigh_vid)
 		softif_neigh_vid_free_ref(softif_neigh_vid);
 	return softif_neigh;
