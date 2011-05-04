@@ -183,6 +183,9 @@ static inline char *pack_hex_byte(char *buf, u8 byte)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
 
+#define ethtool_cmd_speed_set(_ep, _speed) \
+	do { (_ep)->speed = (_speed); } while (0)
+
 #ifndef dereference_function_descriptor
 #define dereference_function_descriptor(p) (p)
 #endif
