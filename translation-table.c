@@ -505,7 +505,8 @@ int tt_global_seq_print_text(struct seq_file *seq, void *offset)
 		goto out;
 	}
 
-	seq_printf(seq, "Globally announced TT entries received via the mesh %s\n",
+	seq_printf(seq,
+		   "Globally announced TT entries received via the mesh %s\n",
 		   net_dev->name);
 
 	spin_lock_bh(&bat_priv->tt_ghash_lock);
