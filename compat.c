@@ -1,4 +1,33 @@
 #include <linux/version.h>
+#include "main.h"
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
+
+#include "bat_sysfs.h"		/* struct bat_attribute */
+
+ssize_t bat_wrapper_show(struct kobject *kobj, struct attribute *attr,
+			 char *buf)
+{
+	struct bat_attribute *bat_attr = to_battr(attr);
+
+	if (bat_attr->show)
+		return bat_attr->show(kobj, attr, buf);
+
+	return -EIO;
+}
+
+ssize_t bat_wrapper_store(struct kobject *kobj, struct attribute *attr,
+			  const char *buf, size_t count)
+{
+	struct bat_attribute *bat_attr = to_battr(attr);
+
+	if (bat_attr->store)
+		return bat_attr->store(kobj, attr, (char *)buf, count);
+
+	return -EIO;
+}
+
+#endif /* < KERNEL_VERSION(2, 6, 25) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
 
@@ -880,11 +909,10 @@ int bat_vscnprintf(char *buf, size_t size, const char *fmt, va_list args)
 asmlinkage int bat_printk(const char *fmt, ...)
 {
 	va_list args;
-	int r;
 	char buf[256];
 
 	va_start(args, fmt);
-	r = bat_vsnprintf(buf, sizeof(buf), fmt, args);
+	bat_vsnprintf(buf, sizeof(buf), fmt, args);
 	va_end(args);
 
 	return printk("%s", buf);

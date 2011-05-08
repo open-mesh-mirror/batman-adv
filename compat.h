@@ -26,7 +26,6 @@
 #define _NET_BATMAN_ADV_COMPAT_H_
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
-#include "bat_sysfs.h"		/* struct bat_attribute */
 
 #ifndef IPPROTO_UDP
 #define IPPROTO_UDP 17
@@ -107,28 +106,11 @@ static inline int skb_cow_head(struct sk_buff *skb, unsigned int headroom)
 
 #define to_battr(a) container_of(a, struct bat_attribute, attr)
 
-static inline ssize_t bat_wrapper_show(struct kobject *kobj,
-				   struct attribute *attr, char *buf)
-{
-	struct bat_attribute *bat_attr = to_battr(attr);
+ssize_t bat_wrapper_show(struct kobject *kobj, struct attribute *attr,
+			 char *buf);
 
-	if (bat_attr->show)
-		return bat_attr->show(kobj, attr, buf);
-
-	return -EIO;
-}
-
-static inline ssize_t bat_wrapper_store(struct kobject *kobj,
-				    struct attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct bat_attribute *bat_attr = to_battr(attr);
-
-	if (bat_attr->store)
-		return bat_attr->store(kobj, attr, (char *)buf, count);
-
-	return -EIO;
-}
+ssize_t bat_wrapper_store(struct kobject *kobj, struct attribute *attr,
+			  const char *buf, size_t count);
 
 static struct sysfs_ops bat_wrapper_ops = {
 	.show   = bat_wrapper_show,
@@ -182,6 +164,9 @@ static inline char *pack_hex_byte(char *buf, u8 byte)
 #endif /* < KERNEL_VERSION(2, 6, 26) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
+
+#define ethtool_cmd_speed_set(_ep, _speed) \
+	do { (_ep)->speed = (_speed); } while (0)
 
 #ifndef dereference_function_descriptor
 #define dereference_function_descriptor(p) (p)
