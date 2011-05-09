@@ -1,3 +1,4 @@
+#include <linux/in.h>
 #include <linux/version.h>
 #include "main.h"
 
