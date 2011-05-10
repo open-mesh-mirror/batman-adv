@@ -29,18 +29,10 @@
 #include <linux/udp.h>
 #include <linux/if_vlan.h>
 
-static void gw_node_free_rcu(struct rcu_head *rcu)
-{
-	struct gw_node *gw_node;
-
-	gw_node = container_of(rcu, struct gw_node, rcu);
-	kfree(gw_node);
-}
-
 static void gw_node_free_ref(struct gw_node *gw_node)
 {
 	if (atomic_dec_and_test(&gw_node->refcount))
-		call_rcu(&gw_node->rcu, gw_node_free_rcu);
+		kfree_rcu(gw_node, rcu);
 }
 
 static struct gw_node *gw_get_selected_gw_node(struct bat_priv *bat_priv)
