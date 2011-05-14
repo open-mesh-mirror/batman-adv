@@ -265,6 +265,8 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...);
 	pos && ({ prefetch(pos->next); 1; }); \
 	pos = rcu_dereference(hlist_next_rcu(pos)))
 
+#define rcu_dereference_protected(p, c) (p)
+
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
