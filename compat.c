@@ -988,3 +988,31 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...)
 }
 
 #endif /* < KERNEL_VERSION(2, 6, 29) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 40)
+
+void free_rcu_gw_node(struct rcu_head *rcu)
+{
+	struct gw_node *gw_node;
+
+	gw_node = container_of(rcu, struct gw_node, rcu);
+	kfree(gw_node);
+}
+
+void free_rcu_neigh_node(struct rcu_head *rcu)
+{
+	struct neigh_node *neigh_node;
+
+	neigh_node = container_of(rcu, struct neigh_node, rcu);
+	kfree(neigh_node);
+}
+
+void free_rcu_softif_neigh(struct rcu_head *rcu)
+{
+	struct softif_neigh *softif_neigh;
+
+	softif_neigh = container_of(rcu, struct softif_neigh, rcu);
+	kfree(softif_neigh);
+}
+
+#endif /* < KERNEL_VERSION(2, 6, 40) */

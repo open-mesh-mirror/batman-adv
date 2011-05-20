@@ -275,4 +275,14 @@ int bat_seq_printf(struct seq_file *m, const char *f, ...);
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 40)
+
+#define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, free_rcu_##ptr)
+
+void free_rcu_gw_node(struct rcu_head *rcu);
+void free_rcu_neigh_node(struct rcu_head *rcu);
+void free_rcu_softif_neigh(struct rcu_head *rcu);
+
+#endif /* < KERNEL_VERSION(2, 6, 40) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
