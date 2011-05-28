@@ -724,7 +724,7 @@ static void tt_global_roam_purge(struct bat_priv *bat_priv)
 		spin_lock_bh(list_lock);
 		hlist_for_each_entry_safe(tt_global_entry, node, node_tmp,
 					  head, hash_entry) {
-			if (!tt_global_entry->flags & TT_GLOBAL_ROAM)
+			if (!(tt_global_entry->flags & TT_GLOBAL_ROAM))
 				continue;
 			if (!is_out_of_time(tt_global_entry->roam_at,
 					    TT_GLOBAL_ROAM_TIMEOUT * 1000))
