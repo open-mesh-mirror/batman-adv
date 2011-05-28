@@ -32,7 +32,7 @@
 #define BAT_UNICAST_FRAG 0x06
 
 /* this file is included by batctl which needs these defines */
-#define COMPAT_VERSION 12
+#define COMPAT_VERSION 14
 #define DIRECTLINK 0x40
 #define VIS_SERVER 0x20
 #define PRIMARIES_FIRST_HOP 0x10
@@ -55,15 +55,15 @@
 struct batman_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
+	uint8_t  ttl;
 	uint8_t  flags;    /* 0x40: DIRECTLINK flag, 0x20 VIS_SERVER flag... */
-	uint8_t  tq;
 	uint32_t seqno;
 	uint8_t  orig[6];
 	uint8_t  prev_sender[6];
-	uint8_t  ttl;
-	uint8_t  num_tt;
 	uint8_t  gw_flags;  /* flags related to gateway class */
-	uint8_t  align;
+	uint8_t  tq;
+	uint8_t  num_tt;
+	uint8_t  reserved;
 } __packed;
 
 #define BAT_PACKET_LEN sizeof(struct batman_packet)
@@ -71,12 +71,13 @@ struct batman_packet {
 struct icmp_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  msg_type; /* see ICMP message types above */
 	uint8_t  ttl;
+	uint8_t  msg_type; /* see ICMP message types above */
 	uint8_t  dst[6];
 	uint8_t  orig[6];
 	uint16_t seqno;
 	uint8_t  uid;
+	uint8_t  reserved;
 } __packed;
 
 #define BAT_RR_LEN 16
@@ -86,8 +87,8 @@ struct icmp_packet {
 struct icmp_packet_rr {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  msg_type; /* see ICMP message types above */
 	uint8_t  ttl;
+	uint8_t  msg_type; /* see ICMP message types above */
 	uint8_t  dst[6];
 	uint8_t  orig[6];
 	uint16_t seqno;
@@ -99,16 +100,19 @@ struct icmp_packet_rr {
 struct unicast_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  dest[6];
 	uint8_t  ttl;
+	uint8_t  reserved;
+	uint8_t  dest[6];
 } __packed;
 
 struct unicast_frag_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  dest[6];
 	uint8_t  ttl;
+	uint8_t  reserved;
+	uint8_t  dest[6];
 	uint8_t  flags;
+	uint8_t  align;
 	uint8_t  orig[6];
 	uint16_t seqno;
 } __packed;
@@ -116,18 +120,20 @@ struct unicast_frag_packet {
 struct bcast_packet {
 	uint8_t  packet_type;
 	uint8_t  version;  /* batman version field */
-	uint8_t  orig[6];
 	uint8_t  ttl;
+	uint8_t  reserved;
 	uint32_t seqno;
+	uint8_t  orig[6];
 } __packed;
 
 struct vis_packet {
 	uint8_t  packet_type;
 	uint8_t  version;        /* batman version field */
-	uint8_t  vis_type;	 /* which type of vis-participant sent this? */
-	uint8_t  entries;	 /* number of entries behind this struct */
-	uint32_t seqno;		 /* sequence number */
 	uint8_t  ttl;		 /* TTL */
+	uint8_t  vis_type;	 /* which type of vis-participant sent this? */
+	uint32_t seqno;		 /* sequence number */
+	uint8_t  entries;	 /* number of entries behind this struct */
+	uint8_t  reserved;
 	uint8_t  vis_orig[6];	 /* originator that announces its neighbors */
 	uint8_t  target_orig[6]; /* who should receive this packet */
 	uint8_t  sender_orig[6]; /* who sent or rebroadcasted this packet */
