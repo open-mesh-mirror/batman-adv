@@ -131,7 +131,7 @@ static inline struct kobject *kobject_create_and_add(const char *name,
 	if (!kobj)
 		return NULL;
 
-	kobject_set_name(kobj, name);
+	kobject_set_name(kobj, "%s", name);
 	kobj->ktype = &ktype_bat_wrapper;
 	kobj->kset = NULL;
 	kobj->parent = parent;
