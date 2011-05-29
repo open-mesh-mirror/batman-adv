@@ -1132,6 +1132,7 @@ static bool send_other_tt_response(struct bat_priv *bat_priv,
 
 	tt_response->packet_type = BAT_TT_QUERY;
 	tt_response->version = COMPAT_VERSION;
+	tt_response->ttl = TTL;
 	memcpy(tt_response->src, req_dst_orig_node->orig, ETH_ALEN);
 	memcpy(tt_response->dst, tt_request->src, ETH_ALEN);
 	tt_response->tt_data = htons(tt_tot);
@@ -1280,6 +1281,7 @@ static bool send_my_tt_response(struct bat_priv *bat_priv,
 
 	tt_response->packet_type = BAT_TT_QUERY;
 	tt_response->version = COMPAT_VERSION;
+	tt_response->ttl = TTL;
 	memcpy(tt_response->src, primary_if->net_dev->dev_addr, ETH_ALEN);
 	memcpy(tt_response->dst, tt_request->src, ETH_ALEN);
 	tt_response->tt_data = htons(tt_tot);
