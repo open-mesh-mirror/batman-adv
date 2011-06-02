@@ -627,6 +627,7 @@ static int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 
 		/* unicast packet */
 	case BAT_UNICAST:
+	case BAT_UNICAST_4ADDR:
 		ret = recv_unicast_packet(skb, hard_iface);
 		break;
 
