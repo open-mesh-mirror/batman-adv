@@ -37,7 +37,10 @@ enum bat_packettype {
 };
 
 enum bat_subtype {
-	BAT_P_DATA		= 0x01
+	BAT_P_DATA		= 0x01,
+	BAT_P_DAT_DHT_GET	= 0x02,
+	BAT_P_DAT_DHT_PUT	= 0x03,
+	BAT_P_DAT_CACHE_REPLY	= 0x04
 };
 
 /* this file is included by batctl which needs these defines */

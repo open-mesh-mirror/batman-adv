@@ -30,6 +30,70 @@
 #include "types.h"
 #include "unicast.h"
 
+#ifdef CONFIG_BATMAN_ADV_DEBUG
+
+static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
+			uint16_t type, int hdr_size, char *msg) {
+	struct unicast_4addr_packet *unicast_4addr_packet;
+
+	if (msg)
+		bat_dbg(DBG_DAT, bat_priv, "%s\n", msg);
+
+	bat_dbg(DBG_DAT, bat_priv, "ARP MSG = [src: %pM-%pI4 dst: %pM-%pI4]\n",
+		ARP_HW_SRC(skb, hdr_size), &ARP_IP_SRC(skb, hdr_size),
+		ARP_HW_DST(skb, hdr_size), &ARP_IP_DST(skb, hdr_size));
+
+	if (hdr_size == 0)
+		return;
+
+	/* if the AP packet is encapsulated in a batman packet, let's print some
+	 * debug messages */
+	unicast_4addr_packet = (struct unicast_4addr_packet *)skb->data;
+
+	switch (unicast_4addr_packet->u.header.packet_type) {
+	case BAT_UNICAST:
+		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a UNICAST "
+			"packet\n");
+		break;
+	case BAT_UNICAST_4ADDR:
+		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a "
+			"UNICAST_4ADDR packet (src: %pM)\n",
+			unicast_4addr_packet->src);
+		switch (unicast_4addr_packet->subtype) {
+		case BAT_P_DAT_DHT_PUT:
+			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_PUT\n");
+			break;
+		case BAT_P_DAT_DHT_GET:
+			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_GET\n");
+			break;
+		case BAT_P_DAT_CACHE_REPLY:
+			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_CACHE_REPLY\n");
+			break;
+		case BAT_P_DATA:
+			bat_dbg(DBG_DAT, bat_priv, "* type: DATA\n");
+			break;
+		default:
+			bat_dbg(DBG_DAT, bat_priv, "* type: Unknown!\n");
+		}
+		break;
+	case BAT_BCAST:
+		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a BCAST "
+			"packet (src: %pM)\n",
+			((struct bcast_packet *)unicast_4addr_packet)->orig);
+		break;
+	default:
+		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within an unknown "
+			"packet type (0x%x)\n",
+			unicast_4addr_packet->u.header.packet_type);
+	}
+}
+
+#else
+
+#define bat_dbg_arp(...)
+
+#endif /* CONFIG_BATMAN_ADV_DEBUG */
+
 static bool is_orig_node_eligible(struct dht_candidate *res, int select,
 				  dat_addr_t tmp_max, dat_addr_t max,
 				  dat_addr_t last_max,
@@ -196,4 +260,56 @@ free_orig:
 out:
 	kfree(cand);
 	return ret;
+}
+
+/* Returns arphdr->ar_op if the skb contains a valid ARP packet, otherwise
+ * returns 0 */
+static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
+			     int hdr_size)
+{
+	struct arphdr *arphdr;
+	struct ethhdr *ethhdr;
+	uint16_t type = 0;
+
+	/* pull the ethernet header */
+	if (unlikely(!pskb_may_pull(skb, hdr_size + ETH_HLEN)))
+		goto out;
+
+	ethhdr = (struct ethhdr *)(skb->data + hdr_size);
+
+	if (ethhdr->h_proto != htons(ETH_P_ARP))
+		goto out;
+
+	/* pull the ARP payload */
+	if (unlikely(!pskb_may_pull(skb, hdr_size + ETH_HLEN +
+				    arp_hdr_len(skb->dev))))
+		goto out;
+
+	arphdr = (struct arphdr *)(skb->data + hdr_size + ETH_HLEN);
+
+	/* Check whether the ARP packet carries a valid
+	 * IP information */
+	if (arphdr->ar_hrd != htons(ARPHRD_ETHER))
+		goto out;
+
+	if (arphdr->ar_pro != htons(ETH_P_IP))
+		goto out;
+
+	if (arphdr->ar_hln != ETH_ALEN)
+		goto out;
+
+	if (arphdr->ar_pln != 4)
+		goto out;
+
+	/* Check for bad reply/request. If the ARP message is not sane, DAT
+	 * will simply ignore it */
+	if (ipv4_is_loopback(ARP_IP_SRC(skb, hdr_size)) ||
+	    ipv4_is_multicast(ARP_IP_SRC(skb, hdr_size)) ||
+	    ipv4_is_loopback(ARP_IP_DST(skb, hdr_size)) ||
+	    ipv4_is_multicast(ARP_IP_DST(skb, hdr_size)))
+		goto out;
+
+	type = ntohs(arphdr->ar_op);
+out:
+	return type;
 }
