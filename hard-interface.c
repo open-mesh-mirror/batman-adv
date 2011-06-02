@@ -20,6 +20,7 @@
  */
 
 #include "main.h"
+#include "distributed-arp-table.h"
 #include "hard-interface.h"
 #include "soft-interface.h"
 #include "send.h"
@@ -117,6 +118,8 @@ static void primary_if_update_addr(struct bat_priv *bat_priv,
 	primary_if = primary_if_get_selected(bat_priv);
 	if (!primary_if)
 		goto out;
+
+	dat_init_own_dht_addr(bat_priv, primary_if);
 
 	vis_packet = (struct vis_packet *)
 				bat_priv->my_vis_info->skb_packet->data;

@@ -67,6 +67,9 @@
 
 #define NUM_WORDS BITS_TO_LONGS(TQ_LOCAL_WINDOW_SIZE)
 
+/* numbers of originator to contact for any PUT/GET DHT operation */
+#define DHT_CANDIDATES_NUM 3
+
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 
 #define VIS_INTERVAL 5000	/* 5 seconds */
@@ -110,6 +113,9 @@ enum uev_type {
 };
 
 #define GW_THRESHOLD	50
+
+#define DHT_CANDIDATE_NOT_FOUND	0
+#define DHT_CANDIDATE_ORIG	1
 
 /*
  * Debug Messages

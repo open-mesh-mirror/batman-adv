@@ -32,6 +32,10 @@ int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 void frag_list_free(struct list_head *head);
 int frag_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 		  struct hard_iface *hard_iface, const uint8_t dstaddr[]);
+bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
+				  struct sk_buff *skb,
+				  struct orig_node *orig_node,
+				  int packet_subtype);
 int unicast_generic_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 			     int packet_type, int packet_subtype);
 

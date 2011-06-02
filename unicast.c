@@ -313,10 +313,10 @@ static bool prepare_unicast_packet(struct sk_buff *skb,
 				     orig_node);
 }
 
-static bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
-					 struct sk_buff *skb,
-					 struct orig_node *orig_node,
-					 int packet_subtype)
+bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
+				  struct sk_buff *skb,
+				  struct orig_node *orig_node,
+				  int packet_subtype)
 {
 	struct hard_iface *primary_if;
 	struct unicast_4addr_packet *unicast_4addr_packet;
