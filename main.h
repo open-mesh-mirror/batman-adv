@@ -126,7 +126,8 @@ enum dbg_level {
 	DBG_ROUTES = 1 << 1, /* route added / changed / deleted */
 	DBG_TT	   = 1 << 2, /* translation table operations */
 	DBG_BLA    = 1 << 3, /* bridge loop avoidance */
-	DBG_ALL    = 15
+	DBG_DAT    = 1 << 4, /* snooped arp messages / dat operations */
+	DBG_ALL    = 31
 };
 
 
