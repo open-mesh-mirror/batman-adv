@@ -563,7 +563,7 @@ static int hard_if_event(struct notifier_block *this,
 		break;
 	default:
 		break;
-	};
+	}
 
 hardif_put:
 	hardif_free_ref(hard_iface);
