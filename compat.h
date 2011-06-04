@@ -104,6 +104,16 @@ static inline int skb_cow_head(struct sk_buff *skb, unsigned int headroom)
 	ret; \
 })
 
+#define strict_strtol(cp, base, res) \
+	({ \
+	int ret = 0; \
+	char *endp; \
+	*res = simple_strtol(cp, &endp, base); \
+	if (cp == endp) \
+		ret = -EINVAL; \
+	ret; \
+})
+
 #define to_battr(a) container_of(a, struct bat_attribute, attr)
 
 ssize_t bat_wrapper_show(struct kobject *kobj, struct attribute *attr,
