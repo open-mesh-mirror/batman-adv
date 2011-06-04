@@ -109,11 +109,6 @@ struct orig_node {
 	struct list_head bond_list;
 };
 
-struct tt_change {
-	uint8_t flags;
-	uint8_t addr[ETH_ALEN];
-};
-
 struct gw_node {
 	struct hlist_node list;
 	struct orig_node *orig_node;

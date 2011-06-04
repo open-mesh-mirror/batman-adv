@@ -42,7 +42,7 @@
  * -> TODO: check influence on TQ_LOCAL_WINDOW_SIZE */
 #define PURGE_TIMEOUT 200
 #define TT_LOCAL_TIMEOUT 3600 /* in seconds */
-#define TT_GLOBAL_ROAM_TIMEOUT 600
+#define TT_CLIENT_ROAM_TIMEOUT 600
 /* sliding packet range of received originator messages in squence numbers
  * (should be a multiple of our word size) */
 #define TQ_LOCAL_WINDOW_SIZE 64
@@ -55,17 +55,11 @@
 
 #define TT_OGM_APPEND_MAX 3 /* number of OGMs sent with the last tt diff */
 
-/* Transtable change flags */
-#define TT_CHANGE_ADD   0x00
-#define TT_CHANGE_DEL   0x01
-#define TT_CHANGE_ROAM  0x02
-
-/* Transtable global entry flags */
-#define TT_GLOBAL_ROAM  0x01
-
 #define ROAMING_MAX_TIME 20 /* Time in which a client can roam at most
 			     * ROAMING_MAX_COUNT times */
 #define ROAMING_MAX_COUNT 5
+
+#define NO_FLAGS 0
 
 #define NUM_WORDS (TQ_LOCAL_WINDOW_SIZE / WORD_BIT_SIZE)
 

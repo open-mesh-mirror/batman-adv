@@ -54,10 +54,14 @@
 #define UNI_FRAG_HEAD 0x01
 #define UNI_FRAG_LARGETAIL 0x02
 
-/* TT flags */
+/* TT_QUERY flags */
 #define TT_RESPONSE     0x01
 #define TT_REQUEST      0x02
 #define TT_FULL_TABLE   0x04
+
+/* TT_CHANGE flags */
+#define TT_CHANGE_DEL   0x01
+#define TT_CLIENT_ROAM  0x02
 
 struct batman_packet {
 	uint8_t  packet_type;
@@ -179,5 +183,10 @@ struct roam_adv_packet {
 	uint8_t  src[ETH_ALEN];
 	uint8_t  client[ETH_ALEN];
 } __packed;
+
+struct tt_change {
+	uint8_t flags;
+	uint8_t addr[ETH_ALEN];
+};
 
 #endif /* _NET_BATMAN_ADV_PACKET_H_ */

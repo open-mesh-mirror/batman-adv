@@ -156,7 +156,7 @@ static void tt_local_event(struct bat_priv *bat_priv, uint8_t op,
 
 	tt_change_node->change.flags = op;
 	if (roaming)
-		tt_change_node->change.flags |= TT_GLOBAL_ROAM;
+		tt_change_node->change.flags |= TT_CLIENT_ROAM;
 
 	memcpy(tt_change_node->change.addr, addr, ETH_ALEN);
 
@@ -204,7 +204,7 @@ void tt_local_add(struct net_device *soft_iface, const uint8_t *addr)
 	if (!tt_local_entry)
 		goto out;
 
-	tt_local_event(bat_priv, TT_CHANGE_ADD, addr, false);
+	tt_local_event(bat_priv, NO_FLAGS, addr, false);
 
 	bat_dbg(DBG_TT, bat_priv,
 		"Creating new local tt entry: %pM (ttvn: %d)\n", addr,
@@ -515,7 +515,7 @@ int tt_global_add(struct bat_priv *bat_priv, struct orig_node *orig_node,
 		atomic_inc(&orig_node->refcount);
 		tt_global_entry->orig_node = orig_node;
 		tt_global_entry->ttvn = ttvn;
-		tt_global_entry->flags = 0x00;
+		tt_global_entry->flags = NO_FLAGS;
 		tt_global_entry->roam_at = 0;
 		atomic_set(&tt_global_entry->refcount, 2);
 
@@ -533,7 +533,7 @@ int tt_global_add(struct bat_priv *bat_priv, struct orig_node *orig_node,
 			atomic_inc(&orig_node->tt_size);
 		}
 		tt_global_entry->ttvn = ttvn;
-		tt_global_entry->flags = 0x00;
+		tt_global_entry->flags = NO_FLAGS;
 		tt_global_entry->roam_at = 0;
 	}
 
@@ -665,7 +665,7 @@ void tt_global_del(struct bat_priv *bat_priv,
 
 	if (tt_global_entry->orig_node == orig_node) {
 		if (roaming) {
-			tt_global_entry->flags |= TT_GLOBAL_ROAM;
+			tt_global_entry->flags |= TT_CLIENT_ROAM;
 			tt_global_entry->roam_at = jiffies;
 			goto out;
 		}
@@ -724,10 +724,10 @@ static void tt_global_roam_purge(struct bat_priv *bat_priv)
 		spin_lock_bh(list_lock);
 		hlist_for_each_entry_safe(tt_global_entry, node, node_tmp,
 					  head, hash_entry) {
-			if (!(tt_global_entry->flags & TT_GLOBAL_ROAM))
+			if (!(tt_global_entry->flags & TT_CLIENT_ROAM))
 				continue;
 			if (!is_out_of_time(tt_global_entry->roam_at,
-					    TT_GLOBAL_ROAM_TIMEOUT * 1000))
+					    TT_CLIENT_ROAM_TIMEOUT * 1000))
 				continue;
 
 			bat_dbg(DBG_TT, bat_priv, "Deleting global "
@@ -818,7 +818,7 @@ uint16_t tt_global_crc(struct bat_priv *bat_priv, struct orig_node *orig_node)
 				 * consistency only. They don't have to be
 				 * taken into account while computing the
 				 * global crc */
-				if (tt_global_entry->flags & TT_GLOBAL_ROAM)
+				if (tt_global_entry->flags & TT_CLIENT_ROAM)
 					continue;
 				total_one = 0;
 				for (j = 0; j < ETH_ALEN; j++)
@@ -943,7 +943,7 @@ static int tt_global_valid_entry(const void *entry_ptr, const void *data_ptr)
 	const struct tt_global_entry *tt_global_entry = entry_ptr;
 	const struct orig_node *orig_node = data_ptr;
 
-	if (tt_global_entry->flags & TT_GLOBAL_ROAM)
+	if (tt_global_entry->flags & TT_CLIENT_ROAM)
 		return 0;
 
 	return (tt_global_entry->orig_node == orig_node);
@@ -998,7 +998,7 @@ static struct sk_buff *tt_response_fill_table(uint16_t tt_len, uint8_t ttvn,
 				continue;
 
 			memcpy(tt_change->addr, tt_local_entry->addr, ETH_ALEN);
-			tt_change->flags = TT_CHANGE_ADD;
+			tt_change->flags = NO_FLAGS;
 
 			tt_count++;
 			tt_change++;
@@ -1339,7 +1339,7 @@ static void _tt_update_changes(struct bat_priv *bat_priv,
 			tt_global_del(bat_priv, orig_node,
 				      (tt_change + i)->addr,
 				      "tt removed by changes",
-				      (tt_change + i)->flags & TT_CHANGE_ROAM);
+				      (tt_change + i)->flags & TT_CLIENT_ROAM);
 		else
 			if (!tt_global_add(bat_priv, orig_node,
 					   (tt_change + i)->addr, ttvn, false))
