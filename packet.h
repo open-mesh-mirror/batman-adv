@@ -24,44 +24,59 @@
 
 #define ETH_P_BATMAN  0x4305	/* unofficial/not registered Ethertype */
 
-#define BAT_PACKET       0x01
-#define BAT_ICMP         0x02
-#define BAT_UNICAST      0x03
-#define BAT_BCAST        0x04
-#define BAT_VIS          0x05
-#define BAT_UNICAST_FRAG 0x06
-#define BAT_TT_QUERY     0x07
-#define BAT_ROAM_ADV     0x08
+enum bat_packettype {
+	BAT_PACKET       = 0x01,
+	BAT_ICMP         = 0x02,
+	BAT_UNICAST      = 0x03,
+	BAT_BCAST        = 0x04,
+	BAT_VIS          = 0x05,
+	BAT_UNICAST_FRAG = 0x06,
+	BAT_TT_QUERY     = 0x07,
+	BAT_ROAM_ADV     = 0x08
+};
 
 /* this file is included by batctl which needs these defines */
 #define COMPAT_VERSION 14
-#define DIRECTLINK 0x40
-#define VIS_SERVER 0x20
-#define PRIMARIES_FIRST_HOP 0x10
+
+enum batman_flags {
+	PRIMARIES_FIRST_HOP = 1 << 4,
+	VIS_SERVER	    = 1 << 5,
+	DIRECTLINK	    = 1 << 6
+};
 
 /* ICMP message types */
-#define ECHO_REPLY 0
-#define DESTINATION_UNREACHABLE 3
-#define ECHO_REQUEST 8
-#define TTL_EXCEEDED 11
-#define PARAMETER_PROBLEM 12
+enum icmp_packettype {
+	ECHO_REPLY		= 0,
+	DESTINATION_UNREACHABLE = 3,
+	ECHO_REQUEST		= 8,
+	TTL_EXCEEDED		= 11,
+	PARAMETER_PROBLEM	= 12
+};
 
 /* vis defines */
-#define VIS_TYPE_SERVER_SYNC		0
-#define VIS_TYPE_CLIENT_UPDATE		1
+enum vis_packettype {
+	VIS_TYPE_SERVER_SYNC   = 0,
+	VIS_TYPE_CLIENT_UPDATE = 1
+};
 
 /* fragmentation defines */
-#define UNI_FRAG_HEAD 0x01
-#define UNI_FRAG_LARGETAIL 0x02
+enum unicast_frag_flags {
+	UNI_FRAG_HEAD	   = 1 << 0,
+	UNI_FRAG_LARGETAIL = 1 << 1
+};
 
 /* TT_QUERY flags */
-#define TT_RESPONSE     0x01
-#define TT_REQUEST      0x02
-#define TT_FULL_TABLE   0x04
+enum tt_query_flags {
+	TT_RESPONSE   = 1 << 0,
+	TT_REQUEST    = 1 << 1,
+	TT_FULL_TABLE = 1 << 2
+};
 
 /* TT_CHANGE flags */
-#define TT_CHANGE_DEL   0x01
-#define TT_CLIENT_ROAM  0x02
+enum tt_change_flags {
+	TT_CHANGE_DEL  = 0x01,
+	TT_CLIENT_ROAM = 0x02
+};
 
 struct batman_packet {
 	uint8_t  packet_type;

@@ -82,9 +82,11 @@
 #define RESET_PROTECTION_MS 30000
 #define EXPECTED_SEQNO_RANGE	65536
 
-#define MESH_INACTIVE 0
-#define MESH_ACTIVE 1
-#define MESH_DEACTIVATING 2
+enum mesh_state {
+	MESH_INACTIVE,
+	MESH_ACTIVE,
+	MESH_DEACTIVATING
+};
 
 #define BCAST_QUEUE_LEN		256
 #define BATMAN_QUEUE_LEN	256
@@ -99,10 +101,12 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 /* all messages related to routing / flooding / broadcasting / etc */
-#define DBG_BATMAN 1
-#define DBG_ROUTES 2	/* route added / changed / deleted */
-#define DBG_TT 4	/* translation table operations */
-#define DBG_ALL 7
+enum dbg_level {
+	DBG_BATMAN = 1 << 0,
+	DBG_ROUTES = 1 << 1, /* route added / changed / deleted */
+	DBG_TT	   = 1 << 2, /* translation table operations */
+	DBG_ALL    = 7
+};
 
 
 /*
