@@ -148,8 +148,7 @@ static void tt_local_event(struct bat_priv *bat_priv, uint8_t op,
 {
 	struct tt_change_node *tt_change_node;
 
-	tt_change_node = (struct tt_change_node *)
-		kmalloc(sizeof(*tt_change_node), GFP_ATOMIC);
+	tt_change_node = kmalloc(sizeof(*tt_change_node), GFP_ATOMIC);
 
 	if (!tt_change_node)
 		return;
