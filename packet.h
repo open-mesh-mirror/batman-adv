@@ -202,6 +202,6 @@ struct roam_adv_packet {
 struct tt_change {
 	uint8_t flags;
 	uint8_t addr[ETH_ALEN];
-};
+} __packed;
 
 #endif /* _NET_BATMAN_ADV_PACKET_H_ */
