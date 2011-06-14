@@ -1194,7 +1194,6 @@ int recv_tt_query(struct sk_buff *skb, struct hard_iface *recv_if)
 	struct bat_priv *bat_priv = netdev_priv(recv_if->soft_iface);
 	struct tt_query_packet *tt_query;
 	struct ethhdr *ethhdr;
-	int ret = NET_RX_DROP;
 
 	/* drop packet if it has not necessary minimum size */
 	if (unlikely(!pskb_may_pull(skb, sizeof(struct tt_query_packet))))
@@ -1248,11 +1247,10 @@ int recv_tt_query(struct sk_buff *skb, struct hard_iface *recv_if)
 		}
 		break;
 	}
-	ret = NET_RX_SUCCESS;
 
 out:
-	kfree_skb(skb);
-	return ret;
+	/* returning NET_RX_DROP will make the caller function kfree the skb */
+	return NET_RX_DROP;
 }
 
 int recv_roam_adv(struct sk_buff *skb, struct hard_iface *recv_if)
