@@ -1,3 +1,15 @@
+batman-adv 2011.2.0:
+
+* support latest kernels (2.6.21 - 3.0)
+* cleanup of coding style
+* rename of HNA to TT
+* support for multi vlan in bridge loop detection
+* many bug fixes (rcu protection of router/primary_if/softif_neigh,
+  race condition in TQ calculation, deadlock when creating new mesh
+  interfaces, ...)
+
+ -- Sun, 19 Jun 2011 20:07:47 +0200
+
 batman-adv 2011.1.0:
 
 * support latest kernels (2.6.21 - 2.6.39)
@@ -6,7 +18,7 @@ batman-adv 2011.1.0:
 * many bug fixes (fragmented packets linearisation, fragments numbering,
   verification of added interfaces, ...)
 
- -- Sat, Sun, 17 Apr 2011 17:41:53 +0200
+ -- Sun, 17 Apr 2011 17:41:53 +0200
 
 batman-adv 2011.0.0:
 
