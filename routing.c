@@ -1231,7 +1231,7 @@ int recv_tt_query(struct sk_buff *skb, struct hard_iface *recv_if)
 		}
 		break;
 	case TT_RESPONSE:
-		/* packet needs to be linearised to access the TT changes records */
+		/* packet needs to be linearised to access the TT changes */
 		if (skb_linearize(skb) < 0)
 			goto out;
 
