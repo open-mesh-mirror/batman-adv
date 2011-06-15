@@ -1199,7 +1199,7 @@ out:
 	if (primary_if)
 		hardif_free_ref(primary_if);
 	if (!ret)
-		kfree(skb);
+		kfree_skb(skb);
 	return ret;
 
 }
@@ -1312,7 +1312,7 @@ out:
 	if (primary_if)
 		hardif_free_ref(primary_if);
 	if (!ret)
-		kfree(skb);
+		kfree_skb(skb);
 	/* This packet was for me, so it doesn't need to be re-routed */
 	return true;
 }
