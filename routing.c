@@ -1259,7 +1259,6 @@ int recv_roam_adv(struct sk_buff *skb, struct hard_iface *recv_if)
 	struct roam_adv_packet *roam_adv_packet;
 	struct orig_node *orig_node;
 	struct ethhdr *ethhdr;
-	int ret = NET_RX_DROP;
 
 	/* drop packet if it has not necessary minimum size */
 	if (unlikely(!pskb_may_pull(skb, sizeof(struct roam_adv_packet))))
@@ -1297,10 +1296,9 @@ int recv_roam_adv(struct sk_buff *skb, struct hard_iface *recv_if)
 	bat_priv->tt_poss_change = true;
 
 	orig_node_free_ref(orig_node);
-	ret = NET_RX_SUCCESS;
 out:
-	kfree(skb);
-	return ret;
+	/* returning NET_RX_DROP will make the caller function kfree the skb */
+	return NET_RX_DROP;
 }
 
 /* find a suitable router for this originator, and use
