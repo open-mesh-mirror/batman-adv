@@ -1012,12 +1012,12 @@ out:
 int send_tt_request(struct bat_priv *bat_priv, struct orig_node *dst_orig_node,
 		    uint8_t ttvn, uint16_t tt_crc, bool full_table)
 {
-	struct sk_buff *skb;
+	struct sk_buff *skb = NULL;
 	struct tt_query_packet *tt_request;
 	struct neigh_node *neigh_node = NULL;
 	struct hard_iface *primary_if;
-	struct tt_req_node *tt_req_node;
-	int ret = 0;
+	struct tt_req_node *tt_req_node = NULL;
+	int ret = 1;
 
 	primary_if = primary_if_get_selected(bat_priv);
 	if (!primary_if)
@@ -1066,8 +1066,9 @@ out:
 		neigh_node_free_ref(neigh_node);
 	if (primary_if)
 		hardif_free_ref(primary_if);
-	if (ret) {
+	if (ret)
 		kfree_skb(skb);
+	if (ret && tt_req_node) {
 		spin_lock_bh(&bat_priv->tt_req_list_lock);
 		list_del(&tt_req_node->list);
 		spin_unlock_bh(&bat_priv->tt_req_list_lock);
