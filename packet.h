@@ -78,10 +78,11 @@ enum tt_query_flags {
 	TT_FULL_TABLE = 1 << 2
 };
 
-/* TT_CHANGE flags */
-enum tt_change_flags {
-	TT_CHANGE_DEL  = 0x01,
-	TT_CLIENT_ROAM = 0x02
+/* TT_CLIENT flags */
+enum tt_client_flags {
+	TT_CLIENT_DEL     = 0x01,
+	TT_CLIENT_ROAM    = 0x02,
+	TT_CLIENT_NOPURGE = 0x04
 };
 
 struct batman_packet {

@@ -224,7 +224,7 @@ struct socket_packet {
 struct tt_local_entry {
 	uint8_t addr[ETH_ALEN];
 	unsigned long last_seen;
-	char never_purge;
+	uint8_t flags;
 	atomic_t refcount;
 	struct rcu_head rcu;
 	struct hlist_node hash_entry;
