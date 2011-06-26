@@ -37,6 +37,17 @@
 #define ARP_IP_DST(skb, hdr_size) (*(uint32_t *)(ARP_HW_SRC(skb, hdr_size) + \
 				   ETH_ALEN * 2 + 4))
 
+bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
+				    struct sk_buff *skb);
+bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
+				    struct sk_buff *skb, int hdr_size);
+bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
+				  struct sk_buff *skb);
+bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
+				  struct sk_buff *skb, int hdr_size);
+bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
+			       struct forw_packet *forw_packet);
+
 /* hash function to choose an entry in a hash table of given size */
 /* hash algorithm from http://en.wikipedia.org/wiki/Hash_table */
 static inline uint32_t hash_ipv4(const void *data, uint32_t size)

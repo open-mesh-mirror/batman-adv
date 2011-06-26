@@ -22,6 +22,7 @@
 #include "main.h"
 #include "soft-interface.h"
 #include "hard-interface.h"
+#include "distributed-arp-table.h"
 #include "routing.h"
 #include "send.h"
 #include "bat_debugfs.h"
@@ -135,6 +136,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	int data_len = skb->len, ret;
 	short vid __maybe_unused = -1;
 	bool do_bcast = false;
+	unsigned long brd_delay = 1;
 
 	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
 		goto dropped;
@@ -195,6 +197,9 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 		if (!primary_if)
 			goto dropped;
 
+		if (dat_snoop_outgoing_arp_request(bat_priv, skb))
+			brd_delay = msecs_to_jiffies(ARP_REQ_DELAY);
+
 		if (my_skb_head_push(skb, sizeof(*bcast_packet)) < 0)
 			goto dropped;
 
@@ -214,7 +219,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 		bcast_packet->seqno =
 			htonl(atomic_inc_return(&bat_priv->bcast_seqno));
 
-		add_bcast_packet_to_list(bat_priv, skb, 1);
+		add_bcast_packet_to_list(bat_priv, skb, brd_delay);
 
 		/* a copy is stored in the bcast list, therefore removing
 		 * the original skb. */
@@ -227,6 +232,8 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 			if (ret)
 				goto dropped;
 		}
+
+		dat_snoop_outgoing_arp_reply(bat_priv, skb);
 
 		ret = unicast_send_skb(skb, bat_priv);
 		if (ret != 0)
@@ -252,6 +259,7 @@ void interface_rx(struct net_device *soft_iface,
 		  int hdr_size)
 {
 	struct bat_priv *bat_priv = netdev_priv(soft_iface);
+	struct unicast_4addr_packet *unicast_4addr_packet;
 	struct ethhdr *ethhdr;
 	struct vlan_ethhdr *vhdr;
 	short vid __maybe_unused = -1;
@@ -259,6 +267,14 @@ void interface_rx(struct net_device *soft_iface,
 	/* check if enough space is available for pulling, and pull */
 	if (!pskb_may_pull(skb, hdr_size))
 		goto dropped;
+
+	unicast_4addr_packet = (struct unicast_4addr_packet *)skb->data;
+
+	if (dat_snoop_incoming_arp_request(bat_priv, skb, hdr_size))
+		goto out;
+
+	if (dat_snoop_incoming_arp_reply(bat_priv, skb, hdr_size))
+		goto out;
 
 	skb_pull_rcsum(skb, hdr_size);
 	skb_reset_mac_header(skb);
