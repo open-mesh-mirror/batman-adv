@@ -31,6 +31,8 @@
 
 #define __always_unused			__attribute__((unused))
 
+#define skb_iif iif
+
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 34)
