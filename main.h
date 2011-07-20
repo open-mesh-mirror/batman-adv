@@ -71,6 +71,9 @@
 #define ARP_REQ_DELAY 250
 /* numbers of originator to contact for any PUT/GET DHT operation */
 #define DHT_CANDIDATES_NUM 3
+/* Factor which default ARP timeout values of the soft_iface table are
+ * multiplied by */
+#define ARP_TIMEOUT_FACTOR 4
 
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 

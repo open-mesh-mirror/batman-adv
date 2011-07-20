@@ -381,6 +381,8 @@ struct net_device *softif_create(const char *name)
 		goto free_soft_iface;
 	}
 
+	arp_change_timeout(soft_iface, name);
+
 	bat_priv = netdev_priv(soft_iface);
 
 	atomic_set(&bat_priv->aggregated_ogms, 1);

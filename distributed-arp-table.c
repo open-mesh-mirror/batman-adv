@@ -23,6 +23,7 @@
 #include <linux/if_arp.h>
 /* needed to use arp_tbl */
 #include <net/arp.h>
+#include <linux/inetdevice.h>
 
 #include "main.h"
 #include "distributed-arp-table.h"
@@ -558,4 +559,22 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 				    sizeof(struct bcast_packet)));
 	}
 	return false;
+}
+
+void arp_change_timeout(struct net_device *soft_iface, const char *name)
+{
+	struct in_device *in_dev = in_dev_get(soft_iface);
+	if (!in_dev) {
+		pr_err("Unable to set ARP parameters for the batman interface "
+		       "'%s'\n", name);
+		return;
+	}
+
+	/* Introduce a delay in the ARP state-machine transactions. Entries
+	 * will be kept in the ARP table for the default time multiplied by 4 */
+	in_dev->arp_parms->base_reachable_time *= ARP_TIMEOUT_FACTOR;
+	in_dev->arp_parms->gc_staletime *= ARP_TIMEOUT_FACTOR;
+	in_dev->arp_parms->reachable_time *= ARP_TIMEOUT_FACTOR;
+
+	in_dev_put(in_dev);
 }
