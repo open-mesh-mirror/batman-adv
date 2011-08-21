@@ -5,7 +5,7 @@ batman-adv 2011.3.0:
 * cleanup of coding style
 * improve client and roaming announcement mechanisms
 * add framework to inform userspace of gateway changes using uevent
-* improve gateway handling to filter out incoming DHCP renemwal requests
+* improve gateway handling to filter out incoming DHCP renewal requests
 * many bugs (acceptance of delayed rebroadcasts, unsigned char on powerpc used
   to store -1, ...) squashed
 
