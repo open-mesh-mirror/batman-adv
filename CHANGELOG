@@ -1,3 +1,16 @@
+batman-adv 2011.3.0:
+
+* support latest kernels (2.6.29 - 3.1)
+* remove compat code for < 2.6.29
+* cleanup of coding style
+* improve client and roaming announcement mechanisms
+* add framework to inform userspace of gateway changes using uevent
+* improve gateway handling to filter out incoming DHCP renewal requests
+* many bugs (acceptance of delayed rebroadcasts, unsigned char on powerpc used
+  to store -1, ...) squashed
+
+ -- Sun, 21 Aug 2011 14:49:20 +0200
+
 batman-adv 2011.2.0:
 
 * support latest kernels (2.6.21 - 3.0)
