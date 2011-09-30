@@ -55,6 +55,13 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
+
+#define kstrtoul strict_strtoul
+#define kstrtol  strict_strtol
+
+#endif /* < KERNEL_VERSION(2, 6, 39) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
 #define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, free_rcu_##ptr)
