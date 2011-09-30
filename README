@@ -1,4 +1,4 @@
-[state: 21-08-2011]
+[state: 30-09-2011]
 
 BATMAN-ADV
 ----------
@@ -206,7 +206,7 @@ option "B.A.T.M.A.N. debugging". When compiling  outside  of  the
 kernel  tree it is necessary to edit the file Makefile.kbuild and
 uncomment the line
 
-#EXTRA_CFLAGS += -DCONFIG_BATMAN_ADV_DEBUG
+#ccflags-y += -DCONFIG_BATMAN_ADV_DEBUG
 
 Those additional  debug messages can be accessed  using a special
 file in debugfs
