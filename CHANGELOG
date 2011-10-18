@@ -1,3 +1,11 @@
+batman-adv 2011.3.1:
+
+* don't send all packets to selected gateway as broadcast
+* prevent translation table corruptions caused by unintialized memory and
+  invalid sizes send through client announcement mechanism
+
+ -- Tue, 18 Oct 2011 20:40:59 +0200
+
 batman-adv 2011.3.0:
 
 * support latest kernels (2.6.29 - 3.1)
