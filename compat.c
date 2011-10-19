@@ -36,12 +36,4 @@ void free_rcu_tt_local_entry(struct rcu_head *rcu)
 	kfree(tt_local_entry);
 }
 
-void free_rcu_tt_global_entry(struct rcu_head *rcu)
-{
-	struct tt_global_entry *tt_global_entry;
-
-	tt_global_entry = container_of(rcu, struct tt_global_entry, rcu);
-	kfree(tt_global_entry);
-}
-
 #endif /* < KERNEL_VERSION(3, 0, 0) */

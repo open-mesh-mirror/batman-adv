@@ -61,7 +61,6 @@ void free_rcu_gw_node(struct rcu_head *rcu);
 void free_rcu_neigh_node(struct rcu_head *rcu);
 void free_rcu_softif_neigh(struct rcu_head *rcu);
 void free_rcu_tt_local_entry(struct rcu_head *rcu);
-void free_rcu_tt_global_entry(struct rcu_head *rcu);
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
