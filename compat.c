@@ -30,9 +30,12 @@ void free_rcu_softif_neigh(struct rcu_head *rcu)
 
 void free_rcu_tt_local_entry(struct rcu_head *rcu)
 {
+	struct tt_common_entry *tt_common_entry;
 	struct tt_local_entry *tt_local_entry;
 
-	tt_local_entry = container_of(rcu, struct tt_local_entry, rcu);
+	tt_common_entry = container_of(rcu, struct tt_common_entry, rcu);
+	tt_local_entry = container_of(tt_common_entry, struct tt_local_entry,
+				      common);
 	kfree(tt_local_entry);
 }
 
