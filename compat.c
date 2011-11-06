@@ -64,6 +64,7 @@ void batadv_free_rcu_backbone_gw(struct rcu_head *rcu)
 }
 #endif
 
+#ifdef CONFIG_BATMAN_ADV_DAT
 void batadv_free_rcu_dat_entry(struct rcu_head *rcu)
 {
 	struct batadv_dat_entry *dat_entry;
@@ -71,5 +72,6 @@ void batadv_free_rcu_dat_entry(struct rcu_head *rcu)
 	dat_entry = container_of(rcu, struct batadv_dat_entry, rcu);
 	kfree(dat_entry);
 }
+#endif
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */

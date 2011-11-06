@@ -28,12 +28,16 @@
 	(ETH_HLEN + max(sizeof(struct batadv_unicast_packet), \
 			sizeof(struct batadv_bcast_packet)))
 
+#ifdef CONFIG_BATMAN_ADV_DAT
+
 /* batadv_dat_addr_t is the type used for all DHT addresses. If it is changed,
  * BATADV_DAT_ADDR_MAX is changed as well.
  *
  * *Please be careful: batadv_dat_addr_t must be UNSIGNED*
  */
 #define batadv_dat_addr_t uint16_t
+
+#endif /* CONFIG_BATMAN_ADV_DAT */
 
 /**
  * struct batadv_hard_iface_bat_iv - per hard interface B.A.T.M.A.N. IV data
@@ -80,7 +84,9 @@ struct batadv_orig_node {
 	uint8_t orig[ETH_ALEN];
 	uint8_t primary_addr[ETH_ALEN];
 	struct batadv_neigh_node __rcu *router; /* rcu protected pointer */
+#ifdef CONFIG_BATMAN_ADV_DAT
 	batadv_dat_addr_t dat_addr;
+#endif
 	unsigned long *bcast_own;
 	uint8_t *bcast_own_sum;
 	unsigned long last_seen;
@@ -243,7 +249,9 @@ struct batadv_priv_vis {
  * @work: work queue callback item for cache purging
  */
 struct batadv_priv_dat {
+#ifdef CONFIG_BATMAN_ADV_DAT
 	batadv_dat_addr_t addr;
+#endif
 	struct batadv_hashtable *hash;
 	struct delayed_work work;
 };
@@ -285,7 +293,9 @@ struct batadv_priv {
 	struct batadv_priv_gw gw;
 	struct batadv_priv_tt tt;
 	struct batadv_priv_vis vis;
+#ifdef CONFIG_BATMAN_ADV_DAT
 	struct batadv_priv_dat dat;
+#endif
 };
 
 struct batadv_socket_client {
