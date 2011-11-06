@@ -22,6 +22,8 @@
 #ifndef _NET_BATMAN_ADV_ARP_H_
 #define _NET_BATMAN_ADV_ARP_H_
 
+#ifdef CONFIG_BATMAN_ADV_DAT
+
 #include "types.h"
 #include "originator.h"
 
@@ -83,5 +85,18 @@ static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
 				choose_orig(primary_if->net_dev->dev_addr,
 					    DAT_ADDR_MAX);
 }
+
+#else
+
+#define dat_snoop_outgoing_arp_request(...) (0)
+#define dat_snoop_incoming_arp_request(...) (0)
+#define dat_snoop_outgoing_arp_reply(...)
+#define dat_snoop_incoming_arp_reply(...) (0)
+#define dat_drop_broadcast_packet(...) (0)
+#define arp_change_timeout(...)
+#define dat_init_orig_node_dht_addr(...)
+#define dat_init_own_dht_addr(...)
+
+#endif /* CONFIG_BATMAN_ADV_DAT */
 
 #endif /* _NET_BATMAN_ADV_ARP_H_ */
