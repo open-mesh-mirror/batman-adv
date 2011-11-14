@@ -34,6 +34,10 @@ if you want to compile against some other kernel, use:
 
 # make KERNELPATH=/path/to/kernel
 
+if you wont to install this module:
+
+# sudo make install
+
 
 CONFIGURATION
 -------------
