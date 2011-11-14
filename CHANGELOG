@@ -1,3 +1,22 @@
+batman-adv 2011.4.0:
+
+* support latest kernels (2.6.29 - 3.2)
+* starting of code refactoring to support multiple protocol versions
+* added support for AP-isolation to prevent non-mesh WIFI clients to talk to
+  each other over the mesh
+* some bugs (memory leaks in the translation table, wrong initialization of
+  ethernet addresses of translation table entries, ...) squashed
+
+ -- Sun, 13 Nov 2011 20:40:05 +0100
+
+batman-adv 2011.3.1:
+
+* don't send all packets to selected gateway as broadcast
+* prevent translation table corruptions caused by unintialized memory and
+  invalid sizes send through client announcement mechanism
+
+ -- Tue, 18 Oct 2011 20:40:59 +0200
+
 batman-adv 2011.3.0:
 
 * support latest kernels (2.6.29 - 3.1)
