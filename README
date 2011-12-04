@@ -207,10 +207,10 @@ times  necessary  to see more detail debug messages. This must be
 enabled when compiling the batman-adv module. When building  bat-
 man-adv  as  part of kernel, use "make menuconfig" and enable the
 option "B.A.T.M.A.N. debugging". When compiling  outside  of  the
-kernel  tree it is necessary to edit the file Makefile.kbuild and
-uncomment the line
+kernel  tree it is necessary to enable  it using  the make option
+CONFIG_BATMAN_ADV_DEBUG=y
 
-#ccflags-y += -DCONFIG_BATMAN_ADV_DEBUG
+# make CONFIG_BATMAN_ADV_DEBUG=y
 
 Those additional  debug messages can be accessed  using a special
 file in debugfs

@@ -18,7 +18,10 @@
 # 02110-1301, USA
 #
 
-
+# uncomment the CONFIG_* line to enable the related feature
+# features enabled in the target kernel configuration cannot be disabled
+# B.A.T.M.A.N. debugging:
+# CONFIG_BATMAN_ADV_DEBUG=y
 
 PWD:=$(shell pwd)
 KERNELPATH ?= /lib/modules/$(shell uname -r)/build
@@ -38,7 +41,7 @@ batman-adv-y += compat.o
 ifneq ($(REVISION),)
 ccflags-y += -DSOURCE_VERSION=\"$(REVISION)\"
 endif
-# ccflags-y += -DCONFIG_BATMAN_ADV_DEBUG
+ccflags-$(CONFIG_BATMAN_ADV_DEBUG) += -DCONFIG_BATMAN_ADV_DEBUG
 include $(PWD)/Makefile.kbuild
 
 all:
