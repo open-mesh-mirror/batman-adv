@@ -18,13 +18,6 @@
 # 02110-1301, USA
 #
 
-
-
-# openwrt integration
-ifeq ($(MAKING_MODULES),1)
--include $(TOPDIR)/Rules.make
-endif
-
 # ccflags-y += -DCONFIG_BATMAN_ADV_DEBUG
 
 ifneq ($(REVISION),)
