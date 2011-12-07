@@ -18,10 +18,9 @@
 # 02110-1301, USA
 #
 
-# uncomment the CONFIG_* line to enable the related feature
-# features enabled in the target kernel configuration cannot be disabled
+# changing the CONFIG_* line to 'y' enables the related feature
 # B.A.T.M.A.N. debugging:
-# CONFIG_BATMAN_ADV_DEBUG=y
+export CONFIG_BATMAN_ADV_DEBUG=n
 
 PWD:=$(shell pwd)
 KERNELPATH ?= /lib/modules/$(shell uname -r)/build
@@ -31,6 +30,7 @@ $(warning $(KERNELPATH) is missing, please set KERNELPATH)
 endif
 
 export KERNELPATH
+RM ?= rm -f
 
 REVISION= $(shell	if [ -d .git ]; then \
 				echo $$(git describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
@@ -41,14 +41,19 @@ batman-adv-y += compat.o
 ifneq ($(REVISION),)
 ccflags-y += -DSOURCE_VERSION=\"$(REVISION)\"
 endif
-ccflags-$(CONFIG_BATMAN_ADV_DEBUG) += -DCONFIG_BATMAN_ADV_DEBUG
 include $(PWD)/Makefile.kbuild
 
-all:
+all: config
 	$(MAKE) -C $(KERNELPATH) M=$(PWD) PWD=$(PWD) modules
 
 clean:
+	$(RM) compat-autoconf.h*
 	$(MAKE) -C $(KERNELPATH) M=$(PWD) PWD=$(PWD) clean
 
-install:
+install: config
 	$(MAKE) -C $(KERNELPATH) M=$(PWD) PWD=$(PWD) INSTALL_MOD_DIR=kernel/net/batman-adv/ modules_install
+
+config:
+	$(PWD)/gen-compat-autoconf.sh $(PWD)/compat-autoconf.h
+
+.PHONY: all clean install config

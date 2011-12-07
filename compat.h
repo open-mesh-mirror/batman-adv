@@ -27,6 +27,13 @@
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33))
+#include <linux/autoconf.h>
+#else
+#include <generated/autoconf.h>
+#endif
+#include "compat-autoconf.h"
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
 
 #define __always_unused			__attribute__((unused))
