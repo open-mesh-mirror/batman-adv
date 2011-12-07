@@ -32,8 +32,8 @@ endif
 export KERNELPATH
 RM ?= rm -f
 
-REVISION= $(shell	if [ -d .git ]; then \
-				echo $$(git describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
+REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
+				echo $$(git --git-dir="$(PWD)/.git" describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
 			fi)
 
 CONFIG_BATMAN_ADV=m
