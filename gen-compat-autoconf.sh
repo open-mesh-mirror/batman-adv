@@ -12,15 +12,22 @@ gen_config() {
 	VALUE="${2}"
 
 	echo "#undef ${KEY}"
+	echo "#undef __enabled_${KEY}"
+	echo "#undef __enabled_${KEY}_MODULE"
 	case "${VALUE}" in
 	y)
 		echo "#define ${KEY} 1"
+		echo "#define __enabled_${KEY} 1"
+		echo "#define __enabled_${KEY}_MODULE 0"
 		;;
 	m)
 		echo "#define ${KEY} 1"
+		echo "#define __enabled_${KEY} 0"
+		echo "#define __enabled_${KEY}_MODULE 1"
 		;;
 	n)
-		# leave it undefined
+		echo "#define __enabled_${KEY} 0"
+		echo "#define __enabled_${KEY}_MODULE 0"
 		;;
 	*)
 		echo "#define ${KEY} \"${VALUE}\""
