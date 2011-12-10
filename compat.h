@@ -61,6 +61,34 @@
 #define __rcu
 #define IFF_BRIDGE_PORT  0 || (hard_iface->net_dev->br_port ? 1 : 0)
 
+struct kernel_param_ops {
+	/* Returns 0, or -errno.  arg is in kp->arg. */
+	int (*set)(const char *val, const struct kernel_param *kp);
+	/* Returns length written or -errno.  Buffer is 4k (ie. be short!) */
+	int (*get)(char *buffer, struct kernel_param *kp);
+	/* Optional function to free kp->arg when module unloaded. */
+	void (*free)(void *arg);
+};
+
+#define module_param_cb(name, ops, arg, perm)				\
+	static int __compat_set_param_##name(const char *val,		\
+					     struct kernel_param *kp)	\
+				{ return (ops)->set(val, kp); }		\
+	static int __compat_get_param_##name(char *buffer,		\
+					     struct kernel_param *kp)	\
+				{ return (ops)->get(buffer, kp); }	\
+	__module_param_call(MODULE_PARAM_PREFIX, name,			\
+			    __compat_set_param_##name,			\
+			    __compat_get_param_##name, arg,		\
+			    __same_type((arg), bool *), perm)
+
+static inline int __param_set_copystring(const char *val,
+					 const struct kernel_param *kp)
+{
+	return param_set_copystring(val, (struct kernel_param *)kp);
+}
+#define param_set_copystring __param_set_copystring
+
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
