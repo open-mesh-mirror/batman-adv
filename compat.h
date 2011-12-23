@@ -42,6 +42,7 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 34)
 
 #define hlist_first_rcu(head) (*((struct hlist_node **)(&(head)->first)))
@@ -55,6 +56,20 @@
 #define rcu_dereference_protected(p, c) (p)
 
 #endif /* < KERNEL_VERSION(2, 6, 34) */
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
+
+#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
+	__module_param_call(p1, p2, p3, p4, p5, p7)
+
+#else
+
+#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
+	__module_param_call(p1, p2, p3, p4, p5, p6, p7)
+
+#endif /* < KERNEL_VERSION(2, 6, 31) */
+
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 
@@ -77,10 +92,10 @@ struct kernel_param_ops {
 	static int __compat_get_param_##name(char *buffer,		\
 					     struct kernel_param *kp)	\
 				{ return (ops)->get(buffer, kp); }	\
-	__module_param_call(MODULE_PARAM_PREFIX, name,			\
-			    __compat_set_param_##name,			\
-			    __compat_get_param_##name, arg,		\
-			    __same_type((arg), bool *), perm)
+	__compat__module_param_call(MODULE_PARAM_PREFIX, name,		\
+				    __compat_set_param_##name,		\
+				    __compat_get_param_##name, arg,	\
+				    __same_type((arg), bool *), perm)
 
 static inline int __param_set_copystring(const char *val,
 					 const struct kernel_param *kp)
@@ -91,12 +106,14 @@ static inline int __param_set_copystring(const char *val,
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
 
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
 
 #endif /* < KERNEL_VERSION(2, 6, 39) */
+
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
