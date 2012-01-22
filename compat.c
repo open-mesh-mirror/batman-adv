@@ -55,4 +55,12 @@ void free_rcu_tt_local_entry(struct rcu_head *rcu)
 	kfree(tt_local_entry);
 }
 
+void free_rcu_backbone_gw(struct rcu_head *rcu)
+{
+	struct backbone_gw *backbone_gw;
+
+	backbone_gw = container_of(rcu, struct backbone_gw, rcu);
+	kfree(backbone_gw);
+}
+
 #endif /* < KERNEL_VERSION(3, 0, 0) */

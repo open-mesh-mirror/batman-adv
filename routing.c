@@ -29,6 +29,7 @@
 #include "originator.h"
 #include "vis.h"
 #include "unicast.h"
+#include "bridge_loop_avoidance.h"
 
 void slide_own_bcast_window(struct hard_iface *hard_iface)
 {
@@ -1069,6 +1070,11 @@ int recv_bcast_packet(struct sk_buff *skb, struct hard_iface *recv_if)
 
 	/* rebroadcast packet */
 	add_bcast_packet_to_list(bat_priv, skb, 1);
+
+	/* don't hand the broadcast up if it is from an originator
+	 * from the same backbone. */
+	if (bla_is_backbone_gw(skb, orig_node, hdr_size))
+		goto out;
 
 	/* broadcast for me */
 	interface_rx(recv_if->soft_iface, skb, recv_if, hdr_size);
