@@ -1434,6 +1434,7 @@ static void _tt_update_changes(struct bat_priv *bat_priv,
 				 */
 				return;
 	}
+	orig_node->tt_initialised = true;
 }
 
 static void tt_fill_gtable(struct bat_priv *bat_priv,
@@ -1476,7 +1477,6 @@ static void tt_update_changes(struct bat_priv *bat_priv,
 	tt_save_orig_buffer(bat_priv, orig_node, (unsigned char *)tt_change,
 			    tt_num_changes);
 	atomic_set(&orig_node->last_ttvn, ttvn);
-	orig_node->tt_initialised = true;
 }
 
 bool is_my_client(struct bat_priv *bat_priv, const uint8_t *addr)
