@@ -21,6 +21,8 @@
 # changing the CONFIG_* line to 'y' enables the related feature
 # B.A.T.M.A.N. debugging:
 export CONFIG_BATMAN_ADV_DEBUG=n
+# B.A.T.M.A.N. bridge loop avoidance:
+export CONFIG_BATMAN_ADV_BLA=y
 
 PWD:=$(shell pwd)
 KERNELPATH ?= /lib/modules/$(shell uname -r)/build

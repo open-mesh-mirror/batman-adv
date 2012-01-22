@@ -36,6 +36,7 @@ module).  Available  options  and  their    possible   values are
 (default marked with an "*")
 
  * CONFIG_BATMAN_ADV_DEBUG=[y|n*] (B.A.T.M.A.N. debugging)
+ * CONFIG_BATMAN_ADV_BLA=[y*|n] (B.A.T.M.A.N. bridge loop avoidance)
 
 e.g., debugging can be enabled by
 

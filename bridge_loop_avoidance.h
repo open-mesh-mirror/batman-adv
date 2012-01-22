@@ -22,6 +22,7 @@
 #ifndef _NET_BATMAN_ADV_BLA_H_
 #define _NET_BATMAN_ADV_BLA_H_
 
+#ifdef CONFIG_BATMAN_ADV_BLA
 int bla_rx(struct bat_priv *bat_priv, struct sk_buff *skb, short vid);
 int bla_tx(struct bat_priv *bat_priv, struct sk_buff *skb, short vid);
 int bla_is_backbone_gw(struct sk_buff *skb,
@@ -37,5 +38,18 @@ int bla_init(struct bat_priv *bat_priv);
 void bla_free(struct bat_priv *bat_priv);
 
 #define BLA_CRC_INIT	0
+#else /* ifdef CONFIG_BATMAN_ADV_BLA */
+
+#define bla_rx(...)				(0)
+#define bla_tx(...)				(0)
+#define bla_is_backbone_gw(...)			(0)
+#define bla_claim_table_seq_print_text		(0)
+#define bla_is_backbone_gw_orig(...)		(0)
+#define bla_check_bcast_duplist(...)		(0)
+#define bla_update_orig_address(...)		{}
+#define bla_init(...)				(1)
+#define bla_free(...)				{}
+
+#endif /* ifdef CONFIG_BATMAN_ADV_BLA */
 
 #endif /* ifndef _NET_BATMAN_ADV_BLA_H_ */
