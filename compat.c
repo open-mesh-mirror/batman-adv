@@ -44,14 +44,6 @@ void free_rcu_neigh_node(struct rcu_head *rcu)
 	kfree(neigh_node);
 }
 
-void free_rcu_softif_neigh(struct rcu_head *rcu)
-{
-	struct softif_neigh *softif_neigh;
-
-	softif_neigh = container_of(rcu, struct softif_neigh, rcu);
-	kfree(softif_neigh);
-}
-
 void free_rcu_tt_local_entry(struct rcu_head *rcu)
 {
 	struct tt_common_entry *tt_common_entry;
