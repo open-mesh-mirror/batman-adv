@@ -1,3 +1,14 @@
+batman-adv 2012.0.0:
+
+* support latest kernels (2.6.29 - 3.3)
+* Fix bat_socket_read memory corruption (CVE-2011-4604)
+* Cleanup of gateway handling code
+* many bugs (hang when softif creation fails, memory leaks when hashes
+  table cannot be filled, wrong filter for missed ogms, many smaller
+  translation table problems, ...) fixed
+
+ -- Sun, 05 Feb 2012 15:06:08 +0100
+
 batman-adv 2011.4.0:
 
 * support latest kernels (2.6.29 - 3.2)
