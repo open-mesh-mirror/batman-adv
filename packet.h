@@ -165,9 +165,9 @@ struct vis_packet {
 	uint32_t seqno;		 /* sequence number */
 	uint8_t  entries;	 /* number of entries behind this struct */
 	uint8_t  reserved;
-	uint8_t  vis_orig[ETH_ALEN];	 /* originator that announces its neighbors */
+	uint8_t  vis_orig[ETH_ALEN];	/* originator reporting its neighbors */
 	uint8_t  target_orig[ETH_ALEN]; /* who should receive this packet */
-	uint8_t  sender_orig[ETH_ALEN]; /* who sent or rebroadcasted this packet */
+	uint8_t  sender_orig[ETH_ALEN]; /* who sent or forwarded this packet */
 } __packed;
 
 struct tt_query_packet {
