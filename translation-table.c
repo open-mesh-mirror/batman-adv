@@ -816,9 +816,10 @@ static void tt_global_del_roaming(struct bat_priv *bat_priv,
 
 
 
-void tt_global_del(struct bat_priv *bat_priv,
-		   struct orig_node *orig_node, const unsigned char *addr,
-		   const char *message, bool roaming)
+static void tt_global_del(struct bat_priv *bat_priv,
+			  struct orig_node *orig_node,
+			  const unsigned char *addr,
+			  const char *message, bool roaming)
 {
 	struct tt_global_entry *tt_global_entry = NULL;
 	struct tt_local_entry *tt_local_entry = NULL;
