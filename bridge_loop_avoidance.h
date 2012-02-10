@@ -46,9 +46,10 @@ void bla_free(struct bat_priv *bat_priv);
 #define bla_claim_table_seq_print_text		(0)
 #define bla_is_backbone_gw_orig(...)		(0)
 #define bla_check_bcast_duplist(...)		(0)
-#define bla_update_orig_address(...)		{}
+#define bla_update_orig_address(...)		do {} while (0)
 #define bla_init(...)				(1)
-#define bla_free(...)				{}
+#define bla_free(...)				do {} while (0)
+
 
 #endif /* ifdef CONFIG_BATMAN_ADV_BLA */
 
