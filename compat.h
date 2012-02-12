@@ -104,6 +104,15 @@ static inline int __param_set_copystring(const char *val,
 }
 #define param_set_copystring __param_set_copystring
 
+static inline void dev_hw_addr_random(struct net_device *dev, u8 *hwaddr)
+{
+	random_ether_addr(hwaddr);
+}
+
+/* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
+#define addr_assign_type ifindex
+#define NET_ADDR_RANDOM 0
+
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
 
