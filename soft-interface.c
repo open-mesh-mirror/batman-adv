@@ -108,8 +108,7 @@ static int interface_set_mac_addr(struct net_device *dev, void *p)
 	}
 
 	memcpy(dev->dev_addr, addr->sa_data, ETH_ALEN);
-	if (dev->addr_assign_type & NET_ADDR_RANDOM)
-		dev->addr_assign_type &= ~NET_ADDR_RANDOM;
+	dev->addr_assign_type &= ~NET_ADDR_RANDOM;
 
 	return 0;
 }
