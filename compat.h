@@ -104,6 +104,10 @@ static inline int __param_set_copystring(const char *val,
 }
 #define param_set_copystring __param_set_copystring
 
+/* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
+#define addr_assign_type ifindex
+#define NET_ADDR_RANDOM 0
+
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
 
@@ -123,6 +127,16 @@ void free_rcu_gw_node(struct rcu_head *rcu);
 void free_rcu_neigh_node(struct rcu_head *rcu);
 void free_rcu_softif_neigh(struct rcu_head *rcu);
 void free_rcu_tt_local_entry(struct rcu_head *rcu);
+
+#endif /* < KERNEL_VERSION(3, 0, 0) */
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
+
+static inline void eth_hw_addr_random(struct net_device *dev)
+{
+	random_ether_addr(dev->dev_addr);
+}
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
