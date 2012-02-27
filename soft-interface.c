@@ -259,7 +259,6 @@ void interface_rx(struct net_device *soft_iface,
 		  int hdr_size)
 {
 	struct bat_priv *bat_priv = netdev_priv(soft_iface);
-	struct unicast_4addr_packet *unicast_4addr_packet;
 	struct ethhdr *ethhdr;
 	struct vlan_ethhdr *vhdr;
 	short vid __maybe_unused = -1;
@@ -267,8 +266,6 @@ void interface_rx(struct net_device *soft_iface,
 	/* check if enough space is available for pulling, and pull */
 	if (!pskb_may_pull(skb, hdr_size))
 		goto dropped;
-
-	unicast_4addr_packet = (struct unicast_4addr_packet *)skb->data;
 
 	if (dat_snoop_incoming_arp_request(bat_priv, skb, hdr_size))
 		goto out;
