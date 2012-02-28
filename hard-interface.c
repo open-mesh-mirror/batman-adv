@@ -343,23 +343,23 @@ int hardif_enable_interface(struct hard_iface *hard_iface,
 	if (atomic_read(&bat_priv->fragmentation) && hard_iface->net_dev->mtu <
 		ETH_DATA_LEN + BAT_HEADER_LEN)
 		bat_info(hard_iface->soft_iface,
-			"The MTU of interface %s is too small (%i) to handle "
-			"the transport of batman-adv packets. Packets going "
-			"over this interface will be fragmented on layer2 "
-			"which could impact the performance. Setting the MTU "
-			"to %zi would solve the problem.\n",
-			hard_iface->net_dev->name, hard_iface->net_dev->mtu,
-			ETH_DATA_LEN + BAT_HEADER_LEN);
+			 "The MTU of interface %s is too small (%i) to handle "
+			 "the transport of batman-adv packets. Packets going "
+			 "over this interface will be fragmented on layer2 "
+			 "which could impact the performance. Setting the MTU "
+			 "to %zi would solve the problem.\n",
+			 hard_iface->net_dev->name, hard_iface->net_dev->mtu,
+			 ETH_DATA_LEN + BAT_HEADER_LEN);
 
 	if (!atomic_read(&bat_priv->fragmentation) && hard_iface->net_dev->mtu <
 		ETH_DATA_LEN + BAT_HEADER_LEN)
 		bat_info(hard_iface->soft_iface,
-			"The MTU of interface %s is too small (%i) to handle "
-			"the transport of batman-adv packets. If you experience"
-			" problems getting traffic through try increasing the "
-			"MTU to %zi.\n",
-			hard_iface->net_dev->name, hard_iface->net_dev->mtu,
-			ETH_DATA_LEN + BAT_HEADER_LEN);
+			 "The MTU of interface %s is too small (%i) to handle "
+			 "the transport of batman-adv packets. If you "
+			 "experience problems getting traffic through try "
+			 "increasing the MTU to %zi.\n",
+			 hard_iface->net_dev->name, hard_iface->net_dev->mtu,
+			 ETH_DATA_LEN + BAT_HEADER_LEN);
 
 	if (hardif_is_iface_up(hard_iface))
 		hardif_activate_interface(hard_iface);
