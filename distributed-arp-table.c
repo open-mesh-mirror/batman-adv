@@ -298,6 +298,7 @@ static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 {
 	struct arphdr *arphdr;
 	struct ethhdr *ethhdr;
+	uint32_t ip_src, ip_dst;
 	uint16_t type = 0;
 
 	/* pull the ethernet header */
@@ -332,10 +333,10 @@ static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 
 	/* Check for bad reply/request. If the ARP message is not sane, DAT
 	 * will simply ignore it */
-	if (ipv4_is_loopback(ARP_IP_SRC(skb, hdr_size)) ||
-	    ipv4_is_multicast(ARP_IP_SRC(skb, hdr_size)) ||
-	    ipv4_is_loopback(ARP_IP_DST(skb, hdr_size)) ||
-	    ipv4_is_multicast(ARP_IP_DST(skb, hdr_size)))
+	ip_src = ARP_IP_SRC(skb, hdr_size);
+	ip_dst = ARP_IP_DST(skb, hdr_size);
+	if (ipv4_is_loopback(ip_src) || ipv4_is_multicast(ip_src) ||
+	    ipv4_is_loopback(ip_dst) || ipv4_is_multicast(ip_dst))
 		goto out;
 
 	type = ntohs(arphdr->ar_op);
@@ -538,9 +539,8 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 	/* If this packet is an ARP_REQUEST and we already have the information
 	 * that it is going to ask, we can drop the packet */
 	if (!forw_packet->num_packets &&
-			(arp_get_type(bat_priv, forw_packet->skb,
-				      sizeof(struct bcast_packet)) ==
-							ARPOP_REQUEST)) {
+	    (ARPOP_REQUEST == arp_get_type(bat_priv, forw_packet->skb,
+					   sizeof(struct bcast_packet)))) {
 		n = neigh_lookup(&arp_tbl,
 				 &ARP_IP_DST(forw_packet->skb,
 					     sizeof(struct bcast_packet)),
