@@ -408,9 +408,6 @@ struct bat_algo_ops {
 				 int tt_num_changes);
 	/* send scheduled OGM */
 	void (*bat_ogm_emit)(struct forw_packet *forw_packet);
-	/* receive incoming OGM */
-	void (*bat_ogm_receive)(struct hard_iface *if_incoming,
-				struct sk_buff *skb);
 };
 
 struct dht_candidate {
