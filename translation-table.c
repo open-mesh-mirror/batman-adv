@@ -1618,8 +1618,9 @@ bool send_tt_response(struct bat_priv *bat_priv,
 			return true;
 
 		return send_my_tt_response(bat_priv, tt_request);
-	} else
+	} else {
 		return send_other_tt_response(bat_priv, tt_request);
+	}
 }
 
 static void _tt_update_changes(struct bat_priv *bat_priv,

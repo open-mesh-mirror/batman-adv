@@ -1142,8 +1142,9 @@ int bla_init(struct bat_priv *bat_priv)
 			htons(crc16(0, primary_if->net_dev->dev_addr,
 				    ETH_ALEN));
 		hardif_free_ref(primary_if);
-	} else
+	} else {
 		bat_priv->claim_dest.group = 0; /* will be set later */
+	}
 
 	/* initialize the duplicate list */
 	for (i = 0; i < DUPLIST_SIZE; i++)
