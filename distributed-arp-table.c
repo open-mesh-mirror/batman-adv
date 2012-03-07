@@ -217,8 +217,7 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
 	return res;
 }
 
-/*
- * Sends the skb payload passed as argument to the candidates selected for
+/* Sends the skb payload passed as argument to the candidates selected for
  * the data represented by 'ip'. The skb is copied by means of pskb_copy()
  * and is sent as unicast packet to each of the selected candidate.
  *

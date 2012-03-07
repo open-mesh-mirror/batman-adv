@@ -123,8 +123,7 @@ static void claim_free_ref(struct claim *claim)
 		call_rcu(&claim->rcu, claim_free_rcu);
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @data: search data (may be local/static data)
  *
  * looks for a claim in the hash, and returns it if found
@@ -163,8 +162,7 @@ static struct claim *claim_hash_find(struct bat_priv *bat_priv,
 	return claim_tmp;
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @addr: the address of the originator
  * @vid: the VLAN ID
  *
@@ -243,8 +241,7 @@ static void bla_del_backbone_claims(struct backbone_gw *backbone_gw)
 	backbone_gw->crc = BLA_CRC_INIT;
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @orig: the mac address to be announced within the claim
  * @vid: the VLAN ID
  * @claimtype: the type of the claim (CLAIM, UNCLAIM, ANNOUNCE, ...)
@@ -353,8 +350,7 @@ out:
 		hardif_free_ref(primary_if);
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @orig: the mac address of the originator
  * @vid: the VLAN ID
  *
@@ -411,8 +407,7 @@ static struct backbone_gw *bla_get_backbone_gw(struct bat_priv *bat_priv,
 	return entry;
 }
 
-/*
- * update or add the own backbone gw to make sure we announce
+/* update or add the own backbone gw to make sure we announce
  * where we receive other backbone gws
  */
 static void bla_update_own_backbone_gw(struct bat_priv *bat_priv,
@@ -430,8 +425,7 @@ static void bla_update_own_backbone_gw(struct bat_priv *bat_priv,
 	backbone_gw_free_ref(backbone_gw);
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @vid: the vid where the request came on
  *
  * Repeat all of our own claims, and finally send an ANNOUNCE frame
@@ -477,8 +471,7 @@ static void bla_answer_request(struct bat_priv *bat_priv,
 	backbone_gw_free_ref(backbone_gw);
 }
 
-/*
- * @backbone_gw: the backbone gateway from whom we are out of sync
+/* @backbone_gw: the backbone gateway from whom we are out of sync
  *
  * When the crc is wrong, ask the backbone gateway for a full table update.
  * After the request, it will repeat all of his own claims and finally
@@ -505,8 +498,7 @@ static void bla_send_request(struct backbone_gw *backbone_gw)
 	}
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @backbone_gw: our backbone gateway which should be announced
  *
  * This function sends an announcement. It is called from multiple
@@ -526,8 +518,7 @@ static void bla_send_announce(struct bat_priv *bat_priv,
 
 }
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @mac: the mac address of the claim
  * @vid: the VLAN ID of the frame
  * @backbone_gw: the backbone gateway which claims it
@@ -595,8 +586,7 @@ claim_free_ref:
 	claim_free_ref(claim);
 }
 
-/*
- * Delete a claim from the claim hash which has the
+/* Delete a claim from the claim hash which has the
  * given mac address and vid.
  */
 static void bla_del_claim(struct bat_priv *bat_priv, const uint8_t *mac,
@@ -818,8 +808,7 @@ static int check_claim_group(struct bat_priv *bat_priv,
 }
 
 
-/*
- * @bat_priv: the bat priv with all the soft interface information
+/* @bat_priv: the bat priv with all the soft interface information
  * @skb: the frame to be checked
  *
  * Check if this is a claim frame, and process it accordingly.
@@ -924,8 +913,7 @@ static int bla_process_claim(struct bat_priv *bat_priv,
 	return 1;
 }
 
-/*
- * Check when we last heard from other nodes, and remove them in case of
+/* Check when we last heard from other nodes, and remove them in case of
  * a time out, or clean all backbone gws if now is set.
  */
 static void bla_purge_backbone_gw(struct bat_priv *bat_priv, int now)
@@ -1082,8 +1070,7 @@ static void bla_start_timer(struct bat_priv *bat_priv)
 			   msecs_to_jiffies(BLA_PERIOD_LENGTH));
 }
 
-/*
- * periodic work to do:
+/* periodic work to do:
  *  * purge structures when they are too old
  *  * send announcements
  */

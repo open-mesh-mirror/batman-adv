@@ -29,8 +29,7 @@
 
 #ifdef CONFIG_BATMAN_ADV_DAT
 
-/*
- * dat_addr_t is the type used for all DHT addresses. If it is changed,
+/* dat_addr_t is the type used for all DHT addresses. If it is changed,
  * DAT_ADDR_MAX is changed as well.
  *
  * *Please be careful: dat_addr_t must be UNSIGNED*

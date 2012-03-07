@@ -599,8 +599,7 @@ int tt_global_add(struct bat_priv *bat_priv, struct orig_node *orig_node,
 	} else {
 		/* there is already a global entry, use this one. */
 
-		/*
-		 * If there is the TT_CLIENT_ROAM flag set, there is only one
+		/* If there is the TT_CLIENT_ROAM flag set, there is only one
 		 * originator left in the list and we previously received a
 		 * delete + roaming change for this originator.
 		 *
@@ -636,8 +635,7 @@ out:
 	return ret;
 }
 
-/*
- * print all orig nodes who announce the address for this global entry.
+/* print all orig nodes who announce the address for this global entry.
  * it is assumed that the caller holds rcu_read_lock();
  */
 static void tt_global_print_entry(struct tt_global_entry *tt_global_entry,
@@ -773,8 +771,7 @@ static void tt_global_del_struct(struct bat_priv *bat_priv,
 
 }
 
-/*
- * If the client is to be deleted, we check if it is the last origantor entry
+/* If the client is to be deleted, we check if it is the last origantor entry
  * within tt_global entry. If yes, we set the TT_CLIENT_ROAM flag and the timer,
  * otherwise we simply remove the originator scheduled for deletion.
  */
@@ -788,8 +785,7 @@ static void tt_global_del_roaming(struct bat_priv *bat_priv,
 	struct hlist_node *node;
 	struct tt_orig_list_entry *orig_entry;
 
-	/*
-	 * no local entry exists, case 1:
+	/* no local entry exists, case 1:
 	 * Check if this is the last one or if other entries exist.
 	 */
 
