@@ -657,9 +657,8 @@ static void tt_global_print_entry(struct tt_global_entry *tt_global_entry,
 	hlist_for_each_entry_rcu(orig_entry, node, head, list) {
 		flags = tt_common_entry->flags;
 		last_ttvn = atomic_read(&orig_entry->orig_node->last_ttvn);
-		seq_printf(seq,	" * %pM  (%3u) via %pM     (%3u)   "
-			   "[%c%c]\n", tt_global_entry->common.addr,
-			   orig_entry->ttvn,
+		seq_printf(seq, " * %pM  (%3u) via %pM     (%3u)   [%c%c]\n",
+			   tt_global_entry->common.addr, orig_entry->ttvn,
 			   orig_entry->orig_node->orig, last_ttvn,
 			   (flags & TT_CLIENT_ROAM ? 'R' : '.'),
 			   (flags & TT_CLIENT_WIFI ? 'W' : '.'));

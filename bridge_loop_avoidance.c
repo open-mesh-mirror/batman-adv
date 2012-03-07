@@ -375,8 +375,8 @@ static struct backbone_gw *bla_get_backbone_gw(struct bat_priv *bat_priv,
 		return entry;
 
 	bat_dbg(DBG_BLA, bat_priv,
-		"bla_get_backbone_gw(): not found (%pM, %d),"
-		" creating new entry\n", orig, vid);
+		"bla_get_backbone_gw(): not found (%pM, %d), creating new entry\n",
+		orig, vid);
 
 	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
 	if (!entry)
@@ -449,8 +449,7 @@ static void bla_answer_request(struct bat_priv *bat_priv,
 	int i;
 
 	bat_dbg(DBG_BLA, bat_priv,
-		"bla_answer_request(): received a "
-		"claim request, send all of our own claims again\n");
+		"bla_answer_request(): received a claim request, send all of our own claims again\n");
 
 	backbone_gw = backbone_hash_find(bat_priv,
 					 primary_if->net_dev->dev_addr, vid);
@@ -643,16 +642,14 @@ static int handle_announce(struct bat_priv *bat_priv,
 	crc = ntohs(*((uint16_t *) (&an_addr[4])));
 
 	bat_dbg(DBG_BLA, bat_priv,
-		"handle_announce(): ANNOUNCE vid %d (sent "
-		"by %pM)... CRC = %04x\n",
+		"handle_announce(): ANNOUNCE vid %d (sent by %pM)... CRC = %04x\n",
 		vid, backbone_gw->orig, crc);
 
 	if (backbone_gw->crc != crc) {
 		bat_dbg(DBG_BLA, backbone_gw->bat_priv,
-			"handle_announce(): CRC FAILED for %pM/%d"
-			"(my = %04x, sent = %04x)\n",
-			backbone_gw->orig, backbone_gw->vid,
-			backbone_gw->crc, crc);
+			"handle_announce(): CRC FAILED for %pM/%d (my = %04x, sent = %04x)\n",
+			backbone_gw->orig, backbone_gw->vid, backbone_gw->crc,
+			crc);
 
 		bla_send_request(backbone_gw);
 	} else {
@@ -684,8 +681,7 @@ static int handle_request(struct bat_priv *bat_priv,
 		return 1;
 
 	bat_dbg(DBG_BLA, bat_priv,
-		"handle_request(): REQUEST vid %d (sent "
-		"by %pM)...\n",
+		"handle_request(): REQUEST vid %d (sent by %pM)...\n",
 		vid, ethhdr->h_source);
 
 	bla_answer_request(bat_priv, primary_if, vid);
@@ -711,8 +707,7 @@ static int handle_unclaim(struct bat_priv *bat_priv,
 		return 1;
 
 	/* this must be an UNCLAIM frame */
-	bat_dbg(DBG_BLA, bat_priv, "handle_unclaim():"
-		"UNCLAIM %pM on vid %d (sent by %pM)...\n",
+	bat_dbg(DBG_BLA, bat_priv, "handle_unclaim(): UNCLAIM %pM on vid %d (sent by %pM)...\n",
 		claim_addr, vid, backbone_gw->orig);
 
 	bla_del_claim(bat_priv, claim_addr, vid);
@@ -890,9 +885,8 @@ static int bla_process_claim(struct bat_priv *bat_priv,
 	/* check if it is a claim frame. */
 	ret = check_claim_group(bat_priv, primary_if, hw_src, hw_dst, ethhdr);
 	if (ret == 1)
-		bat_dbg(DBG_BLA, bat_priv, "bla_process_claim(): received "
-			"a claim frame from another group. From: "
-			"%pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
+		bat_dbg(DBG_BLA, bat_priv,
+			"bla_process_claim(): received a claim frame from another group. From: %pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
 			ethhdr->h_source, vid, hw_src, hw_dst);
 
 	if (ret < 2)
@@ -924,9 +918,8 @@ static int bla_process_claim(struct bat_priv *bat_priv,
 		break;
 	}
 
-	bat_dbg(DBG_BLA, bat_priv, "bla_process_claim(): ERROR - this looks"
-		"like a claim frame, but is useless. eth src"
-		"%pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
+	bat_dbg(DBG_BLA, bat_priv,
+		"bla_process_claim(): ERROR - this looks like a claim frame, but is useless. eth src %pM on vid %d ...(hw_src %pM, hw_dst %pM)\n",
 		ethhdr->h_source, vid, hw_src, hw_dst);
 	return 1;
 }
@@ -962,8 +955,8 @@ static void bla_purge_backbone_gw(struct bat_priv *bat_priv, int now)
 				continue;
 
 			bat_dbg(DBG_BLA, backbone_gw->bat_priv,
-				"bla_purge_backbone_gw(): backbone gw %pM"
-				" timed out\n",	backbone_gw->orig);
+				"bla_purge_backbone_gw(): backbone gw %pM timed out\n",
+				backbone_gw->orig);
 
 purge_now:
 			/* don't wait for the pending request anymore */
@@ -1551,21 +1544,21 @@ int bla_claim_table_seq_print_text(struct seq_file *seq, void *offset)
 
 	primary_if = primary_if_get_selected(bat_priv);
 	if (!primary_if) {
-		ret = seq_printf(seq, "BATMAN mesh %s disabled - please "
-				 "specify interfaces to enable it\n",
+		ret = seq_printf(seq,
+				 "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
 				 net_dev->name);
 		goto out;
 	}
 
 	if (primary_if->if_status != IF_ACTIVE) {
-		ret = seq_printf(seq, "BATMAN mesh %s disabled - "
-				 "primary interface not active\n",
+		ret = seq_printf(seq,
+				 "BATMAN mesh %s disabled - primary interface not active\n",
 				 net_dev->name);
 		goto out;
 	}
 
-	seq_printf(seq, "Claims announced for the mesh %s "
-		   "(orig %pM, group id %04x)\n",
+	seq_printf(seq,
+		   "Claims announced for the mesh %s (orig %pM, group id %04x)\n",
 		   net_dev->name, primary_if->net_dev->dev_addr,
 		   ntohs(bat_priv->claim_dest.group));
 	seq_printf(seq, "   %-17s    %-5s    %-17s [o] (%-4s)\n",

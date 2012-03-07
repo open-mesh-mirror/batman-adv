@@ -56,12 +56,12 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 
 	switch (unicast_4addr_packet->u.header.packet_type) {
 	case BAT_UNICAST:
-		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a UNICAST "
-			"packet\n");
+		bat_dbg(DBG_DAT, bat_priv,
+			"* encapsulated within a UNICAST packet\n");
 		break;
 	case BAT_UNICAST_4ADDR:
-		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a "
-			"UNICAST_4ADDR packet (src: %pM)\n",
+		bat_dbg(DBG_DAT, bat_priv,
+			"* encapsulated within a UNICAST_4ADDR packet (src: %pM)\n",
 			unicast_4addr_packet->src);
 		switch (unicast_4addr_packet->subtype) {
 		case BAT_P_DAT_DHT_PUT:
@@ -81,13 +81,13 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 		}
 		break;
 	case BAT_BCAST:
-		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within a BCAST "
-			"packet (src: %pM)\n",
+		bat_dbg(DBG_DAT, bat_priv,
+			"* encapsulated within a BCAST packet (src: %pM)\n",
 			((struct bcast_packet *)unicast_4addr_packet)->orig);
 		break;
 	default:
-		bat_dbg(DBG_DAT, bat_priv, "* encapsulated within an unknown "
-			"packet type (0x%x)\n",
+		bat_dbg(DBG_DAT, bat_priv,
+			"* encapsulated within an unknown packet type (0x%x)\n",
 			unicast_4addr_packet->u.header.packet_type);
 	}
 }
@@ -177,9 +177,10 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
 	if (max_orig_node) {
 		cands[select].type = DHT_CANDIDATE_ORIG;
 		cands[select].orig_node = max_orig_node;
-		bat_dbg(DBG_DAT, bat_priv, "dht_select_candidates() %d: "
-			"selected %pM addr=%u dist=%u\n", select,
-			max_orig_node->orig, max_orig_node->dht_addr, max);
+		bat_dbg(DBG_DAT, bat_priv,
+			"dht_select_candidates() %d: selected %pM addr=%u dist=%u\n",
+			select, max_orig_node->orig, max_orig_node->dht_addr,
+			max);
 	}
 	*last_max = max;
 }
@@ -206,8 +207,9 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
 
 	ip_key = (dat_addr_t)hash_ipv4(&ip_dst, DAT_ADDR_MAX);
 
-	bat_dbg(DBG_DAT, bat_priv, "dht_select_candidates(): IP=%pI4 "
-		"hash(IP)=%u\n", &ip_dst, ip_key);
+	bat_dbg(DBG_DAT, bat_priv,
+		"dht_select_candidates(): IP=%pI4 hash(IP)=%u\n", &ip_dst,
+		ip_key);
 
 	for (select = 0; select < DHT_CANDIDATES_NUM; select++)
 		choose_next_candidate(bat_priv, res, select, ip_key, &last_max);
@@ -547,8 +549,8 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 				 forw_packet->if_incoming->soft_iface);
 		/* check if we already know this neigh */
 		if (n && (n->nud_state & NUD_CONNECTED)) {
-			bat_dbg(DBG_DAT, bat_priv, "ARP Request for %pI4: "
-				"fallback prevented\n",
+			bat_dbg(DBG_DAT, bat_priv,
+				"ARP Request for %pI4: fallback prevented\n",
 				&ARP_IP_DST(forw_packet->skb,
 					    sizeof(struct bcast_packet)));
 			return true;
@@ -565,8 +567,8 @@ void arp_change_timeout(struct net_device *soft_iface, const char *name)
 {
 	struct in_device *in_dev = in_dev_get(soft_iface);
 	if (!in_dev) {
-		pr_err("Unable to set ARP parameters for the batman interface "
-		       "'%s'\n", name);
+		pr_err("Unable to set ARP parameters for the batman interface '%s'\n",
+		       name);
 		return;
 	}
 
