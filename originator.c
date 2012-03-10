@@ -294,14 +294,12 @@ static bool purge_orig_neighbors(struct bat_priv *bat_priv,
 			    (neigh_node->if_incoming->if_status ==
 							IF_TO_BE_REMOVED))
 				bat_dbg(DBG_BATMAN, bat_priv,
-					"neighbor purge: originator %pM, "
-					"neighbor: %pM, iface: %s\n",
+					"neighbor purge: originator %pM, neighbor: %pM, iface: %s\n",
 					orig_node->orig, neigh_node->addr,
 					neigh_node->if_incoming->net_dev->name);
 			else
 				bat_dbg(DBG_BATMAN, bat_priv,
-					"neighbor timeout: originator %pM, "
-					"neighbor: %pM, last_seen: %u\n",
+					"neighbor timeout: originator %pM, neighbor: %pM, last_seen: %u\n",
 					orig_node->orig, neigh_node->addr,
 					jiffies_to_msecs(last_seen));
 
@@ -415,15 +413,15 @@ int orig_seq_print_text(struct seq_file *seq, void *offset)
 	primary_if = primary_if_get_selected(bat_priv);
 
 	if (!primary_if) {
-		ret = seq_printf(seq, "BATMAN mesh %s disabled - "
-				 "please specify interfaces to enable it\n",
+		ret = seq_printf(seq,
+				 "BATMAN mesh %s disabled - please specify interfaces to enable it\n",
 				 net_dev->name);
 		goto out;
 	}
 
 	if (primary_if->if_status != IF_ACTIVE) {
-		ret = seq_printf(seq, "BATMAN mesh %s "
-				 "disabled - primary interface not active\n",
+		ret = seq_printf(seq,
+				 "BATMAN mesh %s disabled - primary interface not active\n",
 				 net_dev->name);
 		goto out;
 	}
