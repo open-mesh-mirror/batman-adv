@@ -57,6 +57,13 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+
+#define pr_warn pr_warning
+
+#endif /* < KERNEL_VERSION(2, 6, 35) */
+
+
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
 
