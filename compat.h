@@ -57,6 +57,13 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
+
+#define pr_warn pr_warning
+
+#endif /* < KERNEL_VERSION(2, 6, 35) */
+
+
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
 
@@ -132,13 +139,13 @@ void free_rcu_backbone_gw(struct rcu_head *rcu);
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
 
 static inline void eth_hw_addr_random(struct net_device *dev)
 {
 	random_ether_addr(dev->dev_addr);
 }
 
-#endif /* < KERNEL_VERSION(3, 0, 0) */
+#endif /* < KERNEL_VERSION(3, 4, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
