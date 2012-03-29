@@ -65,9 +65,9 @@ To deactivate an interface you have  to  write  "none"  into  its
 All  mesh  wide  settings  can be found in batman's own interface
 folder:
 
-#  ls  /sys/class/net/bat0/mesh/
-# aggregated_ogms   fragmentation gw_sel_class   vis_mode
-# ap_isolation      gw_bandwidth  hop_penalty
+# ls /sys/class/net/bat0/mesh/
+# aggregated_ogms   fragmentation gw_sel_class   routing_algo
+# ap_isolation      gw_bandwidth  hop_penalty    vis_mode
 # bonding           gw_mode       orig_interval
 
 
