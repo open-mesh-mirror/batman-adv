@@ -45,6 +45,9 @@ struct hashtable_t {
 /* allocates and clears the hash */
 struct hashtable_t *hash_new(uint32_t size);
 
+/* set class key for all locks */
+void hash_set_lock_class(struct hashtable_t *hash, struct lock_class_key *key);
+
 /* free only the hashtable and the hash itself. */
 void hash_destroy(struct hashtable_t *hash);
 

@@ -1125,6 +1125,14 @@ out:
 	bla_start_timer(bat_priv);
 }
 
+/* The hash for claim and backbone hash receive the same key because they
+ * are getting initialized by hash_new with the same key. Reinitializing
+ * them with to different keys to allow nested locking without generating
+ * lockdep warnings
+ */
+static struct lock_class_key claim_hash_lock_class_key;
+static struct lock_class_key backbone_hash_lock_class_key;
+
 /* initialize all bla structures */
 int bla_init(struct bat_priv *bat_priv)
 {
@@ -1158,6 +1166,10 @@ int bla_init(struct bat_priv *bat_priv)
 
 	bat_priv->claim_hash = hash_new(128);
 	bat_priv->backbone_hash = hash_new(32);
+
+	hash_set_lock_class(bat_priv->claim_hash, &claim_hash_lock_class_key);
+	hash_set_lock_class(bat_priv->backbone_hash,
+			    &backbone_hash_lock_class_key);
 
 	if (!bat_priv->claim_hash || !bat_priv->backbone_hash)
 		return -1;
