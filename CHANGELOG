@@ -1,3 +1,15 @@
+batman-adv 2012.1.0:
+
+* support latest kernels (2.6.29 - 3.4)
+* makefile rewrite (install target, cleanups, new selection system for features)
+* cleanup of coding style (explicit marking of common headers, common unit for
+  time specific defines, ...)
+* Added framework to switch between different routing algorithms
+* some bugs fixes (distinguish between wrap-around ttvn and uninitialized ttvn
+  value, ...)
+
+ -- Fri, 30 Mar 2012 19:31:12 +0300
+
 batman-adv 2012.0.0:
 
 * support latest kernels (2.6.29 - 3.3)
