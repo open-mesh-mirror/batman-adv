@@ -697,7 +697,8 @@ static int handle_unclaim(struct bat_priv *bat_priv,
 		return 1;
 
 	/* this must be an UNCLAIM frame */
-	bat_dbg(DBG_BLA, bat_priv, "handle_unclaim(): UNCLAIM %pM on vid %d (sent by %pM)...\n",
+	bat_dbg(DBG_BLA, bat_priv,
+		"handle_unclaim(): UNCLAIM %pM on vid %d (sent by %pM)...\n",
 		claim_addr, vid, backbone_gw->orig);
 
 	bla_del_claim(bat_priv, claim_addr, vid);
