@@ -163,7 +163,8 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 	tt_local_add(soft_iface, ethhdr->h_source, skb->skb_iif);
 
 	/* don't accept stp packets. STP does not help in meshes.
-	 * better use the bridge loop avoidance ... */
+	 * better use the bridge loop avoidance ...
+	 */
 	if (compare_eth(ethhdr->h_dest, stp_addr))
 		goto dropped;
 
@@ -311,7 +312,8 @@ void interface_rx(struct net_device *soft_iface,
 		goto dropped;
 
 	/* Let the bridge loop avoidance check the packet. If will
-	 * not handle it, we can safely push it up. */
+	 * not handle it, we can safely push it up.
+	 */
 	if (bla_rx(bat_priv, skb, vid))
 		goto out;
 

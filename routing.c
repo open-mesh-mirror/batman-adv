@@ -670,7 +670,8 @@ int recv_roam_adv(struct sk_buff *skb, struct hard_iface *recv_if)
 
 	/* check if it is a backbone gateway. we don't accept
 	 * roaming advertisement from it, as it has the same
-	 * entries as we have. */
+	 * entries as we have.
+	 */
 	if (bla_is_backbone_gw_orig(bat_priv, roam_adv_packet->src))
 		goto out;
 
@@ -1089,7 +1090,8 @@ int recv_bcast_packet(struct sk_buff *skb, struct hard_iface *recv_if)
 	add_bcast_packet_to_list(bat_priv, skb, 1);
 
 	/* don't hand the broadcast up if it is from an originator
-	 * from the same backbone. */
+	 * from the same backbone.
+	 */
 	if (bla_is_backbone_gw(skb, orig_node, hdr_size))
 		goto out;
 

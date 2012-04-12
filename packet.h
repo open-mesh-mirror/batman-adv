@@ -108,7 +108,8 @@ enum bla_claimframe {
 };
 
 /* the destination hardware field in the ARP frame is used to
- * transport the claim type and the group id */
+ * transport the claim type and the group id
+ */
 struct bla_claim_dst {
 	uint8_t magic[3];	/* FF:43:05 */
 	uint8_t type;		/* bla_claimframe */

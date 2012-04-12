@@ -263,8 +263,8 @@ void tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 		}
 		rcu_read_unlock();
 		/* The global entry has to be marked as ROAMING and
-		 * has to be kept for consistency purpose */
-
+		 * has to be kept for consistency purpose
+		 */
 		tt_global_entry->common.flags |= TT_CLIENT_ROAM;
 		tt_global_entry->roam_at = jiffies;
 	}
@@ -518,7 +518,8 @@ static void tt_changes_list_free(struct bat_priv *bat_priv)
 }
 
 /* find out if an orig_node is already in the list of a tt_global_entry.
- * returns 1 if found, 0 otherwise */
+ * returns 1 if found, 0 otherwise
+ */
 static bool tt_global_entry_has_orig(const struct tt_global_entry *entry,
 				     const struct orig_node *orig_node)
 {
@@ -807,7 +808,8 @@ static void tt_global_del_roaming(struct bat_priv *bat_priv,
 		tt_global_entry->roam_at = jiffies;
 	} else
 		/* there is another entry, we can simply delete this
-		 * one and can still use the other one. */
+		 * one and can still use the other one.
+		 */
 		tt_global_del_orig_entry(bat_priv, tt_global_entry,
 					 orig_node, message);
 }
@@ -1078,12 +1080,14 @@ static uint16_t tt_global_crc(struct bat_priv *bat_priv,
 			/* Roaming clients are in the global table for
 			 * consistency only. They don't have to be
 			 * taken into account while computing the
-			 * global crc */
+			 * global crc
+			 */
 			if (tt_global_entry->common.flags & TT_CLIENT_ROAM)
 				continue;
 
 			/* find out if this global entry is announced by this
-			 * originator */
+			 * originator
+			 */
 			if (!tt_global_entry_has_orig(tt_global_entry,
 						      orig_node))
 				continue;
