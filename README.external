@@ -21,7 +21,7 @@ if you want to compile against some other kernel, use:
 
 # make KERNELPATH=/path/to/kernel
 
-if you wont to install this module:
+if you want to install this module:
 
 # sudo make install
 
@@ -29,7 +29,7 @@ CONFIGURATION
 -------------
 
 The     in-kernel    module    can    be    configured    through
-menuconfig.   When  compiling outside  of the kernel,  tree it is
+menuconfig.   When  compiling outside  of the kernel tree,  it is
 necessary  to  configure  it  using    the   make  options.  Each
 option  can be set to to y (enabled), n (disabled) or m (build as
 module).  Available  options  and  their    possible   values are
