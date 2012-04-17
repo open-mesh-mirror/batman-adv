@@ -88,14 +88,51 @@ static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
 
 #else
 
-#define dat_snoop_outgoing_arp_request(...) (0)
-#define dat_snoop_incoming_arp_request(...) (0)
-#define dat_snoop_outgoing_arp_reply(...)
-#define dat_snoop_incoming_arp_reply(...) (0)
-#define dat_drop_broadcast_packet(...) (0)
-#define arp_change_timeout(...)
-#define dat_init_orig_node_dht_addr(...)
-#define dat_init_own_dht_addr(...)
+static inline bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
+						  struct sk_buff *skb)
+{
+	return false;
+}
+
+static inline bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
+						  struct sk_buff *skb,
+						  int hdr_size)
+{
+	return false;
+}
+
+static inline bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
+						struct sk_buff *skb)
+{
+	return false;
+}
+
+static inline bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
+						struct sk_buff *skb,
+						int hdr_size)
+{
+	return false;
+}
+
+static inline bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
+					     struct forw_packet *forw_packet)
+{
+	return false;
+}
+
+static inline void dat_init_orig_node_dht_addr(struct orig_node *orig_node)
+{
+}
+
+static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
+					 struct hard_iface *primary_if)
+{
+}
+
+static inline void arp_change_timeout(struct net_device *soft_iface,
+				      const char *name)
+{
+}
 
 #endif /* CONFIG_BATMAN_ADV_DAT */
 
