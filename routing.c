@@ -1041,15 +1041,17 @@ int batadv_recv_unicast_packet(struct sk_buff *skb,
 {
 	struct batadv_priv *bat_priv = netdev_priv(recv_if->soft_iface);
 	struct batadv_unicast_packet *unicast_packet;
+	struct batadv_unicast_4addr_packet *unicast_4addr_packet;
 	int hdr_size = sizeof(*unicast_packet);
 	bool is4addr;
 
 	unicast_packet = (struct batadv_unicast_packet *)skb->data;
+	unicast_4addr_packet = (struct batadv_unicast_4addr_packet *)skb->data;
 
 	is4addr = unicast_packet->header.packet_type == BATADV_UNICAST_4ADDR;
 	/* the caller function should have already pulled 2 bytes */
 	if (is4addr)
-		hdr_size = sizeof(struct batadv_unicast_4addr_packet);
+		hdr_size = sizeof(*unicast_4addr_packet);
 
 	if (batadv_check_unicast_packet(skb, hdr_size) < 0)
 		return NET_RX_DROP;
@@ -1065,6 +1067,10 @@ int batadv_recv_unicast_packet(struct sk_buff *skb,
 		if (batadv_dat_snoop_incoming_arp_reply(bat_priv, skb,
 							hdr_size))
 			goto rx_success;
+
+		if (is4addr)
+			batadv_dat_inc_counter(bat_priv,
+					       unicast_4addr_packet->subtype);
 
 		batadv_interface_rx(recv_if->soft_iface, skb, recv_if, hdr_size,
 				    NULL);
