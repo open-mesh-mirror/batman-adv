@@ -203,7 +203,7 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
  * return an array of size DHT_CANDIDATES_NUM
  */
 static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
-						   uint32_t ip_dst)
+						   __be32 ip_dst)
 {
 	int select;
 	dat_addr_t last_max = DAT_ADDR_MAX, ip_key;
@@ -236,7 +236,7 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
  * function returns true
  */
 static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
-			  uint32_t ip, int packet_subtype)
+			  __be32 ip, int packet_subtype)
 {
 	int i;
 	bool ret = false;
@@ -283,8 +283,7 @@ out:
  * the hw address hw. If the neighbour entry doesn't exists, then it will be
  * created
  */
-static void arp_neigh_update(struct bat_priv *bat_priv, uint32_t ip,
-			     uint8_t *hw)
+static void arp_neigh_update(struct bat_priv *bat_priv, __be32 ip, uint8_t *hw)
 {
 	struct neighbour *n = NULL;
 	struct hard_iface *primary_if = primary_if_get_selected(bat_priv);
@@ -313,7 +312,7 @@ static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 {
 	struct arphdr *arphdr;
 	struct ethhdr *ethhdr;
-	uint32_t ip_src, ip_dst;
+	__be32 ip_src, ip_dst;
 	uint16_t type = 0;
 
 	/* pull the ethernet header */
@@ -367,7 +366,7 @@ bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 				    struct sk_buff *skb)
 {
 	uint16_t type = 0;
-	uint32_t ip_dst, ip_src;
+	__be32 ip_dst, ip_src;
 	uint8_t *hw_src;
 	bool ret = false;
 	struct neighbour *n = NULL;
@@ -433,7 +432,7 @@ bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 				    struct sk_buff *skb, int hdr_size)
 {
 	uint16_t type;
-	uint32_t ip_src, ip_dst;
+	__be32 ip_src, ip_dst;
 	uint8_t *hw_src;
 	struct hard_iface *primary_if = NULL;
 	struct sk_buff *skb_new;
@@ -492,7 +491,7 @@ bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
 				  struct sk_buff *skb)
 {
 	uint16_t type;
-	uint32_t ip_src, ip_dst;
+	__be32 ip_src, ip_dst;
 	uint8_t *hw_src, *hw_dst;
 	bool ret = false;
 
@@ -529,7 +528,7 @@ bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
 				  struct sk_buff *skb, int hdr_size)
 {
 	uint16_t type;
-	uint32_t ip_src, ip_dst;
+	__be32 ip_src, ip_dst;
 	uint8_t *hw_src, *hw_dst;
 	bool ret = false;
 
