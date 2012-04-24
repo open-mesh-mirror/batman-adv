@@ -27,6 +27,28 @@
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 30)
+
+#undef __alloc_percpu
+#define __alloc_percpu(size, align) \
+	percpu_alloc_mask((size), GFP_KERNEL, cpu_possible_map)
+
+#endif /* < KERNEL_VERSION(2, 6, 30) */
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
+
+#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
+	__module_param_call(p1, p2, p3, p4, p5, p7)
+
+#else
+
+#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
+	__module_param_call(p1, p2, p3, p4, p5, p6, p7)
+
+#endif /* < KERNEL_VERSION(2, 6, 31) */
+
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33))
 #include <linux/autoconf.h>
 #else
@@ -63,19 +85,6 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 35) */
 
-
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
-
-#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
-	__module_param_call(p1, p2, p3, p4, p5, p7)
-
-#else
-
-#define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
-	__module_param_call(p1, p2, p3, p4, p5, p6, p7)
-
-#endif /* < KERNEL_VERSION(2, 6, 31) */
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
