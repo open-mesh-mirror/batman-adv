@@ -96,7 +96,10 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 
 #else
 
-#define bat_dbg_arp(...)
+static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
+			uint16_t type, int hdr_size, char *msg)
+{
+}
 
 #endif /* CONFIG_BATMAN_ADV_DEBUG */
 
