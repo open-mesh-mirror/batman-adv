@@ -37,7 +37,8 @@
 #ifdef CONFIG_BATMAN_ADV_DEBUG
 
 static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
-			uint16_t type, int hdr_size, char *msg) {
+			uint16_t type, int hdr_size, char *msg)
+{
 	struct unicast_4addr_packet *unicast_4addr_packet;
 
 	if (msg)
