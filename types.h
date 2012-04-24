@@ -187,7 +187,7 @@ enum bat_counters {
 struct bat_priv {
 	atomic_t mesh_state;
 	struct net_device_stats stats;
-	uint64_t *bat_counters; /* Per cpu counters */
+	uint64_t __percpu *bat_counters; /* Per cpu counters */
 	atomic_t aggregated_ogms;	/* boolean */
 	atomic_t bonding;		/* boolean */
 	atomic_t fragmentation;		/* boolean */
