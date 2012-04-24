@@ -191,7 +191,8 @@ static int recv_unhandled_packet(struct sk_buff *skb,
 }
 
 /* incoming packets with the batman ethertype received on any active hard
- * interface */
+ * interface
+ */
 int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 		    struct packet_type *ptype, struct net_device *orig_dev)
 {
@@ -238,7 +239,8 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 	}
 
 	/* all receive handlers return whether they received or reused
-	 * the supplied skb. if not, we have to free the skb. */
+	 * the supplied skb. if not, we have to free the skb.
+	 */
 	idx = batman_ogm_packet->header.packet_type;
 	ret = (*recv_packet_handler[idx])(skb, hard_iface);
 
@@ -247,7 +249,8 @@ int batman_skb_recv(struct sk_buff *skb, struct net_device *dev,
 
 	/* return NET_RX_SUCCESS in any case as we
 	 * most probably dropped the packet for
-	 * routing-logical reasons. */
+	 * routing-logical reasons.
+	 */
 	return NET_RX_SUCCESS;
 
 err_free:

@@ -51,8 +51,9 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 			       struct forw_packet *forw_packet);
 void arp_change_timeout(struct net_device *soft_iface, const char *name);
 
-/* hash function to choose an entry in a hash table of given size */
-/* hash algorithm from http://en.wikipedia.org/wiki/Hash_table */
+/* hash function to choose an entry in a hash table of given size.
+ * hash algorithm from http://en.wikipedia.org/wiki/Hash_table
+ */
 static inline uint32_t hash_ipv4(const void *data, uint32_t size)
 {
 	const unsigned char *key = data;

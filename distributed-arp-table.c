@@ -51,7 +51,8 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 		return;
 
 	/* if the AP packet is encapsulated in a batman packet, let's print some
-	 * debug messages */
+	 * debug messages
+	 */
 	unicast_4addr_packet = (struct unicast_4addr_packet *)skb->data;
 
 	switch (unicast_4addr_packet->u.header.packet_type) {
@@ -118,11 +119,13 @@ static bool is_orig_node_eligible(struct dht_candidate *res, int select,
 	if (tmp_max > last_max)
 		goto out;
 	/* check if during this iteration we have already found an originator
-	 * with a closer dht address */
+	 * with a closer dht address
+	 */
 	if (tmp_max < max)
 		goto out;
 	/* this is an hash collision with the temporary selected node. Choose
-	 * the one with the lowest address */
+	 * the one with the lowest address
+	 */
 	if ((tmp_max == max) &&
 	    (compare_eth(candidate->orig, max_orig_node->orig) > 0))
 		goto out;
@@ -133,7 +136,8 @@ out:
 }
 
 /* selects the next candidate by populating cands[select] and modifies last_max
- * accordingly */
+ * accordingly
+ */
 static void choose_next_candidate(struct bat_priv *bat_priv,
 				  struct dht_candidate *cands, int select,
 				  dat_addr_t ip_key, dat_addr_t *last_max)
@@ -146,11 +150,13 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
 	int i;
 
 	/* if no node is eligible as candidate, we will leave the candidate as
-	 * NOT_FOUND */
+	 * NOT_FOUND
+	 */
 	cands[select].type = DHT_CANDIDATE_NOT_FOUND;
 
 	/* iterate over the originator list and find the node with closest
-	 * dht_address which has not been selected yet */
+	 * dht_address which has not been selected yet
+	 */
 	for (i = 0; i < hash->size; i++) {
 		head = &hash->table[i];
 
@@ -190,7 +196,8 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
  * closest values (from the LEFT, with wrap around if needed) then the hash
  * value of the key. ip_dst is the key.
  *
- * return an array of size DHT_CANDIDATES_NUM */
+ * return an array of size DHT_CANDIDATES_NUM
+ */
 static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
 						   uint32_t ip_dst)
 {
@@ -222,7 +229,8 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
  * and is sent as unicast packet to each of the selected candidate.
  *
  * If the packet is successfully sent to at least one candidate, then this
- * function returns true */
+ * function returns true
+ */
 static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 			  uint32_t ip, int packet_subtype)
 {
@@ -269,7 +277,8 @@ out:
 
 /* Update the neighbour entry corresponding to the IP passed as parameter with
  * the hw address hw. If the neighbour entry doesn't exists, then it will be
- * created */
+ * created
+ */
 static void arp_neigh_update(struct bat_priv *bat_priv, uint32_t ip,
 			     uint8_t *hw)
 {
@@ -293,7 +302,8 @@ out:
 }
 
 /* Returns arphdr->ar_op if the skb contains a valid ARP packet, otherwise
- * returns 0 */
+ * returns 0
+ */
 static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 			     int hdr_size)
 {
@@ -347,7 +357,8 @@ out:
 
 /* return true if the message has been sent to the dht candidates, false
  * otherwise. In case of true the message has to be enqueued to permit the
- * fallback */
+ * fallback
+ */
 bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 				    struct sk_buff *skb)
 {
@@ -361,7 +372,8 @@ bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 
 	type = arp_get_type(bat_priv, skb, 0);
 	/* If we get an ARP_REQUEST we have to send the unicast message to the
-	 * selected DHT candidates */
+	 * selected DHT candidates
+	 */
 	if (type != ARPOP_REQUEST)
 		goto out;
 
@@ -409,7 +421,8 @@ out:
 /* This function is meant to be invoked for an ARP request which is coming into
  * the bat0 interfaces from the mesh network. It will check for the needed data
  * into the local table. If found, an ARP reply is sent immediately, otherwise
- * the caller has to deliver the ARP request to the upper layer */
+ * the caller has to deliver the ARP request to the upper layer
+ */
 bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 				    struct sk_buff *skb, int hdr_size)
 {
@@ -465,7 +478,8 @@ out:
 
 /* This function is meant to be invoked on an ARP reply packet going into the
  * soft interface. The related neighbour entry has to be updated and the DHT has
- * to be populated as well */
+ * to be populated as well
+ */
 bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
 				  struct sk_buff *skb)
 {
@@ -489,7 +503,8 @@ bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
 	arp_neigh_update(bat_priv, ip_dst, hw_dst);
 
 	/* Send the ARP reply to the candidates for both the IP addresses we
-	 * fetched from the ARP reply */
+	 * fetched from the ARP reply
+	 */
 	dht_send_data(bat_priv, skb, ip_src, BAT_P_DAT_DHT_PUT);
 	dht_send_data(bat_priv, skb, ip_dst, BAT_P_DAT_DHT_PUT);
 	ret = true;
@@ -498,7 +513,8 @@ out:
 }
 
 /* This function has to be invoked on an ARP reply coming into the soft
- * interface from the mesh network. The local table has to be updated */
+ * interface from the mesh network. The local table has to be updated
+ */
 bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
 				  struct sk_buff *skb, int hdr_size)
 {
@@ -520,12 +536,14 @@ bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
 	ip_dst = ARP_IP_DST(skb, hdr_size);
 
 	/* Update our internal cache with both the IP addresses we fetched from
-	 * the ARP reply */
+	 * the ARP reply
+	 */
 	arp_neigh_update(bat_priv, ip_src, hw_src);
 	arp_neigh_update(bat_priv, ip_dst, hw_dst);
 
 	/* if this REPLY is directed to a client of mine, let's deliver the
-	 * packet to the interface */
+	 * packet to the interface
+	 */
 	ret = !is_my_client(bat_priv, hw_dst);
 out:
 	/* if ret == false packet has to be delivered to the interface */
@@ -538,7 +556,8 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 	struct neighbour *n;
 
 	/* If this packet is an ARP_REQUEST and we already have the information
-	 * that it is going to ask, we can drop the packet */
+	 * that it is going to ask, we can drop the packet
+	 */
 	if (!forw_packet->num_packets &&
 	    (ARPOP_REQUEST == arp_get_type(bat_priv, forw_packet->skb,
 					   sizeof(struct bcast_packet)))) {
@@ -572,7 +591,8 @@ void arp_change_timeout(struct net_device *soft_iface, const char *name)
 	}
 
 	/* Introduce a delay in the ARP state-machine transactions. Entries
-	 * will be kept in the ARP table for the default time multiplied by 4 */
+	 * will be kept in the ARP table for the default time multiplied by 4
+	 */
 	in_dev->arp_parms->base_reachable_time *= ARP_TIMEOUT_FACTOR;
 	in_dev->arp_parms->gc_staletime *= ARP_TIMEOUT_FACTOR;
 	in_dev->arp_parms->reachable_time *= ARP_TIMEOUT_FACTOR;

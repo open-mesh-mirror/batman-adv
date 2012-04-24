@@ -328,7 +328,8 @@ bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
 
 	/* pull the header space and fill the unicast_packet substructure.
 	 * We can do that because the first member of the unicast_4addr_packet
-	 * is of type struct unicast_packet */
+	 * is of type struct unicast_packet
+	 */
 	if (!pull_and_fill_unicast(skb, sizeof(*unicast_4addr_packet),
 				   orig_node))
 		goto out;
@@ -387,7 +388,8 @@ find_router:
 		break;
 	default:
 		/* this function supports UNICAST and UNICAST_4ADDR only. It
-		 * should never be invoked with any other packet type */
+		 * should never be invoked with any other packet type
+		 */
 		goto out;
 	}
 
