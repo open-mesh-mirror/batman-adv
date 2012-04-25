@@ -59,6 +59,7 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
 
 #define __always_unused			__attribute__((unused))
+#define __percpu
 
 #define skb_iif iif
 
