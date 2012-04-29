@@ -29,7 +29,7 @@
 
 #include <linux/if_arp.h>
 
-#define DAT_ADDR_MAX biggest_unsigned_int(dat_addr_t)
+#define DAT_ADDR_MAX ((dat_addr_t)~(dat_addr_t)0)
 
 #define ARP_HW_SRC(skb, hdr_size) ((uint8_t *)(skb->data + hdr_size) + \
 				   ETH_HLEN + sizeof(struct arphdr))
