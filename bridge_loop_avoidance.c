@@ -1169,12 +1169,12 @@ int bla_init(struct bat_priv *bat_priv)
 	bat_priv->claim_hash = hash_new(128);
 	bat_priv->backbone_hash = hash_new(32);
 
+	if (!bat_priv->claim_hash || !bat_priv->backbone_hash)
+		return -1;
+
 	hash_set_lock_class(bat_priv->claim_hash, &claim_hash_lock_class_key);
 	hash_set_lock_class(bat_priv->backbone_hash,
 			    &backbone_hash_lock_class_key);
-
-	if (!bat_priv->claim_hash || !bat_priv->backbone_hash)
-		return -1;
 
 	bat_dbg(DBG_BLA, bat_priv, "bla hashes initialized\n");
 
