@@ -518,13 +518,12 @@ static void bat_iv_ogm_forward(struct orig_node *orig_node,
 	}
 
 	if (!is_from_best_next_hop) {
-		/**
-		* Mark the forwarded packet when it is not coming from our best
-		* next hop. We still need to forward the packet for our neighbor
-		* link quality detection to work in case the packet originated
-		* from a single hop neighbor. Otherwise we can simply drop the
-		* ogm.
-		*/
+		/* Mark the forwarded packet when it is not coming from our
+		 * best next hop. We still need to forward the packet for our
+		 * neighbor link quality detection to work in case the packet
+		 * originated from a single hop neighbor. Otherwise we can
+		 * simply drop the ogm.
+		 */
 		if (is_single_hop_neigh)
 			batman_ogm_packet->flags |= NOT_BEST_NEXT_HOP;
 		else
