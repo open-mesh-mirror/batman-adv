@@ -1200,7 +1200,8 @@ static int bat_iv_ogm_receive(struct sk_buff *skb,
 		return NET_RX_DROP;
 
 	/* did we receive a B.A.T.M.A.N. IV OGM packet on an interface
-	 * that does not have B.A.T.M.A.N. IV enabled ? */
+	 * that does not have B.A.T.M.A.N. IV enabled ?
+	 */
 	if (bat_priv->bat_algo_ops->bat_ogm_emit != bat_iv_ogm_emit)
 		return NET_RX_DROP;
 
