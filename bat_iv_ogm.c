@@ -38,7 +38,7 @@ static struct neigh_node *bat_iv_ogm_neigh_new(struct hard_iface *hard_iface,
 {
 	struct neigh_node *neigh_node;
 
-	neigh_node = neigh_node_new(hard_iface, neigh_addr, seqno);
+	neigh_node = batadv_neigh_node_new(hard_iface, neigh_addr, seqno);
 	if (!neigh_node)
 		goto out;
 
