@@ -422,7 +422,8 @@ struct bat_algo_ops {
 	/* de-init routing info when hard-interface is disabled */
 	void (*bat_iface_disable)(struct hard_iface *hard_iface);
 	/* (re-)init mac addresses of the protocol information
-	 * belonging to this hard-interface */
+	 * belonging to this hard-interface
+	 */
 	void (*bat_iface_update_mac)(struct hard_iface *hard_iface);
 	/* called when primary interface is selected / changed */
 	void (*bat_primary_iface_set)(struct hard_iface *hard_iface);

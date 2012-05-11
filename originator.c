@@ -86,8 +86,9 @@ struct neigh_node *orig_node_get_router(struct orig_node *orig_node)
 	return router;
 }
 
-struct neigh_node *neigh_node_new(struct hard_iface *hard_iface,
-				  const uint8_t *neigh_addr, uint32_t seqno)
+struct neigh_node *batadv_neigh_node_new(struct hard_iface *hard_iface,
+					 const uint8_t *neigh_addr,
+					 uint32_t seqno)
 {
 	struct bat_priv *bat_priv = netdev_priv(hard_iface->soft_iface);
 	struct neigh_node *neigh_node;

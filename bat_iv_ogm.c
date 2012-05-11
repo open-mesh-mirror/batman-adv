@@ -38,7 +38,8 @@ static struct neigh_node *bat_iv_ogm_neigh_new(struct hard_iface *hard_iface,
 {
 	struct neigh_node *neigh_node;
 
-	neigh_node = neigh_node_new(hard_iface, neigh_addr, ntohl(seqno));
+	neigh_node = batadv_neigh_node_new(hard_iface, neigh_addr,
+					   ntohl(seqno));
 	if (!neigh_node)
 		goto out;
 
@@ -522,13 +523,12 @@ static void bat_iv_ogm_forward(struct orig_node *orig_node,
 	}
 
 	if (!is_from_best_next_hop) {
-		/**
-		* Mark the forwarded packet when it is not coming from our best
-		* next hop. We still need to forward the packet for our neighbor
-		* link quality detection to work in case the packet originated
-		* from a single hop neighbor. Otherwise we can simply drop the
-		* ogm.
-		*/
+		/* Mark the forwarded packet when it is not coming from our
+		 * best next hop. We still need to forward the packet for our
+		 * neighbor link quality detection to work in case the packet
+		 * originated from a single hop neighbor. Otherwise we can
+		 * simply drop the ogm.
+		 */
 		if (is_single_hop_neigh)
 			batman_ogm_packet->flags |= NOT_BEST_NEXT_HOP;
 		else
@@ -1201,7 +1201,8 @@ static int bat_iv_ogm_receive(struct sk_buff *skb,
 		return NET_RX_DROP;
 
 	/* did we receive a B.A.T.M.A.N. IV OGM packet on an interface
-	 * that does not have B.A.T.M.A.N. IV enabled ? */
+	 * that does not have B.A.T.M.A.N. IV enabled ?
+	 */
 	if (bat_priv->bat_algo_ops->bat_ogm_emit != bat_iv_ogm_emit)
 		return NET_RX_DROP;
 
