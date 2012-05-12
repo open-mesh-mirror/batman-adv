@@ -62,7 +62,7 @@ static const struct ethtool_ops bat_ethtool_ops = {
 	.get_sset_count = bat_get_sset_count,
 };
 
-int my_skb_head_push(struct sk_buff *skb, unsigned int len)
+int batadv_skb_head_push(struct sk_buff *skb, unsigned int len)
 {
 	int result;
 
@@ -209,7 +209,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 		if (batadv_dat_snoop_outgoing_arp_request(bat_priv, skb))
 			brd_delay = msecs_to_jiffies(ARP_REQ_DELAY);
 
-		if (my_skb_head_push(skb, sizeof(*bcast_packet)) < 0)
+		if (batadv_skb_head_push(skb, sizeof(*bcast_packet)) < 0)
 			goto dropped;
 
 		bcast_packet = (struct bcast_packet *)skb->data;
@@ -263,9 +263,9 @@ end:
 	return NETDEV_TX_OK;
 }
 
-void interface_rx(struct net_device *soft_iface,
-		  struct sk_buff *skb, struct hard_iface *recv_if,
-		  int hdr_size)
+void batadv_interface_rx(struct net_device *soft_iface,
+			 struct sk_buff *skb, struct hard_iface *recv_if,
+			 int hdr_size)
 {
 	struct bat_priv *bat_priv = netdev_priv(soft_iface);
 	struct ethhdr *ethhdr;
@@ -370,7 +370,7 @@ static void interface_setup(struct net_device *dev)
 	memset(priv, 0, sizeof(*priv));
 }
 
-struct net_device *softif_create(const char *name)
+struct net_device *batadv_softif_create(const char *name)
 {
 	struct net_device *soft_iface;
 	struct bat_priv *bat_priv;
@@ -460,7 +460,7 @@ out:
 	return NULL;
 }
 
-void softif_destroy(struct net_device *soft_iface)
+void batadv_softif_destroy(struct net_device *soft_iface)
 {
 	batadv_debugfs_del_meshif(soft_iface);
 	batadv_sysfs_del_meshif(soft_iface);
@@ -468,7 +468,7 @@ void softif_destroy(struct net_device *soft_iface)
 	unregister_netdevice(soft_iface);
 }
 
-int softif_is_valid(const struct net_device *net_dev)
+int batadv_softif_is_valid(const struct net_device *net_dev)
 {
 	if (net_dev->netdev_ops->ndo_start_xmit == interface_tx)
 		return 1;
