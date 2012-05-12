@@ -49,28 +49,6 @@ bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 				      struct forw_packet *forw_packet);
 void batadv_arp_change_timeout(struct net_device *soft_iface, const char *name);
 
-/* hash function to choose an entry in a hash table of given size.
- * hash algorithm from http://en.wikipedia.org/wiki/Hash_table
- */
-static inline uint32_t hash_ipv4(const void *data, uint32_t size)
-{
-	const unsigned char *key = data;
-	uint32_t hash = 0;
-	size_t i;
-
-	for (i = 0; i < 4; i++) {
-		hash += key[i];
-		hash += (hash << 10);
-		hash ^= (hash >> 6);
-	}
-
-	hash += (hash << 3);
-	hash ^= (hash >> 11);
-	hash += (hash << 15);
-
-	return hash % size;
-}
-
 static inline void
 batadv_dat_init_orig_node_dht_addr(struct orig_node *orig_node)
 {

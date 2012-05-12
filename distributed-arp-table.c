@@ -32,6 +32,28 @@
 #include "translation-table.h"
 #include "unicast.h"
 
+/* hash function to choose an entry in a hash table of given size.
+ * hash algorithm from http://en.wikipedia.org/wiki/Hash_table
+ */
+static uint32_t batadv_hash_ipv4(const void *data, uint32_t size)
+{
+	const unsigned char *key = data;
+	uint32_t hash = 0;
+	size_t i;
+
+	for (i = 0; i < 4; i++) {
+		hash += key[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return hash % size;
+}
+
 #ifdef CONFIG_BATMAN_ADV_DEBUG
 
 static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
@@ -214,7 +236,7 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
 	if (!res)
 		return NULL;
 
-	ip_key = (dat_addr_t)hash_ipv4(&ip_dst, DAT_ADDR_MAX);
+	ip_key = (dat_addr_t)batadv_hash_ipv4(&ip_dst, DAT_ADDR_MAX);
 
 	bat_dbg(DBG_DAT, bat_priv,
 		"dht_select_candidates(): IP=%pI4 hash(IP)=%u\n", &ip_dst,
