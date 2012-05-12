@@ -310,7 +310,9 @@ out:
 static void arp_neigh_update(struct bat_priv *bat_priv, __be32 ip, uint8_t *hw)
 {
 	struct neighbour *n = NULL;
-	struct hard_iface *primary_if = primary_if_get_selected(bat_priv);
+	struct hard_iface *primary_if;
+
+	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if)
 		goto out;
 
@@ -325,7 +327,7 @@ out:
 	if (n && !IS_ERR(n))
 		neigh_release(n);
 	if (primary_if)
-		hardif_free_ref(primary_if);
+		batadv_hardif_free_ref(primary_if);
 }
 
 /* Returns arphdr->ar_op if the skb contains a valid ARP packet, otherwise
@@ -412,7 +414,7 @@ bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 	hw_src = ARP_HW_SRC(skb, 0);
 	ip_dst = ARP_IP_DST(skb, 0);
 
-	primary_if = primary_if_get_selected(bat_priv);
+	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if)
 		goto out;
 
@@ -445,7 +447,7 @@ out:
 	if (n)
 		neigh_release(n);
 	if (primary_if)
-		hardif_free_ref(primary_if);
+		batadv_hardif_free_ref(primary_if);
 	return ret;
 }
 
@@ -476,7 +478,7 @@ bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 	bat_dbg_arp(bat_priv, skb, type, hdr_size,
 		    "Parsing incoming ARP REQUEST");
 
-	primary_if = primary_if_get_selected(bat_priv);
+	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if)
 		goto out;
 
@@ -503,7 +505,7 @@ out:
 	if (n)
 		neigh_release(n);
 	if (primary_if)
-		hardif_free_ref(primary_if);
+		batadv_hardif_free_ref(primary_if);
 	if (ret)
 		kfree_skb(skb);
 	return ret;
