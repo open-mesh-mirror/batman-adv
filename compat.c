@@ -28,7 +28,7 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
-void free_rcu_gw_node(struct rcu_head *rcu)
+void batadv_free_rcu_gw_node(struct rcu_head *rcu)
 {
 	struct gw_node *gw_node;
 
@@ -36,7 +36,7 @@ void free_rcu_gw_node(struct rcu_head *rcu)
 	kfree(gw_node);
 }
 
-void free_rcu_neigh_node(struct rcu_head *rcu)
+void batadv_free_rcu_neigh_node(struct rcu_head *rcu)
 {
 	struct neigh_node *neigh_node;
 
@@ -44,7 +44,7 @@ void free_rcu_neigh_node(struct rcu_head *rcu)
 	kfree(neigh_node);
 }
 
-void free_rcu_tt_local_entry(struct rcu_head *rcu)
+void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu)
 {
 	struct tt_common_entry *tt_common_entry;
 	struct tt_local_entry *tt_local_entry;
@@ -56,7 +56,7 @@ void free_rcu_tt_local_entry(struct rcu_head *rcu)
 }
 
 #ifdef CONFIG_BATMAN_ADV_BLA
-void free_rcu_backbone_gw(struct rcu_head *rcu)
+void batadv_free_rcu_backbone_gw(struct rcu_head *rcu)
 {
 	struct backbone_gw *backbone_gw;
 

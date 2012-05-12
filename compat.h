@@ -138,13 +138,13 @@ static inline int __param_set_copystring(const char *val,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
-#define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, free_rcu_##ptr)
+#define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, batadv_free_rcu_##ptr)
 #define vlan_insert_tag(skb, vid) __vlan_put_tag(skb, vid)
 
-void free_rcu_gw_node(struct rcu_head *rcu);
-void free_rcu_neigh_node(struct rcu_head *rcu);
-void free_rcu_tt_local_entry(struct rcu_head *rcu);
-void free_rcu_backbone_gw(struct rcu_head *rcu);
+void batadv_free_rcu_gw_node(struct rcu_head *rcu);
+void batadv_free_rcu_neigh_node(struct rcu_head *rcu);
+void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu);
+void batadv_free_rcu_backbone_gw(struct rcu_head *rcu);
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
