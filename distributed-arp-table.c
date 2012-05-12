@@ -240,6 +240,7 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 {
 	int i;
 	bool ret = false;
+	int send_status;
 	struct neigh_node *neigh_node = NULL;
 	struct sk_buff *tmp_skb;
 	struct dht_candidate *cand = dht_select_candidates(bat_priv, ip);
@@ -264,8 +265,11 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 			kfree_skb(tmp_skb);
 			goto free_neigh;
 		}
-		if (send_skb_packet(tmp_skb, neigh_node->if_incoming,
-				    neigh_node->addr) == NET_XMIT_SUCCESS)
+
+		send_status = batadv_send_skb_packet(tmp_skb,
+						     neigh_node->if_incoming,
+						     neigh_node->addr);
+		if (send_status == NET_XMIT_SUCCESS)
 			/* packet sent to a candidate: we can return true */
 			ret = true;
 free_neigh:
