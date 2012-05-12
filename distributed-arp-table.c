@@ -62,11 +62,12 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 	struct unicast_4addr_packet *unicast_4addr_packet;
 
 	if (msg)
-		bat_dbg(DBG_DAT, bat_priv, "%s\n", msg);
+		batadv_dbg(DBG_DAT, bat_priv, "%s\n", msg);
 
-	bat_dbg(DBG_DAT, bat_priv, "ARP MSG = [src: %pM-%pI4 dst: %pM-%pI4]\n",
-		ARP_HW_SRC(skb, hdr_size), &ARP_IP_SRC(skb, hdr_size),
-		ARP_HW_DST(skb, hdr_size), &ARP_IP_DST(skb, hdr_size));
+	batadv_dbg(DBG_DAT, bat_priv,
+		   "ARP MSG = [src: %pM-%pI4 dst: %pM-%pI4]\n",
+		   ARP_HW_SRC(skb, hdr_size), &ARP_IP_SRC(skb, hdr_size),
+		   ARP_HW_DST(skb, hdr_size), &ARP_IP_DST(skb, hdr_size));
 
 	if (hdr_size == 0)
 		return;
@@ -78,39 +79,40 @@ static void bat_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 
 	switch (unicast_4addr_packet->u.header.packet_type) {
 	case BAT_UNICAST:
-		bat_dbg(DBG_DAT, bat_priv,
-			"* encapsulated within a UNICAST packet\n");
+		batadv_dbg(DBG_DAT, bat_priv,
+			   "* encapsulated within a UNICAST packet\n");
 		break;
 	case BAT_UNICAST_4ADDR:
-		bat_dbg(DBG_DAT, bat_priv,
-			"* encapsulated within a UNICAST_4ADDR packet (src: %pM)\n",
-			unicast_4addr_packet->src);
+		batadv_dbg(DBG_DAT, bat_priv,
+			   "* encapsulated within a UNICAST_4ADDR packet (src: %pM)\n",
+			   unicast_4addr_packet->src);
 		switch (unicast_4addr_packet->subtype) {
 		case BAT_P_DAT_DHT_PUT:
-			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_PUT\n");
+			batadv_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_PUT\n");
 			break;
 		case BAT_P_DAT_DHT_GET:
-			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_GET\n");
+			batadv_dbg(DBG_DAT, bat_priv, "* type: DAT_DHT_GET\n");
 			break;
 		case BAT_P_DAT_CACHE_REPLY:
-			bat_dbg(DBG_DAT, bat_priv, "* type: DAT_CACHE_REPLY\n");
+			batadv_dbg(DBG_DAT, bat_priv,
+				   "* type: DAT_CACHE_REPLY\n");
 			break;
 		case BAT_P_DATA:
-			bat_dbg(DBG_DAT, bat_priv, "* type: DATA\n");
+			batadv_dbg(DBG_DAT, bat_priv, "* type: DATA\n");
 			break;
 		default:
-			bat_dbg(DBG_DAT, bat_priv, "* type: Unknown!\n");
+			batadv_dbg(DBG_DAT, bat_priv, "* type: Unknown!\n");
 		}
 		break;
 	case BAT_BCAST:
-		bat_dbg(DBG_DAT, bat_priv,
-			"* encapsulated within a BCAST packet (src: %pM)\n",
-			((struct bcast_packet *)unicast_4addr_packet)->orig);
+		batadv_dbg(DBG_DAT, bat_priv,
+			   "* encapsulated within a BCAST packet (src: %pM)\n",
+			   ((struct bcast_packet *)unicast_4addr_packet)->orig);
 		break;
 	default:
-		bat_dbg(DBG_DAT, bat_priv,
-			"* encapsulated within an unknown packet type (0x%x)\n",
-			unicast_4addr_packet->u.header.packet_type);
+		batadv_dbg(DBG_DAT, bat_priv,
+			   "* encapsulated within an unknown packet type (0x%x)\n",
+			   unicast_4addr_packet->u.header.packet_type);
 	}
 }
 
@@ -151,7 +153,7 @@ static bool is_orig_node_eligible(struct dht_candidate *res, int select,
 	 * the one with the lowest address
 	 */
 	if ((tmp_max == max) &&
-	    (compare_eth(candidate->orig, max_orig_node->orig) > 0))
+	    (batadv_compare_eth(candidate->orig, max_orig_node->orig) > 0))
 		goto out;
 
 	ret = true;
@@ -207,10 +209,10 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
 	if (max_orig_node) {
 		cands[select].type = DHT_CANDIDATE_ORIG;
 		cands[select].orig_node = max_orig_node;
-		bat_dbg(DBG_DAT, bat_priv,
-			"dht_select_candidates() %d: selected %pM addr=%u dist=%u\n",
-			select, max_orig_node->orig, max_orig_node->dht_addr,
-			max);
+		batadv_dbg(DBG_DAT, bat_priv,
+			   "dht_select_candidates() %d: selected %pM addr=%u dist=%u\n",
+			   select, max_orig_node->orig, max_orig_node->dht_addr,
+			   max);
 	}
 	*last_max = max;
 }
@@ -238,9 +240,9 @@ static struct dht_candidate *dht_select_candidates(struct bat_priv *bat_priv,
 
 	ip_key = (dat_addr_t)batadv_hash_ipv4(&ip_dst, DAT_ADDR_MAX);
 
-	bat_dbg(DBG_DAT, bat_priv,
-		"dht_select_candidates(): IP=%pI4 hash(IP)=%u\n", &ip_dst,
-		ip_key);
+	batadv_dbg(DBG_DAT, bat_priv,
+		   "dht_select_candidates(): IP=%pI4 hash(IP)=%u\n", &ip_dst,
+		   ip_key);
 
 	for (select = 0; select < DHT_CANDIDATES_NUM; select++)
 		choose_next_candidate(bat_priv, res, select, ip_key, &last_max);
@@ -268,7 +270,7 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 	if (!cand)
 		goto out;
 
-	bat_dbg(DBG_DAT, bat_priv, "DHT_SEND for %pI4\n", &ip);
+	batadv_dbg(DBG_DAT, bat_priv, "DHT_SEND for %pI4\n", &ip);
 
 	for (i = 0; i < DHT_CANDIDATES_NUM; i++) {
 		if (cand[i].type == DHT_CANDIDATE_NOT_FOUND)
@@ -320,7 +322,8 @@ static void arp_neigh_update(struct bat_priv *bat_priv, __be32 ip, uint8_t *hw)
 	if (!n)
 		goto out;
 
-	bat_dbg(DBG_DAT, bat_priv, "Updating neighbour: %pI4 - %pM\n", &ip, hw);
+	batadv_dbg(DBG_DAT, bat_priv, "Updating neighbour: %pI4 - %pM\n", &ip,
+		   hw);
 
 	neigh_update(n, hw, NUD_REACHABLE, NEIGH_UPDATE_F_OVERRIDE);
 out:
@@ -437,7 +440,7 @@ bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 		primary_if->soft_iface->last_rx = jiffies;
 
 		netif_rx(skb_new);
-		bat_dbg(DBG_DAT, bat_priv, "ARP request replied locally\n");
+		batadv_dbg(DBG_DAT, bat_priv, "ARP request replied locally\n");
 	} else {
 		/* Send the request on the DHT */
 		inc_counter(bat_priv, BAT_CNT_DAT_REQUEST_TX);
@@ -604,16 +607,16 @@ bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 				 forw_packet->if_incoming->soft_iface);
 		/* check if we already know this neigh */
 		if (n && (n->nud_state & NUD_CONNECTED)) {
-			bat_dbg(DBG_DAT, bat_priv,
-				"ARP Request for %pI4: fallback prevented\n",
-				&ARP_IP_DST(forw_packet->skb,
-					    sizeof(struct bcast_packet)));
+			batadv_dbg(DBG_DAT, bat_priv,
+				   "ARP Request for %pI4: fallback prevented\n",
+				   &ARP_IP_DST(forw_packet->skb,
+					       sizeof(struct bcast_packet)));
 			return true;
 		}
 
-		bat_dbg(DBG_DAT, bat_priv, "ARP Request for %pI4: fallback\n",
-			&ARP_IP_DST(forw_packet->skb,
-				    sizeof(struct bcast_packet)));
+		batadv_dbg(DBG_DAT, bat_priv, "ARP Request for %pI4: fallback\n",
+			   &ARP_IP_DST(forw_packet->skb,
+				       sizeof(struct bcast_packet)));
 	}
 	return false;
 }

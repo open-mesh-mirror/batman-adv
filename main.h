@@ -190,7 +190,7 @@ int batadv_algo_seq_print_text(struct seq_file *seq, void *offset);
 int batadv_debug_log(struct bat_priv *bat_priv, const char *fmt, ...)
 __printf(2, 3);
 
-#define bat_dbg(type, bat_priv, fmt, arg...)			\
+#define batadv_dbg(type, bat_priv, fmt, arg...)			\
 	do {							\
 		if (atomic_read(&bat_priv->log_level) & type)	\
 			batadv_debug_log(bat_priv, fmt, ## arg);\
@@ -198,9 +198,9 @@ __printf(2, 3);
 	while (0)
 #else /* !CONFIG_BATMAN_ADV_DEBUG */
 __printf(3, 4)
-static inline void bat_dbg(int type __always_unused,
-			   struct bat_priv *bat_priv __always_unused,
-			   const char *fmt __always_unused, ...)
+static inline void batadv_dbg(int type __always_unused,
+			      struct bat_priv *bat_priv __always_unused,
+			      const char *fmt __always_unused, ...)
 {
 }
 #endif
@@ -209,14 +209,14 @@ static inline void bat_dbg(int type __always_unused,
 	do {								\
 		struct net_device *_netdev = (net_dev);                 \
 		struct bat_priv *_batpriv = netdev_priv(_netdev);       \
-		bat_dbg(DBG_ALL, _batpriv, fmt, ## arg);		\
+		batadv_dbg(DBG_ALL, _batpriv, fmt, ## arg);		\
 		pr_info("%s: " fmt, _netdev->name, ## arg);		\
 	} while (0)
 #define bat_err(net_dev, fmt, arg...)					\
 	do {								\
 		struct net_device *_netdev = (net_dev);                 \
 		struct bat_priv *_batpriv = netdev_priv(_netdev);       \
-		bat_dbg(DBG_ALL, _batpriv, fmt, ## arg);		\
+		batadv_dbg(DBG_ALL, _batpriv, fmt, ## arg);		\
 		pr_err("%s: " fmt, _netdev->name, ## arg);		\
 	} while (0)
 
@@ -224,7 +224,7 @@ static inline void bat_dbg(int type __always_unused,
  *
  * note: can't use compare_ether_addr() as it requires aligned memory
  */
-static inline int compare_eth(const void *data1, const void *data2)
+static inline int batadv_compare_eth(const void *data1, const void *data2)
 {
 	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
 }
@@ -235,7 +235,8 @@ static inline int compare_eth(const void *data1, const void *data2)
  *
  * Returns true if current time is after timestamp + timeout
  */
-static inline bool has_timed_out(unsigned long timestamp, unsigned int timeout)
+static inline bool batadv_has_timed_out(unsigned long timestamp,
+					unsigned int timeout)
 {
 	return time_is_before_jiffies(timestamp + msecs_to_jiffies(timeout));
 }
@@ -263,18 +264,18 @@ static inline bool has_timed_out(unsigned long timestamp, unsigned int timeout)
 #define seq_after(x, y) seq_before(y, x)
 
 /* Stop preemption on local cpu while incrementing the counter */
-static inline void add_counter(struct bat_priv *bat_priv, size_t idx,
-			       size_t count)
+static inline void batadv_add_counter(struct bat_priv *bat_priv, size_t idx,
+				      size_t count)
 {
 	int cpu = get_cpu();
 	per_cpu_ptr(bat_priv->bat_counters, cpu)[idx] += count;
 	put_cpu();
 }
 
-#define inc_counter(b, i) add_counter(b, i, 1)
+#define inc_counter(b, i) batadv_add_counter(b, i, 1)
 
 /* Sum and return the cpu-local counters for index 'idx' */
-static inline uint64_t sum_counter(struct bat_priv *bat_priv, size_t idx)
+static inline uint64_t batadv_sum_counter(struct bat_priv *bat_priv, size_t idx)
 {
 	uint64_t *counters;
 	int cpu;
