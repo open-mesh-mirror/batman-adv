@@ -557,7 +557,7 @@ bool batadv_dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
 	/* if this REPLY is directed to a client of mine, let's deliver the
 	 * packet to the interface
 	 */
-	ret = !is_my_client(bat_priv, hw_dst);
+	ret = !batadv_is_my_client(bat_priv, hw_dst);
 out:
 	/* if ret == false packet has to be delivered to the interface */
 	return ret;
