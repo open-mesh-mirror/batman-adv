@@ -113,7 +113,7 @@ static void primary_if_update_addr(struct bat_priv *bat_priv,
 	if (!primary_if)
 		goto out;
 
-	dat_init_own_dht_addr(bat_priv, primary_if);
+	batadv_dat_init_own_dht_addr(bat_priv, primary_if);
 
 	vis_packet = (struct vis_packet *)
 				bat_priv->my_vis_info->skb_packet->data;

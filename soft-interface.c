@@ -206,7 +206,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 		if (!primary_if)
 			goto dropped;
 
-		if (dat_snoop_outgoing_arp_request(bat_priv, skb))
+		if (batadv_dat_snoop_outgoing_arp_request(bat_priv, skb))
 			brd_delay = msecs_to_jiffies(ARP_REQ_DELAY);
 
 		if (my_skb_head_push(skb, sizeof(*bcast_packet)) < 0)
@@ -242,7 +242,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 				goto dropped;
 		}
 
-		dat_snoop_outgoing_arp_reply(bat_priv, skb);
+		batadv_dat_snoop_outgoing_arp_reply(bat_priv, skb);
 
 		ret = unicast_send_skb(skb, bat_priv);
 		if (ret != 0)
@@ -276,10 +276,10 @@ void interface_rx(struct net_device *soft_iface,
 	if (!pskb_may_pull(skb, hdr_size))
 		goto dropped;
 
-	if (dat_snoop_incoming_arp_request(bat_priv, skb, hdr_size))
+	if (batadv_dat_snoop_incoming_arp_request(bat_priv, skb, hdr_size))
 		goto out;
 
-	if (dat_snoop_incoming_arp_reply(bat_priv, skb, hdr_size))
+	if (batadv_dat_snoop_incoming_arp_reply(bat_priv, skb, hdr_size))
 		goto out;
 
 	skb_pull_rcsum(skb, hdr_size);
@@ -388,7 +388,7 @@ struct net_device *softif_create(const char *name)
 		goto free_soft_iface;
 	}
 
-	arp_change_timeout(soft_iface, name);
+	batadv_arp_change_timeout(soft_iface, name);
 
 	bat_priv = netdev_priv(soft_iface);
 

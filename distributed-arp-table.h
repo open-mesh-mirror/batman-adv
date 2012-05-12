@@ -39,17 +39,17 @@
 #define ARP_IP_DST(skb, hdr_size) (*(__be32 *)(ARP_HW_SRC(skb, hdr_size) + \
 				   ETH_ALEN * 2 + 4))
 
-bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
-				    struct sk_buff *skb);
-bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
-				    struct sk_buff *skb, int hdr_size);
-bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
-				  struct sk_buff *skb);
-bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
-				  struct sk_buff *skb, int hdr_size);
-bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
-			       struct forw_packet *forw_packet);
-void arp_change_timeout(struct net_device *soft_iface, const char *name);
+bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
+					   struct sk_buff *skb);
+bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
+					   struct sk_buff *skb, int hdr_size);
+bool batadv_dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
+					 struct sk_buff *skb);
+bool batadv_dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
+					 struct sk_buff *skb, int hdr_size);
+bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
+				      struct forw_packet *forw_packet);
+void batadv_arp_change_timeout(struct net_device *soft_iface, const char *name);
 
 /* hash function to choose an entry in a hash table of given size.
  * hash algorithm from http://en.wikipedia.org/wiki/Hash_table
@@ -73,14 +73,15 @@ static inline uint32_t hash_ipv4(const void *data, uint32_t size)
 	return hash % size;
 }
 
-static inline void dat_init_orig_node_dht_addr(struct orig_node *orig_node)
+static inline void
+batadv_dat_init_orig_node_dht_addr(struct orig_node *orig_node)
 {
 	orig_node->dht_addr = (dat_addr_t)choose_orig(orig_node->orig,
 						      DAT_ADDR_MAX);
 }
 
-static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
-					 struct hard_iface *primary_if)
+static inline void batadv_dat_init_own_dht_addr(struct bat_priv *bat_priv,
+						struct hard_iface *primary_if)
 {
 	bat_priv->dht_addr = (dat_addr_t)
 				choose_orig(primary_if->net_dev->dev_addr,
@@ -89,49 +90,53 @@ static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
 
 #else
 
-static inline bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
-						  struct sk_buff *skb)
+static inline bool
+batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
+				      struct sk_buff *skb)
 {
 	return false;
 }
 
-static inline bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
-						  struct sk_buff *skb,
-						  int hdr_size)
+static inline bool
+batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
+				      struct sk_buff *skb, int hdr_size)
 {
 	return false;
 }
 
-static inline bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
-						struct sk_buff *skb)
+static inline bool
+batadv_dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
+				    struct sk_buff *skb)
 {
 	return false;
 }
 
-static inline bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
-						struct sk_buff *skb,
-						int hdr_size)
+static inline bool
+batadv_dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
+				    struct sk_buff *skb, int hdr_size)
 {
 	return false;
 }
 
-static inline bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
-					     struct forw_packet *forw_packet)
+static inline bool
+batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
+				 struct forw_packet *forw_packet)
 {
 	return false;
 }
 
-static inline void dat_init_orig_node_dht_addr(struct orig_node *orig_node)
+static inline void
+batadv_dat_init_orig_node_dht_addr(struct orig_node *orig_node)
 {
 }
 
-static inline void dat_init_own_dht_addr(struct bat_priv *bat_priv,
-					 struct hard_iface *primary_if)
+static inline void batadv_dat_init_own_dht_addr(struct bat_priv *bat_priv,
+						struct hard_iface *primary_if)
 {
 }
 
-static inline void arp_change_timeout(struct net_device *soft_iface,
-				      const char *name)
+static inline void batadv_arp_change_timeout(struct net_device *soft_iface,
+					     const char *name)
 {
 }
 

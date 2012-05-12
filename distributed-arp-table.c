@@ -362,8 +362,8 @@ out:
  * otherwise. In case of true the message has to be enqueued to permit the
  * fallback
  */
-bool dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
-				    struct sk_buff *skb)
+bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
+					   struct sk_buff *skb)
 {
 	uint16_t type = 0;
 	__be32 ip_dst, ip_src;
@@ -428,8 +428,8 @@ out:
  * into the local table. If found, an ARP reply is sent immediately, otherwise
  * the caller has to deliver the ARP request to the upper layer
  */
-bool dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
-				    struct sk_buff *skb, int hdr_size)
+bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
+					   struct sk_buff *skb, int hdr_size)
 {
 	uint16_t type;
 	__be32 ip_src, ip_dst;
@@ -487,8 +487,8 @@ out:
  * soft interface. The related neighbour entry has to be updated and the DHT has
  * to be populated as well
  */
-bool dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
-				  struct sk_buff *skb)
+bool batadv_dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
+					 struct sk_buff *skb)
 {
 	uint16_t type;
 	__be32 ip_src, ip_dst;
@@ -524,8 +524,8 @@ out:
 /* This function has to be invoked on an ARP reply coming into the soft
  * interface from the mesh network. The local table has to be updated
  */
-bool dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
-				  struct sk_buff *skb, int hdr_size)
+bool batadv_dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
+					 struct sk_buff *skb, int hdr_size)
 {
 	uint16_t type;
 	__be32 ip_src, ip_dst;
@@ -559,8 +559,8 @@ out:
 	return ret;
 }
 
-bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
-			       struct forw_packet *forw_packet)
+bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
+				      struct forw_packet *forw_packet)
 {
 	struct neighbour *n;
 
@@ -590,7 +590,7 @@ bool dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 	return false;
 }
 
-void arp_change_timeout(struct net_device *soft_iface, const char *name)
+void batadv_arp_change_timeout(struct net_device *soft_iface, const char *name)
 {
 	struct in_device *in_dev = in_dev_get(soft_iface);
 	if (!in_dev) {

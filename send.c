@@ -203,7 +203,7 @@ static void send_outstanding_bcast_packet(struct work_struct *work)
 	if (atomic_read(&bat_priv->mesh_state) == MESH_DEACTIVATING)
 		goto out;
 
-	if (dat_drop_broadcast_packet(bat_priv, forw_packet))
+	if (batadv_dat_drop_broadcast_packet(bat_priv, forw_packet))
 		goto out;
 
 	/* rebroadcast packet */
