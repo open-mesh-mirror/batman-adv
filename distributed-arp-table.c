@@ -1,5 +1,4 @@
-/*
- * Copyright (C) 2011-2012 B.A.T.M.A.N. contributors:
+/* Copyright (C) 2011-2012 B.A.T.M.A.N. contributors:
  *
  * Antonio Quartulli
  *
@@ -16,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA
- *
  */
 
 #include <linux/if_ether.h>
@@ -336,7 +334,8 @@ static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 	arphdr = (struct arphdr *)(skb->data + hdr_size + ETH_HLEN);
 
 	/* Check whether the ARP packet carries a valid
-	 * IP information */
+	 * IP information
+	 */
 	if (arphdr->ar_hrd != htons(ARPHRD_ETHER))
 		goto out;
 
@@ -350,7 +349,8 @@ static uint16_t arp_get_type(struct bat_priv *bat_priv, struct sk_buff *skb,
 		goto out;
 
 	/* Check for bad reply/request. If the ARP message is not sane, DAT
-	 * will simply ignore it */
+	 * will simply ignore it
+	 */
 	ip_src = ARP_IP_SRC(skb, hdr_size);
 	ip_dst = ARP_IP_DST(skb, hdr_size);
 	if (ipv4_is_loopback(ip_src) || ipv4_is_multicast(ip_src) ||
