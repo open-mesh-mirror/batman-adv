@@ -349,7 +349,7 @@ int batadv_debugfs_add_meshif(struct net_device *dev)
 	if (!bat_priv->debug_dir)
 		goto out;
 
-	bat_socket_setup(bat_priv);
+	batadv_socket_setup(bat_priv);
 	debug_log_setup(bat_priv);
 
 	for (bat_debug = mesh_debuginfos; *bat_debug; ++bat_debug) {
