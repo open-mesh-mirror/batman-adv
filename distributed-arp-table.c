@@ -179,7 +179,7 @@ static void choose_next_candidate(struct bat_priv *bat_priv,
 
 			max = tmp_max;
 			if (max_orig_node)
-				orig_node_free_ref(max_orig_node);
+				batadv_orig_node_free_ref(max_orig_node);
 			max_orig_node = orig_node;
 		}
 		rcu_read_unlock();
@@ -253,7 +253,7 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 		if (cand[i].type == DHT_CANDIDATE_NOT_FOUND)
 			continue;
 
-		neigh_node = orig_node_get_router(cand[i].orig_node);
+		neigh_node = batadv_orig_node_get_router(cand[i].orig_node);
 		if (!neigh_node)
 			goto free_orig;
 
@@ -269,9 +269,9 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 			/* packet sent to a candidate: we can return true */
 			ret = true;
 free_neigh:
-		neigh_node_free_ref(neigh_node);
+		batadv_neigh_node_free_ref(neigh_node);
 free_orig:
-		orig_node_free_ref(cand[i].orig_node);
+		batadv_orig_node_free_ref(cand[i].orig_node);
 	}
 
 out:
