@@ -434,7 +434,7 @@ struct net_device *softif_create(const char *name)
 	if (ret < 0)
 		goto free_bat_counters;
 
-	ret = debugfs_add_meshif(soft_iface);
+	ret = batadv_debugfs_add_meshif(soft_iface);
 	if (ret < 0)
 		goto unreg_sysfs;
 
@@ -445,7 +445,7 @@ struct net_device *softif_create(const char *name)
 	return soft_iface;
 
 unreg_debugfs:
-	debugfs_del_meshif(soft_iface);
+	batadv_debugfs_del_meshif(soft_iface);
 unreg_sysfs:
 	sysfs_del_meshif(soft_iface);
 free_bat_counters:
@@ -462,7 +462,7 @@ out:
 
 void softif_destroy(struct net_device *soft_iface)
 {
-	debugfs_del_meshif(soft_iface);
+	batadv_debugfs_del_meshif(soft_iface);
 	sysfs_del_meshif(soft_iface);
 	mesh_free(soft_iface);
 	unregister_netdevice(soft_iface);
