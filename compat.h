@@ -113,12 +113,12 @@ struct kernel_param_ops {
 				    __compat_get_param_##name, arg,	\
 				    __same_type((arg), bool *), perm)
 
-static inline int __param_set_copystring(const char *val,
-					 const struct kernel_param *kp)
+static inline int batadv_param_set_copystring(const char *val,
+					      const struct kernel_param *kp)
 {
 	return param_set_copystring(val, (struct kernel_param *)kp);
 }
-#define param_set_copystring __param_set_copystring
+#define param_set_copystring batadv_param_set_copystring
 
 /* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
 #define addr_assign_type ifindex
