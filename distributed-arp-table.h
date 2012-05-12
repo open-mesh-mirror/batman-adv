@@ -52,16 +52,20 @@ void batadv_arp_change_timeout(struct net_device *soft_iface, const char *name);
 static inline void
 batadv_dat_init_orig_node_dht_addr(struct orig_node *orig_node)
 {
-	orig_node->dht_addr = (dat_addr_t)choose_orig(orig_node->orig,
-						      DAT_ADDR_MAX);
+	uint32_t addr;
+
+	addr = batadv_choose_orig(orig_node->orig, DAT_ADDR_MAX);
+	orig_node->dht_addr = (dat_addr_t)addr;
 }
 
 static inline void batadv_dat_init_own_dht_addr(struct bat_priv *bat_priv,
 						struct hard_iface *primary_if)
 {
-	bat_priv->dht_addr = (dat_addr_t)
-				choose_orig(primary_if->net_dev->dev_addr,
-					    DAT_ADDR_MAX);
+	uint32_t addr;
+
+	addr = batadv_choose_orig(primary_if->net_dev->dev_addr, DAT_ADDR_MAX);
+
+	bat_priv->dht_addr = (dat_addr_t)addr;
 }
 
 #else
