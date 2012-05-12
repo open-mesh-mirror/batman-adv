@@ -259,9 +259,9 @@ static bool dht_send_data(struct bat_priv *bat_priv, struct sk_buff *skb,
 			goto free_orig;
 
 		tmp_skb = pskb_copy(skb, GFP_ATOMIC);
-		if (!prepare_unicast_4addr_packet(bat_priv, tmp_skb,
-						  cand[i].orig_node,
-						  packet_subtype)) {
+		if (!batadv_prepare_unicast_4addr_packet(bat_priv, tmp_skb,
+							 cand[i].orig_node,
+							 packet_subtype)) {
 			kfree_skb(tmp_skb);
 			goto free_neigh;
 		}

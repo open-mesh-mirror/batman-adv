@@ -139,7 +139,7 @@ static void orig_node_free_rcu(struct rcu_head *rcu)
 
 	spin_unlock_bh(&orig_node->neigh_list_lock);
 
-	frag_list_free(&orig_node->frag_list);
+	batadv_frag_list_free(&orig_node->frag_list);
 	batadv_tt_global_del_orig(orig_node->bat_priv, orig_node,
 				  "originator timed out");
 
@@ -374,7 +374,7 @@ static void _purge_orig(struct bat_priv *bat_priv)
 
 			if (has_timed_out(orig_node->last_frag_packet,
 					  FRAG_TIMEOUT))
-				frag_list_free(&orig_node->frag_list);
+				batadv_frag_list_free(&orig_node->frag_list);
 		}
 		spin_unlock_bh(list_lock);
 	}

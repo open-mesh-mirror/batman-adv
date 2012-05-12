@@ -27,30 +27,32 @@
 #define FRAG_TIMEOUT 10000	/* purge frag list entries after time in ms */
 #define FRAG_BUFFER_SIZE 6	/* number of list elements in buffer */
 
-int frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
-			struct sk_buff **new_skb);
-void frag_list_free(struct list_head *head);
-int frag_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
-		  struct hard_iface *hard_iface, const uint8_t dstaddr[]);
-bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
-				  struct sk_buff *skb,
-				  struct orig_node *orig_node,
-				  int packet_subtype);
-int unicast_generic_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
-			     int packet_type, int packet_subtype);
+int batadv_frag_reassemble_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
+			       struct sk_buff **new_skb);
+void batadv_frag_list_free(struct list_head *head);
+int batadv_frag_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
+			 struct hard_iface *hard_iface,
+			 const uint8_t dstaddr[]);
+bool batadv_prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
+					 struct sk_buff *skb,
+					 struct orig_node *orig_node,
+					 int packet_subtype);
+int batadv_unicast_generic_send_skb(struct sk_buff *skb,
+				    struct bat_priv *bat_priv,
+				    int packet_type, int packet_subtype);
 
 static inline int unicast_send_skb(struct sk_buff *skb,
 				   struct bat_priv *bat_priv)
 {
-	return unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST, 0);
+	return batadv_unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST, 0);
 }
 
 static inline int unicast_4addr_send_skb(struct sk_buff *skb,
 					 struct bat_priv *bat_priv,
 					 int packet_subtype)
 {
-	return unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST_4ADDR,
-					packet_subtype);
+	return batadv_unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST_4ADDR,
+					       packet_subtype);
 }
 
 static inline int frag_can_reassemble(const struct sk_buff *skb, int mtu)
