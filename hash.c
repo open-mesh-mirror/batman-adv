@@ -70,7 +70,8 @@ free_hash:
 	return NULL;
 }
 
-void hash_set_lock_class(struct hashtable_t *hash, struct lock_class_key *key)
+void batadv_hash_set_lock_class(struct hashtable_t *hash,
+				struct lock_class_key *key)
 {
 	uint32_t i;
 

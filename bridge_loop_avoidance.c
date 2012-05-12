@@ -1172,9 +1172,10 @@ int bla_init(struct bat_priv *bat_priv)
 	if (!bat_priv->claim_hash || !bat_priv->backbone_hash)
 		return -ENOMEM;
 
-	hash_set_lock_class(bat_priv->claim_hash, &claim_hash_lock_class_key);
-	hash_set_lock_class(bat_priv->backbone_hash,
-			    &backbone_hash_lock_class_key);
+	batadv_hash_set_lock_class(bat_priv->claim_hash,
+				   &claim_hash_lock_class_key);
+	batadv_hash_set_lock_class(bat_priv->backbone_hash,
+				   &backbone_hash_lock_class_key);
 
 	bat_dbg(DBG_BLA, bat_priv, "bla hashes initialized\n");
 
