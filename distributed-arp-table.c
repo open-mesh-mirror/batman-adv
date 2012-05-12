@@ -498,7 +498,7 @@ bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 
 	inc_counter(bat_priv, BAT_CNT_DAT_REPLY_TX);
 
-	unicast_4addr_send_skb(skb_new, bat_priv, BAT_P_DAT_CACHE_REPLY);
+	batadv_unicast_4addr_send_skb(skb_new, bat_priv, BAT_P_DAT_CACHE_REPLY);
 
 	ret = true;
 out:

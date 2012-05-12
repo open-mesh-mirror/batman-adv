@@ -39,21 +39,21 @@ int batadv_unicast_generic_send_skb(struct sk_buff *skb,
 				    struct bat_priv *bat_priv,
 				    int packet_type, int packet_subtype);
 
-static inline int unicast_send_skb(struct sk_buff *skb,
-				   struct bat_priv *bat_priv)
+static inline int batadv_unicast_send_skb(struct sk_buff *skb,
+					  struct bat_priv *bat_priv)
 {
 	return batadv_unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST, 0);
 }
 
-static inline int unicast_4addr_send_skb(struct sk_buff *skb,
-					 struct bat_priv *bat_priv,
-					 int packet_subtype)
+static inline int batadv_unicast_4addr_send_skb(struct sk_buff *skb,
+						struct bat_priv *bat_priv,
+						int packet_subtype)
 {
 	return batadv_unicast_generic_send_skb(skb, bat_priv, BAT_UNICAST_4ADDR,
 					       packet_subtype);
 }
 
-static inline int frag_can_reassemble(const struct sk_buff *skb, int mtu)
+static inline int batadv_frag_can_reassemble(const struct sk_buff *skb, int mtu)
 {
 	const struct unicast_frag_packet *unicast_packet;
 	int uneven_correction = 0;

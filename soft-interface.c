@@ -245,7 +245,7 @@ static int interface_tx(struct sk_buff *skb, struct net_device *soft_iface)
 
 		batadv_dat_snoop_outgoing_arp_reply(bat_priv, skb);
 
-		ret = unicast_send_skb(skb, bat_priv);
+		ret = batadv_unicast_send_skb(skb, bat_priv);
 		if (ret != 0)
 			goto dropped_freed;
 	}
