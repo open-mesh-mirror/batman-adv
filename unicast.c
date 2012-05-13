@@ -395,10 +395,11 @@ find_router:
 
 	unicast_packet = (struct unicast_packet *)skb->data;
 
-	/* inform the destination ode that we are still missing a correct route
+	/* inform the destination node that we are still missing a correct route
 	 * for this client. The destination will receive this packet and will
 	 * try to reroute it because the ttvn contained in the header is less
-	 * than the current one */
+	 * than the current one
+	 */
 	if (tt_global_client_is_roaming(bat_priv, ethhdr->h_dest))
 		unicast_packet->ttvn = unicast_packet->ttvn - 1;
 

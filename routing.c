@@ -928,7 +928,8 @@ static int check_unicast_ttvn(struct bat_priv *bat_priv,
 			sizeof(struct unicast_packet));
 
 		/* we don't have an updated route for this client, so we should
-		 * not try to reroute the packet!! */
+		 * not try to reroute the packet!!
+		 */
 		if (tt_global_client_is_roaming(bat_priv, ethhdr->h_dest))
 			return 1;
 

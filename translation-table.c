@@ -2220,7 +2220,8 @@ request_table:
 
 /* returns true whether we know that the client has moved from its old
  * originator to another one. This entry is kept is still kept for consistency
- * purposes */
+ * purposes
+ */
 bool tt_global_client_is_roaming(struct bat_priv *bat_priv, uint8_t *addr)
 {
 	struct tt_global_entry *tt_global_entry;
