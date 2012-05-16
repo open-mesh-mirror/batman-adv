@@ -476,7 +476,7 @@ bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 		batadv_dbg(DBG_DAT, bat_priv, "ARP request replied locally\n");
 	} else {
 		/* Send the request on the DHT */
-		inc_counter(bat_priv, BAT_CNT_DAT_REQUEST_TX);
+		batadv_inc_counter(bat_priv, BAT_CNT_DAT_REQUEST_TX);
 		ret = batadv_dht_send_data(bat_priv, skb, ip_dst,
 					   BAT_P_DAT_DHT_GET);
 	}
@@ -533,7 +533,7 @@ bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 	if (!skb_new)
 		goto out;
 
-	inc_counter(bat_priv, BAT_CNT_DAT_REPLY_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_DAT_REPLY_TX);
 
 	batadv_unicast_4addr_send_skb(skb_new, bat_priv, BAT_P_DAT_CACHE_REPLY);
 
@@ -574,7 +574,7 @@ bool batadv_dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
 	batadv_arp_neigh_update(bat_priv, ip_src, hw_src);
 	batadv_arp_neigh_update(bat_priv, ip_dst, hw_dst);
 
-	inc_counter(bat_priv, BAT_CNT_DAT_REPLY_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_DAT_REPLY_TX);
 
 	/* Send the ARP reply to the candidates for both the IP addresses we
 	 * fetched from the ARP reply

@@ -193,7 +193,7 @@ static inline void batadv_vdbg(int type, struct bat_priv *bat_priv,
 			       const char *fmt, va_list args)
 {
 	if (atomic_read(&bat_priv->log_level) & type)
-			batadv_debug_log(bat_priv, fmt, args);
+		batadv_debug_log(bat_priv, fmt, args);
 }
 
 #else /* !CONFIG_BATMAN_ADV_DEBUG */
@@ -218,14 +218,14 @@ static inline void batadv_dbg(int type, struct bat_priv *bat_priv,
 	va_end(args);
 }
 
-#define bat_info(net_dev, fmt, arg...)					\
+#define batadv_info(net_dev, fmt, arg...)				\
 	do {								\
 		struct net_device *_netdev = (net_dev);                 \
 		struct bat_priv *_batpriv = netdev_priv(_netdev);       \
 		batadv_dbg(DBG_ALL, _batpriv, fmt, ## arg);		\
 		pr_info("%s: " fmt, _netdev->name, ## arg);		\
 	} while (0)
-#define bat_err(net_dev, fmt, arg...)					\
+#define batadv_err(net_dev, fmt, arg...)				\
 	do {								\
 		struct net_device *_netdev = (net_dev);                 \
 		struct bat_priv *_batpriv = netdev_priv(_netdev);       \
@@ -254,10 +254,10 @@ static inline bool batadv_has_timed_out(unsigned long timestamp,
 	return time_is_before_jiffies(timestamp + msecs_to_jiffies(timeout));
 }
 
-#define atomic_dec_not_zero(v)	atomic_add_unless((v), -1, 0)
+#define batadv_atomic_dec_not_zero(v)	atomic_add_unless((v), -1, 0)
 
 /* Returns the smallest signed integer in two's complement with the sizeof x */
-#define smallest_signed_int(x) (1u << (7u + 8u * (sizeof(x) - 1u)))
+#define batadv_smallest_signed_int(x) (1u << (7u + 8u * (sizeof(x) - 1u)))
 
 /* Checks if a sequence number x is a predecessor/successor of y.
  * they handle overflows/underflows and can correctly check for a
@@ -269,12 +269,12 @@ static inline bool batadv_has_timed_out(unsigned long timestamp,
  *  - when adding 128 - it is neither a predecessor nor a successor,
  *  - after adding more than 127 to the starting value - it is a successor
  */
-#define seq_before(x, y) ({typeof(x) _d1 = (x); \
-			  typeof(y) _d2 = (y); \
-			  typeof(x) _dummy = (_d1 - _d2); \
-			  (void) (&_d1 == &_d2); \
-			  _dummy > smallest_signed_int(_dummy); })
-#define seq_after(x, y) seq_before(y, x)
+#define batadv_seq_before(x, y) ({typeof(x) _d1 = (x); \
+				 typeof(y) _d2 = (y); \
+				 typeof(x) _dummy = (_d1 - _d2); \
+				 (void) (&_d1 == &_d2); \
+				 _dummy > batadv_smallest_signed_int(_dummy); })
+#define batadv_seq_after(x, y) batadv_seq_before(y, x)
 
 /* Stop preemption on local cpu while incrementing the counter */
 static inline void batadv_add_counter(struct bat_priv *bat_priv, size_t idx,
@@ -285,7 +285,7 @@ static inline void batadv_add_counter(struct bat_priv *bat_priv, size_t idx,
 	put_cpu();
 }
 
-#define inc_counter(b, i) batadv_add_counter(b, i, 1)
+#define batadv_inc_counter(b, i) batadv_add_counter(b, i, 1)
 
 /* Sum and return the cpu-local counters for index 'idx' */
 static inline uint64_t batadv_sum_counter(struct bat_priv *bat_priv, size_t idx)

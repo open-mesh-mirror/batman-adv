@@ -1431,7 +1431,7 @@ static int batadv_send_tt_request(struct bat_priv *bat_priv,
 		   dst_orig_node->orig, neigh_node->addr,
 		   (full_table ? 'F' : '.'));
 
-	inc_counter(bat_priv, BAT_CNT_TT_REQUEST_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_TT_REQUEST_TX);
 
 	batadv_send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
 	ret = 0;
@@ -1559,7 +1559,7 @@ static bool batadv_send_other_tt_response(struct bat_priv *bat_priv,
 		   res_dst_orig_node->orig, neigh_node->addr,
 		   req_dst_orig_node->orig, req_ttvn);
 
-	inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_TX);
 
 	batadv_send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
 	ret = true;
@@ -1680,7 +1680,7 @@ static bool batadv_send_my_tt_response(struct bat_priv *bat_priv,
 		   orig_node->orig, neigh_node->addr,
 		   (tt_response->flags & TT_FULL_TABLE ? 'F' : '.'));
 
-	inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_TX);
 
 	batadv_send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
 	ret = true;
@@ -1930,7 +1930,7 @@ static bool batadv_tt_check_roam_count(struct bat_priv *bat_priv,
 					 ROAMING_MAX_TIME))
 			continue;
 
-		if (!atomic_dec_not_zero(&tt_roam_node->counter))
+		if (!batadv_atomic_dec_not_zero(&tt_roam_node->counter))
 			/* Sorry, you roamed too many times! */
 			goto unlock;
 		ret = true;
@@ -1998,7 +1998,7 @@ static void batadv_send_roam_adv(struct bat_priv *bat_priv, uint8_t *client,
 		   "Sending ROAMING_ADV to %pM (client %pM) via %pM\n",
 		   orig_node->orig, client, neigh_node->addr);
 
-	inc_counter(bat_priv, BAT_CNT_TT_ROAM_ADV_TX);
+	batadv_inc_counter(bat_priv, BAT_CNT_TT_ROAM_ADV_TX);
 
 	batadv_send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
 	ret = 0;
@@ -2162,7 +2162,7 @@ int batadv_tt_append_diff(struct bat_priv *bat_priv,
 
 	/* if the changes have been sent often enough */
 	if ((tt_num_changes < 0) &&
-	    (!atomic_dec_not_zero(&bat_priv->tt_ogm_append_cnt))) {
+	    (!batadv_atomic_dec_not_zero(&bat_priv->tt_ogm_append_cnt))) {
 		batadv_tt_realloc_packet_buff(packet_buff, packet_buff_len,
 					      packet_min_len, packet_min_len);
 		tt_num_changes = 0;

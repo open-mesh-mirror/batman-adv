@@ -605,7 +605,7 @@ int batadv_recv_tt_query(struct sk_buff *skb, struct hard_iface *recv_if)
 
 	switch (tt_query->flags & TT_QUERY_TYPE_MASK) {
 	case TT_REQUEST:
-		inc_counter(bat_priv, BAT_CNT_TT_REQUEST_RX);
+		batadv_inc_counter(bat_priv, BAT_CNT_TT_REQUEST_RX);
 
 		/* If we cannot provide an answer the tt_request is
 		 * forwarded
@@ -620,7 +620,7 @@ int batadv_recv_tt_query(struct sk_buff *skb, struct hard_iface *recv_if)
 		}
 		break;
 	case TT_RESPONSE:
-		inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_RX);
+		batadv_inc_counter(bat_priv, BAT_CNT_TT_RESPONSE_RX);
 
 		if (batadv_is_my_mac(tt_query->dst)) {
 			/* packet needs to be linearized to access the TT
@@ -674,7 +674,7 @@ int batadv_recv_roam_adv(struct sk_buff *skb, struct hard_iface *recv_if)
 	if (is_broadcast_ether_addr(ethhdr->h_source))
 		goto out;
 
-	inc_counter(bat_priv, BAT_CNT_TT_ROAM_ADV_RX);
+	batadv_inc_counter(bat_priv, BAT_CNT_TT_ROAM_ADV_RX);
 
 	roam_adv_packet = (struct roam_adv_packet *)skb->data;
 
@@ -896,7 +896,7 @@ static int batadv_route_unicast_packet(struct sk_buff *skb,
 	unicast_packet->header.ttl--;
 
 	/* Update stats counter */
-	inc_counter(bat_priv, BAT_CNT_FORWARD);
+	batadv_inc_counter(bat_priv, BAT_CNT_FORWARD);
 	batadv_add_counter(bat_priv, BAT_CNT_FORWARD_BYTES,
 			   skb->len + ETH_HLEN);
 
@@ -920,6 +920,7 @@ static int batadv_check_unicast_ttvn(struct bat_priv *bat_priv,
 	struct hard_iface *primary_if;
 	struct unicast_packet *unicast_packet;
 	bool tt_poss_change;
+	int is_old_ttvn;
 
 	/* I could need to modify it */
 	if (skb_cow(skb, sizeof(struct unicast_packet)) < 0)
@@ -943,7 +944,8 @@ static int batadv_check_unicast_ttvn(struct bat_priv *bat_priv,
 	}
 
 	/* Check whether I have to reroute the packet */
-	if (seq_before(unicast_packet->ttvn, curr_ttvn) || tt_poss_change) {
+	is_old_ttvn = batadv_seq_before(unicast_packet->ttvn, curr_ttvn);
+	if (is_old_ttvn || tt_poss_change) {
 		/* check if there is enough data before accessing it */
 		if (pskb_may_pull(skb, sizeof(struct unicast_packet) +
 				  ETH_HLEN) < 0)
