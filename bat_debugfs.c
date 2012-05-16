@@ -74,16 +74,13 @@ static int batadv_fdebug_log(struct debug_log *debug_log, const char *fmt, ...)
 	return 0;
 }
 
-int batadv_debug_log(struct bat_priv *bat_priv, const char *fmt, ...)
+int batadv_debug_log(struct bat_priv *bat_priv, const char *fmt, va_list args)
 {
-	va_list args;
 	char tmp_log_buf[256];
 
-	va_start(args, fmt);
 	vscnprintf(tmp_log_buf, sizeof(tmp_log_buf), fmt, args);
 	batadv_fdebug_log(bat_priv->debug_log, "[%10u] %s",
 			  jiffies_to_msecs(jiffies), tmp_log_buf);
-	va_end(args);
 
 	return 0;
 }

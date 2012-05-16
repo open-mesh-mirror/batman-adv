@@ -32,6 +32,31 @@
 #include "translation-table.h"
 #include "unicast.h"
 
+static uint8_t *batadv_arp_hw_src(struct sk_buff *skb, int hdr_size)
+{
+	uint8_t *addr;
+
+	addr = (uint8_t *)(skb->data + hdr_size);
+	addr += ETH_HLEN + sizeof(struct arphdr);
+
+	return addr;
+}
+
+static __be32 batadv_arp_ip_src(struct sk_buff *skb, int hdr_size)
+{
+	return *(__be32 *)(batadv_arp_hw_src(skb, hdr_size) + ETH_ALEN);
+}
+
+static uint8_t *batadv_arp_hw_dst(struct sk_buff *skb, int hdr_size)
+{
+	return batadv_arp_hw_src(skb, hdr_size) + ETH_ALEN + 4;
+}
+
+static __be32 batadv_arp_ip_dst(struct sk_buff *skb, int hdr_size)
+{
+	return *(__be32 *)(batadv_arp_hw_src(skb, hdr_size) + ETH_ALEN * 2 + 4);
+}
+
 /* hash function to choose an entry in a hash table of given size.
  * hash algorithm from http://en.wikipedia.org/wiki/Hash_table
  */
@@ -60,14 +85,17 @@ static void batadv_dbg_arp(struct bat_priv *bat_priv, struct sk_buff *skb,
 			   uint16_t type, int hdr_size, char *msg)
 {
 	struct unicast_4addr_packet *unicast_4addr_packet;
+	__be32 src_ip, dst_ip;
 
 	if (msg)
 		batadv_dbg(DBG_DAT, bat_priv, "%s\n", msg);
 
+	src_ip = batadv_arp_ip_src(skb, hdr_size);
+	dst_ip = batadv_arp_ip_dst(skb, hdr_size);
 	batadv_dbg(DBG_DAT, bat_priv,
 		   "ARP MSG = [src: %pM-%pI4 dst: %pM-%pI4]\n",
-		   ARP_HW_SRC(skb, hdr_size), &ARP_IP_SRC(skb, hdr_size),
-		   ARP_HW_DST(skb, hdr_size), &ARP_IP_DST(skb, hdr_size));
+		   batadv_arp_hw_src(skb, hdr_size), &src_ip,
+		   batadv_arp_hw_dst(skb, hdr_size), &dst_ip);
 
 	if (hdr_size == 0)
 		return;
@@ -383,8 +411,8 @@ static uint16_t batadv_arp_get_type(struct bat_priv *bat_priv,
 	/* Check for bad reply/request. If the ARP message is not sane, DAT
 	 * will simply ignore it
 	 */
-	ip_src = ARP_IP_SRC(skb, hdr_size);
-	ip_dst = ARP_IP_DST(skb, hdr_size);
+	ip_src = batadv_arp_ip_src(skb, hdr_size);
+	ip_dst = batadv_arp_ip_dst(skb, hdr_size);
 	if (ipv4_is_loopback(ip_src) || ipv4_is_multicast(ip_src) ||
 	    ipv4_is_loopback(ip_dst) || ipv4_is_multicast(ip_dst))
 		goto out;
@@ -418,9 +446,9 @@ bool batadv_dat_snoop_outgoing_arp_request(struct bat_priv *bat_priv,
 
 	batadv_dbg_arp(bat_priv, skb, type, 0, "Parsing outgoing ARP REQUEST");
 
-	ip_src = ARP_IP_SRC(skb, 0);
-	hw_src = ARP_HW_SRC(skb, 0);
-	ip_dst = ARP_IP_DST(skb, 0);
+	ip_src = batadv_arp_ip_src(skb, 0);
+	hw_src = batadv_arp_hw_src(skb, 0);
+	ip_dst = batadv_arp_ip_dst(skb, 0);
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if)
@@ -480,9 +508,9 @@ bool batadv_dat_snoop_incoming_arp_request(struct bat_priv *bat_priv,
 	if (type != ARPOP_REQUEST)
 		goto out;
 
-	hw_src = ARP_HW_SRC(skb, hdr_size);
-	ip_src = ARP_IP_SRC(skb, hdr_size);
-	ip_dst = ARP_IP_DST(skb, hdr_size);
+	hw_src = batadv_arp_hw_src(skb, hdr_size);
+	ip_src = batadv_arp_ip_src(skb, hdr_size);
+	ip_dst = batadv_arp_ip_dst(skb, hdr_size);
 
 	batadv_dbg_arp(bat_priv, skb, type, hdr_size,
 		       "Parsing incoming ARP REQUEST");
@@ -538,10 +566,10 @@ bool batadv_dat_snoop_outgoing_arp_reply(struct bat_priv *bat_priv,
 
 	batadv_dbg_arp(bat_priv, skb, type, 0, "Parsing outgoing ARP REPLY");
 
-	hw_src = ARP_HW_SRC(skb, 0);
-	ip_src = ARP_IP_SRC(skb, 0);
-	hw_dst = ARP_HW_DST(skb, 0);
-	ip_dst = ARP_IP_DST(skb, 0);
+	hw_src = batadv_arp_hw_src(skb, 0);
+	ip_src = batadv_arp_ip_src(skb, 0);
+	hw_dst = batadv_arp_hw_dst(skb, 0);
+	ip_dst = batadv_arp_ip_dst(skb, 0);
 
 	batadv_arp_neigh_update(bat_priv, ip_src, hw_src);
 	batadv_arp_neigh_update(bat_priv, ip_dst, hw_dst);
@@ -576,10 +604,10 @@ bool batadv_dat_snoop_incoming_arp_reply(struct bat_priv *bat_priv,
 	batadv_dbg_arp(bat_priv, skb, type, hdr_size,
 		       "Parsing incoming ARP REPLY");
 
-	hw_src = ARP_HW_SRC(skb, hdr_size);
-	ip_src = ARP_IP_SRC(skb, hdr_size);
-	hw_dst = ARP_HW_DST(skb, hdr_size);
-	ip_dst = ARP_IP_DST(skb, hdr_size);
+	hw_src = batadv_arp_hw_src(skb, hdr_size);
+	ip_src = batadv_arp_ip_src(skb, hdr_size);
+	hw_dst = batadv_arp_hw_dst(skb, hdr_size);
+	ip_dst = batadv_arp_ip_dst(skb, hdr_size);
 
 	/* Update our internal cache with both the IP addresses we fetched from
 	 * the ARP reply
@@ -603,6 +631,7 @@ bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 	struct neighbour *n = NULL;
 	uint16_t type;
 	bool ret = false;
+	__be32 ip_dst;
 
 	/* If this packet is an ARP_REQUEST and we already have the information
 	 * that it is going to ask, we can drop the packet
@@ -614,20 +643,19 @@ bool batadv_dat_drop_broadcast_packet(struct bat_priv *bat_priv,
 	if (type != ARPOP_REQUEST)
 		goto out;
 
-	n = neigh_lookup(&arp_tbl, &ARP_IP_DST(forw_packet->skb, bcast_len),
+	ip_dst = batadv_arp_ip_dst(forw_packet->skb, bcast_len);
+	n = neigh_lookup(&arp_tbl, &ip_dst,
 			 forw_packet->if_incoming->soft_iface);
 
 	/* check if we already know this neigh */
 	if (!n || !(n->nud_state & NUD_CONNECTED)) {
 		batadv_dbg(DBG_DAT, bat_priv,
-			   "ARP Request for %pI4: fallback\n",
-			   &ARP_IP_DST(forw_packet->skb, bcast_len));
+			   "ARP Request for %pI4: fallback\n", &ip_dst);
 		goto out;
 	}
 
 	batadv_dbg(DBG_DAT, bat_priv,
-		   "ARP Request for %pI4: fallback prevented\n",
-		   &ARP_IP_DST(forw_packet->skb, bcast_len));
+		   "ARP Request for %pI4: fallback prevented\n", &ip_dst);
 	ret = true;
 
 out:

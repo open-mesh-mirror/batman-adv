@@ -187,23 +187,36 @@ int batadv_algo_select(struct bat_priv *bat_priv, char *name);
 int batadv_algo_seq_print_text(struct seq_file *seq, void *offset);
 
 #ifdef CONFIG_BATMAN_ADV_DEBUG
-int batadv_debug_log(struct bat_priv *bat_priv, const char *fmt, ...)
-__printf(2, 3);
+int batadv_debug_log(struct bat_priv *bat_priv, const char *fmt, va_list args);
 
-#define batadv_dbg(type, bat_priv, fmt, arg...)			\
-	do {							\
-		if (atomic_read(&bat_priv->log_level) & type)	\
-			batadv_debug_log(bat_priv, fmt, ## arg);\
-	}							\
-	while (0)
+static inline void batadv_vdbg(int type, struct bat_priv *bat_priv,
+			       const char *fmt, va_list args)
+{
+	if (atomic_read(&bat_priv->log_level) & type)
+			batadv_debug_log(bat_priv, fmt, args);
+}
+
 #else /* !CONFIG_BATMAN_ADV_DEBUG */
-__printf(3, 4)
-static inline void batadv_dbg(int type __always_unused,
-			      struct bat_priv *bat_priv __always_unused,
-			      const char *fmt __always_unused, ...)
+
+static inline void batadv_vdbg(int type __always_unused,
+			       struct bat_priv *bat_priv __always_unused,
+			       const char *fmt __always_unused,
+			       va_list args __always_unused)
 {
 }
+
 #endif
+
+__printf(3, 4)
+static inline void batadv_dbg(int type, struct bat_priv *bat_priv,
+			       const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	batadv_vdbg(type, bat_priv, fmt, args);
+	va_end(args);
+}
 
 #define bat_info(net_dev, fmt, arg...)					\
 	do {								\
