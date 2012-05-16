@@ -30,7 +30,7 @@
  *
  * *Please be careful: dat_addr_t must be UNSIGNED*
  */
-#define dat_addr_t uint16_t
+typedef uint16_t dat_addr_t;
 
 #endif /* CONFIG_BATMAN_ADV_DAT */
 
