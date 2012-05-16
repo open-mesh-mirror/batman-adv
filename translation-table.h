@@ -41,7 +41,6 @@ void batadv_tt_global_del_orig(struct bat_priv *bat_priv,
 struct orig_node *batadv_transtable_search(struct bat_priv *bat_priv,
 					   const uint8_t *src,
 					   const uint8_t *addr);
-uint16_t batadv_tt_local_crc(struct bat_priv *bat_priv);
 void batadv_tt_free(struct bat_priv *bat_priv);
 bool batadv_send_tt_response(struct bat_priv *bat_priv,
 			     struct tt_query_packet *tt_request);

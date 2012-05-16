@@ -1172,7 +1172,7 @@ static uint16_t batadv_tt_global_crc(struct bat_priv *bat_priv,
 }
 
 /* Calculates the checksum of the local table */
-uint16_t batadv_tt_local_crc(struct bat_priv *bat_priv)
+static uint16_t batadv_tt_local_crc(struct bat_priv *bat_priv)
 {
 	uint16_t total = 0, total_one;
 	struct hashtable_t *hash = bat_priv->tt_local_hash;
