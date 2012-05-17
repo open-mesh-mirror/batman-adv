@@ -283,78 +283,13 @@ out:
 	return ret;
 }
 
-static bool pull_and_fill_unicast(struct sk_buff *skb, int hdr_size,
-				  struct orig_node *orig_node)
-{
-	struct unicast_packet *unicast_packet;
-
-	if (my_skb_head_push(skb, hdr_size) < 0)
-		return false;
-
-	unicast_packet = (struct unicast_packet *)skb->data;
-	unicast_packet->header.version = COMPAT_VERSION;
-	/* batman packet type: unicast */
-	unicast_packet->header.packet_type = BAT_UNICAST;
-	/* set unicast ttl */
-	unicast_packet->header.ttl = TTL;
-	/* copy the destination for faster routing */
-	memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
-	/* set the destination tt version number */
-	unicast_packet->ttvn =
-		(uint8_t)atomic_read(&orig_node->last_ttvn);
-
-	return true;
-}
-
-static bool prepare_unicast_packet(struct sk_buff *skb,
-				   struct orig_node *orig_node)
-{
-	return pull_and_fill_unicast(skb, sizeof(struct unicast_packet),
-				     orig_node);
-}
-
-bool prepare_unicast_4addr_packet(struct bat_priv *bat_priv,
-				  struct sk_buff *skb,
-				  struct orig_node *orig_node,
-				  int packet_subtype)
-{
-	struct hard_iface *primary_if;
-	struct unicast_4addr_packet *unicast_4addr_packet;
-	bool ret = false;
-
-	primary_if = primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
-
-	/* pull the header space and fill the unicast_packet substructure.
-	 * We can do that because the first member of the unicast_4addr_packet
-	 * is of type struct unicast_packet
-	 */
-	if (!pull_and_fill_unicast(skb, sizeof(*unicast_4addr_packet),
-				   orig_node))
-		goto out;
-
-	unicast_4addr_packet = (struct unicast_4addr_packet *)skb->data;
-	unicast_4addr_packet->u.header.packet_type = BAT_UNICAST_4ADDR;
-	memcpy(unicast_4addr_packet->src, primary_if->net_dev->dev_addr,
-	       ETH_ALEN);
-	unicast_4addr_packet->subtype = packet_subtype;
-
-	ret = true;
-out:
-	if (primary_if)
-		hardif_free_ref(primary_if);
-	return ret;
-}
-
-int unicast_generic_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
-			     int packet_type, int packet_subtype)
+int unicast_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv)
 {
 	struct ethhdr *ethhdr = (struct ethhdr *)skb->data;
+	struct unicast_packet *unicast_packet;
 	struct orig_node *orig_node;
 	struct neigh_node *neigh_node;
 	int data_len = skb->len;
-	struct unicast_packet *unicast_packet;
 	int ret = 1;
 
 	/* get routing information */
@@ -368,6 +303,7 @@ int unicast_generic_send_skb(struct sk_buff *skb, struct bat_priv *bat_priv,
 	 * returns NULL in case of AP isolation */
 	orig_node = transtable_search(bat_priv, ethhdr->h_source,
 				      ethhdr->h_dest);
+
 find_router:
 	/**
 	 * find_router():
@@ -375,25 +311,25 @@ find_router:
 	 *  - increases neigh_nodes refcount if found.
 	 */
 	neigh_node = find_router(bat_priv, orig_node, NULL);
+
 	if (!neigh_node)
 		goto out;
 
-	switch (packet_type) {
-	case BAT_UNICAST:
-		prepare_unicast_packet(skb, orig_node);
-		break;
-	case BAT_UNICAST_4ADDR:
-		prepare_unicast_4addr_packet(bat_priv, skb, orig_node,
-					     packet_subtype);
-		break;
-	default:
-		/* this function supports UNICAST and UNICAST_4ADDR only. It
-		 * should never be invoked with any other packet type
-		 */
+	if (my_skb_head_push(skb, sizeof(*unicast_packet)) < 0)
 		goto out;
-	}
 
 	unicast_packet = (struct unicast_packet *)skb->data;
+
+	unicast_packet->header.version = COMPAT_VERSION;
+	/* batman packet type: unicast */
+	unicast_packet->header.packet_type = BAT_UNICAST;
+	/* set unicast ttl */
+	unicast_packet->header.ttl = TTL;
+	/* copy the destination for faster routing */
+	memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
+	/* set the destination tt version number */
+	unicast_packet->ttvn =
+		(uint8_t)atomic_read(&orig_node->last_ttvn);
 
 	/* inform the destination node that we are still missing a correct route
 	 * for this client. The destination will receive this packet and will
@@ -403,9 +339,7 @@ find_router:
 	if (tt_global_client_is_roaming(bat_priv, ethhdr->h_dest))
 		unicast_packet->ttvn = unicast_packet->ttvn - 1;
 
-	/* fragmentation mechanism only works for UNICAST (now) */
-	if (packet_type == BAT_UNICAST &&
-	    atomic_read(&bat_priv->fragmentation) &&
+	if (atomic_read(&bat_priv->fragmentation) &&
 	    data_len + sizeof(*unicast_packet) >
 				neigh_node->if_incoming->net_dev->mtu) {
 		/* send frag skb decreases ttl */
@@ -417,6 +351,7 @@ find_router:
 
 	send_skb_packet(skb, neigh_node->if_incoming, neigh_node->addr);
 	ret = 0;
+	goto out;
 
 out:
 	if (neigh_node)

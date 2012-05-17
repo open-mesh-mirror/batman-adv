@@ -25,22 +25,14 @@
 #define ETH_P_BATMAN  0x4305	/* unofficial/not registered Ethertype */
 
 enum bat_packettype {
-	BAT_IV_OGM		= 0x01,
-	BAT_ICMP		= 0x02,
-	BAT_UNICAST		= 0x03,
-	BAT_BCAST		= 0x04,
-	BAT_VIS			= 0x05,
-	BAT_UNICAST_FRAG	= 0x06,
-	BAT_TT_QUERY		= 0x07,
-	BAT_ROAM_ADV		= 0x08,
-	BAT_UNICAST_4ADDR	= 0x09
-};
-
-enum bat_subtype {
-	BAT_P_DATA		= 0x01,
-	BAT_P_DAT_DHT_GET	= 0x02,
-	BAT_P_DAT_DHT_PUT	= 0x03,
-	BAT_P_DAT_CACHE_REPLY	= 0x04
+	BAT_IV_OGM	 = 0x01,
+	BAT_ICMP	 = 0x02,
+	BAT_UNICAST	 = 0x03,
+	BAT_BCAST	 = 0x04,
+	BAT_VIS		 = 0x05,
+	BAT_UNICAST_FRAG = 0x06,
+	BAT_TT_QUERY	 = 0x07,
+	BAT_ROAM_ADV	 = 0x08
 };
 
 /* this file is included by batctl which needs these defines */
@@ -166,12 +158,6 @@ struct unicast_packet {
 	struct batman_header header;
 	uint8_t  ttvn; /* destination translation table version number */
 	uint8_t  dest[ETH_ALEN];
-} __packed;
-
-struct unicast_4addr_packet {
-	struct unicast_packet u;
-	uint8_t src[ETH_ALEN];
-	uint8_t subtype;
 } __packed;
 
 struct unicast_frag_packet {
