@@ -123,8 +123,9 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 
 
 #define BAT_ATTR_HIF_STORE_UINT(_name, _min, _max, _post_func)		\
-ssize_t store_##_name(struct kobject *kobj, struct attribute *attr,	\
-		      char *buff, size_t count)				\
+ssize_t batadv_store_##_name(struct kobject *kobj,			\
+			     struct attribute *attr, char *buff,	\
+			     size_t count)				\
 {									\
 	struct net_device *net_dev = batadv_kobj_to_netdev(kobj);	\
 	struct hard_iface *hard_iface;					\
@@ -142,8 +143,8 @@ ssize_t store_##_name(struct kobject *kobj, struct attribute *attr,	\
 }
 
 #define BAT_ATTR_HIF_SHOW_UINT(_name)					\
-ssize_t show_##_name(struct kobject *kobj,				\
-		     struct attribute *attr, char *buff)		\
+ssize_t batadv_show_##_name(struct kobject *kobj,			\
+			    struct attribute *attr, char *buff)		\
 {									\
 	struct net_device *net_dev = batadv_kobj_to_netdev(kobj);	\
 	struct hard_iface *hard_iface;					\
