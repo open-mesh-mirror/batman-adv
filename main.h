@@ -69,15 +69,6 @@
 
 #define NUM_WORDS BITS_TO_LONGS(TQ_LOCAL_WINDOW_SIZE)
 
-/* msecs after which an ARP_REQUEST is sent in broadcast as fallback */
-#define ARP_REQ_DELAY 250
-/* numbers of originator to contact for any PUT/GET DHT operation */
-#define DHT_CANDIDATES_NUM 3
-/* Factor which default ARP timeout values of the soft_iface table are
- * multiplied by
- */
-#define ARP_TIMEOUT_FACTOR 4
-
 #define LOG_BUF_LEN 8192	  /* has to be a power of 2 */
 
 #define VIS_INTERVAL 5000	/* 5 seconds */
@@ -124,9 +115,6 @@ enum uev_type {
 
 #define GW_THRESHOLD	50
 
-#define DHT_CANDIDATE_NOT_FOUND	0
-#define DHT_CANDIDATE_ORIG	1
-
 /* Debug Messages */
 #ifdef pr_fmt
 #undef pr_fmt
@@ -140,8 +128,7 @@ enum dbg_level {
 	DBG_ROUTES = 1 << 1, /* route added / changed / deleted */
 	DBG_TT	   = 1 << 2, /* translation table operations */
 	DBG_BLA    = 1 << 3, /* bridge loop avoidance */
-	DBG_DAT    = 1 << 4, /* snooped arp messages / dat operations */
-	DBG_ALL    = 31
+	DBG_ALL    = 15
 };
 
 /* Kernel headers */

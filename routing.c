@@ -997,17 +997,13 @@ int batadv_recv_unicast_packet(struct sk_buff *skb, struct hard_iface *recv_if)
 	struct unicast_packet *unicast_packet;
 	int hdr_size = sizeof(*unicast_packet);
 
-	unicast_packet = (struct unicast_packet *)skb->data;
-
-	/* the caller function should have already pulled 2 bytes */
-	if (unicast_packet->header.packet_type == BAT_UNICAST_4ADDR)
-		hdr_size = sizeof(struct unicast_4addr_packet);
-
 	if (batadv_check_unicast_packet(skb, hdr_size) < 0)
 		return NET_RX_DROP;
 
 	if (!batadv_check_unicast_ttvn(bat_priv, skb))
 		return NET_RX_DROP;
+
+	unicast_packet = (struct unicast_packet *)skb->data;
 
 	/* packet for me */
 	if (batadv_is_my_mac(unicast_packet->dest)) {

@@ -20,7 +20,6 @@
 #include "main.h"
 #include "soft-interface.h"
 #include "hard-interface.h"
-#include "distributed-arp-table.h"
 #include "routing.h"
 #include "send.h"
 #include "bat_debugfs.h"
@@ -142,7 +141,6 @@ static int batadv_interface_tx(struct sk_buff *skb,
 	int data_len = skb->len, ret;
 	short vid __maybe_unused = -1;
 	bool do_bcast = false;
-	unsigned long brd_delay = 1;
 
 	if (atomic_read(&bat_priv->mesh_state) != MESH_ACTIVE)
 		goto dropped;
@@ -206,9 +204,6 @@ static int batadv_interface_tx(struct sk_buff *skb,
 		if (!primary_if)
 			goto dropped;
 
-		if (batadv_dat_snoop_outgoing_arp_request(bat_priv, skb))
-			brd_delay = msecs_to_jiffies(ARP_REQ_DELAY);
-
 		if (batadv_skb_head_push(skb, sizeof(*bcast_packet)) < 0)
 			goto dropped;
 
@@ -229,7 +224,7 @@ static int batadv_interface_tx(struct sk_buff *skb,
 		bcast_packet->seqno =
 			htonl(atomic_inc_return(&bat_priv->bcast_seqno));
 
-		batadv_add_bcast_packet_to_list(bat_priv, skb, brd_delay);
+		batadv_add_bcast_packet_to_list(bat_priv, skb, 1);
 
 		/* a copy is stored in the bcast list, therefore removing
 		 * the original skb.
@@ -243,8 +238,6 @@ static int batadv_interface_tx(struct sk_buff *skb,
 			if (ret)
 				goto dropped;
 		}
-
-		batadv_dat_snoop_outgoing_arp_reply(bat_priv, skb);
 
 		ret = batadv_unicast_send_skb(skb, bat_priv);
 		if (ret != 0)
@@ -277,12 +270,6 @@ void batadv_interface_rx(struct net_device *soft_iface,
 	/* check if enough space is available for pulling, and pull */
 	if (!pskb_may_pull(skb, hdr_size))
 		goto dropped;
-
-	if (batadv_dat_snoop_incoming_arp_request(bat_priv, skb, hdr_size))
-		goto out;
-
-	if (batadv_dat_snoop_incoming_arp_reply(bat_priv, skb, hdr_size))
-		goto out;
 
 	skb_pull_rcsum(skb, hdr_size);
 	skb_reset_mac_header(skb);
@@ -390,8 +377,6 @@ struct net_device *batadv_softif_create(const char *name)
 		       name, ret);
 		goto free_soft_iface;
 	}
-
-	batadv_arp_change_timeout(soft_iface, name);
 
 	bat_priv = netdev_priv(soft_iface);
 
@@ -538,12 +523,6 @@ static const struct {
 	{ "tt_response_rx" },
 	{ "tt_roam_adv_tx" },
 	{ "tt_roam_adv_rx" },
-#ifdef CONFIG_BATMAN_ADV_DAT
-	{ "dat_request_tx" },
-	{ "dat_request_rx" },
-	{ "dat_reply_tx" },
-	{ "dat_reply_rx" },
-#endif
 };
 
 static void batadv_get_strings(struct net_device *dev, uint32_t stringset,

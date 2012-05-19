@@ -275,8 +275,6 @@ static void batadv_recv_handler_init(void)
 
 	/* batman icmp packet */
 	batadv_rx_handler[BAT_ICMP] = batadv_recv_icmp_packet;
-	/* unicast with 4 addresses packet */
-	batadv_rx_handler[BAT_UNICAST_4ADDR] = batadv_recv_unicast_packet;
 	/* unicast packet */
 	batadv_rx_handler[BAT_UNICAST] = batadv_recv_unicast_packet;
 	/* fragmented unicast packet */
