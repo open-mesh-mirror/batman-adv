@@ -23,14 +23,14 @@
 #define ETH_P_BATMAN  0x4305	/* unofficial/not registered Ethertype */
 
 enum bat_packettype {
-	BAT_IV_OGM       = 0x01,
-	BAT_ICMP         = 0x02,
-	BAT_UNICAST      = 0x03,
-	BAT_BCAST        = 0x04,
-	BAT_VIS          = 0x05,
+	BAT_IV_OGM	 = 0x01,
+	BAT_ICMP	 = 0x02,
+	BAT_UNICAST	 = 0x03,
+	BAT_BCAST	 = 0x04,
+	BAT_VIS		 = 0x05,
 	BAT_UNICAST_FRAG = 0x06,
-	BAT_TT_QUERY     = 0x07,
-	BAT_ROAM_ADV     = 0x08
+	BAT_TT_QUERY	 = 0x07,
+	BAT_ROAM_ADV	 = 0x08
 };
 
 /* this file is included by batctl which needs these defines */
