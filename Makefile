@@ -41,7 +41,7 @@ REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
 CONFIG_BATMAN_ADV=m
 batman-adv-y += compat.o
 ifneq ($(REVISION),)
-ccflags-y += -DSOURCE_VERSION=\"$(REVISION)\"
+ccflags-y += -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
 endif
 include $(PWD)/Makefile.kbuild
 
