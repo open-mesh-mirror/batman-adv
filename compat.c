@@ -29,37 +29,37 @@
 
 void batadv_free_rcu_gw_node(struct rcu_head *rcu)
 {
-	struct gw_node *gw_node;
+	struct batadv_gw_node *gw_node;
 
-	gw_node = container_of(rcu, struct gw_node, rcu);
+	gw_node = container_of(rcu, struct batadv_gw_node, rcu);
 	kfree(gw_node);
 }
 
 void batadv_free_rcu_neigh_node(struct rcu_head *rcu)
 {
-	struct neigh_node *neigh_node;
+	struct batadv_neigh_node *neigh_node;
 
-	neigh_node = container_of(rcu, struct neigh_node, rcu);
+	neigh_node = container_of(rcu, struct batadv_neigh_node, rcu);
 	kfree(neigh_node);
 }
 
 void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu)
 {
-	struct tt_common_entry *tt_common_entry;
-	struct tt_local_entry *tt_local_entry;
+	struct batadv_tt_common_entry *tt_common_entry;
+	struct batadv_tt_local_entry *tt_local_entry;
 
-	tt_common_entry = container_of(rcu, struct tt_common_entry, rcu);
-	tt_local_entry = container_of(tt_common_entry, struct tt_local_entry,
-				      common);
+	tt_common_entry = container_of(rcu, struct batadv_tt_common_entry, rcu);
+	tt_local_entry = container_of(tt_common_entry,
+				      struct batadv_tt_local_entry, common);
 	kfree(tt_local_entry);
 }
 
 #ifdef CONFIG_BATMAN_ADV_BLA
 void batadv_free_rcu_backbone_gw(struct rcu_head *rcu)
 {
-	struct backbone_gw *backbone_gw;
+	struct batadv_backbone_gw *backbone_gw;
 
-	backbone_gw = container_of(rcu, struct backbone_gw, rcu);
+	backbone_gw = container_of(rcu, struct batadv_backbone_gw, rcu);
 	kfree(backbone_gw);
 }
 #endif
