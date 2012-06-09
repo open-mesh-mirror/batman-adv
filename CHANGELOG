@@ -1,3 +1,18 @@
+batman-adv 2012.2.0:
+
+* support latest kernels (2.6.29 - 3.5)
+* cleanup of coding style (use of named constants instead of values, refactored
+  code to reduce readability, replace bitarrays with kernel functionality, ...)
+* tweaking hop penalty to reduce route flapping
+* enhanced the framework to support multiple routing algorithms
+* reimplemented the bridge loop avoidance with support for multiple active
+  backbone gateways
+* some bugs fixed (translation table flag handling, correct unicast rerouting,
+  endianness fixed for translation table crc, avoid of routing loops by being
+  strict on forwarded ogms, ...)
+
+ -- Tue, 12 Jun 2012 18:21:54 +0200
+
 batman-adv 2012.1.0:
 
 * support latest kernels (2.6.29 - 3.4)
