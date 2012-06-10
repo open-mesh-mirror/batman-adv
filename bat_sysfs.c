@@ -139,7 +139,7 @@ ssize_t batadv_store_##_name(struct kobject *kobj,			\
 					  _post_func, attr,		\
 					  &hard_iface->_name, net_dev);	\
 									\
-	hardif_free_ref(hard_iface);					\
+	batadv_hardif_free_ref(hard_iface);				\
 	return length;							\
 }
 
@@ -157,7 +157,7 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 									\
 	length = sprintf(buff, "%i\n", atomic_read(&hard_iface->_name));\
 									\
-	hardif_free_ref(hard_iface);					\
+	batadv_hardif_free_ref(hard_iface);				\
 	return length;							\
 }
 
