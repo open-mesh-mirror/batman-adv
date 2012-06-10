@@ -135,8 +135,9 @@ ssize_t batadv_store_##_name(struct kobject *kobj,			\
 	if (!hard_iface)						\
 		return 0;						\
 									\
-	length = __store_uint_attr(buff, count, _min, _max, _post_func,	\
-				   attr, &hard_iface->_name, net_dev);	\
+	length = __batadv_store_uint_attr(buff, count, _min, _max,	\
+					  _post_func, attr,		\
+					  &hard_iface->_name, net_dev);	\
 									\
 	hardif_free_ref(hard_iface);					\
 	return length;							\
