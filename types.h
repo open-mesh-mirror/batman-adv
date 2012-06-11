@@ -22,7 +22,7 @@
 
 #include "packet.h"
 #include "bitarray.h"
-#include "linux/kernel.h"
+#include <linux/kernel.h>
 
 #define BATADV_HEADER_LEN \
 	(ETH_HLEN + max(sizeof(struct batadv_unicast_packet), \
