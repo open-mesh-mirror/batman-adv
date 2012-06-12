@@ -284,13 +284,13 @@ int batadv_socket_setup(struct batadv_priv *bat_priv)
 
 	d = debugfs_create_file(BATADV_ICMP_SOCKET, S_IFREG | S_IWUSR | S_IRUSR,
 				bat_priv->debug_dir, bat_priv, &batadv_fops);
-	if (d)
+	if (!d)
 		goto err;
 
 	return 0;
 
 err:
-	return 1;
+	return -ENOMEM;
 }
 
 static void batadv_socket_add_packet(struct batadv_socket_client *socket_client,
