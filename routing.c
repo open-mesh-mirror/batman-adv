@@ -638,6 +638,8 @@ int batadv_recv_tt_query(struct sk_buff *skb, struct batadv_hard_iface *recv_if)
 			 */
 			if (skb_linearize(skb) < 0)
 				goto out;
+			/* skb_linearize() possibly changed skb->data */
+			tt_query = (struct batadv_tt_query_packet *)skb->data;
 
 			tt_size = batadv_tt_len(ntohs(tt_query->tt_data));
 
