@@ -1222,7 +1222,7 @@ int batadv_bla_check_bcast_duplist(struct batadv_priv *bat_priv,
 	/* calculate the crc ... */
 	crc = crc16(0, content, length);
 
-	for (i = 0 ; i < BATADV_DUPLIST_SIZE; i++) {
+	for (i = 0; i < BATADV_DUPLIST_SIZE; i++) {
 		curr = (bat_priv->bcast_duplist_curr + i) % BATADV_DUPLIST_SIZE;
 		entry = &bat_priv->bcast_duplist[curr];
 
