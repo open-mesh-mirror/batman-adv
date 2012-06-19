@@ -72,8 +72,8 @@
 
 #define __hlist_for_each_rcu(pos, head) \
 	for (pos = rcu_dereference(hlist_first_rcu(head)); \
-	pos && ({ prefetch(pos->next); 1; }); \
-	pos = rcu_dereference(hlist_next_rcu(pos)))
+	     pos && ({ prefetch(pos->next); 1; }); \
+	     pos = rcu_dereference(hlist_next_rcu(pos)))
 
 #define rcu_dereference_protected(p, c) (p)
 

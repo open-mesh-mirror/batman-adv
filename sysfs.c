@@ -119,7 +119,7 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 	static BATADV_ATTR_SIF_STORE_UINT(_name, _min, _max, _post_func)\
 	static BATADV_ATTR_SIF_SHOW_UINT(_name)				\
 	static BATADV_ATTR(_name, _mode, batadv_show_##_name,		\
-			batadv_store_##_name)
+			   batadv_store_##_name)
 
 
 #define BATADV_ATTR_HIF_STORE_UINT(_name, _min, _max, _post_func)	\
