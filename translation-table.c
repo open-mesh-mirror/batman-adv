@@ -245,7 +245,7 @@ void batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 
 	if (tt_local_entry) {
 		tt_local_entry->last_seen = jiffies;
-		/* possibly unset the TT_CLIENT_PENDING flag */
+		/* possibly unset the BATADV_TT_CLIENT_PENDING flag */
 		tt_local_entry->common.flags &= ~BATADV_TT_CLIENT_PENDING;
 		goto out;
 	}
@@ -713,8 +713,8 @@ int batadv_tt_global_add(struct batadv_priv *bat_priv,
 	} else {
 		/* there is already a global entry, use this one. */
 
-		/* If there is the TT_CLIENT_ROAM flag set, there is only one
-		 * originator left in the list and we previously received a
+		/* If there is the BATADV_TT_CLIENT_ROAM flag set, there is only
+		 * one originator left in the list and we previously received a
 		 * delete + roaming change for this originator.
 		 *
 		 * We should first delete the old originator before adding the
@@ -889,8 +889,8 @@ batadv_tt_global_del_struct(struct batadv_priv *bat_priv,
 }
 
 /* If the client is to be deleted, we check if it is the last origantor entry
- * within tt_global entry. If yes, we set the TT_CLIENT_ROAM flag and the timer,
- * otherwise we simply remove the originator scheduled for deletion.
+ * within tt_global entry. If yes, we set the BATADV_TT_CLIENT_ROAM flag and the
+ * timer, otherwise we simply remove the originator scheduled for deletion.
  */
 static void
 batadv_tt_global_del_roaming(struct batadv_priv *bat_priv,
@@ -958,7 +958,7 @@ static void batadv_tt_global_del(struct batadv_priv *bat_priv,
 	 * event, there are two possibilities:
 	 * 1) the client roamed from node A to node B => if there
 	 *    is only one originator left for this client, we mark
-	 *    it with TT_CLIENT_ROAM, we start a timer and we
+	 *    it with BATADV_TT_CLIENT_ROAM, we start a timer and we
 	 *    wait for node B to claim it. In case of timeout
 	 *    the entry is purged.
 	 *
@@ -2148,7 +2148,7 @@ out:
 	return changed_num;
 }
 
-/* Purge out all the tt local entries marked with TT_CLIENT_PENDING */
+/* Purge out all the tt local entries marked with BATADV_TT_CLIENT_PENDING */
 static void batadv_tt_local_purge_pending_clients(struct batadv_priv *bat_priv)
 {
 	struct batadv_hashtable *hash = bat_priv->tt_local_hash;

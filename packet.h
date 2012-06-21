@@ -77,7 +77,7 @@ enum batadv_tt_query_flags {
 	BATADV_TT_FULL_TABLE = 1 << 2,
 };
 
-/* TT_CLIENT flags.
+/* BATADV_TT_CLIENT flags.
  * Flags from 1 to 1 << 7 are sent on the wire, while flags from 1 << 8 to
  * 1 << 15 are used for local computation only
  */
