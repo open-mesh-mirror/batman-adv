@@ -2292,7 +2292,8 @@ void batadv_tt_update_orig(struct batadv_priv *bat_priv,
 	if ((!orig_node->tt_initialised && ttvn == 1) ||
 	    ttvn - orig_ttvn == 1) {
 		/* the OGM could not contain the changes due to their size or
-		 * because they have already been sent TT_OGM_APPEND_MAX times.
+		 * because they have already been sent BATADV_TT_OGM_APPEND_MAX
+		 * times.
 		 * In this case send a tt request
 		 */
 		if (!tt_num_changes) {
