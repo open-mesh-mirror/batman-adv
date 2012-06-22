@@ -228,8 +228,8 @@ void batadv_gw_election(struct batadv_priv *bat_priv)
 	} else if ((!curr_gw) && (next_gw)) {
 		batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 			   "Adding route to gateway %pM (gw_flags: %i, tq: %i)\n",
-			    next_gw->orig_node->orig,
-			    next_gw->orig_node->gw_flags, router->tq_avg);
+			   next_gw->orig_node->orig,
+			   next_gw->orig_node->gw_flags, router->tq_avg);
 		batadv_throw_uevent(bat_priv, BATADV_UEV_GW, BATADV_UEV_ADD,
 				    gw_addr);
 	} else {
