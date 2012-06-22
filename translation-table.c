@@ -145,7 +145,6 @@ static void batadv_tt_orig_list_entry_free_rcu(struct rcu_head *rcu)
 	struct batadv_tt_orig_list_entry *orig_entry;
 
 	orig_entry = container_of(rcu, struct batadv_tt_orig_list_entry, rcu);
-	atomic_dec(&orig_entry->orig_node->tt_size);
 	batadv_orig_node_free_ref(orig_entry->orig_node);
 	kfree(orig_entry);
 }
@@ -153,6 +152,8 @@ static void batadv_tt_orig_list_entry_free_rcu(struct rcu_head *rcu)
 static void
 batadv_tt_orig_list_entry_free_ref(struct batadv_tt_orig_list_entry *orig_entry)
 {
+	/* to avoid race conditions, immediately decrease the tt counter */
+	atomic_dec(&orig_entry->orig_node->tt_size);
 	call_rcu(&orig_entry->rcu, batadv_tt_orig_list_entry_free_rcu);
 }
 
@@ -1025,7 +1026,6 @@ void batadv_tt_global_del_orig(struct batadv_priv *bat_priv,
 		}
 		spin_unlock_bh(list_lock);
 	}
-	atomic_set(&orig_node->tt_size, 0);
 	orig_node->tt_initialised = false;
 }
 
@@ -2247,10 +2247,10 @@ bool batadv_is_ap_isolated(struct batadv_priv *bat_priv, uint8_t *src,
 {
 	struct batadv_tt_local_entry *tt_local_entry = NULL;
 	struct batadv_tt_global_entry *tt_global_entry = NULL;
-	bool ret = true;
+	bool ret = false;
 
 	if (!atomic_read(&bat_priv->ap_isolation))
-		return false;
+		goto out;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, dst);
 	if (!tt_local_entry)
@@ -2260,10 +2260,10 @@ bool batadv_is_ap_isolated(struct batadv_priv *bat_priv, uint8_t *src,
 	if (!tt_global_entry)
 		goto out;
 
-	if (_batadv_is_ap_isolated(tt_local_entry, tt_global_entry))
+	if (!_batadv_is_ap_isolated(tt_local_entry, tt_global_entry))
 		goto out;
 
-	ret = false;
+	ret = true;
 
 out:
 	if (tt_global_entry)
