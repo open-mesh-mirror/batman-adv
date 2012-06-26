@@ -385,7 +385,8 @@ struct net_device *batadv_softif_create(const char *name)
 	bat_priv = netdev_priv(soft_iface);
 
 	/* batadv_interface_stats() needs to be available as soon as
-	 * register_netdevice() has been called */
+	 * register_netdevice() has been called
+	 */
 	bat_priv->bat_counters = __alloc_percpu(cnt_len, __alignof__(uint64_t));
 	if (!bat_priv->bat_counters)
 		goto free_soft_iface;
