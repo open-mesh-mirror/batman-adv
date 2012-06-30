@@ -239,9 +239,13 @@ struct batadv_priv_vis {
 /**
  * struct batadv_priv_dat - per mesh interface DAT private data
  * @addr: node DAT address
+ * @hash: hashtable representing the local ARP cache
+ * @work: work queue callback item for cache purging
  */
 struct batadv_priv_dat {
 	batadv_dat_addr_t addr;
+	struct batadv_hashtable *hash;
+	struct delayed_work work;
 };
 
 struct batadv_priv {
@@ -453,6 +457,24 @@ struct batadv_algo_ops {
 	void (*bat_ogm_schedule)(struct batadv_hard_iface *hard_iface);
 	/* send scheduled OGM */
 	void (*bat_ogm_emit)(struct batadv_forw_packet *forw_packet);
+};
+
+/**
+ * struct batadv_dat_entry - it is a single entry of batman-adv ARP backend. It
+ * is used to stored ARP entries needed for the global DAT cache
+ * @ip: the IPv4 corresponding to this DAT/ARP entry
+ * @mac_addr: the MAC address associated to the stored IPv4
+ * @hash_entry: hlist node for batadv_priv_dat::hash
+ * @refcount: number of contexts the object is used
+ * @rcu: struct used for freeing in an RCU-safe manner
+ */
+struct batadv_dat_entry {
+	__be32 ip;
+	uint8_t mac_addr[ETH_ALEN];
+	unsigned long last_update;
+	struct hlist_node hash_entry;
+	atomic_t refcount;
+	struct rcu_head rcu;
 };
 
 /**
