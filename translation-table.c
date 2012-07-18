@@ -688,7 +688,8 @@ batadv_tt_global_orig_entry_add(struct batadv_tt_global_entry *tt_global,
 	orig_entry = batadv_tt_global_orig_entry_find(tt_global, orig_node);
 	if (orig_entry) {
 		/* refresh the ttvn: the current value could be a bogus one that
-		 * was added during a "temporary client detection" */
+		 * was added during a "temporary client detection"
+		 */
 		orig_entry->ttvn = ttvn;
 		goto out;
 	}
