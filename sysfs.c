@@ -122,7 +122,7 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 			   batadv_store_##_name)
 
 
-#define BATADV_ATTR_HIF_STORE_UINT(_name, _min, _max, _post_func)	\
+#define BATADV_ATTR_HIF_STORE_UINT(_name, _var, _min, _max, _post_func)	\
 ssize_t batadv_store_##_name(struct kobject *kobj,			\
 			     struct attribute *attr, char *buff,	\
 			     size_t count)				\
@@ -137,13 +137,13 @@ ssize_t batadv_store_##_name(struct kobject *kobj,			\
 									\
 	length = __batadv_store_uint_attr(buff, count, _min, _max,	\
 					  _post_func, attr,		\
-					  &hard_iface->_name, net_dev);	\
+					  &hard_iface->_var, net_dev);	\
 									\
 	batadv_hardif_free_ref(hard_iface);				\
 	return length;							\
 }
 
-#define BATADV_ATTR_HIF_SHOW_UINT(_name)				\
+#define BATADV_ATTR_HIF_SHOW_UINT(_name, _var)				\
 ssize_t batadv_show_##_name(struct kobject *kobj,			\
 			    struct attribute *attr, char *buff)		\
 {									\
@@ -155,7 +155,7 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 	if (!hard_iface)						\
 		return 0;						\
 									\
-	length = sprintf(buff, "%i\n", atomic_read(&hard_iface->_name));\
+	length = sprintf(buff, "%i\n", atomic_read(&hard_iface->_var));	\
 									\
 	batadv_hardif_free_ref(hard_iface);				\
 	return length;							\
@@ -164,9 +164,10 @@ ssize_t batadv_show_##_name(struct kobject *kobj,			\
 /* Use this, if you are going to set [name] in hard_iface to an
  * unsigned integer value
  */
-#define BATADV_ATTR_HIF_UINT(_name, _mode, _min, _max, _post_func)	\
-	static BATADV_ATTR_HIF_STORE_UINT(_name, _min, _max, _post_func)\
-	static BATADV_ATTR_HIF_SHOW_UINT(_name)				\
+#define BATADV_ATTR_HIF_UINT(_name, _var, _mode, _min, _max, _post_func)\
+	static BATADV_ATTR_HIF_STORE_UINT(_name, _var, _min,		\
+					  _max, _post_func)		\
+	static BATADV_ATTR_HIF_SHOW_UINT(_name, _var)			\
 	static BATADV_ATTR(_name, _mode, batadv_show_##_name,		\
 			   batadv_store_##_name)
 
