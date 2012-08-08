@@ -790,6 +790,9 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 	struct sk_buff *skb_new;
 	struct batadv_hard_iface *primary_if = NULL;
 
+	if (!atomic_read(&bat_priv->distributed_arp_table))
+		goto out;
+
 	type = batadv_arp_get_type(bat_priv, skb, 0);
 	/* If the node gets an ARP_REQUEST it has to send a DHT_GET unicast
 	 * message to the selected DHT candidates
@@ -861,6 +864,9 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 	bool ret = false;
 	int err;
 
+	if (!atomic_read(&bat_priv->distributed_arp_table))
+		goto out;
+
 	type = batadv_arp_get_type(bat_priv, skb, hdr_size);
 	if (type != ARPOP_REQUEST)
 		goto out;
@@ -924,6 +930,9 @@ void batadv_dat_snoop_outgoing_arp_reply(struct batadv_priv *bat_priv,
 	__be32 ip_src, ip_dst;
 	uint8_t *hw_src, *hw_dst;
 
+	if (!atomic_read(&bat_priv->distributed_arp_table))
+		return;
+
 	type = batadv_arp_get_type(bat_priv, skb, 0);
 	if (type != ARPOP_REPLY)
 		return;
@@ -958,6 +967,9 @@ bool batadv_dat_snoop_incoming_arp_reply(struct batadv_priv *bat_priv,
 	__be32 ip_src, ip_dst;
 	uint8_t *hw_src, *hw_dst;
 	bool ret = false;
+
+	if (!atomic_read(&bat_priv->distributed_arp_table))
+		goto out;
 
 	type = batadv_arp_get_type(bat_priv, skb, hdr_size);
 	if (type != ARPOP_REPLY)
@@ -1003,6 +1015,9 @@ bool batadv_dat_drop_broadcast_packet(struct batadv_priv *bat_priv,
 	bool ret = false;
 	const size_t bcast_len = sizeof(struct batadv_bcast_packet);
 
+	if (!atomic_read(&bat_priv->distributed_arp_table))
+		goto out;
+
 	/* If this packet is an ARP_REQUEST and the node already has the
 	 * information that it is going to ask, then the packet can be dropped
 	 */
@@ -1030,4 +1045,14 @@ out:
 	if (dat_entry)
 		batadv_dat_entry_free_ref(dat_entry);
 	return ret;
+}
+
+void batadv_dat_switch(struct net_device *net_dev)
+{
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+
+	if (atomic_read(&bat_priv->distributed_arp_table))
+		batadv_dat_init(bat_priv);
+	else
+		batadv_dat_free(bat_priv);
 }
