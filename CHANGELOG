@@ -1,3 +1,21 @@
+batman-adv 2012.3.0:
+
+* support latest kernels (2.6.29 - 3.6)
+* added namespace-like prefix for all batman-adv symbols
+* integrated extended statistic support using ethtool
+* important bugs fixed
+  - correct endianness for translation table crc
+  - avoid race condition in translation table replacements
+  - ensure gateway gets selected
+  - allow broadcasts with enabled AP isolation
+  - fix vis output for multiple interface configurations
+  - fix race condition during adds in hashes
+  - fix dropped DHCP packets with enabled bridge loop avoidance and gateway
+    support
+  - don't leak information through uninitialized packets fields
+
+ -- Sun, 19 Aug 2012 21:28:23 +0200
+
 batman-adv 2012.2.0:
 
 * support latest kernels (2.6.29 - 3.5)
