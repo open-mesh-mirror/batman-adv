@@ -277,8 +277,8 @@ void batadv_interface_rx(struct net_device *soft_iface,
 	struct vlan_ethhdr *vhdr;
 	struct batadv_header *batadv_header = (struct batadv_header *)skb->data;
 	short vid __maybe_unused = -1;
-	bool is_bcast;
 	__be16 ethertype = __constant_htons(BATADV_ETH_P_BATMAN);
+	bool is_bcast;
 
 	is_bcast = (batadv_header->packet_type == BATADV_BCAST);
 
