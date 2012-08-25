@@ -149,4 +149,14 @@ static inline void eth_hw_addr_random(struct net_device *dev)
 
 #endif /* < KERNEL_VERSION(3, 4, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
+
+#define net_ratelimited_function(func, ...) \
+	do { \
+		if (net_ratelimit()) \
+			func(__VA_ARGS__); \
+	} while (0)
+
+#endif /* < KERNEL_VERSION(3, 5, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
