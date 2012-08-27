@@ -359,6 +359,12 @@ out:
 static struct lock_class_key batadv_netdev_xmit_lock_key;
 static struct lock_class_key batadv_netdev_addr_lock_key;
 
+/**
+ * batadv_set_lockdep_class_one - Set lockdep class for a single tx queue
+ * @dev: device which owns the tx queue
+ * @txq: tx queue to modify
+ * @_unused: always NULL
+ */
 static void batadv_set_lockdep_class_one(struct net_device *dev,
 					 struct netdev_queue *txq,
 					 void *_unused)
@@ -366,6 +372,10 @@ static void batadv_set_lockdep_class_one(struct net_device *dev,
 	lockdep_set_class(&txq->_xmit_lock, &batadv_netdev_xmit_lock_key);
 }
 
+/**
+ * batadv_set_lockdep_class - Set txq and addr_list lockdep class
+ * @dev: network device to modify
+ */
 static void batadv_set_lockdep_class(struct net_device *dev)
 {
 	lockdep_set_class(&dev->addr_list_lock, &batadv_netdev_addr_lock_key);
