@@ -352,16 +352,6 @@ out:
 	return;
 }
 
-static const struct net_device_ops batadv_netdev_ops = {
-	.ndo_open = batadv_interface_open,
-	.ndo_stop = batadv_interface_release,
-	.ndo_get_stats = batadv_interface_stats,
-	.ndo_set_mac_address = batadv_interface_set_mac_addr,
-	.ndo_change_mtu = batadv_interface_change_mtu,
-	.ndo_start_xmit = batadv_interface_tx,
-	.ndo_validate_addr = eth_validate_addr
-};
-
 /* batman-adv network devices have devices nesting below it and are a special
  * "super class" of normal network devices; split their locks off into a
  * separate class since they always nest.
@@ -382,6 +372,30 @@ static void batadv_set_lockdep_class(struct net_device *dev)
 	netdev_for_each_tx_queue(dev, batadv_set_lockdep_class_one, NULL);
 }
 
+/**
+ * batadv_softif_init - Late stage initialization of soft interface
+ * @dev: registered network device to modify
+ *
+ * Returns error code on failures
+ */
+static int batadv_softif_init(struct net_device *dev)
+{
+	batadv_set_lockdep_class(dev);
+
+	return 0;
+}
+
+static const struct net_device_ops batadv_netdev_ops = {
+	.ndo_init = batadv_softif_init,
+	.ndo_open = batadv_interface_open,
+	.ndo_stop = batadv_interface_release,
+	.ndo_get_stats = batadv_interface_stats,
+	.ndo_set_mac_address = batadv_interface_set_mac_addr,
+	.ndo_change_mtu = batadv_interface_change_mtu,
+	.ndo_start_xmit = batadv_interface_tx,
+	.ndo_validate_addr = eth_validate_addr
+};
+
 static void batadv_interface_setup(struct net_device *dev)
 {
 	struct batadv_priv *priv = netdev_priv(dev);
@@ -391,7 +405,6 @@ static void batadv_interface_setup(struct net_device *dev)
 	dev->netdev_ops = &batadv_netdev_ops;
 	dev->destructor = free_netdev;
 	dev->tx_queue_len = 0;
-	batadv_set_lockdep_class(dev);
 
 	/* can't call min_mtu, because the needed variables
 	 * have not been initialized yet
