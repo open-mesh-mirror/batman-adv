@@ -60,7 +60,7 @@ batadv_dat_init_orig_node_addr(struct batadv_orig_node *orig_node)
  */
 static inline void
 batadv_dat_init_own_addr(struct batadv_priv *bat_priv,
-			     struct batadv_hard_iface *primary_if)
+			 struct batadv_hard_iface *primary_if)
 {
 	uint32_t addr;
 
