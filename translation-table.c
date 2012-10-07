@@ -256,8 +256,8 @@ void batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 			 int ifindex)
 {
 	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
-	struct batadv_tt_local_entry *tt_local = NULL;
-	struct batadv_tt_global_entry *tt_global = NULL;
+	struct batadv_tt_local_entry *tt_local;
+	struct batadv_tt_global_entry *tt_global;
 	struct hlist_head *head;
 	struct hlist_node *node;
 	struct batadv_tt_orig_list_entry *orig_entry;
@@ -543,7 +543,7 @@ uint16_t batadv_tt_local_remove(struct batadv_priv *bat_priv,
 				const uint8_t *addr, const char *message,
 				bool roaming)
 {
-	struct batadv_tt_local_entry *tt_local_entry = NULL;
+	struct batadv_tt_local_entry *tt_local_entry;
 	uint16_t flags, curr_flags = BATADV_NO_FLAGS;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr);
@@ -783,8 +783,8 @@ int batadv_tt_global_add(struct batadv_priv *bat_priv,
 			 const unsigned char *tt_addr, uint8_t flags,
 			 uint8_t ttvn)
 {
-	struct batadv_tt_global_entry *tt_global_entry = NULL;
-	struct batadv_tt_local_entry *tt_local_entry = NULL;
+	struct batadv_tt_global_entry *tt_global_entry;
+	struct batadv_tt_local_entry *tt_local_entry;
 	int ret = 0;
 	int hash_added;
 	struct batadv_tt_common_entry *common;
@@ -1074,7 +1074,7 @@ static void batadv_tt_global_del(struct batadv_priv *bat_priv,
 				 const unsigned char *addr,
 				 const char *message, bool roaming)
 {
-	struct batadv_tt_global_entry *tt_global_entry = NULL;
+	struct batadv_tt_global_entry *tt_global_entry;
 	struct batadv_tt_local_entry *local_entry = NULL;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr);
@@ -1677,7 +1677,7 @@ static bool
 batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 			      struct batadv_tt_query_packet *tt_request)
 {
-	struct batadv_orig_node *req_dst_orig_node = NULL;
+	struct batadv_orig_node *req_dst_orig_node;
 	struct batadv_orig_node *res_dst_orig_node = NULL;
 	struct batadv_neigh_node *neigh_node = NULL;
 	struct batadv_hard_iface *primary_if = NULL;
@@ -1812,7 +1812,7 @@ static bool
 batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 			   struct batadv_tt_query_packet *tt_request)
 {
-	struct batadv_orig_node *orig_node = NULL;
+	struct batadv_orig_node *orig_node;
 	struct batadv_neigh_node *neigh_node = NULL;
 	struct batadv_hard_iface *primary_if = NULL;
 	uint8_t my_ttvn, req_ttvn, ttvn;
@@ -1978,7 +1978,7 @@ static void _batadv_tt_update_changes(struct batadv_priv *bat_priv,
 static void batadv_tt_fill_gtable(struct batadv_priv *bat_priv,
 				  struct batadv_tt_query_packet *tt_response)
 {
-	struct batadv_orig_node *orig_node = NULL;
+	struct batadv_orig_node *orig_node;
 
 	orig_node = batadv_orig_hash_find(bat_priv, tt_response->src);
 	if (!orig_node)
@@ -2020,7 +2020,7 @@ static void batadv_tt_update_changes(struct batadv_priv *bat_priv,
 
 bool batadv_is_my_client(struct batadv_priv *bat_priv, const uint8_t *addr)
 {
-	struct batadv_tt_local_entry *tt_local_entry = NULL;
+	struct batadv_tt_local_entry *tt_local_entry;
 	bool ret = false;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr);

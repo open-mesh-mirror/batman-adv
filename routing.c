@@ -911,7 +911,7 @@ batadv_reroute_unicast_packet(struct batadv_priv *bat_priv,
 			      struct batadv_unicast_packet *unicast_packet,
 			      uint8_t *dst_addr)
 {
-	struct batadv_orig_node *orig_node = NULL;
+	struct batadv_orig_node *orig_node;
 	bool ret = false;
 
 	orig_node = batadv_transtable_search(bat_priv, NULL, dst_addr);
