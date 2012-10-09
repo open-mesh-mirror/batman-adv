@@ -1061,16 +1061,16 @@ int batadv_recv_unicast_packet(struct sk_buff *skb,
 
 	/* packet for me */
 	if (batadv_is_my_mac(unicast_packet->dest)) {
+		if (is4addr)
+			batadv_dat_inc_counter(bat_priv,
+					       unicast_4addr_packet->subtype);
+
 		if (batadv_dat_snoop_incoming_arp_request(bat_priv, skb,
 							  hdr_size))
 			goto rx_success;
 		if (batadv_dat_snoop_incoming_arp_reply(bat_priv, skb,
 							hdr_size))
 			goto rx_success;
-
-		if (is4addr)
-			batadv_dat_inc_counter(bat_priv,
-					       unicast_4addr_packet->subtype);
 
 		batadv_interface_rx(recv_if->soft_iface, skb, recv_if, hdr_size,
 				    NULL);
