@@ -145,6 +145,11 @@ void batadv_free_rcu_neigh_node(struct rcu_head *rcu);
 void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu);
 void batadv_free_rcu_backbone_gw(struct rcu_head *rcu);
 
+static inline void skb_reset_mac_len(struct sk_buff *skb)
+{
+	skb->mac_len = skb->network_header - skb->mac_header;
+}
+
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
 
@@ -156,5 +161,24 @@ static inline void eth_hw_addr_random(struct net_device *dev)
 }
 
 #endif /* < KERNEL_VERSION(3, 4, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
+
+/* hack for not correctly set mac_len. This may happen for some special
+ * configurations like batman-adv on VLANs.
+ *
+ * This is pretty dirty, but we only use skb_share_check() in main.c right
+ * before mac_len is checked, and the recomputation shouldn't hurt too much.
+ */
+#define skb_share_check(skb, b) \
+	({ \
+		struct sk_buff *_t_skb; \
+		_t_skb = skb_share_check(skb, b); \
+		if (_t_skb) \
+			skb_reset_mac_len(_t_skb); \
+		_t_skb; \
+	})
+
+#endif /* < KERNEL_VERSION(3, 8, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
