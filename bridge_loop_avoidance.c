@@ -37,26 +37,14 @@ static void batadv_bla_periodic_work(struct work_struct *work);
 static void batadv_bla_send_announce(struct batadv_priv *bat_priv,
 				     struct batadv_backbone_gw *backbone_gw);
 
-static inline void hash_bytes(uint32_t *hash, void *data, uint32_t size)
-{
-	const unsigned char *key = data;
-	int i;
-
-	for (i = 0; i < size; i++) {
-		*hash += key[i];
-		*hash += (*hash << 10);
-		*hash ^= (*hash >> 6);
-	}
-}
-
 /* return the index of the claim */
 static inline uint32_t batadv_choose_claim(const void *data, uint32_t size)
 {
 	struct batadv_claim *claim = (struct batadv_claim *)data;
 	uint32_t hash = 0;
 
-	hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
-	hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
+	batadv_hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
+	batadv_hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
 
 	hash += (hash << 3);
 	hash ^= (hash >> 11);
@@ -72,8 +60,8 @@ static inline uint32_t batadv_choose_backbone_gw(const void *data,
 	struct batadv_claim *claim = (struct batadv_claim *)data;
 	uint32_t hash = 0;
 
-	hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
-	hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
+	batadv_hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
+	batadv_hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
 
 	hash += (hash << 3);
 	hash ^= (hash >> 11);
