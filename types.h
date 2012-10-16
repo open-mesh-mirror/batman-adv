@@ -255,13 +255,13 @@ struct batadv_priv_vis {
  * @hash: hashtable representing the local ARP cache
  * @work: work queue callback item for cache purging
  */
-struct batadv_priv_dat {
 #ifdef CONFIG_BATMAN_ADV_DAT
+struct batadv_priv_dat {
 	batadv_dat_addr_t addr;
-#endif
 	struct batadv_hashtable *hash;
 	struct delayed_work work;
 };
+#endif
 
 struct batadv_priv {
 	atomic_t mesh_state;
