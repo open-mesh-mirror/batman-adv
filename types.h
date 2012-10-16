@@ -484,6 +484,7 @@ struct batadv_algo_ops {
  * is used to stored ARP entries needed for the global DAT cache
  * @ip: the IPv4 corresponding to this DAT/ARP entry
  * @mac_addr: the MAC address associated to the stored IPv4
+ * @last_update: time in jiffies when this entry was refreshed last time
  * @hash_entry: hlist node for batadv_priv_dat::hash
  * @refcount: number of contexts the object is used
  * @rcu: struct used for freeing in an RCU-safe manner
