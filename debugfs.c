@@ -300,11 +300,6 @@ static int batadv_transtable_local_open(struct inode *inode, struct file *file)
 	return single_open(file, batadv_tt_local_seq_print_text, net_dev);
 }
 
-/**
- * batadv_vis_data_open - prepare file handler for reads from dat_cache
- * @inode:
- * @file:
- */
 static int batadv_vis_data_open(struct inode *inode, struct file *file)
 {
 	struct net_device *net_dev = (struct net_device *)inode->i_private;
