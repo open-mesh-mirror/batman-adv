@@ -245,6 +245,16 @@ static int batadv_algorithms_open(struct inode *inode, struct file *file)
 	return single_open(file, batadv_algo_seq_print_text, NULL);
 }
 
+/**
+ * batadv_compat_open - Prepare file handler for printing of the compat version
+ * @inode: inode which was opened
+ * @file: file handle to be initialized
+ */
+static int batadv_compat_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, batadv_compat_seq_print_text, NULL);
+}
+
 static int batadv_originators_open(struct inode *inode, struct file *file)
 {
 	struct net_device *net_dev = (struct net_device *)inode->i_private;
@@ -327,9 +337,11 @@ struct batadv_debuginfo batadv_debuginfo_##_name = {	\
  * placed in the BATADV_DEBUGFS_SUBDIR subdirectory of debugfs
  */
 static BATADV_DEBUGINFO(routing_algos, S_IRUGO, batadv_algorithms_open);
+static BATADV_DEBUGINFO(compat_version, S_IRUGO, batadv_compat_open);
 
 static struct batadv_debuginfo *batadv_general_debuginfos[] = {
 	&batadv_debuginfo_routing_algos,
+	&batadv_debuginfo_compat_version,
 	NULL,
 };
 

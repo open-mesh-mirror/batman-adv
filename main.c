@@ -420,6 +420,18 @@ int batadv_algo_seq_print_text(struct seq_file *seq, void *offset)
 	return 0;
 }
 
+/**
+ * batadv_compat_seq_print_text - print the compatibility version
+ * @seq: debugfs table seq_file struct
+ * @offset: not used
+ */
+int batadv_compat_seq_print_text(struct seq_file *seq, void *offset)
+{
+	seq_printf(seq, "%d\n", BATADV_COMPAT_VERSION);
+
+	return 0;
+}
+
 static int batadv_param_set_ra(const char *val, const struct kernel_param *kp)
 {
 	struct batadv_algo_ops *bat_algo_ops;

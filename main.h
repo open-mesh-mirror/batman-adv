@@ -176,6 +176,7 @@ void batadv_recv_handler_unregister(uint8_t packet_type);
 int batadv_algo_register(struct batadv_algo_ops *bat_algo_ops);
 int batadv_algo_select(struct batadv_priv *bat_priv, char *name);
 int batadv_algo_seq_print_text(struct seq_file *seq, void *offset);
+int batadv_compat_seq_print_text(struct seq_file *seq, void *offset);
 
 /**
  * enum batadv_dbg_level - available log levels
