@@ -17,6 +17,8 @@
  * 02110-1301, USA
  */
 
+#include <linux/crc32c.h>
+#include <linux/highmem.h>
 #include "main.h"
 #include "sysfs.h"
 #include "debugfs.h"
@@ -431,6 +433,43 @@ int batadv_compat_seq_print_text(struct seq_file *seq, void *offset)
 	seq_printf(seq, "%d\n", BATADV_COMPAT_VERSION);
 
 	return 0;
+}
+
+/**
+ * batadv_skb_crc32 - calculate CRC32 of the whole packet and skip bytes in
+ *  the header
+ * @skb: skb pointing to fragmented socket buffers
+ * @payload_ptr: Pointer to position inside the head buffer of the skb
+ *  marking the start of the data to be CRC'ed
+ *
+ * payload_ptr must always point to an address in the skb head buffer and not to
+ * a fragment.
+ */
+__be32 batadv_skb_crc32(const struct sk_buff *skb, u8 *payload_ptr)
+{
+	u32 crc = 0;
+	struct sk_buff *iter;
+	size_t skip_len, read_len;
+	const skb_frag_t *f;
+	u8 *vaddr;
+	int i;
+
+	skip_len = payload_ptr - skb->data;
+	read_len = skb_headlen(skb) - skip_len;
+	if (read_len)
+		crc = crc32c(crc, payload_ptr, read_len);
+
+	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+		f = &skb_shinfo(skb)->frags[i];
+		vaddr = kmap_atomic(skb_frag_page(f));
+		crc = crc32c(crc, vaddr + f->page_offset, skb_frag_size(f));
+		kunmap_atomic(vaddr);
+	}
+
+	skb_walk_frags(skb, iter)
+		crc = crc32c(crc, iter->data, skb_headlen(iter));
+
+	return htonl(crc);
 }
 
 static int batadv_param_set_ra(const char *val, const struct kernel_param *kp)

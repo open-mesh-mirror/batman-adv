@@ -37,6 +37,9 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
 
+#define skb_walk_frags(skb, iter)       \
+	for (iter = skb_shinfo(skb)->frag_list; iter; iter = iter->next)
+
 #define __compat__module_param_call(p1, p2, p3, p4, p5, p6, p7) \
 	__module_param_call(p1, p2, p3, p4, p5, p7)
 
@@ -77,6 +80,17 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 35) */
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
+
+#define kmap_atomic(p)  kmap_atomic(p, KM_SKB_DATA_SOFTIRQ)
+
+#ifdef kunmap_atomic
+#undef kunmap_atomic
+#endif
+#define kunmap_atomic(x, arg...)        do { pagefault_enable(); } while (0)
+
+#endif /* < KERNEL_VERSION(2, 6, 37) */
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
@@ -144,6 +158,26 @@ static inline void skb_reset_mac_len(struct sk_buff *skb)
 }
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 2, 0)
+
+static inline struct page *skb_frag_page(const skb_frag_t *frag)
+{
+	return frag->page;
+}
+
+static inline void *skb_frag_address(const skb_frag_t *frag)
+{
+	return page_address(skb_frag_page(frag)) + frag->page_offset;
+}
+
+static inline unsigned int skb_frag_size(const skb_frag_t *frag)
+{
+	return frag->size;
+}
+
+#endif /* < KERNEL_VERSION(3, 2, 0) */
 
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
