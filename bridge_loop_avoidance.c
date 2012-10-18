@@ -1167,6 +1167,8 @@ int batadv_bla_init(struct batadv_priv *bat_priv)
 	uint16_t crc;
 	unsigned long entrytime;
 
+	spin_lock_init(&bat_priv->bla.bcast_duplist_lock);
+
 	batadv_dbg(BATADV_DBG_BLA, bat_priv, "bla hash registering\n");
 
 	/* setting claim destination address */
