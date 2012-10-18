@@ -18,7 +18,7 @@
 # 02110-1301, USA
 #
 
-# changing the CONFIG_* line to 'y' enables the related feature
+# read README.external for more information about the configuration
 # B.A.T.M.A.N. debugging:
 export CONFIG_BATMAN_ADV_DEBUG=n
 # B.A.T.M.A.N. bridge loop avoidance:
