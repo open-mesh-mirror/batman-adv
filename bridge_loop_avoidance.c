@@ -1204,6 +1204,8 @@ int batadv_bla_init(struct batadv_priv *bat_priv)
 	uint16_t crc;
 	unsigned long entrytime;
 
+	spin_lock_init(&bat_priv->bla.bcast_duplist_lock);
+
 	batadv_dbg(BATADV_DBG_BLA, bat_priv, "bla hash registering\n");
 
 	/* setting claim destination address */
@@ -1302,7 +1304,8 @@ int batadv_bla_check_bcast_duplist(struct batadv_priv *bat_priv,
 		goto out;
 	}
 	/* not found, add a new entry (overwrite the oldest entry)
-	 * and allow it, its the first occurence. */
+	 * and allow it, its the first occurence.
+	 */
 	curr = (bat_priv->bla.bcast_duplist_curr + BATADV_DUPLIST_SIZE - 1);
 	curr %= BATADV_DUPLIST_SIZE;
 	entry = &bat_priv->bla.bcast_duplist[curr];
