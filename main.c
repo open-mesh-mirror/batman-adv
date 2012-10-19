@@ -444,29 +444,24 @@ int batadv_compat_seq_print_text(struct seq_file *seq, void *offset)
  * payload_ptr must always point to an address in the skb head buffer and not to
  * a fragment.
  */
-__be32 batadv_skb_crc32(const struct sk_buff *skb, u8 *payload_ptr)
+__be32 batadv_skb_crc32(struct sk_buff *skb, u8 *payload_ptr)
 {
 	u32 crc = 0;
-	struct sk_buff *iter;
-	size_t skip_len, read_len;
-	const skb_frag_t *f;
-	u8 *vaddr;
-	int i;
+	unsigned int from;
+	unsigned int to = skb->len;
+	struct skb_seq_state st;
+	const u8 *data;
+	unsigned int len;
+	unsigned int consumed = 0;
 
-	skip_len = payload_ptr - skb->data;
-	read_len = skb_headlen(skb) - skip_len;
-	if (read_len)
-		crc = crc32c(crc, payload_ptr, read_len);
+	from = (unsigned int)(payload_ptr - skb->data);
 
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		f = &skb_shinfo(skb)->frags[i];
-		vaddr = kmap_atomic(skb_frag_page(f));
-		crc = crc32c(crc, vaddr + f->page_offset, skb_frag_size(f));
-		kunmap_atomic(vaddr);
+	skb_prepare_seq_read(skb, from, to, &st);
+	while ((len = skb_seq_read(consumed, &data, &st)) != 0) {
+		crc = crc32c(crc, data, len);
+		consumed += len;
 	}
-
-	skb_walk_frags(skb, iter)
-		crc = crc32c(crc, iter->data, skb_headlen(iter));
+	skb_abort_seq_read(&st);
 
 	return htonl(crc);
 }
