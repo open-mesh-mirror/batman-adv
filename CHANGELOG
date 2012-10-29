@@ -1,3 +1,22 @@
+batman-adv 2012.4.0:
+
+* support latest kernels (2.6.29 - 3.7)
+* cleanup of coding style
+* integration of remaining packet counters in ethtool statistic
+* speedy join of new non-mesh clients based on broadcast packets
+* added bridge loop avoidance backbone gateway debugfs table
+* workaround for kernel bug when running on top of vlan device
+* bugs squashed
+  - announcement of own MAC address after modification
+  - wrong counting of received OGMs on x86
+  - route flapping in multiple interfaces setup
+  - receiving of translation table requests for foreign nodes
+  - invalid memory access after failure during the interface appending
+  - wrong calculation of packet crc which lead to dropping of broadcast
+    packets when bridge loop avoidance is enabled
+
+ -- Mon, 29 Oct 2012 16:47:05 +0100
+
 batman-adv 2012.3.0:
 
 * support latest kernels (2.6.29 - 3.6)
