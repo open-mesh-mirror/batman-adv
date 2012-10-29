@@ -1061,13 +1061,3 @@ out:
 		batadv_dat_entry_free_ref(dat_entry);
 	return ret;
 }
-
-void batadv_dat_switch(struct net_device *net_dev)
-{
-	struct batadv_priv *bat_priv = netdev_priv(net_dev);
-
-	if (atomic_read(&bat_priv->distributed_arp_table))
-		batadv_dat_init(bat_priv);
-	else
-		batadv_dat_free(bat_priv);
-}
