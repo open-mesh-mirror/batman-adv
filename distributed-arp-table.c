@@ -634,6 +634,9 @@ out:
  */
 static void batadv_dat_hash_free(struct batadv_priv *bat_priv)
 {
+	if (!bat_priv->dat.hash)
+		return;
+
 	__batadv_dat_purge(bat_priv, NULL);
 
 	batadv_hash_destroy(bat_priv->dat.hash);
