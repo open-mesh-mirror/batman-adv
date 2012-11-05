@@ -204,7 +204,11 @@ struct batadv_unicast_4addr_packet {
 	struct batadv_unicast_packet u;
 	uint8_t src[ETH_ALEN];
 	uint8_t subtype;
-} __packed;
+	uint8_t reserved;
+	/* "4 bytes boundary + 2 bytes" long to make the payload after the
+	 * following ethernet header again 4 bytes boundary aligned
+	 */
+};
 
 struct batadv_unicast_frag_packet {
 	struct batadv_header header;

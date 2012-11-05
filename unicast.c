@@ -374,6 +374,7 @@ bool batadv_unicast_4addr_prepare_skb(struct batadv_priv *bat_priv,
 	memcpy(unicast_4addr_packet->src, primary_if->net_dev->dev_addr,
 	       ETH_ALEN);
 	unicast_4addr_packet->subtype = packet_subtype;
+	unicast_4addr_packet->reserved = 0;
 
 	ret = true;
 out:
