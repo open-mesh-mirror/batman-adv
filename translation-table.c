@@ -860,14 +860,6 @@ int batadv_tt_global_add(struct batadv_priv *bat_priv,
 		 */
 		common->flags &= ~BATADV_TT_CLIENT_TEMP;
 
-		/* if this is a normal add, possibly unset the ROAM flag. This
-		 * flag could have been set before because the client was
-		 * roaming, but now that the node got the ADD event, the flag
-		 * can be unset
-		 */
-		if (!(flags & BATADV_TT_CLIENT_ROAM))
-			common->flags &= ~BATADV_TT_CLIENT_ROAM;
-
 		/* If there is the BATADV_TT_CLIENT_ROAM flag set, there is only
 		 * one originator left in the list and we previously received a
 		 * delete + roaming change for this originator.
