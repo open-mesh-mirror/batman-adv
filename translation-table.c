@@ -336,8 +336,10 @@ add_event:
 	batadv_tt_local_event(bat_priv, addr, tt_local->common.flags);
 
 check_roaming:
-	/* Check whether it is a roaming! */
-	if (tt_global) {
+	/* Check whether it is a roaming, but don't do anything if the roaming
+	 * process has already been handled
+	 */
+	if (tt_global && !(tt_global->common.flags & BATADV_TT_CLIENT_ROAM)) {
 		/* These node are probably going to update their tt table */
 		head = &tt_global->orig_list;
 		rcu_read_lock();
