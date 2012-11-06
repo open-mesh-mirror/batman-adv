@@ -292,7 +292,6 @@ void batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 			 */
 			tt_local->common.flags &= ~BATADV_TT_CLIENT_ROAM;
 			roamed_back = true;
-			goto check_roaming;
 		}
 		goto check_roaming;
 	}
