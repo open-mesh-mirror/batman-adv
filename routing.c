@@ -890,22 +890,37 @@ batadv_reroute_unicast_packet(struct batadv_priv *bat_priv,
 			      struct batadv_unicast_packet *unicast_packet,
 			      uint8_t *dst_addr)
 {
-	struct batadv_orig_node *orig_node;
+	struct batadv_orig_node *orig_node = NULL;
+	struct batadv_hard_iface *primary_if = NULL;
 	bool ret = false;
+	uint8_t *orig_addr, orig_ttvn;
 
-	orig_node = batadv_transtable_search(bat_priv, NULL, dst_addr);
-	if (!orig_node)
-		goto out;
+	if (batadv_is_my_client(bat_priv, dst_addr)) {
+		primary_if = batadv_primary_if_get_selected(bat_priv);
+		if (!primary_if)
+			goto out;
+		orig_addr = primary_if->net_dev->dev_addr;
+		orig_ttvn = (uint8_t)atomic_read(&bat_priv->tt.vn);
+	} else {
+		orig_node = batadv_transtable_search(bat_priv, NULL, dst_addr);
+		if (!orig_node)
+			goto out;
 
-	if (batadv_compare_eth(orig_node->orig, unicast_packet->dest))
-		goto out;
+		if (batadv_compare_eth(orig_node->orig, unicast_packet->dest))
+			goto out;
+
+		orig_addr = orig_node->orig;
+		orig_ttvn = (uint8_t)atomic_read(&orig_node->last_ttvn);
+	}
 
 	/* update the packet header */
-	memcpy(unicast_packet->dest, orig_node->orig, ETH_ALEN);
-	unicast_packet->ttvn = (uint8_t)atomic_read(&orig_node->last_ttvn);
+	memcpy(unicast_packet->dest, orig_addr, ETH_ALEN);
+	unicast_packet->ttvn = orig_ttvn;
 
 	ret = true;
 out:
+	if (primary_if)
+		batadv_hardif_free_ref(primary_if);
 	if (orig_node)
 		batadv_orig_node_free_ref(orig_node);
 
