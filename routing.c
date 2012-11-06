@@ -929,7 +929,7 @@ out:
 
 static int batadv_check_unicast_ttvn(struct batadv_priv *bat_priv,
 				     struct sk_buff *skb) {
-	uint8_t curr_ttvn;
+	uint8_t curr_ttvn, old_ttvn;
 	struct batadv_orig_node *orig_node;
 	struct ethhdr *ethhdr;
 	struct batadv_hard_iface *primary_if;
@@ -994,6 +994,7 @@ static int batadv_check_unicast_ttvn(struct batadv_priv *bat_priv,
 	if (!is_old_ttvn)
 		return 1;
 
+	old_ttvn = unicast_packet->ttvn;
 	/* the packet was forged based on outdated network information. Its
 	 * destination can possibly be updated and forwarded towards the new
 	 * target host
@@ -1003,7 +1004,7 @@ static int batadv_check_unicast_ttvn(struct batadv_priv *bat_priv,
 		net_ratelimited_function(batadv_dbg, BATADV_DBG_TT, bat_priv,
 					 "Rerouting unicast packet to %pM (dst=%pM): TTVN mismatch old_ttvn=%u new_ttvn=%u\n",
 					 unicast_packet->dest, ethhdr->h_dest,
-					 unicast_packet->ttvn, curr_ttvn);
+					 old_ttvn, curr_ttvn);
 		return 1;
 	}
 
