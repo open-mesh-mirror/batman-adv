@@ -2036,7 +2036,8 @@ bool batadv_is_my_client(struct batadv_priv *bat_priv, const uint8_t *addr)
 	/* Check if the client has been logically deleted (but is kept for
 	 * consistency purpose)
 	 */
-	if (tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING)
+	if ((tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING) ||
+	    (tt_local_entry->common.flags & BATADV_TT_CLIENT_ROAM))
 		goto out;
 	ret = true;
 out:
