@@ -877,11 +877,10 @@ out:
  * @bat_priv: the bat priv with all the soft interface information
  * @unicast_packet: the unicast header to be updated
  * @dst_addr: the payload destination
- * @msg: the message to print explaining the reason of the requested re-route
  *
- * Search the global translation table for dst_addr and update the unicast
- * header with the new corresponding information (originator address where the
- * destination client currently is and its known TTVN)
+ * Search the translation table for dst_addr and update the unicast header with
+ * the new corresponding information (originator address where the destination
+ * client currently is and its known TTVN)
  *
  * Returns true if the packet header has been updated, false otherwise
  */
