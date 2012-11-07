@@ -128,7 +128,8 @@ struct batadv_header {
 	uint8_t  version;  /* batman version field */
 	uint8_t  ttl;
 	/* the parent struct has to add a byte after the header to make
-	 * everything 4 bytes aligned again */
+	 * everything 4 bytes aligned again
+	 */
 };
 
 struct batadv_ogm_packet {
