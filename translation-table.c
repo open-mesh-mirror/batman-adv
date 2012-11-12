@@ -2545,7 +2545,7 @@ bool batadv_tt_local_client_is_roaming(struct batadv_priv *bat_priv,
 	if (!tt_local_entry)
 		goto out;
 
-	ret = !!(tt_local_entry->common.flags & BATADV_TT_CLIENT_ROAM);
+	ret = tt_local_entry->common.flags & BATADV_TT_CLIENT_ROAM;
 	batadv_tt_local_entry_free_ref(tt_local_entry);
 out:
 	return ret;
