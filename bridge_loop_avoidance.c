@@ -43,8 +43,8 @@ static inline uint32_t batadv_choose_claim(const void *data, uint32_t size)
 	struct batadv_claim *claim = (struct batadv_claim *)data;
 	uint32_t hash = 0;
 
-	batadv_hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
-	batadv_hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
+	hash = batadv_hash_bytes(hash, &claim->addr, sizeof(claim->addr));
+	hash = batadv_hash_bytes(hash, &claim->vid, sizeof(claim->vid));
 
 	hash += (hash << 3);
 	hash ^= (hash >> 11);
@@ -60,8 +60,8 @@ static inline uint32_t batadv_choose_backbone_gw(const void *data,
 	struct batadv_claim *claim = (struct batadv_claim *)data;
 	uint32_t hash = 0;
 
-	batadv_hash_bytes(&hash, &claim->addr, sizeof(claim->addr));
-	batadv_hash_bytes(&hash, &claim->vid, sizeof(claim->vid));
+	hash = batadv_hash_bytes(hash, &claim->addr, sizeof(claim->addr));
+	hash = batadv_hash_bytes(hash, &claim->vid, sizeof(claim->vid));
 
 	hash += (hash << 3);
 	hash ^= (hash >> 11);
