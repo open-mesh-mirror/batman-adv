@@ -86,17 +86,21 @@ static inline void batadv_hash_delete(struct batadv_hashtable *hash,
  *	@hash: previous hash value
  *	@data: data to be hashed
  *	@size: number of bytes to be hashed
+ *
+ *	Returns the new hash value.
  */
-static inline void batadv_hash_bytes(uint32_t *hash, void *data, uint32_t size)
+static inline uint32_t batadv_hash_bytes(uint32_t hash, void *data,
+					 uint32_t size)
 {
 	const unsigned char *key = data;
 	int i;
 
 	for (i = 0; i < size; i++) {
-		*hash += key[i];
-		*hash += (*hash << 10);
-		*hash ^= (*hash >> 6);
+		hash += key[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
 	}
+	return hash;
 }
 
 /**
