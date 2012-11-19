@@ -79,7 +79,7 @@ static int batadv_compare_backbone_gw(const struct hlist_node *node,
 					 hash_entry);
 	const struct batadv_backbone_gw *gw1 = data1, *gw2 = data2;
 
-	if (memcmp(gw1->orig, gw2->orig, ETH_ALEN))
+	if (!batadv_compare_eth(gw1->orig, gw2->orig))
 		return 0;
 
 	if (gw1->vid != gw2->vid)
@@ -96,7 +96,7 @@ static int batadv_compare_claim(const struct hlist_node *node,
 					 hash_entry);
 	const struct batadv_claim *cl1 = data1, *cl2 = data2;
 
-	if (memcmp(cl1->addr, cl2->addr, ETH_ALEN))
+	if (!batadv_compare_eth(cl1->addr, cl2->addr))
 		return 0;
 
 	if (cl1->vid != cl2->vid)
