@@ -166,6 +166,8 @@ static inline void eth_hw_addr_random(struct net_device *dev)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
 
+#define ETH_P_BATMAN	0x4305
+
 /* hack for not correctly set mac_len. This may happen for some special
  * configurations like batman-adv on VLANs.
  *
