@@ -483,6 +483,8 @@ int batadv_tt_local_seq_print_text(struct seq_file *seq, void *offset)
 	int last_seen_secs;
 	int last_seen_msecs;
 	unsigned long last_seen_jiffies;
+	bool no_purge;
+	uint16_t np_flag = BATADV_TT_CLIENT_NOPURGE;
 
 	primary_if = batadv_seq_print_text_primary_if_get(seq);
 	if (!primary_if)
@@ -509,19 +511,21 @@ int batadv_tt_local_seq_print_text(struct seq_file *seq, void *offset)
 			last_seen_secs = last_seen_msecs / 1000;
 			last_seen_msecs = last_seen_msecs % 1000;
 
+			no_purge = tt_common_entry->flags & np_flag;
+
 			seq_printf(seq, " * %pM [%c%c%c%c%c] %3u.%03u\n",
 				   tt_common_entry->addr,
 				   (tt_common_entry->flags &
 				    BATADV_TT_CLIENT_ROAM ? 'R' : '.'),
-				   (tt_common_entry->flags &
-				    BATADV_TT_CLIENT_NOPURGE ? 'P' : '.'),
+				   no_purge ? 'P' : '.',
 				   (tt_common_entry->flags &
 				    BATADV_TT_CLIENT_NEW ? 'N' : '.'),
 				   (tt_common_entry->flags &
 				    BATADV_TT_CLIENT_PENDING ? 'X' : '.'),
 				   (tt_common_entry->flags &
 				    BATADV_TT_CLIENT_WIFI ? 'W' : '.'),
-				   last_seen_secs, last_seen_msecs);
+				   no_purge ? last_seen_secs : 0,
+				   no_purge ? last_seen_msecs : 0);
 		}
 		rcu_read_unlock();
 	}
