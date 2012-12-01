@@ -116,7 +116,6 @@ batadv_tt_global_hash_find(struct batadv_priv *bat_priv, const void *data)
 					       struct batadv_tt_global_entry,
 					       common);
 	return tt_global_entry;
-
 }
 
 static void
@@ -256,7 +255,6 @@ static void batadv_tt_global_free(struct batadv_priv *bat_priv,
 	batadv_hash_remove(bat_priv->tt.global_hash, batadv_compare_tt,
 			   batadv_choose_orig, tt_global->common.addr);
 	batadv_tt_global_entry_free_ref(tt_global);
-
 }
 
 void batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
@@ -648,7 +646,6 @@ static void batadv_tt_local_purge(struct batadv_priv *bat_priv)
 		batadv_tt_local_purge_list(bat_priv, head);
 		spin_unlock_bh(list_lock);
 	}
-
 }
 
 static void batadv_tt_local_table_free(struct batadv_priv *bat_priv)
@@ -1075,7 +1072,6 @@ batadv_tt_global_del_orig_list(struct batadv_tt_global_entry *tt_global_entry)
 		batadv_tt_orig_list_entry_free_ref(orig_entry);
 	}
 	spin_unlock_bh(&tt_global_entry->list_lock);
-
 }
 
 static void
@@ -1851,7 +1847,6 @@ out:
 	if (!ret)
 		kfree_skb(skb);
 	return ret;
-
 }
 
 static bool
@@ -2378,7 +2373,6 @@ static void batadv_tt_local_purge_pending_clients(struct batadv_priv *bat_priv)
 		}
 		spin_unlock_bh(list_lock);
 	}
-
 }
 
 static int batadv_tt_commit_changes(struct batadv_priv *bat_priv,
@@ -2575,7 +2569,6 @@ bool batadv_tt_local_client_is_roaming(struct batadv_priv *bat_priv,
 	batadv_tt_local_entry_free_ref(tt_local_entry);
 out:
 	return ret;
-
 }
 
 bool batadv_tt_add_temporary_global_entry(struct batadv_priv *bat_priv,
