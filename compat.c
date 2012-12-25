@@ -57,9 +57,9 @@ void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu)
 #ifdef CONFIG_BATMAN_ADV_BLA
 void batadv_free_rcu_backbone_gw(struct rcu_head *rcu)
 {
-	struct batadv_backbone_gw *backbone_gw;
+	struct batadv_bla_backbone_gw *backbone_gw;
 
-	backbone_gw = container_of(rcu, struct batadv_backbone_gw, rcu);
+	backbone_gw = container_of(rcu, struct batadv_bla_backbone_gw, rcu);
 	kfree(backbone_gw);
 }
 #endif
