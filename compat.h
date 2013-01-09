@@ -198,6 +198,19 @@ static inline void eth_hw_addr_random(struct net_device *dev)
 
 #define prandom_u32() random32()
 
+#define batadv_interface_set_mac_addr(x, y) \
+__batadv_interface_set_mac_addr(struct net_device *dev, void *p);\
+static int batadv_interface_set_mac_addr(struct net_device *dev, void *p) \
+{\
+	int ret;\
+\
+	ret = __batadv_interface_set_mac_addr(dev, p);\
+	if (!ret) \
+		dev->addr_assign_type &= ~NET_ADDR_RANDOM;\
+	return ret;\
+}\
+static int __batadv_interface_set_mac_addr(x, y)
+
 #endif /* < KERNEL_VERSION(3, 9, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
