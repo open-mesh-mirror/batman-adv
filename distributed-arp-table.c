@@ -819,7 +819,6 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 	bool ret = false;
 	struct batadv_dat_entry *dat_entry = NULL;
 	struct sk_buff *skb_new;
-	struct batadv_hard_iface *primary_if = NULL;
 
 	if (!atomic_read(&bat_priv->distributed_arp_table))
 		goto out;
@@ -841,22 +840,18 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 
 	dat_entry = batadv_dat_entry_hash_find(bat_priv, ip_dst);
 	if (dat_entry) {
-		primary_if = batadv_primary_if_get_selected(bat_priv);
-		if (!primary_if)
-			goto out;
-
 		skb_new = arp_create(ARPOP_REPLY, ETH_P_ARP, ip_src,
-				     primary_if->soft_iface, ip_dst, hw_src,
+				     bat_priv->soft_iface, ip_dst, hw_src,
 				     dat_entry->mac_addr, hw_src);
 		if (!skb_new)
 			goto out;
 
 		skb_reset_mac_header(skb_new);
 		skb_new->protocol = eth_type_trans(skb_new,
-						   primary_if->soft_iface);
+						   bat_priv->soft_iface);
 		bat_priv->stats.rx_packets++;
 		bat_priv->stats.rx_bytes += skb->len + ETH_HLEN;
-		primary_if->soft_iface->last_rx = jiffies;
+		bat_priv->soft_iface->last_rx = jiffies;
 
 		netif_rx(skb_new);
 		batadv_dbg(BATADV_DBG_DAT, bat_priv, "ARP request replied locally\n");
@@ -869,8 +864,6 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 out:
 	if (dat_entry)
 		batadv_dat_entry_free_ref(dat_entry);
-	if (primary_if)
-		batadv_hardif_free_ref(primary_if);
 	return ret;
 }
 
@@ -890,7 +883,6 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 	__be32 ip_src, ip_dst;
 	uint8_t *hw_src;
 	struct sk_buff *skb_new;
-	struct batadv_hard_iface *primary_if = NULL;
 	struct batadv_dat_entry *dat_entry = NULL;
 	bool ret = false;
 	int err;
@@ -915,12 +907,8 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 	if (!dat_entry)
 		goto out;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
-
 	skb_new = arp_create(ARPOP_REPLY, ETH_P_ARP, ip_src,
-			     primary_if->soft_iface, ip_dst, hw_src,
+			     bat_priv->soft_iface, ip_dst, hw_src,
 			     dat_entry->mac_addr, hw_src);
 
 	if (!skb_new)
@@ -944,8 +932,6 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 out:
 	if (dat_entry)
 		batadv_dat_entry_free_ref(dat_entry);
-	if (primary_if)
-		batadv_hardif_free_ref(primary_if);
 	if (ret)
 		kfree_skb(skb);
 	return ret;
