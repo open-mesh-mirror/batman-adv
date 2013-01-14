@@ -1,3 +1,25 @@
+batman-adv 2013.0.0:
+
+* support latest kernels (2.6.29 - 3.8)
+* cleanup of coding style and add kerneldoc
+* add new distributed ARP table feature to cache ARP entries
+* remove __packed attribute whenever possible to allow better compiler
+  optimizations
+* use kernel-registered BATMAN Ethernet type
+* block ECTP traffic to remove integration problems when using BLA
+* allow roaming multiple times in TT
+* bugs squashed
+  - fix lockdeps for interfaces
+  - disallow batman-over-batman configurations
+  - various BLA fixes (wait at startup, hashing, duplist, ...)
+  - fix TT roaming cases
+  - fix TT packet rerouting
+  - fix TT flags handling
+  - fix speedy join/BLA interaction bug
+  - fix random jitter calculation
+
+ -- Sat, 12 Jan 2013 12:00:16 +0100
+
 batman-adv 2012.4.0:
 
 * support latest kernels (2.6.29 - 3.7)
