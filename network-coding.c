@@ -371,9 +371,8 @@ static void batadv_nc_purge_paths(struct batadv_priv *bat_priv,
  * @src: source ethernet mac address going into the hash key
  * @dst: destination ethernet mac address going into the hash key
  */
-static void batadv_nc_hash_key_gen(struct batadv_nc_path *key,
-					  const char *src,
-					  const char *dst)
+static void batadv_nc_hash_key_gen(struct batadv_nc_path *key, const char *src,
+				   const char *dst)
 {
 	memcpy(key->prev_hop, src, sizeof(key->prev_hop));
 	memcpy(key->next_hop, dst, sizeof(key->next_hop));
