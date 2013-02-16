@@ -311,7 +311,7 @@ int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
 				   const char *iface_name)
 {
 	struct batadv_priv *bat_priv;
-	struct net_device *soft_iface;
+	struct net_device *soft_iface, *master;
 	__be16 ethertype = __constant_htons(ETH_P_BATMAN);
 	int ret;
 
@@ -320,11 +320,6 @@ int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
 
 	if (!atomic_inc_not_zero(&hard_iface->refcount))
 		goto out;
-
-	/* hard-interface is part of a bridge */
-	if (hard_iface->net_dev->priv_flags & IFF_BRIDGE_PORT)
-		pr_err("You are about to enable batman-adv on '%s' which already is part of a bridge. Unless you know exactly what you are doing this is probably wrong and won't work the way you think it would.\n",
-		       hard_iface->net_dev->name);
 
 	soft_iface = dev_get_by_name(&init_net, iface_name);
 
@@ -346,6 +341,13 @@ int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
 		ret = -EINVAL;
 		goto err_dev;
 	}
+
+	/* check if the interface is enslaved in another virtual one and
+	 * in that case unlink it first
+	 */
+	master = netdev_master_upper_dev_get(hard_iface->net_dev);
+	if (master)
+		netdev_upper_dev_unlink(hard_iface->net_dev, master);
 
 	hard_iface->soft_iface = soft_iface;
 	bat_priv = netdev_priv(hard_iface->soft_iface);

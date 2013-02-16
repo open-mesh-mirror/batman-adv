@@ -235,6 +235,11 @@ static int __batadv_interface_set_mac_addr(x, y)
 
 #define netdev_master_upper_dev_link netdev_set_master
 #define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
+#define netdev_master_upper_dev_get(dev) \
+({\
+	ASSERT_RTNL();\
+	dev->master;\
+})
 
 #endif /* < KERNEL_VERSION(3, 9, 0) */
 
