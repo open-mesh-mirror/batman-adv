@@ -653,8 +653,8 @@ void batadv_softif_destroy_sysfs(struct net_device *soft_iface)
  * @soft_iface: the to-be-removed batman-adv interface
  * @head: list pointer
  */
-void batadv_softif_destroy_netlink(struct net_device *soft_iface,
-				   struct list_head *head)
+static void batadv_softif_destroy_netlink(struct net_device *soft_iface,
+					  struct list_head *head)
 {
 	struct batadv_hard_iface *hard_iface;
 
