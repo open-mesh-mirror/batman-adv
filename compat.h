@@ -71,6 +71,9 @@ static inline void batadv_this_cpu_add(uint64_t *count_ptr, size_t count)
 	put_cpu();
 }
 
+#define batadv_softif_destroy_netlink(dev, head) batadv_softif_destroy_netlink(dev)
+#define unregister_netdevice_queue(dev, head) unregister_netdevice(dev)
+
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
 
@@ -131,6 +134,24 @@ static inline int batadv_param_set_copystring(const char *val,
 
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
+
+#define batadv_softif_slave_add(x, y) \
+batadv_softif_slave_add(struct net_device *dev, struct ifreq *rq, int cmd)\
+{\
+	return -EOPNOTSUPP;\
+}\
+static int __attribute__((unused)) __batadv_softif_slave_add(x, y)
+
+#define batadv_softif_slave_del(x, y) \
+__batadv_softif_slave_del(struct net_device *dev, struct net_device *slave_dev);\
+static int batadv_softif_slave_del(struct net_device *dev, struct ifreq *rq, int cmd)\
+{\
+	return -EOPNOTSUPP;\
+}\
+static int __attribute__((unused)) __batadv_softif_slave_del(x, y)
+
+#define ndo_add_slave ndo_do_ioctl
+#define ndo_del_slave ndo_do_ioctl
 
 #endif /* < KERNEL_VERSION(2, 6, 39) */
 
