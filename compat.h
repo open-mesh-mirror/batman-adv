@@ -135,23 +135,19 @@ static inline int batadv_param_set_copystring(const char *val,
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
 
-#define batadv_softif_slave_add(x, y) \
-batadv_softif_slave_add(struct net_device *dev, struct ifreq *rq, int cmd)\
-{\
-	return -EOPNOTSUPP;\
-}\
-static int __attribute__((unused)) __batadv_softif_slave_add(x, y)
-
-#define batadv_softif_slave_del(x, y) \
-__batadv_softif_slave_del(struct net_device *dev, struct net_device *slave_dev);\
-static int batadv_softif_slave_del(struct net_device *dev, struct ifreq *rq, int cmd)\
-{\
-	return -EOPNOTSUPP;\
-}\
-static int __attribute__((unused)) __batadv_softif_slave_del(x, y)
-
-#define ndo_add_slave ndo_do_ioctl
-#define ndo_del_slave ndo_do_ioctl
+/* Hack for removing ndo_add/del_slave at the end of net_device_ops.
+ * This is somewhat ugly because it requires that ndo_validate_addr
+ * is at the end of this struct in soft-interface.c.
+ */
+#define ndo_validate_addr \
+	ndo_validate_addr = eth_validate_addr, \
+}; \
+static const struct { \
+	void *ndo_validate_addr; \
+	void *ndo_add_slave; \
+	void *ndo_del_slave; \
+} __attribute__((unused)) __useless_ops1 = { \
+	.ndo_validate_addr
 
 #endif /* < KERNEL_VERSION(2, 6, 39) */
 
