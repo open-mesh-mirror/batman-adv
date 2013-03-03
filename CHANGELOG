@@ -1,3 +1,20 @@
+batman-adv 2013.1.0:
+
+ * support latest kernels (2.6.29 - 3.9)
+ * add lots of kerneldoc in types.h
+ * clean up (kerneldoc alignment, group tt definitions, renaming, ...)
+ * TT improvements:
+   - add CRC to debugging tables
+   - ignore multicast addresses
+   - reduce local TT timeout from 1 hour to 10 minutes
+ * Initialize lockdep class keys for hashes
+ * unbloat bat_priv if debug is not enabled
+ * bugs squashed
+   - fix possible sysfs/rtnl deadlock when deregistering
+   - fix some DAT bugs (skb leak, invalid MAC addresses, NULL pointer dereference)
+
+ -- Sat, 02 Mar 2013 16:02:00 +0100
+
 batman-adv 2013.0.0:
 
 * support latest kernels (2.6.29 - 3.8)
