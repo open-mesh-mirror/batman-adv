@@ -285,7 +285,6 @@ void batadv_nc_purge_orig(struct batadv_priv *bat_priv,
 static void batadv_nc_purge_orig_hash(struct batadv_priv *bat_priv)
 {
 	struct batadv_hashtable *hash = bat_priv->orig_hash;
-	struct hlist_node *node;
 	struct hlist_head *head;
 	struct batadv_orig_node *orig_node;
 	uint32_t i;
@@ -298,7 +297,7 @@ static void batadv_nc_purge_orig_hash(struct batadv_priv *bat_priv)
 		head = &hash->table[i];
 
 		rcu_read_lock();
-		hlist_for_each_entry_rcu(orig_node, node, head, hash_entry)
+		hlist_for_each_entry_rcu(orig_node, head, hash_entry)
 			batadv_nc_purge_orig(bat_priv, orig_node,
 					     batadv_nc_to_purge_nc_node);
 		rcu_read_unlock();
@@ -321,7 +320,7 @@ static void batadv_nc_purge_paths(struct batadv_priv *bat_priv,
 						   struct batadv_nc_path *))
 {
 	struct hlist_head *head;
-	struct hlist_node *node, *node_tmp;
+	struct hlist_node *node_tmp;
 	struct batadv_nc_path *nc_path;
 	spinlock_t *lock; /* Protects lists in hash */
 	uint32_t i;
@@ -332,8 +331,7 @@ static void batadv_nc_purge_paths(struct batadv_priv *bat_priv,
 
 		/* For each nc_path in this bin */
 		spin_lock_bh(lock);
-		hlist_for_each_entry_safe(nc_path, node, node_tmp,
-					  head, hash_entry) {
+		hlist_for_each_entry_safe(nc_path, node_tmp, head, hash_entry) {
 			/* if an helper function has been passed as parameter,
 			 * ask it if the entry has to be purged or not
 			 */
@@ -358,7 +356,7 @@ static void batadv_nc_purge_paths(struct batadv_priv *bat_priv,
 			batadv_dbg(BATADV_DBG_NC, bat_priv,
 				   "Remove nc_path %pM -> %pM\n",
 				   nc_path->prev_hop, nc_path->next_hop);
-			hlist_del_rcu(node);
+			hlist_del_rcu(&nc_path->hash_entry);
 			batadv_nc_path_free_ref(nc_path);
 		}
 		spin_unlock_bh(lock);
@@ -442,7 +440,6 @@ batadv_nc_hash_find(struct batadv_hashtable *hash,
 		    void *data)
 {
 	struct hlist_head *head;
-	struct hlist_node *node;
 	struct batadv_nc_path *nc_path, *nc_path_tmp = NULL;
 	int index;
 
@@ -453,8 +450,8 @@ batadv_nc_hash_find(struct batadv_hashtable *hash,
 	head = &hash->table[index];
 
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(nc_path, node, head, hash_entry) {
-		if (!batadv_nc_hash_compare(node, data))
+	hlist_for_each_entry_rcu(nc_path, head, hash_entry) {
+		if (!batadv_nc_hash_compare(&nc_path->hash_entry, data))
 			continue;
 
 		if (!atomic_inc_not_zero(&nc_path->refcount))
@@ -570,7 +567,6 @@ batadv_nc_process_nc_paths(struct batadv_priv *bat_priv,
 					      struct batadv_nc_path *,
 					      struct batadv_nc_packet *))
 {
-	struct hlist_node *node;
 	struct hlist_head *head;
 	struct batadv_nc_packet *nc_packet, *nc_packet_tmp;
 	struct batadv_nc_path *nc_path;
@@ -586,7 +582,7 @@ batadv_nc_process_nc_paths(struct batadv_priv *bat_priv,
 
 		/* Loop coding paths */
 		rcu_read_lock();
-		hlist_for_each_entry_rcu(nc_path, node, head, hash_entry) {
+		hlist_for_each_entry_rcu(nc_path, head, hash_entry) {
 			/* Loop packets */
 			spin_lock_bh(&nc_path->packet_list_lock);
 			list_for_each_entry_safe(nc_packet, nc_packet_tmp,
@@ -1137,7 +1133,6 @@ batadv_nc_path_search(struct batadv_priv *bat_priv,
 	struct batadv_nc_path *nc_path, nc_path_key;
 	struct batadv_nc_packet *nc_packet_out = NULL;
 	struct batadv_nc_packet *nc_packet, *nc_packet_tmp;
-	struct hlist_node *node;
 	struct batadv_hashtable *hash = bat_priv->nc.coding_hash;
 	int idx;
 
@@ -1151,7 +1146,7 @@ batadv_nc_path_search(struct batadv_priv *bat_priv,
 
 	/* Check for coding opportunities in this nc_path */
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(nc_path, node, &hash->table[idx], hash_entry) {
+	hlist_for_each_entry_rcu(nc_path, &hash->table[idx], hash_entry) {
 		if (!batadv_compare_eth(nc_path->prev_hop, in_nc_node->addr))
 			continue;
 
@@ -1602,7 +1597,6 @@ batadv_nc_find_decoding_packet(struct batadv_priv *bat_priv,
 			       struct batadv_coded_packet *coded)
 {
 	struct batadv_hashtable *hash = bat_priv->nc.decoding_hash;
-	struct hlist_node *hnode;
 	struct batadv_nc_packet *tmp_nc_packet, *nc_packet = NULL;
 	struct batadv_nc_path *nc_path, nc_path_key;
 	uint8_t *dest, *source;
@@ -1627,8 +1621,7 @@ batadv_nc_find_decoding_packet(struct batadv_priv *bat_priv,
 
 	/* Search for matching coding path */
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(nc_path, hnode, &hash->table[index],
-				 hash_entry) {
+	hlist_for_each_entry_rcu(nc_path, &hash->table[index], hash_entry) {
 		/* Find matching nc_packet */
 		spin_lock_bh(&nc_path->packet_list_lock);
 		list_for_each_entry(tmp_nc_packet,
@@ -1749,7 +1742,6 @@ int batadv_nc_nodes_seq_print_text(struct seq_file *seq, void *offset)
 	struct batadv_priv *bat_priv = netdev_priv(net_dev);
 	struct batadv_hashtable *hash = bat_priv->orig_hash;
 	struct batadv_hard_iface *primary_if;
-	struct hlist_node *node;
 	struct hlist_head *head;
 	struct batadv_orig_node *orig_node;
 	struct batadv_nc_node *nc_node;
@@ -1765,7 +1757,7 @@ int batadv_nc_nodes_seq_print_text(struct seq_file *seq, void *offset)
 
 		/* For each orig_node in this bin */
 		rcu_read_lock();
-		hlist_for_each_entry_rcu(orig_node, node, head, hash_entry) {
+		hlist_for_each_entry_rcu(orig_node, head, hash_entry) {
 			seq_printf(seq, "Node:      %pM\n", orig_node->orig);
 
 			seq_printf(seq, " Ingoing:  ");
