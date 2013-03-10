@@ -17,8 +17,8 @@
  * 02110-1301, USA
  */
 
-#ifndef _NET_BATMAN_ADV_NETWORK_CODING_H
-#define _NET_BATMAN_ADV_NETWORK_CODING_H
+#ifndef _NET_BATMAN_ADV_NETWORK_CODING_H_
+#define _NET_BATMAN_ADV_NETWORK_CODING_H_
 
 #ifdef CONFIG_BATMAN_ADV_NC
 
@@ -120,4 +120,4 @@ static inline int batadv_nc_init_debugfs(struct batadv_priv *bat_priv)
 
 #endif /* ifdef CONFIG_BATMAN_ADV_NC */
 
-#endif /* _NET_BATMAN_ADV_NETWORK_CODING_H */
+#endif /* _NET_BATMAN_ADV_NETWORK_CODING_H_ */
