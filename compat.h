@@ -81,6 +81,12 @@ static inline void batadv_this_cpu_add(uint64_t *count_ptr, size_t count)
 
 #define rcu_dereference_protected(p, c) (p)
 
+#define rcu_dereference_raw(p)	({ \
+				 typeof(p) _________p1 = ACCESS_ONCE(p); \
+				 smp_read_barrier_depends(); \
+				 (_________p1); \
+				 })
+
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
