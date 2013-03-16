@@ -129,6 +129,12 @@ static inline int batadv_param_set_copystring(const char *val,
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
+
+#define hlist_first_rcu(head)	(*((struct hlist_node __rcu **)(&(head)->first)))
+#define hlist_next_rcu(node)	(*((struct hlist_node __rcu **)(&(node)->next)))
+
+#endif /* < KERNEL_VERSION(2, 6, 37) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
 
