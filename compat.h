@@ -81,6 +81,12 @@ static inline void batadv_this_cpu_add(uint64_t *count_ptr, size_t count)
 
 #define rcu_dereference_protected(p, c) (p)
 
+#define rcu_dereference_raw(p)	({ \
+				 typeof(p) _________p1 = ACCESS_ONCE(p); \
+				 smp_read_barrier_depends(); \
+				 (_________p1); \
+				 })
+
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
@@ -129,6 +135,12 @@ static inline int batadv_param_set_copystring(const char *val,
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
+
+#define hlist_first_rcu(head)	(*((struct hlist_node __rcu **)(&(head)->first)))
+#define hlist_next_rcu(node)	(*((struct hlist_node __rcu **)(&(node)->next)))
+
+#endif /* < KERNEL_VERSION(2, 6, 37) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
 
@@ -174,7 +186,9 @@ static inline void skb_reset_mac_len(struct sk_buff *skb)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
 
-static inline void eth_hw_addr_random(struct net_device *dev)
+#define eth_hw_addr_random(dev)	batadv_eth_hw_addr_random(dev)
+
+static inline void batadv_eth_hw_addr_random(struct net_device *dev)
 {
 	random_ether_addr(dev->dev_addr);
 }
