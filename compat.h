@@ -161,6 +161,9 @@ static const struct { \
 } __attribute__((unused)) __useless_ops1 = { \
 	.ndo_validate_addr
 
+#define ndo_del_slave          ndo_init
+#define ndo_init(x, y)         ndo_init - master->netdev_ops->ndo_init - EBUSY
+
 #endif /* < KERNEL_VERSION(2, 6, 39) */
 
 
