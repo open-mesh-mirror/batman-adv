@@ -435,6 +435,7 @@ out:
 err_upper:
 	netdev_upper_dev_unlink(hard_iface->net_dev, soft_iface);
 err_dev:
+	hard_iface->soft_iface = NULL;
 	dev_put(soft_iface);
 err:
 	batadv_hardif_free_ref(hard_iface);
