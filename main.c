@@ -177,6 +177,12 @@ void batadv_mesh_free(struct net_device *soft_iface)
 	atomic_set(&bat_priv->mesh_state, BATADV_MESH_INACTIVE);
 }
 
+/**
+ * batadv_is_my_mac - check if the given mac address belongs to any of the real
+ * interfaces in the current mesh
+ * @bat_priv: the bat priv with all the soft interface information
+ * @addr: the address to check
+ */
 int batadv_is_my_mac(struct batadv_priv *bat_priv, const uint8_t *addr)
 {
 	const struct batadv_hard_iface *hard_iface;
