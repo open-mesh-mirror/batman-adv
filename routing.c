@@ -551,6 +551,7 @@ batadv_find_ifalter_router(struct batadv_orig_node *primary_orig,
 
 /**
  * batadv_check_unicast_packet - Check for malformed unicast packets
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: packet to check
  * @hdr_size: size of header to pull
  *
