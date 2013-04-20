@@ -1,3 +1,17 @@
+batman-adv 2013.2.0:
+
+ * support latest kernels (2.6.29 - 3.10)
+ * add network coding feature
+ * add rtnl interface configuration support
+ * fix rtnl and sysfs locking issue
+ * avoid duplicate interface enslaving
+ * bugs squashed:
+   - verify tt len to not exceed packet len
+   - fix identification of own mac addresses
+ * style improvements (change seq_printf to seq_puts)
+
+ -- Sat, 20 Apr 2013 16:42:51 +0200
+
 batman-adv 2013.1.0:
 
  * support latest kernels (2.6.29 - 3.9)
