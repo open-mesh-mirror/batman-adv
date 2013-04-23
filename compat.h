@@ -188,6 +188,7 @@ void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu);
 void batadv_free_rcu_backbone_gw(struct rcu_head *rcu);
 void batadv_free_rcu_dat_entry(struct rcu_head *rcu);
 void batadv_free_rcu_nc_path(struct rcu_head *rcu);
+void batadv_free_rcu_tvlv_handler(struct rcu_head *rcu);
 
 static inline void skb_reset_mac_len(struct sk_buff *skb)
 {

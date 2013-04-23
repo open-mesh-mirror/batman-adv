@@ -84,4 +84,12 @@ void batadv_free_rcu_nc_path(struct rcu_head *rcu)
 }
 #endif
 
+void batadv_free_rcu_tvlv_handler(struct rcu_head *rcu)
+{
+	struct batadv_tvlv_handler *tvlv_handler;
+
+	tvlv_handler = container_of(rcu, struct batadv_tvlv_handler, rcu);
+	kfree(tvlv_handler);
+}
+
 #endif /* < KERNEL_VERSION(3, 0, 0) */
