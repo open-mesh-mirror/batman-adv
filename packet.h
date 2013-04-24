@@ -371,12 +371,12 @@ struct batadv_tvlv_gateway_data {
  * struct tvlv_tt_data - tt data propagated through the tt tvlv container
  * @flags: translation table flags (see batadv_tt_data_flags)
  * @ttvn: translation table version number
- * @crc: crc16 checksum of the local translation table
+ * @crc: crc32 checksum of the local translation table
  */
 struct batadv_tvlv_tt_data {
 	uint8_t flags;
 	uint8_t ttvn;
-	__be16  crc;
+	__be32  crc;
 };
 
 /**
