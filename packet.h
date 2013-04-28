@@ -34,7 +34,7 @@
  * @BATADV_ICMP: unicast packet like IP ICMP used for ping or traceroute
  * @BATADV_UNICAST_TVLV: unicast packet carrying TVLV containers
  */
- enum batadv_packettype {
+enum batadv_packettype {
 	/* 0x00 - 0x3f: local packets or special rules for handling */
 	BATADV_IV_OGM           = 0x00,
 	BATADV_BCAST            = 0x01,
@@ -80,7 +80,7 @@ enum batadv_iv_flags {
 	BATADV_NOT_BEST_NEXT_HOP   = BIT(0),
 	BATADV_PRIMARIES_FIRST_HOP = BIT(1),
 	BATADV_DIRECTLINK          = BIT(2),
- };
+};
 
 /* ICMP message types */
 enum batadv_icmp_packettype {
