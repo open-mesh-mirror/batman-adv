@@ -372,8 +372,8 @@ struct batadv_tvlv_long {
  * @bandwidth_up: advertised uplink upload bandwidth
  */
 struct batadv_tvlv_gateway_data {
-	uint32_t bandwidth_down;
-	uint32_t bandwidth_up;
+	__be32 bandwidth_down;
+	__be32 bandwidth_up;
 };
 
 /**

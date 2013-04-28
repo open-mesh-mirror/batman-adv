@@ -202,8 +202,8 @@ static void batadv_gw_tvlv_ogm_handler_v1(struct batadv_priv *bat_priv,
 		gateway.bandwidth_up = 0;
 	} else {
 		gateway_ptr = tvlv_value;
-		gateway.bandwidth_down = ntohl(gateway_ptr->bandwidth_down);
-		gateway.bandwidth_up = ntohl(gateway_ptr->bandwidth_up);
+		gateway.bandwidth_down = gateway_ptr->bandwidth_down;
+		gateway.bandwidth_up = gateway_ptr->bandwidth_up;
 		if ((gateway.bandwidth_down == 0) ||
 		    (gateway.bandwidth_up == 0)) {
 			gateway.bandwidth_down = 0;

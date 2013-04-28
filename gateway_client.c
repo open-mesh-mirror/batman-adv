@@ -344,8 +344,10 @@ static void batadv_gw_node_add(struct batadv_priv *bat_priv,
 	batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 		   "Found new gateway %pM -> gw bandwidth: %u.%u/%u.%u MBit\n",
 		   orig_node->orig,
-		   gateway->bandwidth_down / 10, gateway->bandwidth_down % 10,
-		   gateway->bandwidth_up / 10, gateway->bandwidth_up % 10);
+		   ntohl(gateway->bandwidth_down) / 10,
+		   ntohl(gateway->bandwidth_down) % 10,
+		   ntohl(gateway->bandwidth_up) / 10,
+		   ntohl(gateway->bandwidth_up) % 10);
 }
 
 /**
@@ -399,8 +401,8 @@ void batadv_gw_node_update(struct batadv_priv *bat_priv,
 		goto out;
 	}
 
-	if ((gw_node->bandwidth_down == gateway->bandwidth_down) &&
-	    (gw_node->bandwidth_up == gateway->bandwidth_up))
+	if ((gw_node->bandwidth_down == ntohl(gateway->bandwidth_down)) &&
+	    (gw_node->bandwidth_up == ntohl(gateway->bandwidth_up)))
 		goto out;
 
 	batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
@@ -410,16 +412,16 @@ void batadv_gw_node_update(struct batadv_priv *bat_priv,
 		   gw_node->bandwidth_down % 10,
 		   gw_node->bandwidth_up / 10,
 		   gw_node->bandwidth_up % 10,
-		   gateway->bandwidth_down / 10,
-		   gateway->bandwidth_down % 10,
-		   gateway->bandwidth_up / 10,
-		   gateway->bandwidth_up % 10);
+		   ntohl(gateway->bandwidth_down) / 10,
+		   ntohl(gateway->bandwidth_down) % 10,
+		   ntohl(gateway->bandwidth_up) / 10,
+		   ntohl(gateway->bandwidth_up) % 10);
 
-	gw_node->bandwidth_down = gateway->bandwidth_down;
-	gw_node->bandwidth_up = gateway->bandwidth_up;
+	gw_node->bandwidth_down = ntohl(gateway->bandwidth_down);
+	gw_node->bandwidth_up = ntohl(gateway->bandwidth_up);
 
 	gw_node->deleted = 0;
-	if (gateway->bandwidth_down == 0) {
+	if (ntohl(gateway->bandwidth_down) == 0) {
 		gw_node->deleted = jiffies;
 		batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 			   "Gateway %pM removed from gateway list\n",
