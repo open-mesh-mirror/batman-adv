@@ -27,6 +27,15 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
+void batadv_free_rcu_tt_global_entry(struct rcu_head *rcu)
+{
+	struct batadv_tt_global_entry *global;
+
+	global = container_of(rcu, struct batadv_tt_global_entry, common.rcu);
+
+	kfree(global);
+}
+
 void batadv_free_rcu_gw_node(struct rcu_head *rcu)
 {
 	struct batadv_gw_node *gw_node;
