@@ -252,6 +252,31 @@ out:
 	return primary_if;
 }
 
+/**
+ * batadv_max_header_len - calculate maximum encapsulation overhead for a
+ *  payload packet
+ *
+ * Return the maximum encapsulation overhead in bytes.
+ */
+int batadv_max_header_len(void)
+{
+	int header_len = 0;
+
+	header_len = max_t(int, header_len,
+			   sizeof(struct batadv_unicast_packet));
+	header_len = max_t(int, header_len,
+			   sizeof(struct batadv_unicast_4addr_packet));
+	header_len = max_t(int, header_len,
+			   sizeof(struct batadv_bcast_packet));
+
+#ifdef CONFIG_BATMAN_ADV_NC
+	header_len = max_t(int, header_len,
+			   sizeof(struct batadv_coded_packet));
+#endif
+
+	return header_len;
+}
+
 static int batadv_recv_unhandled_packet(struct sk_buff *skb,
 					struct batadv_hard_iface *recv_if)
 {
