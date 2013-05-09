@@ -172,8 +172,6 @@ enum batadv_vlan_flags {
 	BATADV_VLAN_HAS_TAG	= BIT(15),
 };
 
-/* mask needed to extract the vlan ID (12bits) from a 16bits variable */
-#define BATADV_VID_MASK	0x0FFF
 #define BATADV_PRINT_VID(vid) (vid & BATADV_VLAN_HAS_TAG ? \
 			       (int)(vid & VLAN_VID_MASK) : -1)
 
