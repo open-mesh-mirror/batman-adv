@@ -175,7 +175,7 @@ enum batadv_vlan_flags {
 /* mask needed to extract the vlan ID (12bits) from a 16bits variable */
 #define BATADV_VID_MASK	0x0FFF
 #define BATADV_PRINT_VID(vid) (vid & BATADV_VLAN_HAS_TAG ? \
-			       (int)(vid & BATADV_VID_MASK) : -1)
+			       (int)(vid & VLAN_VID_MASK) : -1)
 
 extern char batadv_routing_algo[];
 extern struct list_head batadv_hardif_list;
