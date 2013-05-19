@@ -637,7 +637,7 @@ bool batadv_gw_is_dhcp_target(struct sk_buff *skb, unsigned int *header_len)
 	*header_len += ETH_HLEN;
 
 	/* check for initial vlan header */
-	if (proto == __constant_htons(ETH_P_8021Q)) {
+	if (proto == htons(ETH_P_8021Q)) {
 		if (!pskb_may_pull(skb, *header_len + VLAN_HLEN))
 			return false;
 
@@ -648,7 +648,7 @@ bool batadv_gw_is_dhcp_target(struct sk_buff *skb, unsigned int *header_len)
 
 	/* check for ip header */
 	switch (proto) {
-	case __constant_htons(ETH_P_IP):
+	case htons(ETH_P_IP):
 		if (!pskb_may_pull(skb, *header_len + sizeof(*iphdr)))
 			return false;
 		iphdr = (struct iphdr *)(skb->data + *header_len);
@@ -659,7 +659,7 @@ bool batadv_gw_is_dhcp_target(struct sk_buff *skb, unsigned int *header_len)
 			return false;
 
 		break;
-	case __constant_htons(ETH_P_IPV6):
+	case htons(ETH_P_IPV6):
 		if (!pskb_may_pull(skb, *header_len + sizeof(*ipv6hdr)))
 			return false;
 		ipv6hdr = (struct ipv6hdr *)(skb->data + *header_len);
@@ -680,12 +680,12 @@ bool batadv_gw_is_dhcp_target(struct sk_buff *skb, unsigned int *header_len)
 	*header_len += sizeof(*udphdr);
 
 	/* check for bootp port */
-	if ((proto == __constant_htons(ETH_P_IP)) &&
-	    (ntohs(udphdr->dest) != 67))
+	if ((proto == htons(ETH_P_IP)) &&
+	    (udphdr->dest != htons(67)))
 		return false;
 
-	if ((proto == __constant_htons(ETH_P_IPV6)) &&
-	    (ntohs(udphdr->dest) != 547))
+	if ((proto == htons(ETH_P_IPV6)) &&
+	    (udphdr->dest != htons(547)))
 		return false;
 
 	return true;
