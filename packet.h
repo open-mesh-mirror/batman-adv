@@ -409,11 +409,13 @@ struct batadv_tvlv_gateway_data {
  * struct batadv_tvlv_tt_data - tt data propagated through the tt tvlv container
  * @flags: translation table flags (see batadv_tt_data_flags)
  * @ttvn: translation table version number
+ * @reserved: field reserved for future use
  * @crc: crc32 checksum of the local translation table
  */
 struct batadv_tvlv_tt_data {
 	uint8_t flags;
 	uint8_t ttvn;
+	uint16_t reserved;
 	__be32  crc;
 };
 
