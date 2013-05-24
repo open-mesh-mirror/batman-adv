@@ -1486,7 +1486,7 @@ static void batadv_tt_req_list_free(struct batadv_priv *bat_priv)
 static void batadv_tt_save_orig_buffer(struct batadv_priv *bat_priv,
 				       struct batadv_orig_node *orig_node,
 				       const unsigned char *tt_buff,
-				       uint8_t tt_num_changes)
+				       uint16_t tt_num_changes)
 {
 	uint16_t tt_buff_len = batadv_tt_len(tt_num_changes);
 
@@ -2408,8 +2408,8 @@ out:
 static void batadv_tt_update_orig(struct batadv_priv *bat_priv,
 				  struct batadv_orig_node *orig_node,
 				  const unsigned char *tt_buff,
-				  uint8_t tt_num_changes,
-				  uint8_t ttvn, uint32_t tt_crc)
+				  uint16_t tt_num_changes, uint8_t ttvn,
+				  uint32_t tt_crc)
 {
 	uint8_t orig_ttvn = (uint8_t)atomic_read(&orig_node->last_ttvn);
 	bool full_table = true;
