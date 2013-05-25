@@ -604,12 +604,8 @@ static uint16_t batadv_tvlv_container_list_size(struct batadv_priv *bat_priv)
 	uint16_t tvlv_len = 0;
 
 	hlist_for_each_entry(tvlv, &bat_priv->tvlv.container_list, list) {
-		if (tvlv->tvlv_hdr.long_tvlv)
-			tvlv_len += sizeof(struct batadv_tvlv_long);
-		else
-			tvlv_len += sizeof(struct batadv_tvlv_short);
-
-		tvlv_len += tvlv->value_len;
+		tvlv_len += sizeof(struct batadv_tvlv_hdr);
+		tvlv_len += tvlv->tvlv_hdr.len;
 	}
 
 	return tvlv_len;
@@ -678,13 +674,11 @@ void batadv_tvlv_container_register(struct batadv_priv *bat_priv,
 	if (!tvlv_new)
 		return;
 
-	tvlv_new->value_len = tvlv_value_len;
 	tvlv_new->tvlv_hdr.version = version;
 	tvlv_new->tvlv_hdr.type = type;
-	if (tvlv_new->value_len > 255)
-		tvlv_new->tvlv_hdr.long_tvlv = 1;
+	tvlv_new->tvlv_hdr.len = tvlv_value_len;
 
-	memcpy(tvlv_new + 1, tvlv_value, tvlv_new->value_len);
+	memcpy(tvlv_new + 1, tvlv_value, tvlv_new->tvlv_hdr.len);
 	INIT_HLIST_NODE(&tvlv_new->list);
 	atomic_set(&tvlv_new->refcount, 1);
 
@@ -748,8 +742,7 @@ uint16_t batadv_tvlv_container_ogm_append(struct batadv_priv *bat_priv,
 					  int packet_min_len)
 {
 	struct batadv_tvlv_container *tvlv;
-	struct batadv_tvlv_short *tvlv_short;
-	struct batadv_tvlv_long *tvlv_long;
+	struct batadv_tvlv_hdr *tvlv_hdr;
 	uint16_t tvlv_value_len;
 	void *tvlv_value;
 	bool ret;
@@ -769,20 +762,13 @@ uint16_t batadv_tvlv_container_ogm_append(struct batadv_priv *bat_priv,
 	tvlv_value = (*packet_buff) + packet_min_len;
 
 	hlist_for_each_entry(tvlv, &bat_priv->tvlv.container_list, list) {
-		if (tvlv->tvlv_hdr.long_tvlv) {
-			tvlv_long = tvlv_value;
-			tvlv_long->tvlv_hdr = tvlv->tvlv_hdr;
-			tvlv_long->len = htons(tvlv->value_len);
-			tvlv_value = tvlv_long + 1;
-		} else {
-			tvlv_short = tvlv_value;
-			tvlv_short->tvlv_hdr = tvlv->tvlv_hdr;
-			tvlv_short->len = tvlv->value_len;
-			tvlv_value = tvlv_short + 1;
-		}
-
-		memcpy(tvlv_value, tvlv + 1, tvlv->value_len);
-		tvlv_value = (uint8_t *)tvlv_value + tvlv->value_len;
+		tvlv_hdr = tvlv_value;
+		tvlv_hdr->type = tvlv->tvlv_hdr.type;
+		tvlv_hdr->version = tvlv->tvlv_hdr.version;
+		tvlv_hdr->len = htons(tvlv->tvlv_hdr.len);
+		tvlv_value = tvlv_hdr + 1;
+		memcpy(tvlv_value, tvlv + 1, tvlv->tvlv_hdr.len);
+		tvlv_value = (uint8_t *)tvlv_value + tvlv->tvlv_hdr.len;
 	}
 
 end:
@@ -865,30 +851,16 @@ int batadv_tvlv_containers_process(struct batadv_priv *bat_priv,
 				   void *tvlv_value, uint16_t tvlv_value_len)
 {
 	struct batadv_tvlv_handler *tvlv_handler;
-	struct batadv_tvlv_short *tvlv_short;
-	struct batadv_tvlv_long *tvlv_long;
 	struct batadv_tvlv_hdr *tvlv_hdr;
 	uint16_t tvlv_value_cont_len;
 	uint8_t cifnotfound = BATADV_TVLV_HANDLER_OGM_CIFNOTFND;
 	int ret = NET_RX_SUCCESS;
 
-	while (tvlv_value_len >= sizeof(*tvlv_short)) {
+	while (tvlv_value_len >= sizeof(*tvlv_hdr)) {
 		tvlv_hdr = tvlv_value;
-
-		if (tvlv_hdr->long_tvlv) {
-			if (sizeof(*tvlv_long) > tvlv_value_len)
-				break;
-
-			tvlv_long = tvlv_value;
-			tvlv_value_cont_len = ntohs(tvlv_long->len);
-			tvlv_value = tvlv_long + 1;
-			tvlv_value_len -= sizeof(*tvlv_long);
-		} else {
-			tvlv_short = tvlv_value;
-			tvlv_value_cont_len = tvlv_short->len;
-			tvlv_value = tvlv_short + 1;
-			tvlv_value_len -= sizeof(*tvlv_short);
-		}
+		tvlv_value_cont_len = ntohs(tvlv_hdr->len);
+		tvlv_value = tvlv_hdr + 1;
+		tvlv_value_len -= sizeof(*tvlv_hdr);
 
 		if (tvlv_value_cont_len > tvlv_value_len)
 			break;
@@ -1042,8 +1014,7 @@ void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, uint8_t *src,
 			      void *tvlv_value, uint16_t tvlv_value_len)
 {
 	struct batadv_unicast_tvlv_packet *unicast_tvlv_packet;
-	struct batadv_tvlv_short *tvlv_short;
-	struct batadv_tvlv_long *tvlv_long;
+	struct batadv_tvlv_hdr *tvlv_hdr;
 	struct batadv_orig_node *orig_node;
 	struct sk_buff *skb = NULL;
 	unsigned char *tvlv_buff;
@@ -1058,11 +1029,7 @@ void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, uint8_t *src,
 	if (tvlv_value_len > 255)
 		tvlv_long_hdr = 1;
 
-	tvlv_len = tvlv_value_len;
-	if (tvlv_long_hdr)
-		tvlv_len += sizeof(*tvlv_long);
-	else
-		tvlv_len += sizeof(*tvlv_short);
+	tvlv_len = sizeof(*tvlv_hdr) + tvlv_value_len;
 
 	skb = netdev_alloc_skb_ip_align(NULL, ETH_HLEN + hdr_len + tvlv_len);
 	if (!skb)
@@ -1076,26 +1043,16 @@ void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, uint8_t *src,
 	unicast_tvlv_packet->header.ttl = BATADV_TTL;
 	unicast_tvlv_packet->reserved = 0;
 	unicast_tvlv_packet->tvlv_len = htons(tvlv_len);
+	unicast_tvlv_packet->align = 0;
 	memcpy(unicast_tvlv_packet->src, src, ETH_ALEN);
 	memcpy(unicast_tvlv_packet->dst, dst, ETH_ALEN);
 
 	tvlv_buff = (unsigned char *)(unicast_tvlv_packet + 1);
-
-	if (tvlv_long_hdr) {
-		tvlv_long = (struct batadv_tvlv_long *)tvlv_buff;
-		tvlv_long->tvlv_hdr.version = version;
-		tvlv_long->tvlv_hdr.type = type;
-		tvlv_long->tvlv_hdr.long_tvlv = 1;
-		tvlv_long->len = htons(tvlv_value_len);
-		tvlv_buff += sizeof(*tvlv_long);
-	} else {
-		tvlv_short = (struct batadv_tvlv_short *)tvlv_buff;
-		tvlv_short->tvlv_hdr.version = version;
-		tvlv_short->tvlv_hdr.type = type;
-		tvlv_short->len = tvlv_value_len;
-		tvlv_buff += sizeof(*tvlv_short);
-	}
-
+	tvlv_hdr = (struct batadv_tvlv_hdr *)tvlv_buff;
+	tvlv_hdr->version = version;
+	tvlv_hdr->type = type;
+	tvlv_hdr->len = htons(tvlv_value_len);
+	tvlv_buff += sizeof(*tvlv_hdr);
 	memcpy(tvlv_buff, tvlv_value, tvlv_value_len);
 
 	if (batadv_send_skb_to_orig(skb, orig_node, NULL) != NET_XMIT_DROP)

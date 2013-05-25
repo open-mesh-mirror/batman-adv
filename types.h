@@ -976,7 +976,6 @@ struct batadv_dat_candidate {
 struct batadv_tvlv_container {
 	struct hlist_node list;
 	struct batadv_tvlv_hdr tvlv_hdr;
-	uint16_t value_len;
 	atomic_t refcount;
 };
 

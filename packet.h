@@ -345,53 +345,27 @@ struct batadv_coded_packet {
  * @src: address of the source
  * @dst: address of the destination
  * @tvlv_len: length of tvlv data following the unicast tvlv header
+ * @align: 2 bytes to align the header to a 4 byte boundry
  */
 struct batadv_unicast_tvlv_packet {
 	struct batadv_header header;
-	uint8_t reserved;
-	uint8_t dst[ETH_ALEN];
-	uint8_t src[ETH_ALEN];
-	__be16  tvlv_len;
+	uint8_t  reserved;
+	uint8_t  dst[ETH_ALEN];
+	uint8_t  src[ETH_ALEN];
+	__be16   tvlv_len;
+	uint16_t align;
 };
 
 /**
  * struct batadv_tvlv_hdr - base tvlv header struct
- * @long_tvlv: flag indicating whether this is a short tvlv container (max 256
- *  bytes) or a long tvlv one (up to ETH_DATA_LEN)
  * @type: tvlv container type (see batadv_tvlv_type)
  * @version: tvlv container version
- */
-struct batadv_tvlv_hdr {
-#if defined(__BIG_ENDIAN_BITFIELD)
-	uint8_t long_tvlv:1;
-	uint8_t type:7;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-	uint8_t type:7;
-	uint8_t long_tvlv:1;
-#else
-#error "unknown bitfield endianess"
-#endif
-	uint8_t version;
-};
-
-/**
- * struct batadv_tvlv_short - short tvlv header struct
- * @tvlv_hdr: base tvlv header
- * @len: tvlv container length (limited to 255 bytes)
- */
-struct batadv_tvlv_short {
-	struct batadv_tvlv_hdr tvlv_hdr;
-	uint8_t len;
-};
-
-/**
- * struct batadv_tvlv_long - long tvlv header struct
- * @tvlv_hdr: base tvlv header
  * @len: tvlv container length
  */
-struct batadv_tvlv_long {
-	struct batadv_tvlv_hdr tvlv_hdr;
-	__be16 len;
+struct batadv_tvlv_hdr {
+	uint8_t type;
+	uint8_t version;
+	__be16  len;
 };
 
 /**
