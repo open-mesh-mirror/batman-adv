@@ -409,9 +409,11 @@ struct batadv_tvlv_tt_change {
 /**
  * struct batadv_tvlv_roam_adv - roaming advertisement
  * @client: mac address of roaming client
+ * @reserved: field reserved for future use
  */
 struct batadv_tvlv_roam_adv {
-	uint8_t client[ETH_ALEN];
+	uint8_t  client[ETH_ALEN];
+	uint16_t reserved;
 };
 
 #endif /* _NET_BATMAN_ADV_PACKET_H_ */
