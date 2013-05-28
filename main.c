@@ -630,7 +630,7 @@ static uint16_t batadv_tvlv_container_list_size(struct batadv_priv *bat_priv)
 
 	hlist_for_each_entry(tvlv, &bat_priv->tvlv.container_list, list) {
 		tvlv_len += sizeof(struct batadv_tvlv_hdr);
-		tvlv_len += tvlv->tvlv_hdr.len;
+		tvlv_len += ntohs(tvlv->tvlv_hdr.len);
 	}
 
 	return tvlv_len;
@@ -701,9 +701,9 @@ void batadv_tvlv_container_register(struct batadv_priv *bat_priv,
 
 	tvlv_new->tvlv_hdr.version = version;
 	tvlv_new->tvlv_hdr.type = type;
-	tvlv_new->tvlv_hdr.len = tvlv_value_len;
+	tvlv_new->tvlv_hdr.len = htons(tvlv_value_len);
 
-	memcpy(tvlv_new + 1, tvlv_value, tvlv_new->tvlv_hdr.len);
+	memcpy(tvlv_new + 1, tvlv_value, ntohs(tvlv_new->tvlv_hdr.len));
 	INIT_HLIST_NODE(&tvlv_new->list);
 	atomic_set(&tvlv_new->refcount, 1);
 
@@ -790,10 +790,10 @@ uint16_t batadv_tvlv_container_ogm_append(struct batadv_priv *bat_priv,
 		tvlv_hdr = tvlv_value;
 		tvlv_hdr->type = tvlv->tvlv_hdr.type;
 		tvlv_hdr->version = tvlv->tvlv_hdr.version;
-		tvlv_hdr->len = htons(tvlv->tvlv_hdr.len);
+		tvlv_hdr->len = tvlv->tvlv_hdr.len;
 		tvlv_value = tvlv_hdr + 1;
-		memcpy(tvlv_value, tvlv + 1, tvlv->tvlv_hdr.len);
-		tvlv_value = (uint8_t *)tvlv_value + tvlv->tvlv_hdr.len;
+		memcpy(tvlv_value, tvlv + 1, ntohs(tvlv->tvlv_hdr.len));
+		tvlv_value = (uint8_t *)tvlv_value + ntohs(tvlv->tvlv_hdr.len);
 	}
 
 end:
