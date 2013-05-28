@@ -129,10 +129,11 @@ static bool batadv_frag_insert_packet(struct batadv_orig_node *orig_node,
 				      struct hlist_head *chain_out)
 {
 	struct batadv_frag_table_entry *chain;
-	struct batadv_frag_list_entry *frag_entry_new, *frag_entry_curr;
+	struct batadv_frag_list_entry *frag_entry_new = NULL, *frag_entry_curr;
 	struct batadv_frag_packet *frag_packet;
 	uint8_t bucket;
 	uint16_t seqno, hdr_size = sizeof(struct batadv_frag_packet);
+	bool ret = false;
 
 	/* Linearize packet to avoid linearizing 16 packets in a row when doing
 	 * the later merge. Non-linear merge should be added to remove this
@@ -162,6 +163,7 @@ static bool batadv_frag_insert_packet(struct batadv_orig_node *orig_node,
 		hlist_add_head(&frag_entry_new->list, &chain->head);
 		chain->size = skb->len - hdr_size;
 		chain->timestamp = jiffies;
+		ret = true;
 		goto out;
 	}
 
@@ -177,6 +179,7 @@ static bool batadv_frag_insert_packet(struct batadv_orig_node *orig_node,
 					 &frag_entry_curr->list);
 			chain->size += skb->len - hdr_size;
 			chain->timestamp = jiffies;
+			ret = true;
 			goto out;
 		}
 	}
@@ -186,6 +189,7 @@ static bool batadv_frag_insert_packet(struct batadv_orig_node *orig_node,
 		hlist_add_after(&frag_entry_curr->list, &frag_entry_new->list);
 		chain->size += skb->len - hdr_size;
 		chain->timestamp = jiffies;
+		ret = true;
 	}
 
 out:
@@ -202,14 +206,14 @@ out:
 		chain->size = 0;
 	}
 
-	spin_unlock_bh(&chain->lock);
-	return true;
-
 err_unlock:
 	spin_unlock_bh(&chain->lock);
-	kfree(frag_entry_new);
+
 err:
-	return false;
+	if (!ret)
+		kfree(frag_entry_new);
+
+	return ret;
 }
 
 /**
