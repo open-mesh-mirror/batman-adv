@@ -1043,16 +1043,13 @@ void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, uint8_t *src,
 	struct batadv_orig_node *orig_node;
 	struct sk_buff *skb = NULL;
 	unsigned char *tvlv_buff;
-	unsigned int tvlv_len, tvlv_long_hdr = 0;
+	unsigned int tvlv_len;
 	ssize_t hdr_len = sizeof(*unicast_tvlv_packet);
 	bool ret = false;
 
 	orig_node = batadv_orig_hash_find(bat_priv, dst);
 	if (!orig_node)
 		goto out;
-
-	if (tvlv_value_len > 255)
-		tvlv_long_hdr = 1;
 
 	tvlv_len = sizeof(*tvlv_hdr) + tvlv_value_len;
 
