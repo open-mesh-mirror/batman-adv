@@ -128,7 +128,7 @@ int batadv_mesh_init(struct net_device *soft_iface)
 		goto err;
 
 	batadv_tt_local_add(soft_iface, soft_iface->dev_addr,
-			    BATADV_NULL_IFINDEX, BATADV_NO_FLAGS);
+			    BATADV_NO_FLAGS, BATADV_NULL_IFINDEX);
 
 	ret = batadv_bla_init(bat_priv);
 	if (ret < 0)
