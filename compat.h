@@ -182,6 +182,7 @@ static const struct { \
 #define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, batadv_free_rcu_##ptr)
 #define vlan_insert_tag(skb, proto, vid) __vlan_put_tag(skb, vid)
 
+void batadv_free_rcu_softif_vlan(struct rcu_head *rcu);
 void batadv_free_rcu_tt_global_entry(struct rcu_head *rcu);
 void batadv_free_rcu_gw_node(struct rcu_head *rcu);
 void batadv_free_rcu_neigh_node(struct rcu_head *rcu);
@@ -198,6 +199,30 @@ static inline void skb_reset_mac_len(struct sk_buff *skb)
 
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
+
+#define batadv_interface_add_vid(x, y, z) \
+__batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+                          unsigned short vid);\
+static void batadv_interface_add_vid(struct net_device *dev, unsigned short vid)\
+{\
+       __batadv_interface_add_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+                                     unsigned short vid)
+
+#define batadv_interface_kill_vid(x, y, z) \
+__batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+                           unsigned short vid);\
+static void batadv_interface_kill_vid(struct net_device *dev,\
+                                     unsigned short vid)\
+{\
+       __batadv_interface_kill_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+                                      unsigned short vid)
+
+#endif /* < KERNEL_VERSION(3, 3, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)
 
@@ -300,7 +325,34 @@ static int __batadv_interface_set_mac_addr(x, y)
 #include <linux/if_vlan.h>
 #define vlan_insert_tag(skb, proto, vid) vlan_insert_tag(skb, vid)
 
+#define NETIF_F_HW_VLAN_CTAG_FILTER NETIF_F_HW_VLAN_FILTER
+
 #endif /* vlan_insert_tag */
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
+
+#define batadv_interface_add_vid(x, y, z) \
+__batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+			   unsigned short vid);\
+static int batadv_interface_add_vid(struct net_device *dev, unsigned short vid)\
+{\
+	return __batadv_interface_add_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+				      unsigned short vid)
+
+#define batadv_interface_kill_vid(x, y, z) \
+__batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+			    unsigned short vid);\
+static int batadv_interface_kill_vid(struct net_device *dev,\
+				     unsigned short vid)\
+{\
+	return __batadv_interface_kill_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+				       unsigned short vid)
+
+#endif /* >= KERNEL_VERSION(3, 3, 0) */
 
 #endif /* < KERNEL_VERSION(3, 10, 0) */
 
