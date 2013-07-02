@@ -389,7 +389,7 @@ out:
  *  possibly free it
  * @softif_vlan: the vlan object to release
  */
-static void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *softif_vlan)
+void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *softif_vlan)
 {
 	if (atomic_dec_and_test(&softif_vlan->refcount))
 		kfree_rcu(softif_vlan, rcu);
@@ -403,8 +403,8 @@ static void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *softif_vlan)
  * Returns the private data of the vlan matching the vid passed as argument or
  * NULL otherwise. The refcounter of the returned object is incremented by 1.
  */
-static struct batadv_softif_vlan *
-batadv_softif_vlan_get(struct batadv_priv *bat_priv, unsigned short vid)
+struct batadv_softif_vlan *batadv_softif_vlan_get(struct batadv_priv *bat_priv,
+						  unsigned short vid)
 {
 	struct batadv_softif_vlan *vlan_tmp, *vlan = NULL;
 
@@ -434,6 +434,7 @@ batadv_softif_vlan_get(struct batadv_priv *bat_priv, unsigned short vid)
 int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 {
 	struct batadv_softif_vlan *vlan;
+	int err;
 
 	vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
 	if (!vlan)
@@ -448,6 +449,10 @@ int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 	batadv_tt_local_add(bat_priv->soft_iface,
 			    bat_priv->soft_iface->dev_addr, vid,
 			    BATADV_NULL_IFINDEX);
+
+	err = batadv_sysfs_add_vlan(bat_priv->soft_iface, vlan);
+	if (err)
+		return err;
 
 	spin_lock_bh(&bat_priv->softif_vlan_list_lock);
 	hlist_add_head_rcu(&vlan->list, &bat_priv->softif_vlan_list);
@@ -467,6 +472,8 @@ static void batadv_softif_destroy_vlan(struct batadv_priv *bat_priv,
 	spin_lock_bh(&bat_priv->softif_vlan_list_lock);
 	hlist_del_rcu(&vlan->list);
 	spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
+
+	batadv_sysfs_del_vlan(bat_priv, vlan);
 
 	/* explicitly remove the associated TT local entry because it is marked
 	 * with the NOPURGE flag
