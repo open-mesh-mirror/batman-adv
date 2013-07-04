@@ -325,9 +325,9 @@ static int __batadv_interface_set_mac_addr(x, y)
 #include <linux/if_vlan.h>
 #define vlan_insert_tag(skb, proto, vid) vlan_insert_tag(skb, vid)
 
-#define NETIF_F_HW_VLAN_CTAG_FILTER NETIF_F_HW_VLAN_FILTER
-
 #endif /* vlan_insert_tag */
+
+#define NETIF_F_HW_VLAN_CTAG_FILTER NETIF_F_HW_VLAN_FILTER
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
 
