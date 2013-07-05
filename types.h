@@ -530,7 +530,7 @@ struct batadv_priv_nc {
 	struct batadv_hashtable *decoding_hash;
 };
 
-/*
+/**
  * struct batadv_softif_vlan - per VLAN attributes set
  * @vid: VLAN identifier
  * @kobj: kobject for sysfs vlan subdirectory
