@@ -196,7 +196,7 @@ ssize_t batadv_store_vlan_##_name(struct kobject *kobj,			\
 
 #define BATADV_ATTR_VLAN_SHOW_BOOL(_name)				\
 ssize_t batadv_show_vlan_##_name(struct kobject *kobj,			\
-			    struct attribute *attr, char *buff)		\
+				 struct attribute *attr, char *buff)	\
 {									\
 	struct batadv_priv *bat_priv = batadv_vlan_kobj_to_batpriv(kobj);\
 	struct batadv_softif_vlan *vlan = batadv_kobj_to_vlan(bat_priv,	\
