@@ -1,3 +1,18 @@
+batman-adv 2013.3.0:
+
+ * support latest kernels (2.6.29 - 3.11)
+ * send each broadcast only once on non-wireless interfaces
+ * change VID handling to prepare enhanced VLAN features
+ * bugs squashed:
+   - forward late OGMs from best next hop
+   - avoid double free of bat_counters
+   - fix rcu barrier miss
+   - use the proper header len when checking the TTVN
+   - make DAT drop ARP requests targeting local clients
+ * style improvements, code moving and refactoring
+
+ -- Sat, 20 Jul 2013 22:06:46 +0200
+
 batman-adv 2013.2.0:
 
  * support latest kernels (2.6.29 - 3.10)
