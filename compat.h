@@ -84,6 +84,9 @@ static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
 	return skb;
 }
 
+#define VLAN_PRIO_MASK          0xe000 /* Priority Code Point */
+#define VLAN_PRIO_SHIFT         13
+
 #endif /* < KERNEL_VERSION(2, 6, 33) */
 
 
