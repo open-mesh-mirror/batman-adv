@@ -27,6 +27,15 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
 
+void batadv_free_rcu_orig_vlan(struct rcu_head *rcu)
+{
+	struct batadv_orig_node_vlan *vlan;
+
+	vlan = container_of(rcu, structbatadv_orig_node_vlan, rcu);
+
+	kfree(vlan);
+}
+
 void batadv_free_rcu_softif_vlan(struct rcu_head *rcu)
 {
 	struct batadv_softif_vlan *vlan;
