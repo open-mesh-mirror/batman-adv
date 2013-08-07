@@ -283,7 +283,7 @@ void batadv_skb_set_priority(struct sk_buff *skb, int offset)
 					  sizeof(*vhdr), &vhdr_tmp);
 		if (!vhdr)
 			return;
-		prio = htons(vhdr->h_vlan_TCI) & VLAN_PRIO_MASK;
+		prio = ntohs(vhdr->h_vlan_TCI) & VLAN_PRIO_MASK;
 		prio = prio >> VLAN_PRIO_SHIFT;
 		break;
 	case htons(ETH_P_IP):
