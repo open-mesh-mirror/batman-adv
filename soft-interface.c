@@ -192,6 +192,9 @@ static int batadv_interface_tx(struct sk_buff *skb,
 	if (batadv_bla_tx(bat_priv, skb, vid))
 		goto dropped;
 
+	/* skb->data might have been reallocated by batadv_bla_tx() */
+	ethhdr = (struct ethhdr *)skb->data;
+
 	/* Register the client MAC in the transtable */
 	if (!is_multicast_ether_addr(ethhdr->h_source))
 		batadv_tt_local_add(soft_iface, ethhdr->h_source, vid,
@@ -233,6 +236,10 @@ static int batadv_interface_tx(struct sk_buff *skb,
 		default:
 			break;
 		}
+
+		/* reminder: ethhdr might have become unusable from here on
+		 * (batadv_gw_is_dhcp_target() might have reallocated skb data)
+		 */
 	}
 
 	/* ethernet packet should be broadcasted */
@@ -279,7 +286,7 @@ static int batadv_interface_tx(struct sk_buff *skb,
 	/* unicast packet */
 	} else {
 		if (atomic_read(&bat_priv->gw_mode) != BATADV_GW_MODE_OFF) {
-			ret = batadv_gw_out_of_range(bat_priv, skb, ethhdr);
+			ret = batadv_gw_out_of_range(bat_priv, skb);
 			if (ret)
 				goto dropped;
 		}
