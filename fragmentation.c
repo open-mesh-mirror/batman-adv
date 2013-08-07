@@ -393,6 +393,8 @@ static struct sk_buff *batadv_frag_create(struct sk_buff *skb,
 	if (!skb_fragment)
 		goto err;
 
+	skb->priority = TC_PRIO_CONTROL;
+
 	/* Eat the last mtu-bytes of the skb */
 	skb_reserve(skb_fragment, header_size + ETH_HLEN);
 	skb_split(skb, skb_fragment, skb->len - fragment_size);

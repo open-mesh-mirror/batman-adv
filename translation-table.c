@@ -2068,7 +2068,6 @@ static void batadv_tt_tvlv_generate(struct batadv_priv *bat_priv,
 	uint32_t i;
 
 	tt_tot = batadv_tt_entries(tt_len);
-
 	tt_change = (struct batadv_tvlv_tt_change *)tvlv_buff;
 
 	rcu_read_lock();
