@@ -31,7 +31,7 @@ void batadv_free_rcu_orig_vlan(struct rcu_head *rcu)
 {
 	struct batadv_orig_node_vlan *vlan;
 
-	vlan = container_of(rcu, structbatadv_orig_node_vlan, rcu);
+	vlan = container_of(rcu, struct batadv_orig_node_vlan, rcu);
 
 	kfree(vlan);
 }
