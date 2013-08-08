@@ -457,17 +457,20 @@ int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 	vlan->vid = vid;
 	atomic_set(&vlan->refcount, 1);
 
+	atomic_set(&vlan->ap_isolation, 0);
+
+	err = batadv_sysfs_add_vlan(bat_priv->soft_iface, vlan);
+	if (err) {
+		kfree(vlan);
+		return err;
+	}
+
 	/* add a new TT local entry. This one will be marked with the NOPURGE
 	 * flag
 	 */
 	batadv_tt_local_add(bat_priv->soft_iface,
 			    bat_priv->soft_iface->dev_addr, vid,
 			    BATADV_NULL_IFINDEX);
-	atomic_set(&vlan->ap_isolation, 0);
-
-	err = batadv_sysfs_add_vlan(bat_priv->soft_iface, vlan);
-	if (err)
-		return err;
 
 	spin_lock_bh(&bat_priv->softif_vlan_list_lock);
 	hlist_add_head_rcu(&vlan->list, &bat_priv->softif_vlan_list);
