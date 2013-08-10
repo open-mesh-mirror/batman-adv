@@ -282,8 +282,9 @@ static void batadv_dat_entry_add(struct batadv_priv *bat_priv, __be32 ip,
 			memcpy(dat_entry->mac_addr, mac_addr, ETH_ALEN);
 		dat_entry->last_update = jiffies;
 		batadv_dbg(BATADV_DBG_DAT, bat_priv,
-			   "Entry updated: %pI4 %pM (vid: %u)\n",
-			   &dat_entry->ip, dat_entry->mac_addr, vid);
+			   "Entry updated: %pI4 %pM (vid: %d)\n",
+			   &dat_entry->ip, dat_entry->mac_addr,
+			   BATADV_PRINT_VID(vid));
 		goto out;
 	}
 
@@ -307,8 +308,8 @@ static void batadv_dat_entry_add(struct batadv_priv *bat_priv, __be32 ip,
 		goto out;
 	}
 
-	batadv_dbg(BATADV_DBG_DAT, bat_priv, "New entry added: %pI4 %pM (vid: %u)\n",
-		   &dat_entry->ip, dat_entry->mac_addr, vid);
+	batadv_dbg(BATADV_DBG_DAT, bat_priv, "New entry added: %pI4 %pM (vid: %d)\n",
+		   &dat_entry->ip, dat_entry->mac_addr, BATADV_PRINT_VID(vid));
 
 out:
 	if (dat_entry)
