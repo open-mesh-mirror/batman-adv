@@ -450,6 +450,12 @@ int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 	struct batadv_softif_vlan *vlan;
 	int err;
 
+	vlan = batadv_softif_vlan_get(bat_priv, vid);
+	if (vlan) {
+		batadv_softif_vlan_free_ref(vlan);
+		return -EEXIST;
+	}
+
 	vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
 	if (!vlan)
 		return -ENOMEM;
