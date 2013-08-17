@@ -309,6 +309,14 @@ static int __batadv_interface_set_mac_addr(x, y)
 
 #define netdev_notifier_info_to_dev(ptr) ptr
 
+/* older kernels still need to call skb_abort_seq_read() */
+#define skb_seq_read(consumed, data, st) \
+	({ \
+		int len = skb_seq_read(consumed, data, st); \
+		if (len == 0) \
+			skb_abort_seq_read(st); \
+		len; \
+	})
 #endif /* < KERNEL_VERSION(3, 11, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
