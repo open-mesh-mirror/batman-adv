@@ -367,10 +367,10 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 /* older kernels still need to call skb_abort_seq_read() */
 #define skb_seq_read(consumed, data, st) \
 	({ \
-		int len = skb_seq_read(consumed, data, st); \
-		if (len == 0) \
+		int __len = skb_seq_read(consumed, data, st); \
+		if (__len == 0) \
 			skb_abort_seq_read(st); \
-		len; \
+		__len; \
 	})
 #endif /* < KERNEL_VERSION(3, 11, 0) */
 
