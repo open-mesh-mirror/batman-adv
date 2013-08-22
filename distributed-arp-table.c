@@ -953,6 +953,10 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 		if (!skb_new)
 			goto out;
 
+		if (vid & BATADV_VLAN_HAS_TAG)
+			skb_new = vlan_insert_tag(skb_new, htons(ETH_P_8021Q),
+						  vid & VLAN_VID_MASK);
+
 		skb_reset_mac_header(skb_new);
 		skb_new->protocol = eth_type_trans(skb_new,
 						   bat_priv->soft_iface);
@@ -1023,6 +1027,10 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 
 	if (!skb_new)
 		goto out;
+
+	if (vid & BATADV_VLAN_HAS_TAG)
+		skb_new = vlan_insert_tag(skb_new, htons(ETH_P_8021Q),
+					  vid & VLAN_VID_MASK);
 
 	/* To preserve backwards compatibility, the node has choose the outgoing
 	 * format based on the incoming request packet type. The assumption is
