@@ -922,11 +922,12 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 	if (type != ARPOP_REQUEST)
 		goto out;
 
-	batadv_dbg_arp(bat_priv, skb, type, 0, "Parsing outgoing ARP REQUEST");
+	batadv_dbg_arp(bat_priv, skb, type, hdr_size,
+		       "Parsing outgoing ARP REQUEST");
 
-	ip_src = batadv_arp_ip_src(skb, 0);
-	hw_src = batadv_arp_hw_src(skb, 0);
-	ip_dst = batadv_arp_ip_dst(skb, 0);
+	ip_src = batadv_arp_ip_src(skb, hdr_size);
+	hw_src = batadv_arp_hw_src(skb, hdr_size);
+	ip_dst = batadv_arp_ip_dst(skb, hdr_size);
 
 	batadv_dat_entry_add(bat_priv, ip_src, hw_src, vid);
 
@@ -956,7 +957,7 @@ bool batadv_dat_snoop_outgoing_arp_request(struct batadv_priv *bat_priv,
 		skb_new->protocol = eth_type_trans(skb_new,
 						   bat_priv->soft_iface);
 		bat_priv->stats.rx_packets++;
-		bat_priv->stats.rx_bytes += skb->len + ETH_HLEN;
+		bat_priv->stats.rx_bytes += skb->len + ETH_HLEN + hdr_size;
 		bat_priv->soft_iface->last_rx = jiffies;
 
 		netif_rx(skb_new);
@@ -1069,7 +1070,8 @@ void batadv_dat_snoop_outgoing_arp_reply(struct batadv_priv *bat_priv,
 	if (type != ARPOP_REPLY)
 		return;
 
-	batadv_dbg_arp(bat_priv, skb, type, 0, "Parsing outgoing ARP REPLY");
+	batadv_dbg_arp(bat_priv, skb, type, hdr_size,
+		       "Parsing outgoing ARP REPLY");
 
 	hw_src = batadv_arp_hw_src(skb, hdr_size);
 	ip_src = batadv_arp_ip_src(skb, hdr_size);
