@@ -1012,10 +1012,10 @@ void batadv_tvlv_ogm_receive(struct batadv_priv *bat_priv,
  *  payload
  * @bat_priv: the bat priv with all the soft interface information
  * @optr: ogm tvlv handler callback function. This function receives the orig
- *	  node, flags and the tvlv content as argument to process.
- * uptr: unicast tvlv handler callback function. This function receives the
- *	 source & destination of the unicast packet as well as the tvlv content
- *	 to process.
+ *  node, flags and the tvlv content as argument to process.
+ * @uptr: unicast tvlv handler callback function. This function receives the
+ *  source & destination of the unicast packet as well as the tvlv content
+ *  to process.
  * @type: tvlv handler type to be registered
  * @version: tvlv handler version to be registered
  * @flags: flags to enable or disable TVLV API behavior
