@@ -224,15 +224,12 @@ static void batadv_gw_tvlv_ogm_handler_v1(struct batadv_priv *bat_priv,
 /**
  * batadv_gw_init - initialise the gateway handling internals
  * @bat_priv: the bat priv with all the soft interface information
- *
- * Return 0 on success or negative error number in case of failure.
  */
-int batadv_gw_init(struct batadv_priv *bat_priv)
+void batadv_gw_init(struct batadv_priv *bat_priv)
 {
 	batadv_tvlv_handler_register(bat_priv, batadv_gw_tvlv_ogm_handler_v1,
 				     NULL, BATADV_TVLV_GW, 1,
 				     BATADV_TVLV_HANDLER_OGM_CIFNOTFND);
-	return 0;
 }
 
 /**

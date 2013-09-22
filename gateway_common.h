@@ -43,7 +43,7 @@ enum batadv_bandwidth_units {
 ssize_t batadv_gw_bandwidth_set(struct net_device *net_dev, char *buff,
 				size_t count);
 void batadv_gw_tvlv_container_update(struct batadv_priv *bat_priv);
-int batadv_gw_init(struct batadv_priv *bat_priv);
+void batadv_gw_init(struct batadv_priv *bat_priv);
 void batadv_gw_free(struct batadv_priv *bat_priv);
 
 #endif /* _NET_BATMAN_ADV_GATEWAY_COMMON_H_ */
