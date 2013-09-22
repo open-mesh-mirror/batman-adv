@@ -2729,7 +2729,7 @@ out:
 }
 
 /**
- * batadv_dat_status_update - process incoming tt reply
+ * batadv_handle_tt_response - process incoming tt reply
  * @bat_priv: the bat priv with all the soft interface information
  * @tt_data: tt data containing the tt request information
  * @resp_src: mac address of tt reply sender
