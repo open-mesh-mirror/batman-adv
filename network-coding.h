@@ -49,7 +49,6 @@ int batadv_nc_init_debugfs(struct batadv_priv *bat_priv);
 
 static inline void batadv_nc_status_update(struct net_device *net_dev)
 {
-	return;
 }
 
 static inline int batadv_nc_init(struct batadv_priv *bat_priv)
