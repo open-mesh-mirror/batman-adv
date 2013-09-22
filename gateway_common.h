@@ -31,7 +31,7 @@ enum batadv_gw_modes {
  * @BATADV_BW_UNIT_KBIT: unit type kbit
  * @BATADV_BW_UNIT_MBIT: unit type mbit
  */
-enum batadv_bandwidth_types {
+enum batadv_bandwidth_units {
 	BATADV_BW_UNIT_KBIT,
 	BATADV_BW_UNIT_MBIT,
 };

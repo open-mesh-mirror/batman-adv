@@ -34,9 +34,10 @@
 static bool batadv_parse_gw_bandwidth(struct net_device *net_dev, char *buff,
 				      uint32_t *down, uint32_t *up)
 {
-	int ret, bw_unit_type = BATADV_BW_UNIT_KBIT;
+	enum batadv_bandwidth_units bw_unit_type = BATADV_BW_UNIT_KBIT;
 	char *slash_ptr, *tmp_ptr;
 	long ldown, lup;
+	int ret;
 
 	slash_ptr = strchr(buff, '/');
 	if (slash_ptr)
