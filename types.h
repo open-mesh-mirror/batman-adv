@@ -246,7 +246,7 @@ struct batadv_orig_node {
  * @BATADV_ORIG_CAPA_HAS_NC: orig node has network coding enabled
  */
 enum batadv_orig_capabilities {
-	BATADV_ORIG_CAPA_HAS_DAT = BIT(1),
+	BATADV_ORIG_CAPA_HAS_DAT = BIT(0),
 	BATADV_ORIG_CAPA_HAS_NC = BIT(2),
 };
 
