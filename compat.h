@@ -241,11 +241,13 @@ static inline void batadv_eth_hw_addr_random(struct net_device *dev)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
 
+#ifndef net_ratelimited_function
 #define net_ratelimited_function(func, ...) \
 	do { \
 		if (net_ratelimit()) \
 			func(__VA_ARGS__); \
 	} while (0)
+#endif /* ifndef net_ratelimited_function */
 
 #endif /* < KERNEL_VERSION(3, 5, 0) */
 
