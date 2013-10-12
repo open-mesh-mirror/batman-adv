@@ -195,7 +195,7 @@ struct batadv_ogm_packet {
 #define BATADV_OGM_HLEN sizeof(struct batadv_ogm_packet)
 
 /**
- * batadc_icmp_header - common ICMP header
+ * batadv_icmp_header - common ICMP header
  * @header: common batman header
  * @msg_type: ICMP packet type
  * @dst: address of the destination node
