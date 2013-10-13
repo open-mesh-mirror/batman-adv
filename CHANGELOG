@@ -1,3 +1,14 @@
+batman-adv 2013.4.0
+
+ * support latest kernels (2.6.29 - 3.12)
+ * bugs squashed:
+   - fix potential kernel paging errors for unicast transmissions
+   - fix network coding initialization for multiple soft interfaces
+   - fix BLA VLAN handling regression
+   - improve backward compatibility code
+
+ -- Sun, 13 Oct 2013 18:50:11 +0200
+
 batman-adv 2013.3.0:
 
  * support latest kernels (2.6.29 - 3.11)
