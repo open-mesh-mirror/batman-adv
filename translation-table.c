@@ -358,6 +358,13 @@ static void batadv_tt_local_event(struct batadv_priv *bat_priv,
 			goto del;
 		if (del_op_requested && !del_op_entry)
 			goto del;
+
+		/* this is a second add in the same originator interval. It
+		 * means that flags have been changed: update them!
+		 */
+		if (!del_op_requested && !del_op_entry)
+			entry->change.flags = flags;
+
 		continue;
 del:
 		list_del(&entry->list);
@@ -477,10 +484,15 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
 	struct batadv_tt_local_entry *tt_local;
 	struct batadv_tt_global_entry *tt_global;
+	struct net_device *in_dev = NULL;
 	struct hlist_head *head;
 	struct batadv_tt_orig_list_entry *orig_entry;
 	int hash_added, table_size, packet_size_max;
 	bool ret = false, roamed_back = false;
+	uint8_t remote_flags;
+
+	if (ifindex != BATADV_NULL_IFINDEX)
+		in_dev = dev_get_by_index(&init_net, ifindex);
 
 	tt_local = batadv_tt_local_hash_find(bat_priv, addr, vid);
 	tt_global = batadv_tt_global_hash_find(bat_priv, addr, vid);
@@ -542,7 +554,7 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const uint8_t *addr,
 	 */
 	tt_local->common.flags = BATADV_TT_CLIENT_NEW;
 	tt_local->common.vid = vid;
-	if (batadv_is_wifi_iface(ifindex))
+	if (batadv_is_wifi_netdev(in_dev))
 		tt_local->common.flags |= BATADV_TT_CLIENT_WIFI;
 	atomic_set(&tt_local->common.refcount, 2);
 	tt_local->last_seen = jiffies;
@@ -592,9 +604,26 @@ check_roaming:
 		}
 	}
 
-	ret = true;
+	/* store the current remote flags before altering them. This helps
+	 * understanding is flags are changing or not
+	 */
+	remote_flags = tt_local->common.flags & BATADV_TT_REMOTE_MASK;
 
+	if (batadv_is_wifi_netdev(in_dev))
+		tt_local->common.flags |= BATADV_TT_CLIENT_WIFI;
+	else
+		tt_local->common.flags &= ~BATADV_TT_CLIENT_WIFI;
+
+	/* if any "dynamic" flag has been modified, resend an ADD event for this
+	 * entry so that all the nodes can get the new flags
+	 */
+	if (remote_flags ^ (tt_local->common.flags & BATADV_TT_REMOTE_MASK))
+		batadv_tt_local_event(bat_priv, tt_local, BATADV_NO_FLAGS);
+
+	ret = true;
 out:
+	if (in_dev)
+		dev_put(in_dev);
 	if (tt_local)
 		batadv_tt_local_entry_free_ref(tt_local);
 	if (tt_global)
@@ -1930,6 +1959,7 @@ static uint32_t batadv_tt_global_crc(struct batadv_priv *bat_priv,
 	struct batadv_tt_global_entry *tt_global;
 	struct hlist_head *head;
 	uint32_t i, crc_tmp, crc = 0;
+	uint8_t flags;
 
 	for (i = 0; i < hash->size; i++) {
 		head = &hash->table[i];
@@ -1968,6 +1998,13 @@ static uint32_t batadv_tt_global_crc(struct batadv_priv *bat_priv,
 
 			crc_tmp = crc32c(0, &tt_common->vid,
 					 sizeof(tt_common->vid));
+
+			/* compute the CRC on flags that have to be kept in sync
+			 * among nodes
+			 */
+			flags = tt_common->flags & BATADV_TT_SYNC_MASK;
+			crc_tmp = crc32c(crc_tmp, &flags, sizeof(flags));
+
 			crc ^= crc32c(crc_tmp, tt_common->addr, ETH_ALEN);
 		}
 		rcu_read_unlock();
@@ -1993,6 +2030,7 @@ static uint32_t batadv_tt_local_crc(struct batadv_priv *bat_priv,
 	struct batadv_tt_common_entry *tt_common;
 	struct hlist_head *head;
 	uint32_t i, crc_tmp, crc = 0;
+	uint8_t flags;
 
 	for (i = 0; i < hash->size; i++) {
 		head = &hash->table[i];
@@ -2013,6 +2051,13 @@ static uint32_t batadv_tt_local_crc(struct batadv_priv *bat_priv,
 
 			crc_tmp = crc32c(0, &tt_common->vid,
 					 sizeof(tt_common->vid));
+
+			/* compute the CRC on flags that have to be kept in sync
+			 * among nodes
+			 */
+			flags = tt_common->flags & BATADV_TT_SYNC_MASK;
+			crc_tmp = crc32c(crc_tmp, &flags, sizeof(flags));
+
 			crc ^= crc32c(crc_tmp, tt_common->addr, ETH_ALEN);
 		}
 		rcu_read_unlock();
@@ -3494,6 +3539,9 @@ out:
 int batadv_tt_init(struct batadv_priv *bat_priv)
 {
 	int ret;
+
+	/* synchronized flags must be remote */
+	BUILD_BUG_ON(!(BATADV_TT_SYNC_MASK & BATADV_TT_REMOTE_MASK));
 
 	ret = batadv_tt_local_init(bat_priv);
 	if (ret < 0)
