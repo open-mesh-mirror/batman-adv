@@ -120,8 +120,8 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p)
 	if (atomic_read(&bat_priv->mesh_state) == BATADV_MESH_ACTIVE) {
 		batadv_tt_local_remove(bat_priv, old_addr, BATADV_NO_FLAGS,
 				       "mac address changed", false);
-		batadv_tt_local_add(dev, addr->sa_data, BATADV_NULL_IFINDEX,
-				    BATADV_NO_FLAGS);
+		batadv_tt_local_add(dev, addr->sa_data, BATADV_NO_FLAGS,
+				    BATADV_NULL_IFINDEX);
 	}
 
 	return 0;
