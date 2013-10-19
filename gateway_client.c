@@ -722,7 +722,7 @@ bool batadv_gw_is_dhcp_target(struct sk_buff *skb, unsigned int *header_len)
 }
 
 /**
- * batadv_gw_out_of_range - check if the dhcp request destination the best gw
+ * batadv_gw_out_of_range - check if the dhcp request destination is the best gw
  * @bat_priv: the bat priv with all the soft interface information
  * @skb: the outgoing packet
  *

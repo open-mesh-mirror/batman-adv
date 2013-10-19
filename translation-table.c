@@ -2181,7 +2181,7 @@ static int batadv_tt_global_valid(const void *entry_ptr,
 }
 
 /**
- * batadv_tt_tvlv_generate - fill the tvlv buff it with the tt entries from the
+ * batadv_tt_tvlv_generate - fill the tvlv buff with the tt entries from the
  *  specified tt hash
  * @bat_priv: the bat priv with all the soft interface information
  * @hash: hash table containing the tt entries
@@ -2359,7 +2359,7 @@ static int batadv_send_tt_request(struct batadv_priv *bat_priv,
 	tvlv_tt_data->num_vlan = htons(num_vlan);
 
 	/* send all the CRCs within the request. This is needed by intermediate
-	 * node to ensure they have the correct table before replying
+	 * nodes to ensure they have the correct table before replying
 	 */
 	tt_vlan_req = (struct batadv_tvlv_tt_vlan_data *)(tvlv_tt_data + 1);
 	for (i = 0; i < num_vlan; i++) {
