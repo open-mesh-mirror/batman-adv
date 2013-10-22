@@ -54,7 +54,7 @@ static struct batadv_priv *batadv_vlan_kobj_to_batpriv(struct kobject *obj)
 	if (!strcmp(BATADV_SYSFS_IF_MESH_SUBDIR, obj->name))
 		return batadv_kobj_to_batpriv(obj);
 
-	/* ..while the attributed for the tagged vlans are located in
+	/* ..while the attributes for the tagged vlans are located in
 	 * the in the corresponding "vlan%VID" subfolder
 	 */
 	return batadv_kobj_to_batpriv(obj->parent);
