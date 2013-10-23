@@ -318,7 +318,6 @@ static int batadv_recv_my_icmp_packet(struct batadv_priv *bat_priv,
 	default:
 		/* drop unknown type */
 		goto out;
-
 	}
 out:
 	if (primary_if)
