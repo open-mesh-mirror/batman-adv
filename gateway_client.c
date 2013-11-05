@@ -214,7 +214,8 @@ void batadv_gw_check_client_stop(struct batadv_priv *bat_priv)
 		return;
 
 	/* deselect the current gateway so that next time that client mode is
-	 * enabled a proper GW_ADD event can be sent */
+	 * enabled a proper GW_ADD event can be sent
+	 */
 	batadv_gw_select(bat_priv, NULL);
 
 	/* if batman-adv is switching the gw client mode off and a gateway was
