@@ -262,7 +262,7 @@ static inline void batadv_dbg(int type __always_unused,
  */
 static inline int batadv_compare_eth(const void *data1, const void *data2)
 {
-	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
+	return memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0;
 }
 
 /**

@@ -36,7 +36,7 @@ int batadv_compare_orig(const struct hlist_node *node, const void *data2)
 	const void *data1 = container_of(node, struct batadv_orig_node,
 					 hash_entry);
 
-	return (memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0);
+	return memcmp(data1, data2, ETH_ALEN) == 0 ? 1 : 0;
 }
 
 /**
