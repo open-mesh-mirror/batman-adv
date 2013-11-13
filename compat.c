@@ -57,14 +57,6 @@ void batadv_free_rcu_gw_node(struct rcu_head *rcu)
 	kfree(gw_node);
 }
 
-void batadv_free_rcu_neigh_node(struct rcu_head *rcu)
-{
-	struct batadv_neigh_node *neigh_node;
-
-	neigh_node = container_of(rcu, struct batadv_neigh_node, rcu);
-	kfree(neigh_node);
-}
-
 void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu)
 {
 	struct batadv_tt_common_entry *tt_common_entry;
