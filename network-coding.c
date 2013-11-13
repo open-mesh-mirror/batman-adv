@@ -1014,12 +1014,17 @@ static bool batadv_nc_code_packets(struct batadv_priv *bat_priv,
 	int coded_size = sizeof(*coded_packet);
 	int header_add = coded_size - unicast_size;
 
-	router_neigh = batadv_orig_node_get_router(neigh_node->orig_node);
+	/* TODO: do we need to consider the outgoing interface for
+	 * coded packets?
+	 */
+	router_neigh = batadv_orig_router_get(neigh_node->orig_node,
+					      BATADV_IF_DEFAULT);
 	if (!router_neigh)
 		goto out;
 
 	neigh_tmp = nc_packet->neigh_node;
-	router_coding = batadv_orig_node_get_router(neigh_tmp->orig_node);
+	router_coding = batadv_orig_router_get(neigh_tmp->orig_node,
+					       BATADV_IF_DEFAULT);
 	if (!router_coding)
 		goto out;
 
