@@ -59,7 +59,6 @@ static inline int batadv_nc_mesh_init(struct batadv_priv *bat_priv)
 
 static inline void batadv_nc_mesh_free(struct batadv_priv *bat_priv)
 {
-	return;
 }
 
 static inline void
@@ -69,7 +68,6 @@ batadv_nc_update_nc_node(struct batadv_priv *bat_priv,
 			 struct batadv_ogm_packet *ogm_packet,
 			 int is_single_hop_neigh)
 {
-	return;
 }
 
 static inline void
@@ -78,17 +76,14 @@ batadv_nc_purge_orig(struct batadv_priv *bat_priv,
 		     bool (*to_purge)(struct batadv_priv *,
 				      struct batadv_nc_node *))
 {
-	return;
 }
 
 static inline void batadv_nc_init_bat_priv(struct batadv_priv *bat_priv)
 {
-	return;
 }
 
 static inline void batadv_nc_init_orig(struct batadv_orig_node *orig_node)
 {
-	return;
 }
 
 static inline bool batadv_nc_skb_forward(struct sk_buff *skb,
@@ -101,14 +96,12 @@ static inline void
 batadv_nc_skb_store_for_decoding(struct batadv_priv *bat_priv,
 				 struct sk_buff *skb)
 {
-	return;
 }
 
 static inline void
 batadv_nc_skb_store_sniffed_unicast(struct batadv_priv *bat_priv,
 				    struct sk_buff *skb)
 {
-	return;
 }
 
 static inline int batadv_nc_nodes_seq_print_text(struct seq_file *seq,
