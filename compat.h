@@ -152,6 +152,8 @@ static inline int batadv_param_set_copystring(const char *val,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
 
+/* cast last argument of strict_strtoul() because we have a uint32_t */
+#define kstrtou32(cp, base, v) strict_strtoul(cp, base, (unsigned long *)v)
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
 
