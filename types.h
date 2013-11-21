@@ -81,6 +81,7 @@ struct batadv_hard_iface_bat_iv {
  * @rcu: struct used for freeing in an RCU-safe manner
  * @bat_iv: BATMAN IV specific per hard interface data
  * @cleanup_work: work queue callback item for hard interface deinit
+ * @debug_dir: dentry for nc subdir in batman-adv directory in debugfs
  */
 struct batadv_hard_iface {
 	struct list_head list;
@@ -95,6 +96,7 @@ struct batadv_hard_iface {
 	struct rcu_head rcu;
 	struct batadv_hard_iface_bat_iv bat_iv;
 	struct work_struct cleanup_work;
+	struct dentry *debug_dir;
 };
 
 /**
