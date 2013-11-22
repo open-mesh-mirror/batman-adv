@@ -1368,7 +1368,7 @@ batadv_iv_ogm_process_per_outif(const struct sk_buff *skb, int ogm_offset,
 {
 	struct batadv_priv *bat_priv = netdev_priv(if_incoming->soft_iface);
 	struct batadv_neigh_node *router = NULL, *router_router = NULL;
-	struct batadv_orig_node *orig_neigh_node, *orig_node_tmp;
+	struct batadv_orig_node *orig_neigh_node;
 	struct batadv_orig_ifinfo *orig_ifinfo;
 	struct batadv_neigh_node *orig_neigh_router = NULL;
 	struct batadv_neigh_ifinfo *router_ifinfo = NULL;
@@ -1412,7 +1412,6 @@ batadv_iv_ogm_process_per_outif(const struct sk_buff *skb, int ogm_offset,
 
 	router = batadv_orig_router_get(orig_node, if_outgoing);
 	if (router) {
-		orig_node_tmp = router->orig_node;
 		router_router = batadv_orig_router_get(router->orig_node,
 						       if_outgoing);
 		router_ifinfo = batadv_neigh_ifinfo_get(router, if_outgoing);
