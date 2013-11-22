@@ -715,9 +715,21 @@ static bool batadv_can_nc_with_orig(struct batadv_priv *bat_priv,
 				    struct batadv_orig_node *orig_node,
 				    struct batadv_ogm_packet *ogm_packet)
 {
-	if (orig_node->last_real_seqno != ntohl(ogm_packet->seqno))
+	struct batadv_orig_ifinfo *orig_ifinfo;
+	uint32_t last_real_seqno;
+	uint8_t last_ttl;
+
+	orig_ifinfo = batadv_orig_ifinfo_get(orig_node, BATADV_IF_DEFAULT);
+	if (!orig_ifinfo)
 		return false;
-	if (orig_node->last_ttl != ogm_packet->header.ttl + 1)
+
+	last_ttl = orig_ifinfo->last_ttl;
+	last_real_seqno = orig_ifinfo->last_real_seqno;
+	batadv_orig_ifinfo_free_ref(orig_ifinfo);
+
+	if (last_real_seqno != ntohl(ogm_packet->seqno))
+		return false;
+	if (last_ttl != ogm_packet->header.ttl + 1)
 		return false;
 	if (!batadv_compare_eth(ogm_packet->orig, ogm_packet->prev_sender))
 		return false;
