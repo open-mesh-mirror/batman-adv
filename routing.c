@@ -428,7 +428,7 @@ batadv_find_router(struct batadv_priv *bat_priv,
 {
 	struct batadv_algo_ops *bao = bat_priv->bat_algo_ops;
 	struct batadv_neigh_node *first_candidate_router = NULL;
-	struct batadv_neigh_node *next_candidate_router;
+	struct batadv_neigh_node *next_candidate_router = NULL;
 	struct batadv_neigh_node *router, *cand_router = NULL;
 	struct batadv_orig_ifinfo *cand, *first_candidate = NULL;
 	struct batadv_orig_ifinfo *next_candidate = NULL;
