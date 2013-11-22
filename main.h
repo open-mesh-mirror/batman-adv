@@ -71,7 +71,8 @@
 
 /* default interface for multi interface operation. The default interface is
  * used for communication which originated locally (i.e. is not forwarded)
- * or where special forwarding is not desired/necessary. */
+ * or where special forwarding is not desired/necessary.
+ */
 #define BATADV_IF_DEFAULT	((struct batadv_hard_iface *)NULL)
 
 #define BATADV_NUM_WORDS BITS_TO_LONGS(BATADV_TQ_LOCAL_WINDOW_SIZE)
