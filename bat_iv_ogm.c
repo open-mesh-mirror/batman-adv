@@ -466,11 +466,6 @@ static void batadv_iv_ogm_emit(struct batadv_forw_packet *forw_packet)
 	struct net_device *soft_iface;
 	struct batadv_priv *bat_priv;
 	struct batadv_hard_iface *primary_if = NULL;
-	struct batadv_ogm_packet *batadv_ogm_packet;
-	uint8_t *packet_pos;
-
-	packet_pos = forw_packet->skb->data;
-	batadv_ogm_packet = (struct batadv_ogm_packet *)packet_pos;
 
 	if (!forw_packet->if_incoming) {
 		pr_err("Error - can't forward packet: incoming iface not specified\n");
