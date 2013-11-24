@@ -252,7 +252,7 @@ static int batadv_originators_open(struct inode *inode, struct file *file)
  * @file: pointer to the seq_file
  */
 static int batadv_originators_hardif_open(struct inode *inode,
-					   struct file *file)
+					  struct file *file)
 {
 	struct net_device *net_dev = (struct net_device *)inode->i_private;
 	return single_open(file, batadv_orig_hardif_seq_print_text, net_dev);
