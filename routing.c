@@ -430,8 +430,10 @@ batadv_find_router(struct batadv_priv *bat_priv,
 	struct batadv_neigh_node *first_candidate_router = NULL;
 	struct batadv_neigh_node *next_candidate_router = NULL;
 	struct batadv_neigh_node *router, *cand_router = NULL;
+	struct batadv_neigh_node *last_cand_router = NULL;
 	struct batadv_orig_ifinfo *cand, *first_candidate = NULL;
 	struct batadv_orig_ifinfo *next_candidate = NULL;
+	struct batadv_orig_ifinfo *last_candidate;
 	bool last_candidate_found = false;
 
 	if (!orig_node)
@@ -455,6 +457,10 @@ batadv_find_router(struct batadv_priv *bat_priv,
 	 * router - obviously there are no other candidates.
 	 */
 	rcu_read_lock();
+	last_candidate = orig_node->last_bonding_candidate;
+	if (last_candidate)
+		last_cand_router = rcu_dereference(last_candidate->router);
+
 	hlist_for_each_entry_rcu(cand, &orig_node->ifinfo_list, list) {
 		/* acquire some structures and references ... */
 		if (!atomic_inc_not_zero(&cand->refcount))
@@ -478,9 +484,8 @@ batadv_find_router(struct batadv_priv *bat_priv,
 			goto next;
 
 		/* don't use the same router twice */
-		if (orig_node->last_bonding_candidate &&
-		    (orig_node->last_bonding_candidate->router == cand_router))
-				goto next;
+		if (last_cand_router == cand_router)
+			goto next;
 
 		/* mark the first possible candidate */
 		if (!first_candidate) {
@@ -494,14 +499,13 @@ batadv_find_router(struct batadv_priv *bat_priv,
 		 * candidate ... this function should select the next candidate
 		 * AFTER the previously used bonding candidate.
 		 */
-		if (!orig_node->last_bonding_candidate ||
-		    last_candidate_found) {
+		if (!last_candidate || last_candidate_found) {
 			next_candidate = cand;
 			next_candidate_router = cand_router;
 			break;
 		}
 
-		if (orig_node->last_bonding_candidate == cand)
+		if (last_candidate == cand)
 			last_candidate_found = true;
 next:
 		/* free references */
