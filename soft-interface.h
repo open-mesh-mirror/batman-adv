@@ -29,4 +29,20 @@ void batadv_softif_destroy_sysfs(struct net_device *soft_iface);
 int batadv_softif_is_valid(const struct net_device *net_dev);
 extern struct rtnl_link_ops batadv_link_ops;
 
+#ifdef CONFIG_BRIDGE_NETFILTER
+/**
+ * batadv_nf_bridge_skb_free - clean the NF bridge data in an skb
+ * @skb: the skb which nf data has to be free'd
+ */
+static inline void batadv_nf_bridge_skb_free(struct sk_buff *skb)
+{
+	nf_bridge_put(skb->nf_bridge);
+	skb->nf_bridge = NULL;
+}
+#else
+static inline void batadv_nf_bridge_skb_free(struct sk_buff *skb)
+{
+}
+#endif /* CONFIG_BRIDGE_NETFILTER */
+
 #endif /* _NET_BATMAN_ADV_SOFT_INTERFACE_H_ */
