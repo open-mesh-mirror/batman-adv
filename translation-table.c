@@ -3584,7 +3584,7 @@ int batadv_tt_init(struct batadv_priv *bat_priv)
  * @addr: the mac address of the client
  * @vid: the identifier of the VLAN where this client is connected
  *
- * Return true if the client is marked with the TT_CLIENT_ISOLA flag, flase
+ * Returns true if the client is marked with the TT_CLIENT_ISOLA flag, false
  * otherwise
  */
 bool batadv_tt_global_is_isolated(struct batadv_priv *bat_priv,
