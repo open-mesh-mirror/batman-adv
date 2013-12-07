@@ -407,7 +407,7 @@ static ssize_t batadv_store_gw_mode(struct kobject *kobj,
 		    curr_gw_mode_str, buff);
 
 	/* Invoking batadv_gw_reselect() is not enough to really de-select the
-	 * current GW. It will only instruct the gateway clientcode to perform
+	 * current GW. It will only instruct the gateway client code to perform
 	 * a re-election the next time that this is needed.
 	 *
 	 * When gw client mode is being switched off the current GW must be
