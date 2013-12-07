@@ -958,7 +958,7 @@ int batadv_orig_hardif_seq_print_text(struct seq_file *seq, void *offset)
 	hard_iface = batadv_hardif_get_by_netdev(net_dev);
 
 	if (!hard_iface || !hard_iface->soft_iface) {
-		seq_puts(seq, "Interface not known to to B.A.T.M.A.N.\n");
+		seq_puts(seq, "Interface not known to B.A.T.M.A.N.\n");
 		goto out;
 	}
 
