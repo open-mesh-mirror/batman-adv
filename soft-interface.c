@@ -392,6 +392,14 @@ void batadv_interface_rx(struct net_device *soft_iface,
 				  vid))
 		goto dropped;
 
+	/* Clean the netfilter state before delivering the skb.
+	 * This packet may have traversed a bridge when it was encapsulated into
+	 * the batman header. Now that the header has been removed, the
+	 * netfilter state must be cleaned up to avoid to mess up with a
+	 * possible second bridge
+	 */
+	batadv_nf_bridge_skb_free(skb);
+
 	netif_rx(skb);
 	goto out;
 
