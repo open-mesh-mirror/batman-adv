@@ -380,4 +380,10 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 	})
 #endif /* < KERNEL_VERSION(3, 11, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
+
+#define ether_addr_equal_unaligned(_a, _b) (memcmp(_a, _b, ETH_ALEN) == 0)
+
+#endif /* < KERNEL_VERSION(3, 14, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
