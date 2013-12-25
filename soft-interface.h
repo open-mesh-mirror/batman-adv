@@ -31,20 +31,4 @@ void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *softif_vlan);
 struct batadv_softif_vlan *batadv_softif_vlan_get(struct batadv_priv *bat_priv,
 						  unsigned short vid);
 
-#ifdef CONFIG_BRIDGE_NETFILTER
-/**
- * batadv_nf_bridge_skb_free - clean the NF bridge data in an skb
- * @skb: the skb which nf data has to be free'd
- */
-static inline void batadv_nf_bridge_skb_free(struct sk_buff *skb)
-{
-	nf_bridge_put(skb->nf_bridge);
-	skb->nf_bridge = NULL;
-}
-#else
-static inline void batadv_nf_bridge_skb_free(struct sk_buff *skb)
-{
-}
-#endif /* CONFIG_BRIDGE_NETFILTER */
-
 #endif /* _NET_BATMAN_ADV_SOFT_INTERFACE_H_ */

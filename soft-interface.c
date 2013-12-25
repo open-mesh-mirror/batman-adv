@@ -351,6 +351,11 @@ void batadv_interface_rx(struct net_device *soft_iface,
 	skb_pull_rcsum(skb, hdr_size);
 	skb_reset_mac_header(skb);
 
+	/* clean the netfilter state now that the batman-adv header has been
+	 * removed
+	 */
+	nf_reset(skb);
+
 	vid = batadv_get_vid(skb, hdr_size);
 	ethhdr = eth_hdr(skb);
 
@@ -411,14 +416,6 @@ void batadv_interface_rx(struct net_device *soft_iface,
 					 ethhdr->h_dest, vid)) {
 		goto dropped;
 	}
-
-	/* Clean the netfilter state before delivering the skb.
-	 * This packet may have traversed a bridge when it was encapsulated into
-	 * the batman header. Now that the header has been removed, the
-	 * netfilter state must be cleaned up to avoid to mess up with a
-	 * possible second bridge
-	 */
-	batadv_nf_bridge_skb_free(skb);
 
 	netif_rx(skb);
 	goto out;
