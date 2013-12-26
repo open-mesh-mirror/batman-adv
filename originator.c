@@ -783,14 +783,19 @@ batadv_find_best_neighbor(struct batadv_priv *bat_priv,
 	struct batadv_algo_ops *bao = bat_priv->bat_algo_ops;
 
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(neigh, &orig_node->neigh_list, list)
-		if (!best ||
-		    (bao->bat_neigh_cmp(neigh, if_outgoing,
-					best, if_outgoing) <= 0))
-			best = neigh;
+	hlist_for_each_entry_rcu(neigh, &orig_node->neigh_list, list) {
+		if (best && (bao->bat_neigh_cmp(neigh, if_outgoing,
+						best, if_outgoing) <= 0))
+			continue;
 
-	if (!atomic_inc_not_zero(&best->refcount))
-		best = NULL;
+		if (!atomic_inc_not_zero(&neigh->refcount))
+			continue;
+
+		if (best)
+			batadv_neigh_node_free_ref(best);
+
+		best = neigh;
+	}
 	rcu_read_unlock();
 
 	return best;
