@@ -207,6 +207,13 @@ static inline void skb_reset_mac_len(struct sk_buff *skb)
 	skb->mac_len = skb->network_header - skb->mac_header;
 }
 
+#undef BUILD_BUG_ON
+#ifdef __CHECKER__
+#define BUILD_BUG_ON(condition) (0)
+#else /* __CHECKER__ */
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+#endif /* __CHECKER__ */
+
 #endif /* < KERNEL_VERSION(3, 0, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
