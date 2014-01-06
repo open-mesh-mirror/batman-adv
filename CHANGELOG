@@ -1,3 +1,30 @@
+batman-adv 2014.0.0
+
+ * support latest kernels (2.6.29 - 3.13)
+ * This release contains major rework to allow better backward compatibility
+   in the future. Unfortunately these changes require a bump of the compat
+   version to 15, making this and future releases incompatible to the previous
+   releases.
+ * add TVLV container infrastructure for OGMs and TT packets
+ * remove vis functionality (replaced by userspace tool alfred)
+ * reorder packet types and flags in packet types
+ * move some packet members (gw flags, TT, ...) into TVLV containers
+ * rewrite the fragementation code for more fragments (up to 16), more
+   general usage (not only unicast packets) and reassembly on the way
+ * add VLAN awareness to TT, DAT and AP isolation
+ * use CRC32 instead of CRC16 for TT
+ * generalize many functions (neighbor comparison, etc) to prepare
+   code-sharing of BATMAN IV and BATMAN V
+ * set SKB priority according to content (for correct WMM classification)
+ * add a dummy soft-interface rx mode handler to allow static multicast
+   listeners
+ * bugs squashed:
+   - various packet alignment and size fixes (especially on ARM)
+   - white space, typos, kernel doc, etc
+   - improve backward compatibility code
+
+ -- Sat, 04 Jan 2014 20:20:05 +0100
+
 batman-adv 2013.4.0
 
  * support latest kernels (2.6.29 - 3.12)
