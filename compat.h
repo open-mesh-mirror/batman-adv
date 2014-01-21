@@ -403,6 +403,7 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
 
 #define ether_addr_equal_unaligned(_a, _b) (memcmp(_a, _b, ETH_ALEN) == 0)
+#define ether_addr_copy(_a, _b) memcpy(_a, _b, ETH_ALEN)
 
 #endif /* < KERNEL_VERSION(3, 14, 0) */
 
