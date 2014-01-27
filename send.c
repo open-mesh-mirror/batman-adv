@@ -279,6 +279,10 @@ static int batadv_send_skb_unicast(struct batadv_priv *bat_priv,
 		goto out;
 	}
 
+	/* skb->data might have been reallocated by
+	 * batadv_send_skb_prepare_unicast{,_4addr}()
+	 */
+	ethhdr = eth_hdr(skb);
 	unicast_packet = (struct batadv_unicast_packet *)skb->data;
 
 	/* inform the destination node that we are still missing a correct route
