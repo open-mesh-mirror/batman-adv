@@ -289,6 +289,17 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p) \
 }\
 static int __batadv_interface_set_mac_addr(x, y)
 
+#define batadv_interface_tx(x, y) \
+__batadv_interface_tx(struct sk_buff *skb, struct net_device *soft_iface); \
+static int batadv_interface_tx(struct sk_buff *skb, \
+			       struct net_device *soft_iface) \
+{ \
+	skb_reset_mac_header(skb); \
+	return __batadv_interface_tx(skb, soft_iface); \
+} \
+static int __batadv_interface_tx(struct sk_buff *skb, \
+				 struct net_device *soft_iface)
+
 #define netdev_master_upper_dev_link netdev_set_master
 #define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
 #define netdev_master_upper_dev_get(dev) \
