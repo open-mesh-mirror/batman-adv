@@ -103,6 +103,24 @@ static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
 
 #define pr_warn pr_warning
 
+#undef  netdev_for_each_mc_addr
+#define netdev_for_each_mc_addr(mclist, dev) \
+	for (mclist = (struct batadv_dev_addr_list *)dev->mc_list; mclist; \
+	     mclist = (struct batadv_dev_addr_list *)mclist->next)
+
+/* Note, that this breaks the usage of the normal 'struct netdev_hw_addr'
+ * for kernels < 2.6.35 in batman-adv!
+ */
+#define netdev_hw_addr batadv_dev_addr_list
+struct batadv_dev_addr_list {
+	struct dev_addr_list *next;
+	u8  addr[MAX_ADDR_LEN];
+	u8  da_addrlen;
+	u8  da_synced;
+	int da_users;
+	int da_gusers;
+};
+
 #endif /* < KERNEL_VERSION(2, 6, 35) */
 
 
@@ -142,6 +160,14 @@ static inline int batadv_param_set_copystring(const char *val,
 /* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
 #define addr_assign_type ifindex
 #define NET_ADDR_RANDOM 0
+
+#define netdev_master_upper_dev_get_rcu(dev) \
+	NULL; \
+	if (dev->br_port ? 1 : 0) { \
+		rcu_read_unlock(); \
+		dev_hold(dev); \
+		return dev; \
+	}
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
@@ -342,6 +368,17 @@ static int __batadv_interface_tx(struct sk_buff *skb, \
 	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
 	pos && ({ n = pos->member.next; 1; }); \
 	pos = hlist_entry_safe(n, typeof(*pos), member))
+
+#ifndef netdev_master_upper_dev_get_rcu
+#define netdev_master_upper_dev_get_rcu(dev) \
+	NULL; \
+	if (dev->priv_flags & IFF_BRIDGE_PORT) { \
+		rcu_read_unlock(); \
+		dev_hold(dev); \
+		return dev; \
+	}
+
+#endif /* netdev_master_upper_dev_get_rcu */
 
 #endif /* < KERNEL_VERSION(3, 9, 0) */
 

@@ -25,6 +25,8 @@ export CONFIG_BATMAN_ADV_BLA=y
 export CONFIG_BATMAN_ADV_DAT=y
 # B.A.T.M.A.N network coding (catwoman):
 export CONFIG_BATMAN_ADV_NC=n
+# B.A.T.M.A.N. multicast optimizations:
+export CONFIG_BATMAN_ADV_MCAST=y
 
 PWD:=$(shell pwd)
 KERNELPATH ?= /lib/modules/$(shell uname -r)/build
