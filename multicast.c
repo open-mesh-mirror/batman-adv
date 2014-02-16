@@ -498,7 +498,7 @@ batadv_mcast_forw_ip_node_get(struct batadv_priv *bat_priv,
 		return batadv_mcast_forw_ipv6_node_get(bat_priv);
 	default:
 		/* we shouldn't be here... */
-		return 0;
+		return NULL;
 	}
 }
 
