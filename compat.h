@@ -167,8 +167,9 @@ static inline int batadv_param_set_copystring(const char *val,
 		rcu_read_unlock(); \
 		dev_hold(dev); \
 		return dev; \
-	} else \
-		dev = NULL;
+	} else {\
+		dev = NULL; \
+	}
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
