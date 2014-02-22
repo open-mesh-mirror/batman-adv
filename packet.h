@@ -97,9 +97,9 @@ enum batadv_icmp_packettype {
  * @BATADV_MCAST_WANT_ALL_IPV6: we want all IPv6 multicast packets
  */
 enum batadv_mcast_flags {
-	BATADV_MCAST_WANT_ALL_UNSNOOPABLES = BIT(0),
-	BATADV_MCAST_WANT_ALL_IPV4 = BIT(1),
-	BATADV_MCAST_WANT_ALL_IPV6 = BIT(2),
+	BATADV_MCAST_WANT_ALL_UNSNOOPABLES	= BIT(0),
+	BATADV_MCAST_WANT_ALL_IPV4		= BIT(1),
+	BATADV_MCAST_WANT_ALL_IPV6		= BIT(2),
 };
 
 /* tt data subtypes */
