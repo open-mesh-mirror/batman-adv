@@ -45,7 +45,7 @@ static int batadv_mcast_mla_softif_get(struct net_device *dev,
 			break;
 		}
 
-		ether_addr_copy(&new->addr, &mc_list_entry->addr);
+		ether_addr_copy(new->addr, mc_list_entry->addr);
 		hlist_add_head(&new->list, mcast_list);
 		ret++;
 	}
