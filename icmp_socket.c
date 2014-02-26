@@ -230,7 +230,7 @@ static ssize_t batadv_socket_write(struct file *file, const char __user *buff,
 		icmp_packet_rr = (struct batadv_icmp_packet_rr *)icmp_header;
 		if (packet_len == sizeof(*icmp_packet_rr)) {
 			addr = neigh_node->if_incoming->net_dev->dev_addr;
-			ether_addr_copy(icmp_packet_rr->rr, addr);
+			ether_addr_copy(icmp_packet_rr->rr[0], addr);
 		}
 
 		break;

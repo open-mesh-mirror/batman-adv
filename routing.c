@@ -340,7 +340,7 @@ int batadv_recv_icmp_packet(struct sk_buff *skb,
 		if (icmp_packet_rr->rr_cur >= BATADV_RR_LEN)
 			goto out;
 
-		ether_addr_copy(&(icmp_packet_rr->rr[icmp_packet_rr->rr_cur]),
+		ether_addr_copy(icmp_packet_rr->rr[icmp_packet_rr->rr_cur],
 				ethhdr->h_dest);
 		icmp_packet_rr->rr_cur++;
 	}
