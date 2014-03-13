@@ -1,3 +1,25 @@
+batman-adv 2014.1.0
+
+ * support latest kernels (2.6.29 - 3.14)
+ * add mesh wide multi interface optimization, which replaces the old
+   interface alternating and bonding features with a new network wide
+   implementation
+ * add mesh wide client isolation based on fwmark by using and
+   propagating the new isolation flag in TT
+ * send every DHCP packet as bat-unicast when gateway feature is used
+ * add new build checks for packet sizes to avoid architecture dependent
+   problems
+ * bugs squashed:
+   - deselect current gateway when switching away from client mode
+   - fix batman-adv header MTU calculation
+   - fix potential paging error for unicast transmissions
+   - fix vlan refcounter imbalance on failure paths
+   - fix TT-TVLV parsing and a TVLV leak
+   - fix TT CRC computation by ensuring byte order
+   - fix function names, paranthesis, comments, warnings, chachacha ...
+
+ -- Thu, 13 Mar 2014 12:08:00 +0100
+
 batman-adv 2014.0.0
 
  * support latest kernels (2.6.29 - 3.13)
