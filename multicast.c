@@ -194,12 +194,10 @@ static bool batadv_mcast_has_bridge(struct batadv_priv *bat_priv)
 
 	bridge = batadv_mcast_get_bridge(bat_priv);
 	if (!bridge)
-		goto out;
+		return false;
 
 	dev_put(bridge);
 	return true;
-out:
-	return false;
 }
 
 /**
