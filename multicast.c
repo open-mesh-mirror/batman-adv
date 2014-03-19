@@ -179,11 +179,11 @@ static bool batadv_mcast_has_bridge(struct batadv_priv *bat_priv)
  * batadv_mcast_mla_tvlv_update - update multicast tvlv
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Update the own multicast tvlv with our current multicast related settings,
+ * Updates the own multicast tvlv with our current multicast related settings,
  * capabilities and inabilities.
  *
- * Return true if the tvlv container is registered afterwards. Otherwise return
- * false.
+ * Returns true if the tvlv container is registered afterwards. Otherwise
+ * returns false.
  */
 static bool batadv_mcast_mla_tvlv_update(struct batadv_priv *bat_priv)
 {
@@ -220,7 +220,7 @@ static bool batadv_mcast_mla_tvlv_update(struct batadv_priv *bat_priv)
  * batadv_mcast_mla_update - update the own MLAs
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Update the own multicast listener announcements in the translation
+ * Updates the own multicast listener announcements in the translation
  * table as well as the own, announced multicast tvlv container.
  */
 void batadv_mcast_mla_update(struct batadv_priv *bat_priv)
