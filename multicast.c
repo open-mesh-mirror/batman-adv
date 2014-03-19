@@ -312,8 +312,7 @@ static int batadv_mcast_forw_mode_check_ipv6(struct batadv_priv *bat_priv,
 	/* TODO: Implement Multicast Router Discovery (RFC4286),
 	 * then allow scope > link local, too
 	 */
-	if (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) !=
-	    IPV6_ADDR_SCOPE_LINKLOCAL)
+	if (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) != IPV6_ADDR_SCOPE_LINKLOCAL)
 		return -EINVAL;
 
 	/* link-local-all-nodes multicast listeners behind a bridge are

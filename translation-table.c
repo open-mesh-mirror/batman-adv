@@ -206,16 +206,15 @@ int batadv_tt_global_hash_count(struct batadv_priv *bat_priv,
 				const uint8_t *addr, unsigned short vid)
 {
 	struct batadv_tt_global_entry *tt_global_entry;
-	int count = 0;
+	int count;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr, vid);
 	if (!tt_global_entry)
-		goto out;
+		return 0;
 
 	count = atomic_read(&tt_global_entry->orig_list_count);
 	batadv_tt_global_entry_free_ref(tt_global_entry);
 
-out:
 	return count;
 }
 
