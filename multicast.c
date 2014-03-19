@@ -409,20 +409,20 @@ batadv_mcast_forw_tt_node_get(struct batadv_priv *bat_priv,
 static struct batadv_orig_node *
 batadv_mcast_forw_ipv4_node_get(struct batadv_priv *bat_priv)
 {
-	struct batadv_orig_node *orig_node;
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(orig_node,
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_ipv4_list,
 				 mcast_want_all_ipv4_node) {
-		if (atomic_inc_not_zero(&orig_node->refcount))
-			goto unlock;
+		if (!atomic_inc_not_zero(&orig_node->refcount))
+			continue;
+
+		orig_node = tmp_orig_node;
+		break;
 	}
-
-	orig_node = NULL;
-
-unlock:
 	rcu_read_unlock();
+
 	return orig_node;
 }
 
@@ -436,20 +436,20 @@ unlock:
 static struct batadv_orig_node *
 batadv_mcast_forw_ipv6_node_get(struct batadv_priv *bat_priv)
 {
-	struct batadv_orig_node *orig_node;
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
 	rcu_read_lock();
-	hlist_for_each_entry_rcu(orig_node,
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_ipv6_list,
 				 mcast_want_all_ipv6_node) {
-		if (atomic_inc_not_zero(&orig_node->refcount))
-			goto unlock;
+		if (!atomic_inc_not_zero(&orig_node->refcount))
+			continue;
+
+		orig_node = tmp_orig_node;
+		break;
 	}
-
-	orig_node = NULL;
-
-unlock:
 	rcu_read_unlock();
+
 	return orig_node;
 }
 
