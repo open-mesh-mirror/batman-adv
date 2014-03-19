@@ -27,7 +27,7 @@
  * Collect multicast addresses of the local multicast listeners
  * on the given soft interface, dev, in the given mcast_list.
  *
- * Return -ENOMEM on memory allocation error or the number of
+ * Returns -ENOMEM on memory allocation error or the number of
  * items added to the mcast_list otherwise.
  */
 static int batadv_mcast_mla_softif_get(struct net_device *dev,
@@ -59,7 +59,7 @@ static int batadv_mcast_mla_softif_get(struct net_device *dev,
  * @mcast_addr: the multicast address to check
  * @mcast_list: the list with multicast addresses to search in
  *
- * Return true if the given address is already in the given list.
+ * Returns true if the given address is already in the given list.
  * Otherwise returns false.
  */
 static bool batadv_mcast_mla_is_duplicate(uint8_t *mcast_addr,
@@ -78,7 +78,7 @@ static bool batadv_mcast_mla_is_duplicate(uint8_t *mcast_addr,
  * batadv_mcast_mla_list_free - free a list of multicast addresses
  * @mcast_list: the list to free
  *
- * Remove and free all items in the given mcast_list.
+ * Removes and frees all items in the given mcast_list.
  */
 static void batadv_mcast_mla_list_free(struct hlist_head *mcast_list)
 {
@@ -96,7 +96,7 @@ static void batadv_mcast_mla_list_free(struct hlist_head *mcast_list)
  * @bat_priv: the bat priv with all the soft interface information
  * @mcast_list: a list of addresses which should _not_ be removed
  *
- * Retract the announcement of any multicast listener from the
+ * Retracts the announcement of any multicast listener from the
  * translation table except the ones listed in the given mcast_list.
  *
  * If mcast_list is NULL then all are retracted.
@@ -128,7 +128,7 @@ static void batadv_mcast_mla_tt_retract(struct batadv_priv *bat_priv,
  * @bat_priv: the bat priv with all the soft interface information
  * @mcast_list: a list of addresses which are going to get added
  *
- * Add multicast listener announcements from the given mcast_list to the
+ * Adds multicast listener announcements from the given mcast_list to the
  * translation table if they have not been added yet.
  */
 static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
@@ -159,7 +159,7 @@ static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
  * batadv_mcast_has_bridge - check whether the soft-iface is bridged
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Check whether there is a bridge on top of our soft interface. Return
+ * Checks whether there is a bridge on top of our soft interface. Returns
  * true if so, false otherwise.
  */
 static bool batadv_mcast_has_bridge(struct batadv_priv *bat_priv)
