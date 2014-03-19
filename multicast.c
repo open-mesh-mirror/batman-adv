@@ -288,11 +288,11 @@ static int batadv_mcast_forw_mode_check_ipv4(struct batadv_priv *bat_priv,
  * @skb: the IPv6 packet to check
  * @is_unsnoopable: stores whether the destination is snoopable
  *
- * Check whether the given IPv6 packet has the potential to
- * be forwarded with a mode more optimal than classic flooding.
+ * Checks whether the given IPv6 packet has the potential to be forwarded with a
+ * mode more optimal than classic flooding.
  *
- * If so then return 0. Otherwise -EINVAL is returned or -ENOMEM if we are
- * out of memory.
+ * If so then returns 0. Otherwise -EINVAL is returned or -ENOMEM if we are out
+ * of memory.
  */
 static int batadv_mcast_forw_mode_check_ipv6(struct batadv_priv *bat_priv,
 					     struct sk_buff *skb,
@@ -328,11 +328,11 @@ static int batadv_mcast_forw_mode_check_ipv6(struct batadv_priv *bat_priv,
  * @skb: the multicast frame to check
  * @is_unsnoopable: stores whether the destination is snoopable
  *
- * Check whether the given multicast ethernet frame has the potential to
- * be forwarded with a mode more optimal than classic flooding.
+ * Checks whether the given multicast ethernet frame has the potential to be
+ * forwarded with a mode more optimal than classic flooding.
  *
- * If so then return 0. Otherwise -EINVAL is returned or -ENOMEM if we are
- * out of memory.
+ * If so then returns 0. Otherwise -EINVAL is returned or -ENOMEM if we are out
+ * of memory.
  */
 static int batadv_mcast_forw_mode_check(struct batadv_priv *bat_priv,
 					struct sk_buff *skb,
@@ -386,7 +386,7 @@ static int batadv_mcast_forw_want_all_ip_count(struct batadv_priv *bat_priv,
  * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: the ether header containing the multicast destination
  *
- * Return an orig_node matching the multicast address provided by ethhdr
+ * Returns an orig_node matching the multicast address provided by ethhdr
  * via a translation table lookup. This increases the returned nodes refcount.
  */
 static struct batadv_orig_node *
@@ -508,7 +508,7 @@ unlock:
  * @skb: The multicast packet to check
  * @orig: an originator to be set to forward the skb to
  *
- * Return the forwarding mode as enum batadv_forw_mode and in case of
+ * Returns the forwarding mode as enum batadv_forw_mode and in case of
  * BATADV_FORW_SINGLE set the orig to the single originator the skb
  * should be forwarded to.
  */
