@@ -363,9 +363,9 @@ static int batadv_mcast_forw_mode_check(struct batadv_priv *bat_priv,
  * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: ethernet header of a packet
  *
- * Return the number of nodes which want all IPv4 multicast traffic if
- * the given ethhdr is from an IPv4 packet or the number of nodes which want
- * all IPv6 traffic if it matches an IPv6 packet.
+ * Returns the number of nodes which want all IPv4 multicast traffic if the
+ * given ethhdr is from an IPv4 packet or the number of nodes which want all
+ * IPv6 traffic if it matches an IPv6 packet.
  */
 static int batadv_mcast_forw_want_all_ip_count(struct batadv_priv *bat_priv,
 					       struct ethhdr *ethhdr)
@@ -401,8 +401,8 @@ batadv_mcast_forw_tt_node_get(struct batadv_priv *bat_priv,
  * batadv_mcast_want_forw_ipv4_node_get - get a node with an ipv4 flag
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Return an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 flag set
- * and increase its refcount.
+ * Returns an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 flag set and
+ * increases its refcount.
  */
 static struct batadv_orig_node *
 batadv_mcast_forw_ipv4_node_get(struct batadv_priv *bat_priv)
@@ -428,8 +428,8 @@ unlock:
  * batadv_mcast_want_forw_ipv6_node_get - get a node with an ipv6 flag
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Return an orig_node which has the BATADV_MCAST_WANT_ALL_IPV6 flag set
- * and increase its refcount.
+ * Returns an orig_node which has the BATADV_MCAST_WANT_ALL_IPV6 flag set
+ * and increases its refcount.
  */
 static struct batadv_orig_node *
 batadv_mcast_forw_ipv6_node_get(struct batadv_priv *bat_priv)
@@ -456,9 +456,9 @@ unlock:
  * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: an ethernet header to determine the protocol family from
  *
- * Return an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 or
- * BATADV_MCAST_WANT_ALL_IPV6 flag, depending on the provided ethhdr, set
- * and increase its refcount.
+ * Returns an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 or
+ * BATADV_MCAST_WANT_ALL_IPV6 flag, depending on the provided ethhdr, set and
+ * increases its refcount.
  */
 static struct batadv_orig_node *
 batadv_mcast_forw_ip_node_get(struct batadv_priv *bat_priv,
