@@ -250,11 +250,11 @@ out:
  * @skb: the IPv4 packet to check
  * @is_unsnoopable: stores whether the destination is snoopable
  *
- * Check whether the given IPv4 packet has the potential to
- * be forwarded with a mode more optimal than classic flooding.
+ * Checks whether the given IPv4 packet has the potential to be forwarded with a
+ * mode more optimal than classic flooding.
  *
- * If so then return 0. Otherwise -EINVAL is returned or -ENOMEM if we are
- * out of memory.
+ * If so then returns 0. Otherwise -EINVAL is returned or -ENOMEM in case of
+ * memory allocation failure.
  */
 static int batadv_mcast_forw_mode_check_ipv4(struct batadv_priv *bat_priv,
 					     struct sk_buff *skb,
@@ -479,8 +479,8 @@ batadv_mcast_forw_ip_node_get(struct batadv_priv *bat_priv,
  * batadv_mcast_want_forw_unsnoop_node_get - get a node with an unsnoopable flag
  * @bat_priv: the bat priv with all the soft interface information
  *
- * Return an orig_node which has the BATADV_MCAST_WANT_ALL_UNSNOOPABLES flag set
- * and increase its refcount.
+ * Returns an orig_node which has the BATADV_MCAST_WANT_ALL_UNSNOOPABLES flag
+ * set and increases its refcount.
  */
 static struct batadv_orig_node *
 batadv_mcast_forw_unsnoop_node_get(struct batadv_priv *bat_priv)
