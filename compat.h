@@ -164,14 +164,8 @@ static inline int batadv_param_set_copystring(const char *val,
 #define NET_ADDR_RANDOM 0
 
 #define netdev_master_upper_dev_get_rcu(dev) \
-	upper; \
-	if (dev->br_port ? 1 : 0) { \
-		rcu_read_unlock(); \
-		dev_hold(dev); \
-		return dev; \
-	} else {\
-		dev = NULL; \
-	}
+	(dev->br_port ? dev : NULL); \
+	break;
 
 #endif /* < KERNEL_VERSION(2, 6, 36) */
 
@@ -375,13 +369,8 @@ static int __batadv_interface_tx(struct sk_buff *skb, \
 
 #ifndef netdev_master_upper_dev_get_rcu
 #define netdev_master_upper_dev_get_rcu(dev) \
-	upper; \
-	if (dev->priv_flags & IFF_BRIDGE_PORT) { \
-		rcu_read_unlock(); \
-		dev_hold(dev); \
-		return dev; \
-	} else \
-		dev = NULL;
+	(dev->priv_flags & IFF_BRIDGE_PORT ? dev : NULL); \
+	break;
 
 #endif /* netdev_master_upper_dev_get_rcu */
 

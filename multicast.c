@@ -156,32 +156,6 @@ static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_mcast_get_bridge - get the bridge interface on our soft interface
- * @bat_priv: the bat priv with all the soft interface information
- *
- * Return the next bridge interface on top of our soft interface and increase
- * its refcount. If no such bridge interface exists, then return NULL.
- */
-static struct net_device *
-batadv_mcast_get_bridge(struct batadv_priv *bat_priv)
-{
-	struct net_device *upper = bat_priv->soft_iface;
-
-	rcu_read_lock();
-
-	do {
-		upper = netdev_master_upper_dev_get_rcu(upper);
-	} while (upper && !(upper->priv_flags & IFF_EBRIDGE));
-
-	if (upper)
-		dev_hold(upper);
-
-	rcu_read_unlock();
-
-	return upper;
-}
-
-/**
  * batadv_mcast_has_bridge - check whether the soft-iface is bridged
  * @bat_priv: the bat priv with all the soft interface information
  *
@@ -190,14 +164,15 @@ batadv_mcast_get_bridge(struct batadv_priv *bat_priv)
  */
 static bool batadv_mcast_has_bridge(struct batadv_priv *bat_priv)
 {
-	struct net_device *bridge;
+	struct net_device *upper = bat_priv->soft_iface;
 
-	bridge = batadv_mcast_get_bridge(bat_priv);
-	if (!bridge)
-		return false;
+	rcu_read_lock();
+	do {
+		upper = netdev_master_upper_dev_get_rcu(upper);
+	} while (upper && !(upper->priv_flags & IFF_EBRIDGE));
+	rcu_read_unlock();
 
-	dev_put(bridge);
-	return true;
+	return upper;
 }
 
 /**
