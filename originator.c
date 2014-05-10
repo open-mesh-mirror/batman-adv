@@ -842,8 +842,8 @@ batadv_purge_orig_neighbors(struct batadv_priv *bat_priv,
 			hlist_del_rcu(&neigh_node->list);
 			batadv_neigh_node_free_ref(neigh_node);
 		} else {
-			/* only neccesary if not the whole neighbor is to be deleted,
-			 * but some interface has been removed.
+			/* only neccesary if not the whole neighbor is to be
+			 * deleted, but some interface has been removed.
 			 */
 			batadv_purge_neigh_ifinfo(bat_priv, neigh_node);
 		}
