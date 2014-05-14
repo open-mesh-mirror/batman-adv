@@ -704,7 +704,7 @@ free_orig_node:
 /**
  * batadv_purge_neigh_ifinfo - purge obsolete ifinfo entries from neighbor
  * @bat_priv: the bat priv with all the soft interface information
- * @neigh_node: orig node which is to be checked
+ * @neigh: orig node which is to be checked
  */
 static void
 batadv_purge_neigh_ifinfo(struct batadv_priv *bat_priv,
@@ -842,7 +842,7 @@ batadv_purge_orig_neighbors(struct batadv_priv *bat_priv,
 			hlist_del_rcu(&neigh_node->list);
 			batadv_neigh_node_free_ref(neigh_node);
 		} else {
-			/* only neccesary if not the whole neighbor is to be
+			/* only necessary if not the whole neighbor is to be
 			 * deleted, but some interface has been removed.
 			 */
 			batadv_purge_neigh_ifinfo(bat_priv, neigh_node);
