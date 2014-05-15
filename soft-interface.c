@@ -594,8 +594,8 @@ static int batadv_interface_add_vid(struct net_device *dev, __be16 proto,
 	 * exists, because the entry was deleted by kill_vid()
 	 */
 	batadv_tt_local_add(bat_priv->soft_iface,
-			     bat_priv->soft_iface->dev_addr, vid,
-			     BATADV_NULL_IFINDEX, BATADV_NO_MARK);
+			    bat_priv->soft_iface->dev_addr, vid,
+			    BATADV_NULL_IFINDEX, BATADV_NO_MARK);
 
 	return 0;
 }
