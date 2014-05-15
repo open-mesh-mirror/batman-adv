@@ -454,14 +454,14 @@ out:
  *  possibly free it
  * @softif_vlan: the vlan object to release
  */
-void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *vlan)
+void batadv_softif_vlan_free_ref(struct batadv_softif_vlan *softif_vlan)
 {
-	if (atomic_dec_and_test(&vlan->refcount)) {
-		spin_lock_bh(&vlan->bat_priv->softif_vlan_list_lock);
-		hlist_del_rcu(&vlan->list);
-		spin_unlock_bh(&vlan->bat_priv->softif_vlan_list_lock);
+	if (atomic_dec_and_test(&softif_vlan->refcount)) {
+		spin_lock_bh(&softif_vlan->bat_priv->softif_vlan_list_lock);
+		hlist_del_rcu(&softif_vlan->list);
+		spin_unlock_bh(&softif_vlan->bat_priv->softif_vlan_list_lock);
 
-		kfree_rcu(vlan, rcu);
+		kfree_rcu(softif_vlan, rcu);
 	}
 }
 
@@ -611,8 +611,8 @@ static int batadv_interface_add_vid(struct net_device *dev, __be16 proto,
 	 * exists, because the entry was deleted by kill_vid()
 	 */
 	batadv_tt_local_add(bat_priv->soft_iface,
-			     bat_priv->soft_iface->dev_addr, vid,
-			     BATADV_NULL_IFINDEX, BATADV_NO_MARK);
+			    bat_priv->soft_iface->dev_addr, vid,
+			    BATADV_NULL_IFINDEX, BATADV_NO_MARK);
 
 	return 0;
 }
