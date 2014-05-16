@@ -1,3 +1,24 @@
+batman-adv 2014.2.0
+
+ * support latest kernels (2.6.29 - 3.15)
+ * add multicast optimization for certain type of multicast networks
+   to send data only to nodes actually registered using new TVLVs
+   and the translation table
+ * use ether_addr_copy instead of memcpy
+ * remove obsolete reset mac headers
+ * bugs squashed:
+   - fix various (reference counting) bugs introduced by the multi
+     interface optimization
+   - fix a reference count problem when sending fragmented packets
+   - count references for originator nodes referenced by gateway
+   - fix local TT check for outgoing arp requests in DAT
+   - fix TT inconsistencies when VLANs are re-created very fast
+   - update TT entries for each VLAN when the MAC address of the
+     parent interface is changed
+   - improve documentation of DAT, TT and general kerneldoc
+
+ -- Thu, 15 May 2014 19:36:10 +0200
+
 batman-adv 2014.1.0
 
  * support latest kernels (2.6.29 - 3.14)
