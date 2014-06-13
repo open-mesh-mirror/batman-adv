@@ -440,4 +440,10 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(3, 14, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+
+#define pskb_copy_for_clone pskb_copy
+
+#endif /* < KERNEL_VERSION(3, 16, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
