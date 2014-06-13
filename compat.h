@@ -274,6 +274,8 @@ static inline void batadv_eth_hw_addr_random(struct net_device *dev)
 	random_ether_addr(dev->dev_addr);
 }
 
+#define kmalloc_array(n, size, flags) kmalloc(n * size, flags)
+
 #endif /* < KERNEL_VERSION(3, 4, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 5, 0)
