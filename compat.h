@@ -452,6 +452,16 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #define hlist_add_behind(n, prev) hlist_add_after(prev, n)
 
+/* alloc_netdev() was defined differently before 2.6.38 */
+#undef alloc_netdev
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 38)
+#define alloc_netdev(sizeof_priv, name, name_assign_type, setup) \
+	alloc_netdev_mq(sizeof_priv, name, setup, 1)
+#else
+#define alloc_netdev(sizeof_priv, name, name_assign_type, setup) \
+	alloc_netdev_mqs(sizeof_priv, name, setup, 1, 1)
+#endif /* nested < KERNEL_VERSION(2, 6, 38) */
+
 #endif /* < KERNEL_VERSION(3, 17, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
