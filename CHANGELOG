@@ -1,3 +1,15 @@
+batman-adv 2014.3.0
+
+ * support latest kernels (2.6.29 - 3.16)
+ * drop QinQ claim frames in bridge loop avoidance
+ * fix a bogus warning from batadv_is_on_batman_iface()
+ * removed SET_ETHTOOL_OPS
+ * style improvements:
+   - remove semi-colon after macro definition
+   - add blank line between declarations and the rest of the code
+
+ -- Mon, 21 Jul 2014 16:02:17 +0200
+
 batman-adv 2014.2.0
 
  * support latest kernels (2.6.29 - 3.15)
