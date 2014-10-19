@@ -23,9 +23,9 @@
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 
-#define consume_skb(_skb) kfree_skb(_skb)
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 30)
+
+#define consume_skb(_skb) kfree_skb(_skb)
 
 #undef __alloc_percpu
 #define __alloc_percpu(size, align) \
