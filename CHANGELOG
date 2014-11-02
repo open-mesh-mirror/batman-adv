@@ -248,7 +248,7 @@ batman-adv 2011.4.0:
 batman-adv 2011.3.1:
 
 * don't send all packets to selected gateway as broadcast
-* prevent translation table corruptions caused by unintialized memory and
+* prevent translation table corruptions caused by uninitialized memory and
   invalid sizes send through client announcement mechanism
 
  -- Tue, 18 Oct 2011 20:40:59 +0200
