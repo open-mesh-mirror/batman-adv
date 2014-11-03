@@ -345,7 +345,9 @@ static int __batadv_interface_tx(struct sk_buff *skb, \
 	dev->master;\
 })
 #define hlist_entry_safe(ptr, type, member) \
-	(ptr) ? hlist_entry(ptr, type, member) : NULL
+	({ typeof(ptr) ____ptr = (ptr); \
+	   ____ptr ? hlist_entry(____ptr, type, member) : NULL; \
+	})
 
 #undef hlist_for_each_entry
 #define hlist_for_each_entry(pos, head, member) \
