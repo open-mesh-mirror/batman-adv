@@ -1,3 +1,18 @@
+batman-adv 2014.4.0
+
+ * support latest kernels (2.6.29 - 3.19)
+ * double default hop penalty
+ * bugs squashed:
+   - fix wrong size calculations and out of order support in
+     fragmentation (fixes CVE-2014-9428)
+   - fix double fetch in RCU for old kernels (<3.9)
+   - fix NULL dereference and check in gateway code
+   - fix multicast counters
+   - fix network coding SKB control block initialization
+   - fix last_seen initialization for orig nodes
+
+ -- Mon, 05 Jan 2015 20:03:39 +0100
+
 batman-adv 2014.3.0
 
  * support latest kernels (2.6.29 - 3.16)
