@@ -191,6 +191,15 @@ static inline int batadv_param_set_copystring(const char *val,
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
 
+/* On older kernels net_dev->master is reserved for iface bonding. */
+static inline int batadv_netdev_set_master(struct net_device *slave,
+					   struct net_device *master)
+{
+	return 0;
+}
+
+#define netdev_set_master batadv_netdev_set_master
+
 /* Hack for removing ndo_add/del_slave at the end of net_device_ops.
  * This is somewhat ugly because it requires that ndo_validate_addr
  * is at the end of this struct in soft-interface.c.
