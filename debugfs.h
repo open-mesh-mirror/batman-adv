@@ -48,14 +48,14 @@ static inline void batadv_debugfs_del_meshif(struct net_device *dev)
 {
 }
 
-static inline int batadv_debugfs_add_hardif(
-		struct batadv_hard_iface *hard_iface)
+static inline
+int batadv_debugfs_add_hardif(struct batadv_hard_iface *hard_iface)
 {
 	return 0;
 }
 
-static inline void batadv_debugfs_del_hardif(
-		struct batadv_hard_iface *hard_iface)
+static inline
+void batadv_debugfs_del_hardif(struct batadv_hard_iface *hard_iface)
 {
 }
 
