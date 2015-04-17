@@ -88,26 +88,6 @@ static const struct { \
 #endif /* < KERNEL_VERSION(2, 6, 39) */
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
-
-#define kfree_rcu(ptr, rcu_head) call_rcu(&ptr->rcu_head, batadv_free_rcu_##ptr)
-
-struct rcu_head;
-
-void batadv_free_rcu_orig_vlan(struct rcu_head *rcu);
-void batadv_free_rcu_softif_vlan(struct rcu_head *rcu);
-void batadv_free_rcu_tt_global_entry(struct rcu_head *rcu);
-void batadv_free_rcu_gw_node(struct rcu_head *rcu);
-void batadv_free_rcu_tt_local_entry(struct rcu_head *rcu);
-void batadv_free_rcu_backbone_gw(struct rcu_head *rcu);
-void batadv_free_rcu_dat_entry(struct rcu_head *rcu);
-void batadv_free_rcu_nc_path(struct rcu_head *rcu);
-void batadv_free_rcu_tvlv_handler(struct rcu_head *rcu);
-void batadv_free_rcu_vlan(struct rcu_head *rcu);
-
-#endif /* < KERNEL_VERSION(3, 0, 0) */
-
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
 
 #define batadv_interface_add_vid(x, y, z) \

@@ -47,7 +47,6 @@ NOSTDINC_FLAGS := \
 	$(CFLAGS)
 
 CONFIG_BATMAN_ADV=m
-batman-adv-y += compat.o
 ifneq ($(REVISION),)
 ccflags-y += -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
 endif

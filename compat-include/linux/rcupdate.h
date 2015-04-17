@@ -36,4 +36,19 @@
 
 #endif /* < KERNEL_VERSION(2, 6, 34) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
+
+#define kfree_rcu(ptr, rcuhead_name) \
+	do { \
+		void batadv_free_rcu_##ptr(struct rcu_head *rcu) \
+		{ \
+			void *container_ptr; \
+			container_ptr = container_of(rcu, typeof(*(ptr)), rcuhead_name); \
+			kfree(container_ptr); \
+		} \
+		call_rcu(&(ptr)->rcuhead_name, batadv_free_rcu_##ptr); \
+	} while (0)
+
+#endif /* < KERNEL_VERSION(3, 0, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_RCUPDATE_H_ */
