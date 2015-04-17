@@ -59,8 +59,6 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 
-#define IFF_BRIDGE_PORT  0 || (hard_iface->net_dev->br_port ? 1 : 0)
-
 /* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
 #define addr_assign_type ifindex
 
