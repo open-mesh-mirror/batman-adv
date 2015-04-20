@@ -41,6 +41,10 @@ RM ?= rm -f
 REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
 				echo $$(git --git-dir="$(PWD)/.git" describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
 			fi)
+NOSTDINC_FLAGS := \
+	-I$(PWD)/compat-include/ \
+	-include $(PWD)/compat.h \
+	$(CFLAGS)
 
 CONFIG_BATMAN_ADV=m
 batman-adv-y += compat.o

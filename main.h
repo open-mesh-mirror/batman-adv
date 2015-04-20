@@ -182,7 +182,7 @@ enum batadv_uev_type {
 #include <linux/jiffies.h>
 #include <linux/seq_file.h>
 #include <linux/if_vlan.h>
-#include "compat.h"
+#include <linux/printk.h>
 
 #include "types.h"
 
