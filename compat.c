@@ -42,6 +42,15 @@ void batadv_free_rcu_softif_vlan(struct rcu_head *rcu)
 	kfree(vlan);
 }
 
+void batadv_free_rcu_vlan(struct rcu_head *rcu)
+{
+	struct batadv_softif_vlan *vlan;
+
+	vlan = container_of(rcu, struct batadv_softif_vlan, rcu);
+
+	kfree(vlan);
+}
+
 void batadv_free_rcu_tt_global_entry(struct rcu_head *rcu)
 {
 	struct batadv_tt_global_entry *global;
