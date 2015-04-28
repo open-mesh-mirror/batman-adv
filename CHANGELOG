@@ -1,3 +1,14 @@
+batman-adv 2015.0
+
+ * support latest kernels (2.6.29 - 4.1)
+ * cleanup of coding style and add kerneldoc
+ * bugs squashed:
+   - fix incorrect lockdep warning in network coding
+   - fix condition when bonding should be used
+   - fix support of bridged batman-adv devices with kernel < 2.6.39
+
+ -- Tue, 28 Apr 2015 20:20:02 +0200
+
 batman-adv 2014.4.0
 
  * support latest kernels (2.6.29 - 3.19)
