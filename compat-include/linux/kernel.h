@@ -31,7 +31,7 @@
 	unsigned long _v;\
 	int _r;\
 	_r = strict_strtoul(cp, base, &_v);\
-	*(v) = (uint32_t)_v;\
+	*(v) = (u32)_v;\
 	if ((unsigned long)*(v) != _v)\
 		_r = -ERANGE;\
 	_r;\

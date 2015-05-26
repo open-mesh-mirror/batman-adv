@@ -36,7 +36,7 @@
 
 #define this_cpu_add(x, c)	batadv_this_cpu_add(&(x), c)
 
-static inline void batadv_this_cpu_add(uint64_t *count_ptr, size_t count)
+static inline void batadv_this_cpu_add(u64 *count_ptr, size_t count)
 {
 	int cpu = get_cpu();
 	*per_cpu_ptr(count_ptr, cpu) += count;
