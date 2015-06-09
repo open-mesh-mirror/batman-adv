@@ -153,7 +153,8 @@ batadv_gw_get_best_gw_node(struct batadv_priv *bat_priv)
 	struct batadv_neigh_node *router;
 	struct batadv_neigh_ifinfo *router_ifinfo;
 	struct batadv_gw_node *gw_node, *curr_gw = NULL;
-	u32 max_gw_factor = 0, tmp_gw_factor = 0;
+	u64 max_gw_factor = 0;
+	u64 tmp_gw_factor = 0;
 	u32 gw_divisor;
 	u8 max_tq = 0;
 	u8 tq_avg;
