@@ -256,7 +256,7 @@ struct batadv_orig_node {
 	struct hlist_node mcast_want_all_ipv4_node;
 	struct hlist_node mcast_want_all_ipv6_node;
 #endif
-	uint8_t capabilities;
+	unsigned long capabilities;
 	uint8_t capa_initialized;
 	atomic_t last_ttvn;
 	unsigned char *tt_buff;
