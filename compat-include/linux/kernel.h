@@ -36,6 +36,18 @@
 		_r = -ERANGE;\
 	_r;\
 })
+
+#define kstrtou64(cp, base, v)\
+({\
+	unsigned long long _v;\
+	int _r;\
+	_r = strict_strtoull(cp, base, &_v);\
+	*(v) = (uint64_t)_v;\
+	if ((unsigned long long)*(v) != _v)\
+		_r = -ERANGE;\
+	_r;\
+})
+
 #define kstrtoul strict_strtoul
 #define kstrtol  strict_strtol
 
