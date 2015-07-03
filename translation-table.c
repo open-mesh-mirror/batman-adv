@@ -3323,7 +3323,8 @@ static void batadv_tt_update_orig(struct batadv_priv *bat_priv,
 	bool has_tt_init;
 
 	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)tt_buff;
-	has_tt_init = orig_node->capa_initialized & BATADV_ORIG_CAPA_HAS_TT;
+	has_tt_init = test_bit(BATADV_ORIG_CAPA_HAS_TT,
+			       &orig_node->capa_initialized);
 
 	/* orig table not initialised AND first diff is in the OGM OR the ttvn
 	 * increased by one -> we can apply the attached changes

@@ -301,7 +301,7 @@ struct batadv_orig_node {
 enum batadv_orig_capabilities {
 	BATADV_ORIG_CAPA_HAS_DAT,
 	BATADV_ORIG_CAPA_HAS_NC,
-	BATADV_ORIG_CAPA_HAS_TT = BIT(2),
+	BATADV_ORIG_CAPA_HAS_TT,
 	BATADV_ORIG_CAPA_HAS_MCAST = BIT(3),
 };
 
