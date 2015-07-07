@@ -316,10 +316,10 @@ struct batadv_orig_node {
  *  (= orig node announces a tvlv of type BATADV_TVLV_MCAST)
  */
 enum batadv_orig_capabilities {
-	BATADV_ORIG_CAPA_HAS_DAT = BIT(0),
-	BATADV_ORIG_CAPA_HAS_NC = BIT(1),
-	BATADV_ORIG_CAPA_HAS_TT = BIT(2),
-	BATADV_ORIG_CAPA_HAS_MCAST = BIT(3),
+	BATADV_ORIG_CAPA_HAS_DAT,
+	BATADV_ORIG_CAPA_HAS_NC,
+	BATADV_ORIG_CAPA_HAS_TT,
+	BATADV_ORIG_CAPA_HAS_MCAST,
 };
 
 /**
