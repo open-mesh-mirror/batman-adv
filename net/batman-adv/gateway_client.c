@@ -155,13 +155,9 @@ batadv_gw_get_best_gw_node(struct batadv_priv *bat_priv)
 	struct batadv_gw_node *gw_node, *curr_gw = NULL;
 	u64 max_gw_factor = 0;
 	u64 tmp_gw_factor = 0;
-	u32 gw_divisor;
 	u8 max_tq = 0;
 	u8 tq_avg;
 	struct batadv_orig_node *orig_node;
-
-	gw_divisor = BATADV_TQ_LOCAL_WINDOW_SIZE * BATADV_TQ_LOCAL_WINDOW_SIZE;
-	gw_divisor *= 64;
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(gw_node, &bat_priv->gw.list, list) {
@@ -188,7 +184,7 @@ batadv_gw_get_best_gw_node(struct batadv_priv *bat_priv)
 			tmp_gw_factor = tq_avg * tq_avg;
 			tmp_gw_factor *= gw_node->bandwidth_down;
 			tmp_gw_factor *= 100 * 100;
-			tmp_gw_factor /= gw_divisor;
+			tmp_gw_factor >>= 18;
 
 			if ((tmp_gw_factor > max_gw_factor) ||
 			    ((tmp_gw_factor == max_gw_factor) &&
