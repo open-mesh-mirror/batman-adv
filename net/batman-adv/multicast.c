@@ -618,7 +618,7 @@ static void batadv_mcast_want_unsnoop_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(!hlist_unhashed(node));
+		WARN_ON(!hlist_unhashed(node));
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
@@ -629,7 +629,7 @@ static void batadv_mcast_want_unsnoop_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(hlist_unhashed(node));
+		WARN_ON(hlist_unhashed(node));
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
@@ -663,7 +663,7 @@ static void batadv_mcast_want_ipv4_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(!hlist_unhashed(node));
+		WARN_ON(!hlist_unhashed(node));
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
@@ -674,7 +674,7 @@ static void batadv_mcast_want_ipv4_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(hlist_unhashed(node));
+		WARN_ON(hlist_unhashed(node));
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
@@ -708,7 +708,7 @@ static void batadv_mcast_want_ipv6_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(!hlist_unhashed(node));
+		WARN_ON(!hlist_unhashed(node));
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
@@ -719,7 +719,7 @@ static void batadv_mcast_want_ipv6_update(struct batadv_priv *bat_priv,
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
 		/* flag checks above + mcast_handler_lock prevents this */
-		BUG_ON(hlist_unhashed(node));
+		WARN_ON(hlist_unhashed(node));
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
