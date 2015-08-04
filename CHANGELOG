@@ -1,3 +1,25 @@
+batman-adv 2015.1
+
+ * support latest kernels (2.6.29 - 4.2)
+ * cleanup of coding style
+ * cleanup of the compatibility layer
+ * convert to the Linux source directory structure
+ * adjust default configuration
+   - disable network coding
+   - enable bridge loop avoidance
+ * bugs squashed:
+   - avoid DAT to mess up local LAN state
+   - fix race conditions in DAT/NC/TT/MCAST TVLV handlers
+   - fix build system POSIX compatibility
+   - fix gateway selection in fast connection (1) gw_mode
+   - fix initialization of detected gateway, which caused hangs on unloads
+   - fix race conditions in the translation table
+   - fix kernel crash due to missing NULL checks in vlan handlers
+   - fix potentially broken header access by multicast optimization
+   - fix broadcast packets cleanup for purged outgoing interface
+
+ -- Tue, 04 Aug 2015 14:34:42 +0200
+
 batman-adv 2015.0
 
  * support latest kernels (2.6.29 - 4.1)
