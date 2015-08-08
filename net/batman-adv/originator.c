@@ -224,7 +224,8 @@ static void batadv_hardif_neigh_free_rcu(struct rcu_head *rcu)
  *  and possibly free it (without rcu callback)
  * @hardif_neigh: hardif neigh neighbor to free
  */
-void batadv_hardif_neigh_free_now(struct batadv_hardif_neigh_node *hardif_neigh)
+static void
+batadv_hardif_neigh_free_now(struct batadv_hardif_neigh_node *hardif_neigh)
 {
 	if (atomic_dec_and_test(&hardif_neigh->refcount))
 		batadv_hardif_neigh_free_rcu(&hardif_neigh->rcu);
