@@ -1895,7 +1895,8 @@ batadv_iv_hardif_neigh_print(struct seq_file *seq,
  * @bat_priv: the bat priv with all the soft interface information
  * @seq: neighbour table seq_file struct
  */
-void batadv_iv_neigh_print(struct batadv_priv *bat_priv, struct seq_file *seq)
+static void batadv_iv_neigh_print(struct batadv_priv *bat_priv,
+				  struct seq_file *seq)
 {
 	struct net_device *net_dev = (struct net_device *)seq->private;
 	struct batadv_hardif_neigh_node *hardif_neigh;
