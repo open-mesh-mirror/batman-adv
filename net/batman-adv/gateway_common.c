@@ -89,7 +89,7 @@ static bool batadv_parse_gw_bandwidth(struct net_device *net_dev, char *buff,
 		break;
 	}
 
-	if (U32_MAX < ldown) {
+	if (ldown > U32_MAX) {
 		batadv_err(net_dev,
 			   "Download speed of gateway mode too large: %s\n",
 			   buff);
@@ -139,7 +139,7 @@ static bool batadv_parse_gw_bandwidth(struct net_device *net_dev, char *buff,
 			break;
 		}
 
-		if (U32_MAX < lup) {
+		if (lup > U32_MAX) {
 			batadv_err(net_dev,
 				   "Upload speed of gateway mode too large: %s\n",
 				   slash_ptr + 1);
