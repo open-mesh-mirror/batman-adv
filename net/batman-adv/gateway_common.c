@@ -38,7 +38,7 @@
  * @down: pointer holding the returned download bandwidth information
  * @up: pointer holding the returned upload bandwidth information
  *
- * Returns false on parse error and true otherwise.
+ * Return: false on parse error and true otherwise.
  */
 static bool batadv_parse_gw_bandwidth(struct net_device *net_dev, char *buff,
 				      u32 *down, u32 *up)
