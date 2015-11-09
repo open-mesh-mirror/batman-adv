@@ -1247,6 +1247,26 @@ void batadv_bla_update_orig_address(struct batadv_priv *bat_priv,
 }
 
 /**
+ * batadv_bla_status_update - purge bla interfaces if necessary
+ * @net_dev: the soft interface net device
+ */
+void batadv_bla_status_update(struct net_device *net_dev)
+{
+	struct batadv_priv *bat_priv = netdev_priv(net_dev);
+	struct batadv_hard_iface *primary_if;
+
+	primary_if = batadv_primary_if_get_selected(bat_priv);
+	if (!primary_if)
+		return;
+
+	/* this function already purges everything when bla is disabled,
+	 * so just call that one.
+	 */
+	batadv_bla_update_orig_address(bat_priv, primary_if, primary_if);
+	batadv_hardif_free_ref(primary_if);
+}
+
+/**
  * batadv_bla_periodic_work - performs periodic bla work
  * @work: kernel work struct
  *
