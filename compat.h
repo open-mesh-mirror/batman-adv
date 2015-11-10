@@ -170,6 +170,27 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(3, 10, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)
+
+/* the expected behaviour of this function is to return 0 on success, therefore
+ * it is possible to define it as 1 so that batman-adv thinks like something
+ * went wrong. It will then decide what to do.
+ */
+#define cfg80211_get_station(_a, _b, _c) (1)
+/* the following define substitute the expected_throughput field with a random
+ * one existing in the station_info struct. It can be random because due to the
+ * define above it will never be used. We need it only to make the code compile
+ */
+#define expected_throughput filled
+
+#ifdef CONFIG_BATMAN_ADV_BATMAN_V
+
+#warning cfg80211 based throughput metric is only supported with Linux 3.15+
+
+#endif
+
+#endif /* < KERNEL_VERSION(3, 15, 0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
 
 #define IFF_NO_QUEUE	0; dev->tx_queue_len = 0
