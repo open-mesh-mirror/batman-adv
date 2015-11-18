@@ -72,8 +72,8 @@ static int batadv_compare_tt(const struct hlist_node *node, const void *data2)
 {
 	const void *data1 = container_of(node, struct batadv_tt_common_entry,
 					 hash_entry);
-	const struct batadv_tt_common_entry* tt1 = data1;
-	const struct batadv_tt_common_entry* tt2 = data2;
+	const struct batadv_tt_common_entry *tt1 = data1;
+	const struct batadv_tt_common_entry *tt2 = data2;
 
 	return (tt1->vid == tt2->vid) && batadv_compare_eth(data1, data2);
 }
