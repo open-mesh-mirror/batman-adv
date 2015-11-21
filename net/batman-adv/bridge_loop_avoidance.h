@@ -22,6 +22,7 @@
 
 #include <linux/types.h>
 
+struct net_device;
 struct seq_file;
 struct sk_buff;
 
