@@ -1,3 +1,28 @@
+batman-adv 2015.2
+
+ * support latest kernels (2.6.29 - 4.4)
+ * cleanup of coding style and kernel docs
+ * fix includes in various files
+ * add lower layer head/tail room to avoid problems when slave devices
+   encapsulate packets and have not enough space available
+ * fix hard_header_len which allows sending packets shorter than 64byte
+ * Remove obsolete deleted attribute for gateway node to simplify
+   code and avoid delayed free of structures referenced by the gateway
+ * Add lockdep asserts to find locking problems
+ * bugs squashed:
+   - Fix gw_bandwidth calculation on 32 bit systems
+   - prevent potential hlist double deletion
+   - fix soft interface access on unload
+   - fix invalid stack access in DAT
+   - lock CRC access in bridge loop avoidance
+   - fix TT client duplicate detection with VLANs
+   - fix excess VLANs in TT requests
+   - avoid keeping false temporary TT entries
+   - fix TT speedy join for DAT cache replies
+   - fix TT memory leak on add with invalid VLAN
+   
+ -- Mon, 23 Nov 2015 20:25:19 +0100
+
 batman-adv 2015.1
 
  * support latest kernels (2.6.29 - 4.2)
