@@ -119,7 +119,7 @@ static inline int batadv_netdev_set_master(struct net_device *slave,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
 
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv) \
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
 	netdev_master_upper_dev_link(dev, upper_dev)
 
 #endif /* < KERNEL_VERSION(4, 5, 0) */
