@@ -58,6 +58,9 @@ struct batadv_dev_addr_list {
 	int da_gusers;
 };
 
+#define NETDEV_PRE_TYPE_CHANGE	0x000E
+#define NETDEV_POST_TYPE_CHANGE	0x000F
+
 #endif /* < KERNEL_VERSION(2, 6, 35) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
