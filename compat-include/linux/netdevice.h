@@ -58,6 +58,9 @@ struct batadv_dev_addr_list {
 	int da_gusers;
 };
 
+#define NETDEV_PRE_TYPE_CHANGE	0x000E
+#define NETDEV_POST_TYPE_CHANGE	0x000F
+
 #endif /* < KERNEL_VERSION(2, 6, 35) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
@@ -116,5 +119,12 @@ static inline int batadv_netdev_set_master(struct net_device *slave,
 #define dev_get_iflink(_net_dev) ((_net_dev)->iflink)
 
 #endif /* < KERNEL_VERSION(3, 19, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
+	netdev_master_upper_dev_link(dev, upper_dev)
+
+#endif /* < KERNEL_VERSION(4, 5, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
