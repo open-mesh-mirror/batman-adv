@@ -84,7 +84,6 @@ static inline int batadv_netdev_set_master(struct net_device *slave,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
-#define netdev_master_upper_dev_link netdev_set_master
 #define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
 #define netdev_master_upper_dev_get(dev) \
 ({\
@@ -120,7 +119,12 @@ static inline int batadv_netdev_set_master(struct net_device *slave,
 
 #endif /* < KERNEL_VERSION(3, 19, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
+
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
+	netdev_set_master(dev, upper_dev)
+
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
 
 #define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
 	netdev_master_upper_dev_link(dev, upper_dev)
