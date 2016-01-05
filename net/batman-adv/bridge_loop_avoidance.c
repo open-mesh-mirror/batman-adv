@@ -168,7 +168,8 @@ static void batadv_claim_free_rcu(struct rcu_head *rcu)
 }
 
 /**
- * batadv_claim_free_rcu - free a claim
+ * batadv_claim_free_ref - decrement the claim refcounter and possibly
+ *  release it
  * @claim: claim to be free'd
  */
 static void batadv_claim_free_ref(struct batadv_bla_claim *claim)
