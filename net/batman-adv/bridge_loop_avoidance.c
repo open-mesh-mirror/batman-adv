@@ -154,17 +154,14 @@ batadv_backbone_gw_free_ref(struct batadv_bla_backbone_gw *backbone_gw)
 }
 
 /**
- * batadv_claim_free_rcu - finally deinitialize the claim
- * @rcu: rcu pointer within the claim structure
+ * batadv_claim_release - release claim from lists and queue for free after rcu
+ *  grace period
+ * @claim: claim to be free'd
  */
-static void batadv_claim_free_rcu(struct rcu_head *rcu)
+static void batadv_claim_release(struct batadv_bla_claim *claim)
 {
-	struct batadv_bla_claim *claim;
-
-	claim = container_of(rcu, struct batadv_bla_claim, rcu);
-
 	batadv_backbone_gw_free_ref(claim->backbone_gw);
-	kfree(claim);
+	kfree_rcu(claim, rcu);
 }
 
 /**
@@ -174,7 +171,7 @@ static void batadv_claim_free_rcu(struct rcu_head *rcu)
 static void batadv_claim_free_ref(struct batadv_bla_claim *claim)
 {
 	if (atomic_dec_and_test(&claim->refcount))
-		call_rcu(&claim->rcu, batadv_claim_free_rcu);
+		batadv_claim_release(claim);
 }
 
 /**
