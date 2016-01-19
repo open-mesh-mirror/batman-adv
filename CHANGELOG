@@ -1,3 +1,19 @@
+batman-adv 2016.0
+
+ * support latest kernels (2.6.29 - 4.5)
+ * add list of unique single hop neighbors and export it via debugfs
+ * massive kernel doc updates and coding style cleanups
+ * redesign/fix RCU handling when cleaning up to avoid bad memory access
+ * increase bridge loop avoidance wait time to 60 seconds
+ * remove bridge loop avoidance state when it gets disabled
+ * support for interfaces which switch from non-ethernet to ethernet mode
+ * bugs squashed:
+   - fix lockdep splat when doing mcast_free or batadv_tlv_container_remove
+   - fix invalid memory access when shrinking buffer for the OGM-return-rate
+     measurement on interface removal
+
+ -- Tue, 19 Jan 2016 17:02:46 +0100
+
 batman-adv 2015.2
 
  * support latest kernels (2.6.29 - 4.4)
