@@ -1,0 +1,8 @@
+/compat-autoconf.h
+/compat-autoconf.h.tmp
+/net/batman-adv/.*
+/net/batman-adv/batman-adv.ko
+/net/batman-adv/batman-adv.mod.c
+/net/batman-adv/modules.order
+/net/batman-adv/Module.symvers
+/net/batman-adv/*.o
