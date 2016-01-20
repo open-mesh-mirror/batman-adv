@@ -26,6 +26,8 @@
 #include_next <linux/average.h>
 #endif
 
+#include <linux/bug.h>
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
 
 /* Exponentially weighted moving average (EWMA) */
