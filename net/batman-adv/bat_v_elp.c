@@ -67,7 +67,8 @@ static void batadv_v_elp_start_timer(struct batadv_hard_iface *hard_iface)
  * batadv_v_elp_get_throughput - get the throughput towards a neighbour
  * @neigh: the neighbour for which the throughput has to be obtained
  *
- * Return: the throughput towards the given neighbour.
+ * Return: The throughput towards the given neighbour in multiples of 100kpbs
+ *         (a value of '1' equals to 0.1Mbps, '10' equals 1Mbps, etc).
  */
 static u32 batadv_v_elp_get_throughput(struct batadv_hardif_neigh_node *neigh)
 {
