@@ -129,9 +129,10 @@ static u32 batadv_v_elp_get_throughput(struct batadv_hardif_neigh_node *neigh)
 default_throughput:
 	if (!(hard_iface->bat_v.flags & BATADV_WARNING_DEFAULT)) {
 		batadv_info(hard_iface->soft_iface,
-			    "WiFi driver or ethtool info does not provide information about link speeds on interface %s, therefore defaulting to hardcoded throughput values of %d kbit/s. Consider overriding the throughput manually or checking your driver.\n",
+			    "WiFi driver or ethtool info does not provide information about link speeds on interface %s, therefore defaulting to hardcoded throughput values of %u.%1u Mbps. Consider overriding the throughput manually or checking your driver.\n",
 			    hard_iface->net_dev->name,
-			    BATADV_THROUGHPUT_DEFAULT_VALUE / 10);
+			    BATADV_THROUGHPUT_DEFAULT_VALUE / 10,
+			    BATADV_THROUGHPUT_DEFAULT_VALUE % 10);
 		hard_iface->bat_v.flags |= BATADV_WARNING_DEFAULT;
 	}
 
