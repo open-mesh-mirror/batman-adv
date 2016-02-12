@@ -309,7 +309,7 @@ static void batadv_v_ogm_forward(struct batadv_priv *bat_priv,
 	u16 tvlv_len;
 
 	/* only forward for specific interfaces, not for the default one. */
-	if (if_outgoing != BATADV_IF_DEFAULT)
+	if (if_outgoing == BATADV_IF_DEFAULT)
 		goto out;
 
 	orig_ifinfo = batadv_orig_ifinfo_new(orig_node, if_outgoing);
