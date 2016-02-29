@@ -73,8 +73,8 @@ static void batadv_v_elp_start_timer(struct batadv_hard_iface *hard_iface)
 static u32 batadv_v_elp_get_throughput(struct batadv_hardif_neigh_node *neigh)
 {
 	struct batadv_hard_iface *hard_iface = neigh->if_incoming;
+	struct ethtool_link_ksettings link_settings;
 	struct station_info sinfo;
-	struct ethtool_cmd cmd;
 	u32 throughput;
 	int ret;
 
@@ -110,19 +110,19 @@ static u32 batadv_v_elp_get_throughput(struct batadv_hardif_neigh_node *neigh)
 	/* if not a wifi interface, check if this device provides data via
 	 * ethtool (e.g. an Ethernet adapter)
 	 */
-	memset(&cmd, 0, sizeof(cmd));
+	memset(&link_settings, 0, sizeof(link_settings));
 	rtnl_lock();
-	ret = __ethtool_get_settings(hard_iface->net_dev, &cmd);
+	ret = __ethtool_get_link_ksettings(hard_iface->net_dev, &link_settings);
 	rtnl_unlock();
 	if (ret == 0) {
 		/* link characteristics might change over time */
-		if (cmd.duplex == DUPLEX_FULL)
+		if (link_settings.base.duplex == DUPLEX_FULL)
 			hard_iface->bat_v.flags |= BATADV_FULL_DUPLEX;
 		else
 			hard_iface->bat_v.flags &= ~BATADV_FULL_DUPLEX;
 
-		throughput = ethtool_cmd_speed(&cmd);
-		if (throughput && throughput != SPEED_UNKNOWN)
+		throughput = link_settings.base.speed;
+		if (throughput && (throughput != SPEED_UNKNOWN))
 			return throughput * 10;
 	}
 
