@@ -22,6 +22,7 @@
 
 #include <linux/bitops.h>
 #include <linux/compiler.h>
+#include <linux/stddef.h>
 #include <linux/types.h>
 
 /**

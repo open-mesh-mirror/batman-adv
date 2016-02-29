@@ -20,6 +20,7 @@
 
 #include "main.h"
 
+#include <linux/types.h>
 #include <net/rtnetlink.h>
 
 struct net_device;
