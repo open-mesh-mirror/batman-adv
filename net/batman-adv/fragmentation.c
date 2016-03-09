@@ -407,8 +407,8 @@ static struct sk_buff *batadv_frag_create(struct sk_buff *skb,
 					  unsigned int mtu)
 {
 	struct sk_buff *skb_fragment;
-	unsigned header_size = sizeof(*frag_head);
-	unsigned fragment_size = mtu - header_size;
+	unsigned int header_size = sizeof(*frag_head);
+	unsigned int fragment_size = mtu - header_size;
 
 	skb_fragment = netdev_alloc_skb(NULL, mtu + ETH_HLEN);
 	if (!skb_fragment)
@@ -444,9 +444,9 @@ bool batadv_frag_send_packet(struct sk_buff *skb,
 	struct batadv_hard_iface *primary_if = NULL;
 	struct batadv_frag_packet frag_header;
 	struct sk_buff *skb_fragment;
-	unsigned mtu = neigh_node->if_incoming->net_dev->mtu;
-	unsigned header_size = sizeof(frag_header);
-	unsigned max_fragment_size, max_packet_size;
+	unsigned int mtu = neigh_node->if_incoming->net_dev->mtu;
+	unsigned int header_size = sizeof(frag_header);
+	unsigned int max_fragment_size, max_packet_size;
 	bool ret = false;
 
 	/* To avoid merge and refragmentation at next-hops we never send
