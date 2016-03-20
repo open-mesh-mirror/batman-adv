@@ -22,9 +22,7 @@
 #define _NET_BATMAN_ADV_COMPAT_LINUX_AVERAGE_H
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 38)
 #include_next <linux/average.h>
-#endif
 
 #include <linux/bug.h>
 

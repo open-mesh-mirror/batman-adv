@@ -24,16 +24,6 @@
 #include <linux/version.h>
 #include_next <linux/rculist.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 37)
-
-#define hlist_first_rcu(head) \
-	(*((struct hlist_node __rcu **)(&(head)->first)))
-
-#define hlist_next_rcu(node) \
-	(*((struct hlist_node __rcu **)(&(node)->next)))
-
-#endif /* < KERNEL_VERSION(2, 6, 37) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
 #undef hlist_for_each_entry_rcu

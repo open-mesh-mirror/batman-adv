@@ -24,35 +24,6 @@
 #include <linux/version.h>
 #include_next <linux/skbuff.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 30)
-
-#define consume_skb(_skb) kfree_skb(_skb)
-
-#endif /* < KERNEL_VERSION(2, 6, 30) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
-
-static inline struct sk_buff *netdev_alloc_skb_ip_align(struct net_device *dev,
-							unsigned int length)
-{
-	struct sk_buff *skb = netdev_alloc_skb(dev, length + NET_IP_ALIGN);
-
-	if (NET_IP_ALIGN && skb)
-		skb_reserve(skb, NET_IP_ALIGN);
-	return skb;
-}
-
-#endif /* < KERNEL_VERSION(2, 6, 33) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
-
-static inline void skb_reset_mac_len(struct sk_buff *skb)
-{
-	skb->mac_len = skb->network_header - skb->mac_header;
-}
-
-#endif /* < KERNEL_VERSION(3, 0, 0) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
 
 /* hack for not correctly set mac_len. This may happen for some special

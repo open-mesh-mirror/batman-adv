@@ -23,31 +23,11 @@
 
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/kconfig.h>
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33))
-#include <linux/autoconf.h>
-#else
 #include <generated/autoconf.h>
-#endif
+
 #include "compat-autoconf.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
-
-#define skb_iif iif
-
-#define batadv_softif_destroy_netlink(dev, head) batadv_softif_destroy_netlink(dev)
-
-#endif /* < KERNEL_VERSION(2, 6, 33) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
-
-#include <linux/netdevice.h>
-
-#define netdev_master_upper_dev_get_rcu(dev) \
-	(dev->br_port ? dev : NULL); \
-	break;
-
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
 #include <linux/netdevice.h>
 
@@ -55,38 +35,7 @@
 	(dev->priv_flags & IFF_BRIDGE_PORT ? dev : NULL); \
 	break;
 
-#endif /* < KERNEL_VERSION(2, 6, 36) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
-
-/* hack for dev->addr_assign_type &= ~NET_ADDR_RANDOM; */
-#define addr_assign_type ifindex
-
-#endif /* < KERNEL_VERSION(2, 6, 36) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
-
-/* Hack for removing ndo_add/del_slave at the end of net_device_ops.
- * This is somewhat ugly because it requires that ndo_validate_addr
- * is at the end of this struct in soft-interface.c.
- */
-#include <linux/netdevice.h>
-
-#define ndo_validate_addr \
-	ndo_validate_addr = eth_validate_addr, \
-}; \
-static const struct { \
-	void *ndo_validate_addr; \
-	void *ndo_add_slave; \
-	void *ndo_del_slave; \
-} __attribute__((unused)) __useless_ops1 = { \
-	.ndo_validate_addr
-
-#define ndo_del_slave          ndo_init
-#define ndo_init(x, y)         ndo_init - master->netdev_ops->ndo_init - EBUSY
-
-#endif /* < KERNEL_VERSION(2, 6, 39) */
-
+#endif /* < KERNEL_VERSION(3, 9, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
 

@@ -30,58 +30,6 @@
 
 #endif /* < KERNEL_VERSION(3, 3, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
-
-#define unregister_netdevice_queue(dev, head) unregister_netdevice(dev)
-
-#endif /* < KERNEL_VERSION(2, 6, 33) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 35)
-
-#include <linux/etherdevice.h>
-
-#undef  netdev_for_each_mc_addr
-#define netdev_for_each_mc_addr(mclist, dev) \
-	for (mclist = (struct batadv_dev_addr_list *)dev->mc_list; mclist; \
-	     mclist = (struct batadv_dev_addr_list *)mclist->next)
-
-/* Note, that this breaks the usage of the normal 'struct netdev_hw_addr'
- * for kernels < 2.6.35 in batman-adv!
- */
-#define netdev_hw_addr batadv_dev_addr_list
-struct batadv_dev_addr_list {
-	struct dev_addr_list *next;
-	u8  addr[MAX_ADDR_LEN];
-	u8  da_addrlen;
-	u8  da_synced;
-	int da_users;
-	int da_gusers;
-};
-
-#define NETDEV_PRE_TYPE_CHANGE	0x000E
-#define NETDEV_POST_TYPE_CHANGE	0x000F
-
-#endif /* < KERNEL_VERSION(2, 6, 35) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
-
-#define NET_ADDR_RANDOM 0
-
-#endif /* < KERNEL_VERSION(2, 6, 36) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
-
-/* On older kernels net_dev->master is reserved for iface bonding. */
-static inline int batadv_netdev_set_master(struct net_device *slave,
-					   struct net_device *master)
-{
-	return 0;
-}
-
-#define netdev_set_master batadv_netdev_set_master
-
-#endif /* < KERNEL_VERSION(2, 6, 39) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
 #define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
@@ -103,13 +51,8 @@ static inline int batadv_netdev_set_master(struct net_device *slave,
 
 /* alloc_netdev() was defined differently before 2.6.38 */
 #undef alloc_netdev
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 38)
-#define alloc_netdev(sizeof_priv, name, name_assign_type, setup) \
-	alloc_netdev_mq(sizeof_priv, name, setup, 1)
-#else
 #define alloc_netdev(sizeof_priv, name, name_assign_type, setup) \
 	alloc_netdev_mqs(sizeof_priv, name, setup, 1, 1)
-#endif /* nested < KERNEL_VERSION(2, 6, 38) */
 
 #endif /* < KERNEL_VERSION(3, 17, 0) */
 

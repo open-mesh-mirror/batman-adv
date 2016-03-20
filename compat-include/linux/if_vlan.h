@@ -24,21 +24,10 @@
 #include <linux/version.h>
 #include_next <linux/if_vlan.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33)
-
-#define VLAN_PRIO_MASK          0xe000 /* Priority Code Point */
-#define VLAN_PRIO_SHIFT         13
-
-#endif /* < KERNEL_VERSION(2, 6, 33) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 0, 0)
-
-#define vlan_insert_tag(skb, proto, vid) __vlan_put_tag(skb, vid)
-
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
 
 #define vlan_insert_tag(skb, proto, vid) vlan_insert_tag(skb, vid)
 
-#endif /* < KERNEL_VERSION(3, 0, 0) */
+#endif /* < KERNEL_VERSION(3, 10, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_IF_VLAN_H_ */

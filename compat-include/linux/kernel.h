@@ -24,35 +24,6 @@
 #include <linux/version.h>
 #include_next <linux/kernel.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39)
-
-#define kstrtou32(cp, base, v)\
-({\
-	unsigned long _v;\
-	int _r;\
-	_r = strict_strtoul(cp, base, &_v);\
-	*(v) = (u32)_v;\
-	if ((unsigned long)*(v) != _v)\
-		_r = -ERANGE;\
-	_r;\
-})
-
-#define kstrtou64(cp, base, v)\
-({\
-	unsigned long long _v;\
-	int _r;\
-	_r = strict_strtoull(cp, base, &_v);\
-	*(v) = (uint64_t)_v;\
-	if ((unsigned long long)*(v) != _v)\
-		_r = -ERANGE;\
-	_r;\
-})
-
-#define kstrtoul strict_strtoul
-#define kstrtol  strict_strtol
-
-#endif /* < KERNEL_VERSION(2, 6, 39) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
 
 #define U8_MAX		((u8)~0U)
