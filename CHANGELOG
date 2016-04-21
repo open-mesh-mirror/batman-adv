@@ -1,3 +1,22 @@
+batman-adv 2016.1
+
+ * support latest kernels (3.2 - 4.6)
+ * drop support for older kernels 2.6.29 - 3.1
+ * B.A.T.M.A.N. V routing algorithm support
+ * kernel doc updates and coding style cleanups
+ * conversion to the kref based reference counting framework
+ * bugs squashed:
+   - fix endless loop in bat-on-bat netdevice check when using veth
+   - fix various reference counting issues
+   - init neigh node last seen field
+   - fix integer overflow in batadv_iv_ogm_calc_tq
+   - fix broadcast/ogm queue limit on a removed interface
+   - fix DAT candidate selection to use VID
+   - fix unexpected free of bcast_own on add_if error
+   - check skb size before using encapsulated ETH+VLAN header
+
+ -- Thu, 21 Apr 2016 14:10:38 +0200
+
 batman-adv 2016.0
 
  * support latest kernels (2.6.29 - 4.5)
