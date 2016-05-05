@@ -25,6 +25,7 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/jiffies.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/poll.h>
 #include <linux/sched.h> /* for linux/wait.h */
