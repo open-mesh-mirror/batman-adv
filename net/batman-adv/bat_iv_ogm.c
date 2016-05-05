@@ -30,6 +30,7 @@
 #include <linux/if_ether.h>
 #include <linux/init.h>
 #include <linux/jiffies.h>
+#include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/kref.h>
 #include <linux/lockdep.h>
