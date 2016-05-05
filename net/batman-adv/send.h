@@ -26,7 +26,6 @@
 #include "packet.h"
 
 struct sk_buff;
-struct work_struct;
 
 void batadv_forw_packet_free(struct batadv_forw_packet *forw_packet);
 int batadv_send_skb_to_orig(struct sk_buff *skb,
