@@ -45,6 +45,7 @@ REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
 			fi)
 export NOSTDINC_FLAGS := \
 	-I$(PWD)/compat-include/ \
+	-I$(PWD)/include/ \
 	-include $(PWD)/compat.h \
 	$(CFLAGS)
 
