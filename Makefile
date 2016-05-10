@@ -53,6 +53,10 @@ ifneq ($(REVISION),)
 NOSTDINC_FLAGS += -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
 endif
 
+include $(PWD)/compat-sources/Makefile
+
+export batman-adv-y
+
 BUILD_FLAGS := \
 	M=$(PWD)/net/batman-adv \
 	CONFIG_BATMAN_ADV=m \
