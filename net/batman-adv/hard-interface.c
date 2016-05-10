@@ -683,6 +683,13 @@ batadv_hardif_add_interface(struct net_device *net_dev)
 	if (batadv_is_wifi_netdev(net_dev))
 		hard_iface->num_bcasts = BATADV_NUM_BCASTS_WIRELESS;
 
+	/* enable link throughput auto-detection by setting the throughput
+	 * override to zero
+	 */
+	atomic_set(&hard_iface->bat_v.throughput_override, 0);
+
+	atomic_set(&hard_iface->bat_v.elp_interval, 500);
+
 	/* extra reference for return */
 	kref_init(&hard_iface->refcount);
 	kref_get(&hard_iface->refcount);
