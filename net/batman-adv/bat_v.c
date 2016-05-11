@@ -18,7 +18,6 @@
 #include "bat_algo.h"
 #include "main.h"
 
-#include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/cache.h>
 #include <linux/init.h>
