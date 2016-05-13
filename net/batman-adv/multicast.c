@@ -1205,12 +1205,12 @@ int batadv_mcast_flags_seq_print_text(struct seq_file *seq, void *offset)
 
 		rcu_read_lock();
 		hlist_for_each_entry_rcu(orig_node, head, hash_entry) {
-			if (!(orig_node->capa_initialized &
-			      BATADV_ORIG_CAPA_HAS_MCAST))
+			if (!test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
+				      &orig_node->capa_initialized))
 				continue;
 
-			if (!(orig_node->capabilities &
-			      BATADV_ORIG_CAPA_HAS_MCAST)) {
+			if (!test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
+				      &orig_node->capabilities)) {
 				seq_printf(seq, "%pM -\n", orig_node->orig);
 				continue;
 			}
