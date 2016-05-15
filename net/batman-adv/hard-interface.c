@@ -41,6 +41,7 @@
 #include "debugfs.h"
 #include "distributed-arp-table.h"
 #include "gateway_client.h"
+#include "log.h"
 #include "originator.h"
 #include "packet.h"
 #include "send.h"
