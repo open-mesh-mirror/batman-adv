@@ -18,6 +18,8 @@
 #ifndef _NET_BATMAN_ADV_NETLINK_H_
 #define _NET_BATMAN_ADV_NETLINK_H_
 
+#include "main.h"
+
 void batadv_netlink_register(void);
 void batadv_netlink_unregister(void);
 
