@@ -29,8 +29,8 @@
 #include <linux/if_bridge.h>
 #include <linux/if_ether.h>
 #include <linux/igmp.h>
-#include <linux/in6.h>
 #include <linux/in.h>
+#include <linux/in6.h>
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/kernel.h>

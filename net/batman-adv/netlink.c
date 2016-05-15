@@ -15,8 +15,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "main.h"
 #include "netlink.h"
+#include "main.h"
 
 #include <linux/errno.h>
 #include <linux/fs.h>
@@ -25,8 +25,8 @@
 #include <linux/init.h>
 #include <linux/netdevice.h>
 #include <linux/netlink.h>
-#include <linux/stddef.h>
 #include <linux/printk.h>
+#include <linux/stddef.h>
 #include <net/genetlink.h>
 #include <net/netlink.h>
 #include <uapi/linux/batman_adv.h>
