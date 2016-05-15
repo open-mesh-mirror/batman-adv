@@ -15,7 +15,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "bat_algo.h"
+#include "bat_v.h"
 #include "main.h"
 
 #include <linux/bug.h>
@@ -30,6 +30,7 @@
 #include <linux/types.h>
 #include <linux/workqueue.h>
 
+#include "bat_algo.h"
 #include "bat_v_elp.h"
 #include "bat_v_ogm.h"
 #include "hard-interface.h"
