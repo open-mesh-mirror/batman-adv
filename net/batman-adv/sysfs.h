@@ -48,6 +48,8 @@ void batadv_sysfs_del_meshif(struct net_device *dev);
 int batadv_sysfs_add_hardif(struct kobject **hardif_obj,
 			    struct net_device *dev);
 void batadv_sysfs_del_hardif(struct kobject **hardif_obj);
+void batadv_sysfs_rename_hardif(struct kobject **hardif_obj,
+				struct net_device *dev);
 int batadv_sysfs_add_vlan(struct net_device *dev,
 			  struct batadv_softif_vlan *vlan);
 void batadv_sysfs_del_vlan(struct batadv_priv *bat_priv,

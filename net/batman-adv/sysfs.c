@@ -48,6 +48,8 @@
 #include "packet.h"
 #include "soft-interface.h"
 
+static atomic_t batadv_rename = ATOMIC_INIT(0);
+
 static struct net_device *batadv_kobj_to_netdev(struct kobject *obj)
 {
 	struct device *dev = container_of(obj->parent, struct device, kobj);
@@ -1044,6 +1046,21 @@ rem_attr:
 		sysfs_remove_file(*hardif_obj, &((*bat_attr)->attr));
 out:
 	return -ENOMEM;
+}
+
+void batadv_sysfs_rename_hardif(struct kobject **hardif_obj,
+				struct net_device *dev)
+{
+	char new_name[32];
+	int err;
+
+	snprintf(new_name, sizeof(*new_name) - 1, "tmp-%d",
+		 atomic_inc_return(&batadv_rename));
+
+	err = kobject_rename(*hardif_obj, new_name);
+	if (err)
+		batadv_err(dev, "Can't rename sysfs dir: %s/%s: %d\n",
+			   dev->name, new_name, err);
 }
 
 void batadv_sysfs_del_hardif(struct kobject **hardif_obj)

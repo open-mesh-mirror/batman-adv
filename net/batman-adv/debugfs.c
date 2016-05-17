@@ -44,6 +44,7 @@
 #include "translation-table.h"
 
 static struct dentry *batadv_debugfs;
+static atomic_t batadv_rename = ATOMIC_INIT(0);
 
 static int batadv_algorithms_open(struct inode *inode, struct file *file)
 {
@@ -344,6 +345,28 @@ void batadv_debugfs_del_hardif(struct batadv_hard_iface *hard_iface)
 	if (batadv_debugfs) {
 		debugfs_remove_recursive(hard_iface->debug_dir);
 		hard_iface->debug_dir = NULL;
+	}
+}
+
+/**
+ * batadv_debugfs_rename_hardif - rename the base directory
+ * @hard_iface: hard interface which is renamed.
+ *
+ * The interface may be removed and then quickly added back
+ * again. Rename the old instance to something temporary and unique,
+ * so avoiding a name space clash if it does reappear before the deferred
+ * work completes the removal.
+ */
+void batadv_debugfs_rename_hardif(struct batadv_hard_iface *hard_iface)
+{
+	char new_name[32];
+
+	snprintf(new_name, sizeof(*new_name) - 1, "tmp-%d",
+		 atomic_inc_return(&batadv_rename));
+
+	if (batadv_debugfs && hard_iface->debug_dir) {
+		debugfs_rename(batadv_debugfs, hard_iface->debug_dir,
+			       batadv_debugfs, new_name);
 	}
 }
 

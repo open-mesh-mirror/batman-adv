@@ -706,6 +706,23 @@ out:
 	return NULL;
 }
 
+/**
+ * batadv_hardif_rename - rename the sysfs and debugfs
+ * @hard_iface: The hard interface to rename
+ *
+ * The sysfs and debugfs files cannot be removed until all users close
+ * them.  So the removal is deferred into a work queue. This however
+ * means if the interface comes back before the work queue runs, the
+ * files are still there, and so the create gives an EEXISTS error. To
+ * avoid this, rename them to a tempory name.
+ */
+static void batadv_hardif_rename(struct batadv_hard_iface *hard_iface)
+{
+	batadv_sysfs_rename_hardif(&hard_iface->hardif_obj,
+				   hard_iface->net_dev);
+	batadv_debugfs_rename_hardif(hard_iface);
+}
+
 static void batadv_hardif_remove_interface(struct batadv_hard_iface *hard_iface)
 {
 	ASSERT_RTNL();
@@ -719,6 +736,8 @@ static void batadv_hardif_remove_interface(struct batadv_hard_iface *hard_iface)
 		return;
 
 	hard_iface->if_status = BATADV_IF_TO_BE_REMOVED;
+	batadv_hardif_rename(hard_iface);
+
 	queue_work(batadv_event_workqueue, &hard_iface->cleanup_work);
 }
 
