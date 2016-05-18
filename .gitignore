@@ -1,5 +1,7 @@
 /compat-autoconf.h
 /compat-autoconf.h.tmp
+/compat-sources/**/.*
+/compat-sources/**/*.o
 /net/batman-adv/.*
 /net/batman-adv/batman-adv.ko
 /net/batman-adv/batman-adv.mod.c
