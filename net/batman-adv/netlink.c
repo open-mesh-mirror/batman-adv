@@ -350,7 +350,7 @@ batadv_netlink_tp_meter_cancel(struct sk_buff *skb, struct genl_info *info)
 	struct batadv_priv *bat_priv;
 	int ifindex;
 	u8 *dst;
-	int ret;
+	int ret = 0;
 
 	if (!info->attrs[BATADV_ATTR_MESH_IFINDEX])
 		return -EINVAL;
@@ -377,7 +377,7 @@ out:
 	if (soft_iface)
 		dev_put(soft_iface);
 
-	return 0;
+	return ret;
 }
 
 static struct genl_ops batadv_netlink_ops[] = {
