@@ -18,6 +18,7 @@
 #include "bat_v.h"
 #include "main.h"
 
+#include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/cache.h>
 #include <linux/init.h>
@@ -332,6 +333,20 @@ static struct batadv_algo_ops batadv_batman_v __read_mostly = {
 	.bat_neigh_is_similar_or_better = batadv_v_neigh_is_sob,
 	.bat_neigh_print = batadv_v_neigh_print,
 };
+
+/**
+ * batadv_v_hardif_init - initialize the algorithm specific fields in the
+ *  hard-interface object
+ * @hard_iface: the hard-interface to initialize
+ */
+void batadv_v_hardif_init(struct batadv_hard_iface *hard_iface)
+{
+	/* enable link throughput auto-detection by setting the throughput
+	 * override to zero
+	 */
+	atomic_set(&hard_iface->bat_v.throughput_override, 0);
+	atomic_set(&hard_iface->bat_v.elp_interval, 500);
+}
 
 /**
  * batadv_v_mesh_init - initialize the B.A.T.M.A.N. V private resources for a
