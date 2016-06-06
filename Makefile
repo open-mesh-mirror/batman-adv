@@ -43,7 +43,7 @@ RM ?= rm -f
 REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
 				echo $$(git --git-dir="$(PWD)/.git" describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
 			fi)
-export NOSTDINC_FLAGS := \
+NOSTDINC_FLAGS += \
 	-I$(PWD)/compat-include/ \
 	-I$(PWD)/include/ \
 	-include $(PWD)/compat.h \
@@ -55,10 +55,15 @@ endif
 
 include $(PWD)/compat-sources/Makefile
 
+obj-y += net/batman-adv/
+
 export batman-adv-y
 
+
 BUILD_FLAGS := \
-	M=$(PWD)/net/batman-adv \
+	M=$(PWD) \
+	PWD=$(PWD) \
+	REVISION=$(REVISION) \
 	CONFIG_BATMAN_ADV=m \
 	CONFIG_BATMAN_ADV_DEBUG=$(CONFIG_BATMAN_ADV_DEBUG) \
 	CONFIG_BATMAN_ADV_BLA=$(CONFIG_BATMAN_ADV_BLA) \
@@ -66,7 +71,7 @@ BUILD_FLAGS := \
 	CONFIG_BATMAN_ADV_NC=$(CONFIG_BATMAN_ADV_NC) \
 	CONFIG_BATMAN_ADV_MCAST=$(CONFIG_BATMAN_ADV_MCAST) \
 	CONFIG_BATMAN_ADV_BATMAN_V=$(CONFIG_BATMAN_ADV_BATMAN_V) \
-	INSTALL_MOD_DIR=updates/net/batman-adv/
+	INSTALL_MOD_DIR=updates/
 
 all: config
 	$(MAKE) -C $(KERNELPATH) $(BUILD_FLAGS)	modules
