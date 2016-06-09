@@ -1,3 +1,26 @@
+batman-adv 2016.2
+
+ * support latest kernels (3.2 - 4.7)
+ * initial, limited support for network namespaces
+ * kernel doc updates and coding style cleanups
+ * cleanup of legacy kernel compat code
+ * support for detection and reporting of complex bridge loops
+ * bugs squashed:
+   - fix some TT issues: double free for full table request structs
+     (created problems on multi-core systems) and a double put of VLAN
+     objects
+   - fix various B.A.T.M.A.N. V issues: fix mac address after address
+     change, ELP orig address on secondary interfaces, null pointer
+     dereference in metric comparison, refcount issues, ...
+   - fix skb deref after transmission
+   - avoid duplicate neigh_node additions
+   - replace WARN with rate limited output on non-existing VLAN
+   - fix ICMP RR ethernet header access after skb_linearize
+   - fix memleak of untagged vlan when removing interface via rtnl-link
+   - fix build against Debian Stretch kernels
+
+ -- Thu, 09 Jun 2016 15:37:44 +0200
+
 batman-adv 2016.1
 
  * support latest kernels (3.2 - 4.6)
