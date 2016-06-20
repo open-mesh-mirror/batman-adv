@@ -20,6 +20,7 @@
 
 #include <linux/atomic.h>
 #include <linux/byteorder/generic.h>
+#include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/fs.h>
 #include <linux/if.h>
@@ -164,7 +165,7 @@ int batadv_send_unicast_skb(struct sk_buff *skb,
  * host, NULL can be passed as recv_if and no interface alternating is
  * attempted.
  *
- * Return: -1 on failure (and the skb is not consumed), NET_XMIT_POLICED if the
+ * Return: -1 on failure (and the skb is not consumed), -EINPROGRESS if the
  * skb is buffered for later transmit or the NET_XMIT status returned by the
  * lower routine if the packet has been passed down.
  *
@@ -199,7 +200,7 @@ int batadv_send_skb_to_orig(struct sk_buff *skb,
 	 * network coding fails, then send the packet as usual.
 	 */
 	if (recv_if && batadv_nc_skb_forward(skb, neigh_node))
-		ret = NET_XMIT_POLICED;
+		ret = -EINPROGRESS;
 	else
 		ret = batadv_send_unicast_skb(skb, neigh_node);
 
