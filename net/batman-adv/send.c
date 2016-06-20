@@ -366,7 +366,7 @@ int batadv_send_skb_unicast(struct batadv_priv *bat_priv,
 		unicast_packet->ttvn = unicast_packet->ttvn - 1;
 
 	res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (res != -1 && dev_xmit_complete(res))
+	if (res != -1)
 		ret = NET_XMIT_SUCCESS;
 
 out:
