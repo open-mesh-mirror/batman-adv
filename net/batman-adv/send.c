@@ -20,6 +20,7 @@
 
 #include <linux/atomic.h>
 #include <linux/byteorder/generic.h>
+#include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/fs.h>
 #include <linux/if.h>
@@ -72,6 +73,7 @@ int batadv_send_skb_packet(struct sk_buff *skb,
 {
 	struct batadv_priv *bat_priv;
 	struct ethhdr *ethhdr;
+	int ret;
 
 	bat_priv = netdev_priv(hard_iface->soft_iface);
 
@@ -109,8 +111,15 @@ int batadv_send_skb_packet(struct sk_buff *skb,
 	/* dev_queue_xmit() returns a negative result on error.	 However on
 	 * congestion and traffic shaping, it drops and returns NET_XMIT_DROP
 	 * (which is > 0). This will not be treated as an error.
+	 *
+	 * a negative value cannot be returned because it could be interepreted
+	 * as not consumed skb by callers of batadv_send_skb_to_orig.
 	 */
-	return dev_queue_xmit(skb);
+	ret = dev_queue_xmit(skb);
+	if (ret < 0)
+		ret = NET_XMIT_DROP;
+
+	return ret;
 send_skb_err:
 	kfree_skb(skb);
 	return NET_XMIT_DROP;
@@ -156,7 +165,7 @@ int batadv_send_unicast_skb(struct sk_buff *skb,
  * host, NULL can be passed as recv_if and no interface alternating is
  * attempted.
  *
- * Return: -1 on failure (and the skb is not consumed), NET_XMIT_POLICED if the
+ * Return: -1 on failure (and the skb is not consumed), -EINPROGRESS if the
  * skb is buffered for later transmit or the NET_XMIT status returned by the
  * lower routine if the packet has been passed down.
  *
@@ -191,7 +200,7 @@ int batadv_send_skb_to_orig(struct sk_buff *skb,
 	 * network coding fails, then send the packet as usual.
 	 */
 	if (recv_if && batadv_nc_skb_forward(skb, neigh_node))
-		ret = NET_XMIT_POLICED;
+		ret = -EINPROGRESS;
 	else
 		ret = batadv_send_unicast_skb(skb, neigh_node);
 
@@ -357,7 +366,7 @@ int batadv_send_skb_unicast(struct batadv_priv *bat_priv,
 		unicast_packet->ttvn = unicast_packet->ttvn - 1;
 
 	res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (res != -1 && dev_xmit_complete(res))
+	if (res != -1)
 		ret = NET_XMIT_SUCCESS;
 
 out:

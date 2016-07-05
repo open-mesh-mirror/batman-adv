@@ -274,8 +274,7 @@ static int batadv_recv_my_icmp_packet(struct batadv_priv *bat_priv,
 		if (res == -1)
 			goto out;
 
-		if (dev_xmit_complete(res))
-			ret = NET_RX_SUCCESS;
+		ret = NET_RX_SUCCESS;
 
 		break;
 	case BATADV_TP:
@@ -335,7 +334,7 @@ static int batadv_recv_icmp_ttl_exceeded(struct batadv_priv *bat_priv,
 	icmp_packet->ttl = BATADV_TTL;
 
 	res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (res != -1 && dev_xmit_complete(res))
+	if (res != -1)
 		ret = NET_RX_SUCCESS;
 
 out:
@@ -423,7 +422,7 @@ int batadv_recv_icmp_packet(struct sk_buff *skb,
 
 	/* route it */
 	res = batadv_send_skb_to_orig(skb, orig_node, recv_if);
-	if (res != -1 && dev_xmit_complete(res))
+	if (res != -1)
 		ret = NET_RX_SUCCESS;
 
 out:
@@ -671,8 +670,7 @@ static int batadv_route_unicast_packet(struct sk_buff *skb,
 				   len + ETH_HLEN);
 	}
 
-	if (dev_xmit_complete(res))
-		ret = NET_RX_SUCCESS;
+	ret = NET_RX_SUCCESS;
 
 out:
 	if (orig_node)

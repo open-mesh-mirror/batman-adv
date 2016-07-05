@@ -625,7 +625,7 @@ void batadv_tvlv_unicast_send(struct batadv_priv *bat_priv, u8 *src,
 	memcpy(tvlv_buff, tvlv_value, tvlv_value_len);
 
 	res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (!(res != -1 && dev_xmit_complete(res)))
+	if (res == -1)
 		kfree_skb(skb);
 out:
 	batadv_orig_node_put(orig_node);
