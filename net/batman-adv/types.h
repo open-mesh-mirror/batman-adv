@@ -7,9 +7,7 @@
 #ifndef _NET_BATMAN_ADV_TYPES_H_
 #define _NET_BATMAN_ADV_TYPES_H_
 
-#ifndef _NET_BATMAN_ADV_MAIN_H_
-#error only "main.h" can be included directly
-#endif
+#include <list>
 
 #include <linux/average.h>
 #include <linux/bitops.h>
@@ -167,7 +165,7 @@ enum batadv_hard_iface_wifi_flags {
  */
 struct batadv_hard_iface {
 	/** @list: list node for batadv_hardif_list */
-	struct list_head list;
+	//struct list_head list;
 
 	/** @if_status: status of the interface for batman-adv */
 	char if_status;
@@ -221,7 +219,7 @@ struct batadv_hard_iface {
 	/**
 	 * @neigh_list: list of unique single hop neighbors via this interface
 	 */
-	struct hlist_head neigh_list;
+	struct batadv_hardif_neigh_node neigh_list[HLIST];
 
 	/** @neigh_list_lock: lock protecting neigh_list */
 	spinlock_t neigh_list_lock;
@@ -247,7 +245,7 @@ struct batadv_orig_ifinfo_bat_iv {
  */
 struct batadv_orig_ifinfo {
 	/** @list: list node for &batadv_orig_node.ifinfo_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @if_outgoing: pointer to outgoing hard-interface */
 	struct batadv_hard_iface *if_outgoing;
@@ -282,7 +280,7 @@ struct batadv_orig_ifinfo {
  */
 struct batadv_frag_table_entry {
 	/** @fragment_list: head of list with fragments */
-	struct hlist_head fragment_list;
+	struct batadv_frag_list_entry fragment_list[HLIST];
 
 	/** @lock: lock to protect the list of fragments */
 	spinlock_t lock;
@@ -305,7 +303,7 @@ struct batadv_frag_table_entry {
  */
 struct batadv_frag_list_entry {
 	/** @list: list node information */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @skb: fragment */
 	struct sk_buff *skb;
@@ -336,7 +334,7 @@ struct batadv_orig_node_vlan {
 	struct batadv_vlan_tt tt;
 
 	/** @list: list node for &batadv_orig_node.vlan_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/**
 	 * @refcount: number of context where this object is currently in use
@@ -368,7 +366,7 @@ struct batadv_orig_node {
 	u8 orig[ETH_ALEN];
 
 	/** @ifinfo_list: list for routers per outgoing interface */
-	struct hlist_head ifinfo_list;
+	struct batadv_orig_ifinfo ifinfo_list[HLIST];
 
 	/**
 	 * @last_bonding_candidate: pointer to last ifinfo of last used router
@@ -401,29 +399,29 @@ struct batadv_orig_node {
 	 * @mcast_want_all_unsnoopables_node: a list node for the
 	 *  mcast.want_all_unsnoopables list
 	 */
-	struct hlist_node mcast_want_all_unsnoopables_node;
+	//struct hlist_node mcast_want_all_unsnoopables_node;
 
 	/**
 	 * @mcast_want_all_ipv4_node: a list node for the mcast.want_all_ipv4
 	 *  list
 	 */
-	struct hlist_node mcast_want_all_ipv4_node;
+	//struct hlist_node mcast_want_all_ipv4_node;
 	/**
-	 * @mcast_want_all_ipv6_node: a list node for the mcast.want_all_ipv6
+	 * @mcast_want_all_ipv6_node 	: a list node for the mcast.want_all_ipv6
 	 *  list
 	 */
-	struct hlist_node mcast_want_all_ipv6_node;
+	//struct hlist_node mcast_want_all_ipv6_node;
 
 	/**
 	 * @mcast_want_all_rtr4_node: a list node for the mcast.want_all_rtr4
 	 *  list
 	 */
-	struct hlist_node mcast_want_all_rtr4_node;
+	//struct hlist_node mcast_want_all_rtr4_node;
 	/**
 	 * @mcast_want_all_rtr6_node: a list node for the mcast.want_all_rtr6
 	 *  list
 	 */
-	struct hlist_node mcast_want_all_rtr6_node;
+	//struct hlist_node mcast_want_all_rtr6_node;
 #endif
 
 	/** @capabilities: announced capabilities of this originator */
@@ -476,7 +474,7 @@ struct batadv_orig_node {
 	 * @neigh_list: list of potential next hop neighbor towards this orig
 	 *  node
 	 */
-	struct hlist_head neigh_list;
+	struct batadv_neigh_node neigh_list[HLIST];
 
 	/**
 	 * @neigh_list_lock: lock protecting neigh_list, ifinfo_list,
@@ -485,7 +483,7 @@ struct batadv_orig_node {
 	spinlock_t neigh_list_lock;
 
 	/** @hash_entry: hlist node for &batadv_priv.orig_hash */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @bat_priv: pointer to soft_iface this orig node belongs to */
 	struct batadv_priv *bat_priv;
@@ -501,10 +499,10 @@ struct batadv_orig_node {
 
 #ifdef CONFIG_BATMAN_ADV_NC
 	/** @in_coding_list: list of nodes this orig can hear */
-	struct list_head in_coding_list;
+	struct batadv_nc_node in_coding_list[LIST];
 
 	/** @out_coding_list: list of nodes that can hear this orig */
-	struct list_head out_coding_list;
+	struct batadv_nc_node out_coding_list[LIST];
 
 	/** @in_coding_list_lock: protects in_coding_list */
 	spinlock_t in_coding_list_lock;
@@ -520,7 +518,7 @@ struct batadv_orig_node {
 	 * @vlan_list: a list of orig_node_vlan structs, one per VLAN served by
 	 *  the originator represented by this object
 	 */
-	struct hlist_head vlan_list;
+	struct batadv_orig_node_vlan vlan_list[HLIST];
 
 	/** @vlan_list_lock: lock protecting vlan_list */
 	spinlock_t vlan_list_lock;
@@ -557,7 +555,7 @@ enum batadv_orig_capabilities {
  */
 struct batadv_gw_node {
 	/** @list: list node for &batadv_priv_gw.list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @orig_node: pointer to corresponding orig node */
 	struct batadv_orig_node *orig_node;
@@ -603,7 +601,7 @@ struct batadv_hardif_neigh_node_bat_v {
  */
 struct batadv_hardif_neigh_node {
 	/** @list: list node for &batadv_hard_iface.neigh_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @addr: the MAC address of the neighboring interface */
 	u8 addr[ETH_ALEN];
@@ -636,7 +634,7 @@ struct batadv_hardif_neigh_node {
  */
 struct batadv_neigh_node {
 	/** @list: list node for &batadv_orig_node.neigh_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @orig_node: pointer to corresponding orig_node */
 	struct batadv_orig_node *orig_node;
@@ -645,7 +643,7 @@ struct batadv_neigh_node {
 	u8 addr[ETH_ALEN];
 
 	/** @ifinfo_list: list for routing metrics per outgoing interface */
-	struct hlist_head ifinfo_list;
+	struct batadv_neigh_ifinfo ifinfo_list[HLIST];
 
 	/** @ifinfo_lock: lock protecting ifinfo_list and its members */
 	spinlock_t ifinfo_lock;
@@ -712,7 +710,7 @@ struct batadv_neigh_ifinfo_bat_v {
  */
 struct batadv_neigh_ifinfo {
 	/** @list: list node for &batadv_neigh_node.ifinfo_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @if_outgoing: pointer to outgoing hard-interface */
 	struct batadv_hard_iface *if_outgoing;
@@ -1024,22 +1022,22 @@ struct batadv_priv_tt {
 	/**
 	 * @changes_list: tracks tt local changes within an originator interval
 	 */
-	struct list_head changes_list;
+	struct batadv_tt_change_node changes_list[LIST];
 
 	/** @local_hash: local translation table hash table */
-	struct batadv_hashtable *local_hash;
+	struct batadv_tt_local_entry local_hash[HASH];
 
 	/** @global_hash: global translation table hash table */
-	struct batadv_hashtable *global_hash;
+	struct batadv_tt_global_entry global_hash[HASH];
 
 	/** @req_list: list of pending & unanswered tt_requests */
-	struct hlist_head req_list;
+	struct batadv_tt_req_node req_list[HLIST];
 
 	/**
 	 * @roam_list: list of the last roaming events of each client limiting
 	 *  the number of roaming events to avoid route flapping
 	 */
-	struct list_head roam_list;
+	struct batadv_tt_roam_node roam_list[LIST];
 
 	/** @changes_list_lock: lock protecting changes_list & local_changes */
 	spinlock_t changes_list_lock;
@@ -1090,12 +1088,12 @@ struct batadv_priv_bla {
 	/**
 	 * @claim_hash: hash table containing mesh nodes this host has claimed
 	 */
-	struct batadv_hashtable *claim_hash;
+	struct batadv_bla_claim claim_hash[HASH];
 
 	/**
 	 * @backbone_hash: hash table containing all detected backbone gateways
 	 */
-	struct batadv_hashtable *backbone_hash;
+	struct batadv_bla_backbone_gw backbone_hash[HASH];
 
 	/** @loopdetect_addr: MAC address used for own loopdetection frames */
 	u8 loopdetect_addr[ETH_ALEN];
@@ -1165,7 +1163,7 @@ struct batadv_priv_debug_log {
  */
 struct batadv_priv_gw {
 	/** @gateway_list: list of available gateway nodes */
-	struct hlist_head gateway_list;
+	struct batadv_gw_node gateway_list[HLIST];
 
 	/** @list_lock: lock protecting gateway_list, curr_gw, generation */
 	spinlock_t list_lock;
@@ -1207,10 +1205,10 @@ struct batadv_priv_tvlv {
 	 * @container_list: list of registered tvlv containers to be sent with
 	 *  each OGM
 	 */
-	struct hlist_head container_list;
+	struct batadv_tvlv_container container_list[HLIST];
 
 	/** @handler_list: list of the various tvlv content handlers */
-	struct hlist_head handler_list;
+	struct batadv_tvlv_handler handler_list[HLIST];
 
 	/** @container_list_lock: protects tvlv container list access */
 	spinlock_t container_list_lock;
@@ -1229,7 +1227,7 @@ struct batadv_priv_dat {
 	batadv_dat_addr_t addr;
 
 	/** @hash: hashtable representing the local ARP cache */
-	struct batadv_hashtable *hash;
+	struct batadv_dat_entry hash[HASH];
 
 	/** @work: work queue callback item for cache purging */
 	struct delayed_work work;
@@ -1279,37 +1277,37 @@ struct batadv_priv_mcast {
 	 * @mla_list: list of multicast addresses we are currently announcing
 	 *  via TT
 	 */
-	struct hlist_head mla_list; /* see __batadv_mcast_mla_update() */
+	struct batadv_hw_addr mla_list[HLIST]; /* see __batadv_mcast_mla_update() */
 
 	/**
 	 * @want_all_unsnoopables_list: a list of orig_nodes wanting all
 	 *  unsnoopable multicast traffic
 	 */
-	struct hlist_head want_all_unsnoopables_list;
+	struct batadv_orig_node want_all_unsnoopables_list[HLIST];
 
 	/**
 	 * @want_all_ipv4_list: a list of orig_nodes wanting all IPv4 multicast
 	 *  traffic
 	 */
-	struct hlist_head want_all_ipv4_list;
+	struct batadv_orig_node want_all_ipv4_list[HLIST];
 
 	/**
 	 * @want_all_ipv6_list: a list of orig_nodes wanting all IPv6 multicast
 	 *  traffic
 	 */
-	struct hlist_head want_all_ipv6_list;
+	struct batadv_orig_node want_all_ipv6_list[HLIST];
 
 	/**
 	 * @want_all_rtr4_list: a list of orig_nodes wanting all routable IPv4
 	 *  multicast traffic
 	 */
-	struct hlist_head want_all_rtr4_list;
+	struct batadv_orig_node want_all_rtr4_list[LIST];
 
 	/**
 	 * @want_all_rtr6_list: a list of orig_nodes wanting all routable IPv6
 	 *  multicast traffic
 	 */
-	struct hlist_head want_all_rtr6_list;
+	struct batadv_orig_node want_all_rtr6_list[LIST];
 
 	/**
 	 * @mla_flags: flags for the querier, bridge and tvlv state
@@ -1395,7 +1393,7 @@ struct batadv_priv_nc {
 	 *  another incoming skb to code it with. Skbs are added to the buffer
 	 *  just before being forwarded in routing.c
 	 */
-	struct batadv_hashtable *coding_hash;
+	struct batadv_nc_path coding_hash[HASH];
 
 	/**
 	 * @decoding_hash: Hash table used to buffer skbs that might be needed
@@ -1403,7 +1401,7 @@ struct batadv_priv_nc {
 	 *  arriving on the soft-interface; 2) skbs overheard on the
 	 *  hard-interface; and 3) skbs forwarded by batman-adv.
 	 */
-	struct batadv_hashtable *decoding_hash;
+	struct batadv_nc_path decoding_hash[HASH];
 };
 
 /**
@@ -1421,7 +1419,7 @@ struct batadv_tp_unacked {
 	u16 len;
 
 	/** @list: list node for &batadv_tp_vars.unacked_list */
-	struct list_head list;
+	//struct list_head list;
 };
 
 /**
@@ -1440,7 +1438,7 @@ enum batadv_tp_meter_role {
  */
 struct batadv_tp_vars {
 	/** @list: list node for &bat_priv.tp_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @timer: timer for ack (receiver) and retry (sender) */
 	struct timer_list timer;
@@ -1537,7 +1535,7 @@ struct batadv_tp_vars {
 	u32 last_recv;
 
 	/** @unacked_list: list of unacked packets (meta-info only) */
-	struct list_head unacked_list;
+	struct batadv_tp_unacked unacked_list[LIST];
 
 	/** @unacked_lock: protect unacked_list */
 	spinlock_t unacked_lock;
@@ -1569,7 +1567,7 @@ struct batadv_softif_vlan {
 	struct batadv_vlan_tt tt;
 
 	/** @list: list node for &bat_priv.softif_vlan_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/**
 	 * @refcount: number of context where this object is currently in use
@@ -1721,19 +1719,19 @@ struct batadv_priv {
 	atomic_t batman_queue_left;
 
 	/** @forw_bat_list: list of aggregated OGMs that will be forwarded */
-	struct hlist_head forw_bat_list;
+	struct batadv_forw_packet forw_bat_list[HLIST];
 
 	/**
 	 * @forw_bcast_list: list of broadcast packets that will be
 	 *  rebroadcasted
 	 */
-	struct hlist_head forw_bcast_list;
+	struct batadv_forw_packet forw_bcast_list[HLIST];
 
 	/** @tp_list: list of tp sessions */
-	struct hlist_head tp_list;
+	struct batadv_tp_vars tp_list[HLIST];
 
 	/** @orig_hash: hash table containing mesh participants (orig nodes) */
-	struct batadv_hashtable *orig_hash;
+	struct batadv_orig_node orig_hash[HASH];
 
 	/** @forw_bat_list_lock: lock protecting forw_bat_list */
 	spinlock_t forw_bat_list_lock;
@@ -1763,7 +1761,7 @@ struct batadv_priv {
 	 * @softif_vlan_list: a list of softif_vlan structs, one per VLAN
 	 *  created on top of the mesh interface represented by this object
 	 */
-	struct hlist_head softif_vlan_list;
+	struct batadv_softif_vlan softif_vlan_list[HLIST];
 
 	/** @softif_vlan_list_lock: lock protecting softif_vlan_list */
 	spinlock_t softif_vlan_list_lock;
@@ -1829,7 +1827,7 @@ struct batadv_bla_backbone_gw {
 	unsigned short vid;
 
 	/** @hash_entry: hlist node for &batadv_priv_bla.backbone_hash */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @bat_priv: pointer to soft_iface this backbone gateway belongs to */
 	struct batadv_priv *bat_priv;
@@ -1887,7 +1885,7 @@ struct batadv_bla_claim {
 	unsigned long lasttime;
 
 	/** @hash_entry: hlist node for &batadv_priv_bla.claim_hash */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @refcount: number of contexts the object is used */
 	struct rcu_head rcu;
@@ -1911,7 +1909,7 @@ struct batadv_tt_common_entry {
 	 * @hash_entry: hlist node for &batadv_priv_tt.local_hash or for
 	 *  &batadv_priv_tt.global_hash
 	 */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @flags: various state handling flags (see batadv_tt_client_flags) */
 	u16 flags;
@@ -1948,7 +1946,7 @@ struct batadv_tt_global_entry {
 	struct batadv_tt_common_entry common;
 
 	/** @orig_list: list of orig nodes announcing this non-mesh client */
-	struct hlist_head orig_list;
+	struct batadv_tt_orig_list_entry orig_list[HLIST];
 
 	/** @orig_list_count: number of items in the orig_list */
 	atomic_t orig_list_count;
@@ -1977,7 +1975,7 @@ struct batadv_tt_orig_list_entry {
 	u8 flags;
 
 	/** @list: list node for &batadv_tt_global_entry.orig_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @refcount: number of contexts the object is used */
 	struct kref refcount;
@@ -1991,7 +1989,7 @@ struct batadv_tt_orig_list_entry {
  */
 struct batadv_tt_change_node {
 	/** @list: list node for &batadv_priv_tt.changes_list */
-	struct list_head list;
+	//struct list_head list;
 
 	/** @change: holds the actual translation table diff data */
 	struct batadv_tvlv_tt_change change;
@@ -2013,7 +2011,7 @@ struct batadv_tt_req_node {
 	struct kref refcount;
 
 	/** @list: list node for &batadv_priv_tt.req_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 };
 
 /**
@@ -2035,7 +2033,7 @@ struct batadv_tt_roam_node {
 	unsigned long first_time;
 
 	/** @list: list node for &batadv_priv_tt.roam_list */
-	struct list_head list;
+	//struct list_head list;
 };
 
 /**
@@ -2043,7 +2041,7 @@ struct batadv_tt_roam_node {
  */
 struct batadv_nc_node {
 	/** @list: next and prev pointer for the list handling */
-	struct list_head list;
+	//struct list_head list;
 
 	/** @addr: the node's mac address */
 	u8 addr[ETH_ALEN];
@@ -2066,7 +2064,7 @@ struct batadv_nc_node {
  */
 struct batadv_nc_path {
 	/** @hash_entry: next and prev pointer for the list handling */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @rcu: struct used for freeing in an RCU-safe manner */
 	struct rcu_head rcu;
@@ -2075,7 +2073,7 @@ struct batadv_nc_path {
 	struct kref refcount;
 
 	/** @packet_list: list of buffered packets for this path */
-	struct list_head packet_list;
+	struct batadv_nc_packet packet_list[LIST];
 
 	/** @packet_list_lock: access lock for packet list */
 	spinlock_t packet_list_lock;
@@ -2096,7 +2094,7 @@ struct batadv_nc_path {
  */
 struct batadv_nc_packet {
 	/** @list: next and prev pointer for the list handling */
-	struct list_head list;
+	//struct list_head list;
 
 	/** @packet_id: crc32 checksum of skb data */
 	__be32 packet_id;
@@ -2140,10 +2138,10 @@ struct batadv_forw_packet {
 	 * @list: list node for &batadv_priv.forw.bcast_list and
 	 *  &batadv_priv.forw.bat_list
 	 */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @cleanup_list: list node for purging functions */
-	struct hlist_node cleanup_list;
+	//struct hlist_node cleanup_list;
 
 	/** @send_time: execution time for delayed_work (packet sending) */
 	unsigned long send_time;
@@ -2293,7 +2291,7 @@ struct batadv_algo_gw_ops {
  */
 struct batadv_algo_ops {
 	/** @list: list node for the batadv_algo_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @name: name of the algorithm */
 	char *name;
@@ -2331,7 +2329,7 @@ struct batadv_dat_entry {
 	unsigned long last_update;
 
 	/** @hash_entry: hlist node for &batadv_priv_dat.hash */
-	struct hlist_node hash_entry;
+	//struct hlist_node hash_entry;
 
 	/** @refcount: number of contexts the object is used */
 	struct kref refcount;
@@ -2345,7 +2343,7 @@ struct batadv_dat_entry {
  */
 struct batadv_hw_addr {
 	/** @list: list node for the linking of entries */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @addr: the MAC address of this list entry */
 	unsigned char addr[ETH_ALEN];
@@ -2375,7 +2373,7 @@ struct batadv_dat_candidate {
  */
 struct batadv_tvlv_container {
 	/** @list: hlist node for &batadv_priv_tvlv.container_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/** @tvlv_hdr: tvlv header information needed to construct the tvlv */
 	struct batadv_tvlv_hdr tvlv_hdr;
@@ -2389,7 +2387,7 @@ struct batadv_tvlv_container {
  */
 struct batadv_tvlv_handler {
 	/** @list: hlist node for &batadv_priv_tvlv.handler_list */
-	struct hlist_node list;
+	//struct hlist_node list;
 
 	/**
 	 * @ogm_handler: handler callback which is given the tvlv payload to
