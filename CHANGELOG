@@ -1,3 +1,21 @@
+batman-adv 2016.3
+
+ * support latest kernels (3.2 - 4.8)
+ * multicast optimization support for bridged setups
+ * initial, limited support for batman-adv netlink family
+ * throughput meter implementation
+ * support for frame priority in fragment packets
+ * kernel doc updates and coding style cleanups
+ * bugs squashed:
+   - fix (re-)initialization of ELP tweaking options
+   - fix elp packet data reservation
+   - fix nullptr dereference after using vlan_insert_tag
+   - fix various reference counting bugs in bonding, bla, tt and
+     originator code
+   - fix speedy join in gateway client mode
+
+ -- Thu, 01 Sep 2016 16:12:26 +0200
+
 batman-adv 2016.2
 
  * support latest kernels (3.2 - 4.7)
