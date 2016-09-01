@@ -212,8 +212,7 @@ int batadv_debug_log_setup(struct batadv_priv *bat_priv)
 	spin_lock_init(&bat_priv->debug_log->lock);
 	init_waitqueue_head(&bat_priv->debug_log->queue_wait);
 
-	d = debugfs_create_file("log", S_IFREG | S_IRUSR,
-				bat_priv->debug_dir, bat_priv,
+	d = debugfs_create_file("log", 0400, bat_priv->debug_dir, bat_priv,
 				&batadv_log_fops);
 	if (!d)
 		goto err;

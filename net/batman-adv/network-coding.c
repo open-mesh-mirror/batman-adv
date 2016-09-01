@@ -1961,17 +1961,16 @@ int batadv_nc_init_debugfs(struct batadv_priv *bat_priv)
 	if (!nc_dir)
 		goto out;
 
-	file = debugfs_create_u8("min_tq", S_IRUGO | S_IWUSR, nc_dir,
-				 &bat_priv->nc.min_tq);
+	file = debugfs_create_u8("min_tq", 0644, nc_dir, &bat_priv->nc.min_tq);
 	if (!file)
 		goto out;
 
-	file = debugfs_create_u32("max_fwd_delay", S_IRUGO | S_IWUSR, nc_dir,
+	file = debugfs_create_u32("max_fwd_delay", 0644, nc_dir,
 				  &bat_priv->nc.max_fwd_delay);
 	if (!file)
 		goto out;
 
-	file = debugfs_create_u32("max_buffer_time", S_IRUGO | S_IWUSR, nc_dir,
+	file = debugfs_create_u32("max_buffer_time", 0644, nc_dir,
 				  &bat_priv->nc.max_buffer_time);
 	if (!file)
 		goto out;
