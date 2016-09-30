@@ -43,6 +43,8 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
 
+#define NETDEV_CHANGEUPPER	0x0015
+
 #define netdev_notifier_info_to_dev(ptr) ptr
 
 #endif /* < KERNEL_VERSION(3, 11, 0) */
