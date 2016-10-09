@@ -152,6 +152,12 @@ batadv_genl_register_family_with_ops_grps(struct genl_family *family,
 	return batadv_genl_register_family(family);
 }
 
+#define __genl_const
+
+#else
+
+#define __genl_const const
+
 #endif /* < KERNEL_VERSION(3, 13, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_NET_GENETLINK_H_ */
