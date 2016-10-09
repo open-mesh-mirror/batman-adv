@@ -1,10 +1,8 @@
+/build/
 /compat-autoconf.h
 /compat-autoconf.h.tmp
 /compat-sources/**/.*
 /compat-sources/**/*.o
-/net/batman-adv/.*
-/net/batman-adv/batman-adv.ko
-/net/batman-adv/batman-adv.mod.c
-/net/batman-adv/modules.order
-/net/batman-adv/Module.symvers
-/net/batman-adv/*.o
+/modules.order
+/Module.symvers
+/.tmp_versions
