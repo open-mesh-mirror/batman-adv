@@ -24,6 +24,17 @@
 #include <linux/version.h>
 #include_next <net/genetlink.h>
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
+
+#define genl_info_snd_portid(__genl_info) (__genl_info->snd_pid)
+
+#else
+
+#define genl_info_snd_portid(__genl_info) (__genl_info->snd_portid)
+
+#endif /* < KERNEL_VERSION(3, 7, 0) */
+
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0)
 
 #include <linux/export.h>

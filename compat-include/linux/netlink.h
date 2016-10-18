@@ -26,19 +26,13 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
 
-#include <net/scm.h>
+#define netlink_notify_portid(__notify) (__notify->pid)
+#define NETLINK_CB_PORTID(__skb) NETLINK_CB(__skb).pid
 
-struct batadv_netlink_skb_parms {
-	struct ucred		creds;		/* Skb credentials	*/
-	union {
-		__u32		portid;
-		__u32		pid;
-	};
-	__u32			dst_group;
-};
+#else
 
-#undef NETLINK_CB
-#define NETLINK_CB(skb) (*(struct batadv_netlink_skb_parms *)&((skb)->cb))
+#define netlink_notify_portid(__notify) (__notify->portid)
+#define NETLINK_CB_PORTID(__skb) NETLINK_CB(__skb).portid
 
 #endif /* < KERNEL_VERSION(3, 7, 0) */
 
