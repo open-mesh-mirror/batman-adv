@@ -145,11 +145,4 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(3, 15, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
-
-/* WARNING for batadv_getlink_net */
-#define get_link_net get_xstats_size || 1 || netdev->rtnl_link_ops->get_xstats_size
-
-#endif /* < KERNEL_VERSION(4, 0, 0) */
-
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
