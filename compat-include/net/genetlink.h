@@ -96,11 +96,6 @@ batadv_genlmsg_multicast_netns(struct batadv_genl_family *family,
 #define genl_unregister_family(_family) \
 	genl_unregister_family(&(_family)->family)
 
-#define genl_register_family_with_ops_groups(family, ops, grps) \
-	batadv_genl_register_family_with_ops_grps((family), \
-						  (ops), ARRAY_SIZE(ops), \
-						  (grps), ARRAY_SIZE(grps))
-
 static inline int batadv_genl_register_family(struct genl_family *family)
 {
 	unsigned int i;
@@ -148,20 +143,8 @@ static inline int batadv_genl_register_family(struct genl_family *family)
 	return ret;
 }
 
-static inline int
-batadv_genl_register_family_with_ops_grps(struct genl_family *family,
-					  struct genl_ops *ops, size_t n_ops,
-					  struct genl_multicast_group *mcgrps,
-					  size_t n_mcgrps)
-{
-	family->ops = ops;
-	family->n_ops = n_ops;
-	family->mcgrps = mcgrps;
-	family->n_mcgrps = n_mcgrps;
-	family->module = THIS_MODULE;
-
-	return batadv_genl_register_family(family);
-}
+#define genl_register_family(family) \
+	batadv_genl_register_family((family))
 
 #define __genl_const
 
