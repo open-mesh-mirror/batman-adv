@@ -52,7 +52,7 @@ RM ?= rm -f
 MKDIR := mkdir -p
 PATCH_FLAGS = --batch --fuzz=0 --forward --strip=1 --unified --version-control=never -g0 --remove-empty-files --no-backup-if-mismatch --reject-file=-
 PATCH := patch $(PATCH_FLAGS) -i
-SPATCH_FLAGS := --in-place --relax-include-path --use-coccigrep
+SPATCH_FLAGS := --in-place --relax-include-path --use-coccigrep --very-quiet
 CP := cp -fpR
 
 SOURCE = $(wildcard net/batman-adv/*.[ch]) net/batman-adv/Makefile
