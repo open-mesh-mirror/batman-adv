@@ -255,7 +255,7 @@ out:
  */
 struct net_device *batadv_get_real_netdev(struct net_device *net_device)
 {
-	struct net_device *real_netdev = NULL;
+	struct net_device *real_netdev;
 
 	rtnl_lock();
 	real_netdev = batadv_get_real_netdevice(net_device);
