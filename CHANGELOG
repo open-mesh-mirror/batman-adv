@@ -1,3 +1,21 @@
+batman-adv 2016.4
+
+ * support latest kernels (3.2 - 4.9)
+ * add GW selection algorithm for B.A.T.M.A.N. V
+ * add support for querying most tables/lists via netlink
+ * adjusted device modifications for easier handling via rtnl (ip-link)
+ * disabled (bad) debugfs support in network namespaces
+ * add improved compat-patches support (note the new build directory)
+ * reduced translation table memory consumption
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - avoid locking problems when modifying interfaces
+   - fix sysfs errors on fast device deletion/creation events
+   - add missing memory barriers for neighbor list modifications
+   - fix tpmeter debug log output
+
+ -- Thu, 27 Oct 2016 21:12:07 +0200
+
 batman-adv 2016.3
 
  * support latest kernels (3.2 - 4.8)
