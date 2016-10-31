@@ -40,19 +40,11 @@ ifeq ($(shell cd $(KERNELPATH) && pwd),)
 $(warning $(KERNELPATH) is missing, please set KERNELPATH)
 endif
 
-ifeq ($(origin SPATCH), undefined)
-  SPATCH = spatch
-  ifeq ($(shell which $(SPATCH) 2>/dev/null),)
-    $(error $(SPATCH) (coccinelle) not found)
-  endif
-endif
-
 export KERNELPATH
 RM ?= rm -f
 MKDIR := mkdir -p
 PATCH_FLAGS = --batch --fuzz=0 --forward --strip=1 --unified --version-control=never -g0 --remove-empty-files --no-backup-if-mismatch --reject-file=-
 PATCH := patch $(PATCH_FLAGS) -i
-SPATCH_FLAGS := --in-place --relax-include-path --use-coccigrep --very-quiet
 CP := cp -fpR
 LN := ln -sf
 
@@ -114,17 +106,12 @@ $(SOURCE_STAMP): $(SOURCE) compat-patches/* compat-patches/replacements.sh
 	@$(RM) $(SOURCE_BUILD)
 	@$(CP) $(SOURCE) $(BUILD_DIR)/net/batman-adv/
 	@set -e; \
-	patches="$$(ls -1 compat-patches/|grep -e '.patch$$' -e '.cocci$$'|sort)"; \
+	patches="$$(ls -1 compat-patches/|grep '.patch$$'|sort)"; \
 	for i in $${patches}; do \
-		echo '  COMPAT_PATCH '$${i}; \
-		if echo $${i}|grep '.patch$$'; then \
-			cd $(BUILD_DIR); \
-			$(PATCH) ../compat-patches/$${i}; \
-			cd - > /dev/null; \
-		fi; \
-		if echo $${i}|grep '.cocci$$'; then echo $$(pwd); \
-			$(SPATCH) $(SPATCH_FLAGS) --dir $(BUILD_DIR) --sp-file compat-patches/$${i} > /dev/null; \
-		fi; \
+		echo '  COMPAT_PATCH '$${i};\
+		cd $(BUILD_DIR); \
+		$(PATCH) ../compat-patches/$${i}; \
+		cd - > /dev/null; \
 	done
 	compat-patches/replacements.sh
 	touch $(SOURCE_STAMP)
