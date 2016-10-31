@@ -42,6 +42,31 @@
 
 #endif /* < KERNEL_VERSION(3, 9, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
+
+#define batadv_interface_add_vid(x, y, z) \
+__batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+                          unsigned short vid);\
+static void batadv_interface_add_vid(struct net_device *dev, unsigned short vid)\
+{\
+       __batadv_interface_add_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+                                     unsigned short vid)
+
+#define batadv_interface_kill_vid(x, y, z) \
+__batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+                           unsigned short vid);\
+static void batadv_interface_kill_vid(struct net_device *dev,\
+                                     unsigned short vid)\
+{\
+       __batadv_interface_kill_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+                                      unsigned short vid)
+
+#endif /* < KERNEL_VERSION(3, 3, 0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
 #define batadv_interface_set_mac_addr(x, y) \
@@ -69,6 +94,35 @@ static int __batadv_interface_tx(struct sk_buff *skb, \
 				 struct net_device *soft_iface)
 
 #endif /* < KERNEL_VERSION(3, 9, 0) */
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
+
+#define batadv_interface_add_vid(x, y, z) \
+__batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+			   unsigned short vid);\
+static int batadv_interface_add_vid(struct net_device *dev, unsigned short vid)\
+{\
+	return __batadv_interface_add_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_add_vid(struct net_device *dev, __be16 proto,\
+				      unsigned short vid)
+
+#define batadv_interface_kill_vid(x, y, z) \
+__batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+			    unsigned short vid);\
+static int batadv_interface_kill_vid(struct net_device *dev,\
+				     unsigned short vid)\
+{\
+	return __batadv_interface_kill_vid(dev, htons(ETH_P_8021Q), vid);\
+}\
+static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
+				       unsigned short vid)
+
+#endif /* >= KERNEL_VERSION(3, 3, 0) */
+
+#endif /* < KERNEL_VERSION(3, 10, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)
 

@@ -28,12 +28,6 @@
 
 #include <linux/netdev_features.h>
 
-#define __vid_api_returntype void
-
-#else
-
-#define __vid_api_returntype int
-
 #endif /* < KERNEL_VERSION(3, 3, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
