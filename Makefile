@@ -108,7 +108,7 @@ install: config $(SOURCE_STAMP)
 config:
 	$(PWD)/gen-compat-autoconf.sh $(PWD)/compat-autoconf.h
 
-$(SOURCE_STAMP): $(SOURCE) compat-patches/*
+$(SOURCE_STAMP): $(SOURCE) compat-patches/* compat-patches/replacements.sh
 	$(MKDIR) $(BUILD_DIR)/net/batman-adv/
 	@$(LN) ../Makefile $(BUILD_DIR)/Makefile
 	@$(RM) $(SOURCE_BUILD)
@@ -126,6 +126,7 @@ $(SOURCE_STAMP): $(SOURCE) compat-patches/*
 			$(SPATCH) $(SPATCH_FLAGS) --dir $(BUILD_DIR) --sp-file compat-patches/$${i} > /dev/null; \
 		fi; \
 	done
+	compat-patches/replacements.sh
 	touch $(SOURCE_STAMP)
 
 .PHONY: all clean install config
