@@ -24,11 +24,13 @@
 #include <linux/version.h>
 #include_next <linux/cache.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
 
-#ifndef __ro_after_init
-#define __ro_after_init
+/* hack for netlink.c which marked the family ops as ro */
+#ifdef __ro_after_init
+#undef __ro_after_init
 #endif
+#define __ro_after_init
 
 #endif /* < KERNEL_VERSION(4, 6, 0) */
 
