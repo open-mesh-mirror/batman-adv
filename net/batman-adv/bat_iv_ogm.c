@@ -1851,7 +1851,10 @@ static int batadv_iv_ogm_receive(struct sk_buff *skb,
 	ret = NET_RX_SUCCESS;
 
 free_skb:
-	consume_skb(skb);
+	if (ret == NET_RX_SUCCESS)
+		consume_skb(skb);
+	else
+		kfree_skb(skb);
 
 	return ret;
 }

@@ -1066,7 +1066,7 @@ int batadv_recv_unicast_tvlv(struct sk_buff *skb,
 	}
 
 free_skb:
-	consume_skb(skb);
+	kfree_skb(skb);
 
 	return ret;
 }

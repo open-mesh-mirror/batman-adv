@@ -498,7 +498,7 @@ int batadv_v_elp_packet_recv(struct sk_buff *skb,
 	struct batadv_hard_iface *primary_if;
 	struct ethhdr *ethhdr = (struct ethhdr *)skb_mac_header(skb);
 	bool res;
-	int ret;
+	int ret = NET_RX_DROP;
 
 	res = batadv_check_management_packet(skb, if_incoming, BATADV_ELP_HLEN);
 	if (!res)
@@ -531,7 +531,10 @@ int batadv_v_elp_packet_recv(struct sk_buff *skb,
 	batadv_hardif_put(primary_if);
 
 free_skb:
-	consume_skb(skb);
+	if (ret == NET_RX_SUCCESS)
+		consume_skb(skb);
+	else
+		kfree_skb(skb);
 
 	return ret;
 }
