@@ -386,7 +386,7 @@ send:
 			ret = batadv_send_skb_via_tt(bat_priv, skb, dst_hint,
 						     vid);
 		}
-		if (ret != NET_XMIT_SUCCESS)
+		if (ret != NET_XMIT_SUCCESS && ret != NET_XMIT_CN)
 			goto dropped_freed;
 	}
 

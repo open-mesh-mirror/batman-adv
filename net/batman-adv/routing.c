@@ -262,7 +262,7 @@ static int batadv_recv_my_icmp_packet(struct batadv_priv *bat_priv,
 		icmph->ttl = BATADV_TTL;
 
 		res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-		if (res == NET_XMIT_SUCCESS)
+		if (res == NET_XMIT_SUCCESS || res == NET_XMIT_CN)
 			ret = NET_RX_SUCCESS;
 
 		/* skb was consumed */
@@ -330,7 +330,7 @@ static int batadv_recv_icmp_ttl_exceeded(struct batadv_priv *bat_priv,
 	icmp_packet->ttl = BATADV_TTL;
 
 	res = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (res == NET_RX_SUCCESS)
+	if (res == NET_RX_SUCCESS || res == NET_XMIT_CN)
 		ret = NET_XMIT_SUCCESS;
 
 	/* skb was consumed */
@@ -424,7 +424,7 @@ int batadv_recv_icmp_packet(struct sk_buff *skb,
 
 	/* route it */
 	res = batadv_send_skb_to_orig(skb, orig_node, recv_if);
-	if (res == NET_XMIT_SUCCESS)
+	if (res == NET_XMIT_SUCCESS || res == NET_XMIT_CN)
 		ret = NET_RX_SUCCESS;
 
 	/* skb was consumed */
@@ -719,14 +719,14 @@ static int batadv_route_unicast_packet(struct sk_buff *skb,
 
 	len = skb->len;
 	res = batadv_send_skb_to_orig(skb, orig_node, recv_if);
-	if (res == NET_XMIT_SUCCESS)
+	if (res == NET_XMIT_SUCCESS || res == NET_XMIT_CN)
 		ret = NET_RX_SUCCESS;
 
 	/* skb was consumed */
 	skb = NULL;
 
 	/* translate transmit result into receive result */
-	if (res == NET_XMIT_SUCCESS) {
+	if (res == NET_XMIT_SUCCESS || res == NET_XMIT_CN) {
 		/* skb was transmitted and consumed */
 		batadv_inc_counter(bat_priv, BATADV_CNT_FORWARD);
 		batadv_add_counter(bat_priv, BATADV_CNT_FORWARD_BYTES,

@@ -615,7 +615,7 @@ static int batadv_tp_send_msg(struct batadv_tp_vars *tp_vars, const u8 *src,
 	batadv_tp_fill_prerandom(tp_vars, data, data_len);
 
 	r = batadv_send_skb_to_orig(skb, orig_node, NULL);
-	if (r == NET_XMIT_SUCCESS)
+	if (r == NET_XMIT_SUCCESS || r == NET_XMIT_CN)
 		return 0;
 
 	return BATADV_TP_REASON_CANT_SEND;
