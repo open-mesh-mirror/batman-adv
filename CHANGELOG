@@ -1,3 +1,20 @@
+batman-adv 2016.5
+
+ * support latest kernels (3.2 - 4.10)
+ * change installation path back to $INSTALL_MOD_DIR/updates/net/batman-adv
+ * add simple (re)broadcast avoidance
+ * reduce multicast TT and TVLV update delays under B.A.T.M.A.N. V
+ * support B.A.T.M.A.N. V throughput detection when using VLANs on top of WiFi
+ * improve documentation of sysfs and debugfs files
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - detect missing primaryif during tp_send as error
+   - fix re-adding of previously removed interfaces via rtnetlink
+   - fix rare race conditions on interface removal
+   - handle allocation error when generating TT responses
+
+ -- Thu, 15 Dec 2016 18:11:55 +0100
+
 batman-adv 2016.4
 
  * support latest kernels (3.2 - 4.9)
