@@ -164,4 +164,13 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(4, 3, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+
+/* workaround for current issues with Debian's make-kpkg */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+#include <uapi/linux/pkt_cls.h>
+#endif
+
+#endif /* < KERNEL_VERSION(4, 6, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
