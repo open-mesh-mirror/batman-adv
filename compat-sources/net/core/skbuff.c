@@ -32,8 +32,12 @@
  *	2 of the License, or (at your option) any later version.
  */
 
+#include <linux/in6.h>
 #include <linux/ipv6.h>
 #include <linux/skbuff.h>
+#include <linux/types.h>
+#include <net/checksum.h>
+#include <net/ip6_checksum.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 
