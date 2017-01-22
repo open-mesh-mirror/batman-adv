@@ -130,7 +130,7 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(3, 10, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 
 /* the expected behaviour of this function is to return 0 on success, therefore
  * it is possible to define it as 1 so that batman-adv thinks like something
@@ -149,7 +149,7 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif
 
-#endif /* < KERNEL_VERSION(3, 15, 0) */
+#endif /* < KERNEL_VERSION(3, 16, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 
