@@ -509,7 +509,7 @@ int batadv_frag_send_packet(struct sk_buff *skb,
 		batadv_add_counter(bat_priv, BATADV_CNT_FRAG_TX_BYTES,
 				   skb_fragment->len + ETH_HLEN);
 		ret = batadv_send_unicast_skb(skb_fragment, neigh_node);
-		if (ret != NET_XMIT_SUCCESS && ret != NET_XMIT_CN) {
+		if (ret != NET_XMIT_SUCCESS) {
 			ret = NET_XMIT_DROP;
 			goto put_primary_if;
 		}
