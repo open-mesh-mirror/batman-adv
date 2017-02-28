@@ -1,3 +1,17 @@
+batman-adv 2017.0
+
+ * support latest kernels (3.2 - 4.11)
+ * remove bridge loop avoidance addresses from translation table
+ * allow to build B.A.T.M.A.N. V without cfg80211 integration on Linux < 3.16
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - fix interface reference counter on fragmentation errors
+   - avoid double free on fragment merge error
+   - fix support for up to 16 fragments
+   - fix build of multicast compatibility code on some architectures
+
+ -- Tue, 28 Feb 2017 17:22:49 +0100
+
 batman-adv 2016.5
 
  * support latest kernels (3.2 - 4.10)
