@@ -182,8 +182,10 @@ static void batadv_mcast_mla_br_addr_cpy(char *dst, const struct br_ip *src)
 {
 	if (src->proto == htons(ETH_P_IP))
 		ip_eth_mc_map(src->u.ip4, dst);
-	else if (IS_ENABLED(CONFIG_IPV6) && src->proto == htons(ETH_P_IPV6))
+#if IS_ENABLED(CONFIG_IPV6)
+	else if (src->proto == htons(ETH_P_IPV6))
 		ipv6_eth_mc_map(&src->u.ip6, dst);
+#endif
 	else
 		eth_zero_addr(dst);
 }
