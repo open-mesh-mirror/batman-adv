@@ -1,3 +1,13 @@
+batman-adv 2017.0.1
+
+ * support latest kernels (3.2 - 4.11)
+ * bugs squashed:
+   - avoid API incompatibilities with new EWMA implementation
+   - generate equally size fragments to reduce chance of padding or MTU problems
+   - fix initialization of gateway sel class when BATMAN_V is compiled in
+
+ -- Tue, 07 Mar 2017 16:33:11 +0100
+
 batman-adv 2017.0
 
  * support latest kernels (3.2 - 4.11)
