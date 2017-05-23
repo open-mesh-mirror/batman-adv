@@ -1,3 +1,14 @@
+batman-adv 2017.1
+
+ * support latest kernels (3.2 - 4.12)
+ * bridge loop avoidance improvements for various corner cases
+ * reduction of maximum fragment size
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - fix rx packet/bytes stats on local DAT ARP reply
+
+ -- Tue, 23 May 2017 11:40:21 +0200
+
 batman-adv 2017.0.1
 
  * support latest kernels (3.2 - 4.11)
