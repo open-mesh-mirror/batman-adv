@@ -1497,7 +1497,7 @@ void batadv_tp_meter_recv(struct batadv_priv *bat_priv, struct sk_buff *skb)
 /**
  * batadv_tp_meter_init - initialize global tp_meter structures
  */
-void batadv_tp_meter_init(void)
+void __init batadv_tp_meter_init(void)
 {
 	get_random_bytes(batadv_tp_prerandom, sizeof(batadv_tp_prerandom));
 }
