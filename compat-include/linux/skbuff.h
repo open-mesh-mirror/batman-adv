@@ -78,6 +78,12 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 
+static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
+{
+	return (void *)skb_put(skb, len);
+}
+#define skb_put batadv_skb_put
+
 static inline void *skb_put_zero(struct sk_buff *skb, unsigned int len)
 {
 	void *tmp = skb_put(skb, len);
