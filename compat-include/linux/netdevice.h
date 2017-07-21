@@ -86,7 +86,7 @@ static inline void batadv_netif_trans_update(struct net_device *dev)
 
 #endif /* < KERNEL_VERSION(4, 7, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 9)
 
 /* work around missing attribute needs_free_netdev and priv_destructor in
  * net_device
@@ -103,6 +103,6 @@ static inline void batadv_netif_trans_update(struct net_device *dev)
 #define needs_free_netdev destructor = batadv_softif_free2; t2
 #define priv_destructor destructor = batadv_softif_free2; t1
 
-#endif /* < KERNEL_VERSION(4, 12, 0) */
+#endif /* < KERNEL_VERSION(4, 11, 9) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
