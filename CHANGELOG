@@ -1,3 +1,13 @@
+batman-adv 2017.2
+
+ * support latest kernels (3.2 - 4.13)
+ * avoid bridge loop detection mac addresses in translation tables
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - ignore invalid throughput values from wifi interfaces
+
+ -- Fri, 28 Jul 2017 13:38:45 +0200
+
 batman-adv 2017.1
 
  * support latest kernels (3.2 - 4.12)
