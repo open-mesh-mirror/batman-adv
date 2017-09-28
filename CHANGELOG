@@ -1,3 +1,13 @@
+batman-adv 2017.3
+
+ * support latest kernels (3.2 - 4.14)
+ * coding style cleanups and refactoring
+ * bugs squashed:
+   - fix TT sync flag inconsistencies
+   - ignore invalid throughput values from wifi interfaces
+
+ -- Thu, 28 Sep 2017 13:43:18 +0200
+
 batman-adv 2017.2
 
  * support latest kernels (3.2 - 4.13)
