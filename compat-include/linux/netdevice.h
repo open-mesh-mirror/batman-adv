@@ -66,15 +66,20 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
 
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
 	netdev_set_master(dev, upper_dev)
 
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
 
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info) \
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
 	netdev_master_upper_dev_link(dev, upper_dev)
 
-#endif /* < KERNEL_VERSION(4, 5, 0) */
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+
+#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
+	netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info)
+
+#endif /* < KERNEL_VERSION(4, 15, 0) */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0)
 
