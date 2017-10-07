@@ -152,4 +152,11 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 
 #endif /* < KERNEL_VERSION(4, 6, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+
+#define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
+	batadv_softif_slave_add(__dev, __slave_dev)
+
+#endif /* < KERNEL_VERSION(4, 15, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
