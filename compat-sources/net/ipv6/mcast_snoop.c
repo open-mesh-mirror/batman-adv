@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2010: YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  * Copyright (C) 2015: Linus Lüssing <linus.luessing@c0d3.blue>
  *

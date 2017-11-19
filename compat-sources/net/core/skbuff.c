@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
  *	Routines having to do with the 'struct sk_buff' memory handlers.
  *
