@@ -38,6 +38,7 @@
 #include <linux/kref.h>
 #include <linux/list.h>
 #include <linux/lockdep.h>
+#include <linux/net.h>
 #include <linux/netdevice.h>
 #include <linux/printk.h>
 #include <linux/random.h>
