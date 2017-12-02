@@ -205,7 +205,7 @@ struct seq_file;
 struct sk_buff;
 
 /**
- * batadv_print_vid - return printable version of vid information
+ * batadv_print_vid() - return printable version of vid information
  * @vid: the VLAN identifier
  *
  * Return: -1 when no VLAN is used, VLAN id otherwise
@@ -241,7 +241,7 @@ void batadv_recv_handler_unregister(u8 packet_type);
 __be32 batadv_skb_crc32(struct sk_buff *skb, u8 *payload_ptr);
 
 /**
- * batadv_compare_eth - Compare two not u16 aligned Ethernet addresses
+ * batadv_compare_eth() - Compare two not u16 aligned Ethernet addresses
  * @data1: Pointer to a six-byte array containing the Ethernet address
  * @data2: Pointer other six-byte array containing the Ethernet address
  *
@@ -255,7 +255,7 @@ static inline bool batadv_compare_eth(const void *data1, const void *data2)
 }
 
 /**
- * batadv_has_timed_out - compares current time (jiffies) and timestamp +
+ * batadv_has_timed_out() - compares current time (jiffies) and timestamp +
  *  timeout
  * @timestamp:		base value to compare with (in jiffies)
  * @timeout:		added to base value before comparing (in milliseconds)

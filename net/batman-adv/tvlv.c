@@ -45,7 +45,7 @@
 #include "tvlv.h"
 
 /**
- * batadv_tvlv_handler_release - release tvlv handler from lists and queue for
+ * batadv_tvlv_handler_release() - release tvlv handler from lists and queue for
  *  free after rcu grace period
  * @ref: kref pointer of the tvlv
  */
@@ -58,7 +58,7 @@ static void batadv_tvlv_handler_release(struct kref *ref)
 }
 
 /**
- * batadv_tvlv_handler_put - decrement the tvlv container refcounter and
+ * batadv_tvlv_handler_put() - decrement the tvlv container refcounter and
  *  possibly release it
  * @tvlv_handler: the tvlv handler to free
  */
@@ -68,7 +68,7 @@ static void batadv_tvlv_handler_put(struct batadv_tvlv_handler *tvlv_handler)
 }
 
 /**
- * batadv_tvlv_handler_get - retrieve tvlv handler from the tvlv handler list
+ * batadv_tvlv_handler_get() - retrieve tvlv handler from the tvlv handler list
  *  based on the provided type and version (both need to match)
  * @bat_priv: the bat priv with all the soft interface information
  * @type: tvlv handler type to look for
@@ -102,7 +102,7 @@ batadv_tvlv_handler_get(struct batadv_priv *bat_priv, u8 type, u8 version)
 }
 
 /**
- * batadv_tvlv_container_release - release tvlv from lists and free
+ * batadv_tvlv_container_release() - release tvlv from lists and free
  * @ref: kref pointer of the tvlv
  */
 static void batadv_tvlv_container_release(struct kref *ref)
@@ -114,7 +114,7 @@ static void batadv_tvlv_container_release(struct kref *ref)
 }
 
 /**
- * batadv_tvlv_container_put - decrement the tvlv container refcounter and
+ * batadv_tvlv_container_put() - decrement the tvlv container refcounter and
  *  possibly release it
  * @tvlv: the tvlv container to free
  */
@@ -124,7 +124,7 @@ static void batadv_tvlv_container_put(struct batadv_tvlv_container *tvlv)
 }
 
 /**
- * batadv_tvlv_container_get - retrieve tvlv container from the tvlv container
+ * batadv_tvlv_container_get() - retrieve tvlv container from the tvlv container
  *  list based on the provided type and version (both need to match)
  * @bat_priv: the bat priv with all the soft interface information
  * @type: tvlv container type to look for
@@ -158,7 +158,7 @@ batadv_tvlv_container_get(struct batadv_priv *bat_priv, u8 type, u8 version)
 }
 
 /**
- * batadv_tvlv_container_list_size - calculate the size of the tvlv container
+ * batadv_tvlv_container_list_size() - calculate the size of the tvlv container
  *  list entries
  * @bat_priv: the bat priv with all the soft interface information
  *
@@ -183,8 +183,8 @@ static u16 batadv_tvlv_container_list_size(struct batadv_priv *bat_priv)
 }
 
 /**
- * batadv_tvlv_container_remove - remove tvlv container from the tvlv container
- *  list
+ * batadv_tvlv_container_remove() - remove tvlv container from the tvlv
+ *  container list
  * @bat_priv: the bat priv with all the soft interface information
  * @tvlv: the to be removed tvlv container
  *
@@ -207,7 +207,7 @@ static void batadv_tvlv_container_remove(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_container_unregister - unregister tvlv container based on the
+ * batadv_tvlv_container_unregister() - unregister tvlv container based on the
  *  provided type and version (both need to match)
  * @bat_priv: the bat priv with all the soft interface information
  * @type: tvlv container type to unregister
@@ -225,7 +225,7 @@ void batadv_tvlv_container_unregister(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_container_register - register tvlv type, version and content
+ * batadv_tvlv_container_register() - register tvlv type, version and content
  *  to be propagated with each (primary interface) OGM
  * @bat_priv: the bat priv with all the soft interface information
  * @type: tvlv container type
@@ -270,7 +270,7 @@ void batadv_tvlv_container_register(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_realloc_packet_buff - reallocate packet buffer to accommodate
+ * batadv_tvlv_realloc_packet_buff() - reallocate packet buffer to accommodate
  *  requested packet size
  * @packet_buff: packet buffer
  * @packet_buff_len: packet buffer size
@@ -303,7 +303,7 @@ static bool batadv_tvlv_realloc_packet_buff(unsigned char **packet_buff,
 }
 
 /**
- * batadv_tvlv_container_ogm_append - append tvlv container content to given
+ * batadv_tvlv_container_ogm_append() - append tvlv container content to given
  *  OGM packet buffer
  * @bat_priv: the bat priv with all the soft interface information
  * @packet_buff: ogm packet buffer
@@ -356,7 +356,7 @@ end:
 }
 
 /**
- * batadv_tvlv_call_handler - parse the given tvlv buffer to call the
+ * batadv_tvlv_call_handler() - parse the given tvlv buffer to call the
  *  appropriate handlers
  * @bat_priv: the bat priv with all the soft interface information
  * @tvlv_handler: tvlv callback function handling the tvlv content
@@ -410,7 +410,7 @@ static int batadv_tvlv_call_handler(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_containers_process - parse the given tvlv buffer to call the
+ * batadv_tvlv_containers_process() - parse the given tvlv buffer to call the
  *  appropriate handlers
  * @bat_priv: the bat priv with all the soft interface information
  * @ogm_source: flag indicating whether the tvlv is an ogm or a unicast packet
@@ -477,7 +477,7 @@ int batadv_tvlv_containers_process(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_ogm_receive - process an incoming ogm and call the appropriate
+ * batadv_tvlv_ogm_receive() - process an incoming ogm and call the appropriate
  *  handlers
  * @bat_priv: the bat priv with all the soft interface information
  * @batadv_ogm_packet: ogm packet containing the tvlv containers
@@ -504,7 +504,7 @@ void batadv_tvlv_ogm_receive(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_handler_register - register tvlv handler based on the provided
+ * batadv_tvlv_handler_register() - register tvlv handler based on the provided
  *  type and version (both need to match) for ogm tvlv payload and/or unicast
  *  payload
  * @bat_priv: the bat priv with all the soft interface information
@@ -559,7 +559,7 @@ void batadv_tvlv_handler_register(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_handler_unregister - unregister tvlv handler based on the
+ * batadv_tvlv_handler_unregister() - unregister tvlv handler based on the
  *  provided type and version (both need to match)
  * @bat_priv: the bat priv with all the soft interface information
  * @type: tvlv handler type to be unregistered
@@ -582,7 +582,7 @@ void batadv_tvlv_handler_unregister(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_tvlv_unicast_send - send a unicast packet with tvlv payload to the
+ * batadv_tvlv_unicast_send() - send a unicast packet with tvlv payload to the
  *  specified host
  * @bat_priv: the bat priv with all the soft interface information
  * @src: source mac address of the unicast packet
