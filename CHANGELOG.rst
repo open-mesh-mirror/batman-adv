@@ -1,5 +1,19 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2017.4 (2017-12-05)
+===================
+
+* support latest kernels (3.2 - 4.15)
+* coding style cleanups and refactoring
+* documentation cleanup
+* bugs squashed:
+
+  - avoid spurious warnings from bat_v neigh_cmp implementation
+  - fix check of gateway availability in B.A.T.M.A.N. V
+  - fix locking for bidirectional TQ check counters
+  - remove leak of stack bits in fragmentation header priority
+
+
 2017.3 (2017-09-28)
 ===================
 
