@@ -69,8 +69,6 @@
  *		Alexey Kuznetsov:	Accordance to igmp-v2-06 draft.
  *		David L Stevens:	IGMPv3 support, with help from
  *					Vinay Kulkarni
- *
- * License-Filename: LICENSES/preferred/GPL-2.0
  */
 
 #include <linux/igmp.h>

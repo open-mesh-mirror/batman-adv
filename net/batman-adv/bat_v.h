@@ -14,8 +14,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
- *
- * License-Filename: LICENSES/preferred/GPL-2.0
  */
 
 #ifndef _NET_BATMAN_ADV_BAT_V_H_

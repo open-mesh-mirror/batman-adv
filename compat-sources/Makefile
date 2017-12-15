@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
-#
-# License-Filename: LICENSES/preferred/GPL-2.0
 
 batman-adv-$(CONFIG_BATMAN_ADV_MCAST) += ../../../compat-sources/net/core/skbuff.o
 batman-adv-$(CONFIG_BATMAN_ADV_MCAST) += ../../../compat-sources/net/ipv4/igmp.o
