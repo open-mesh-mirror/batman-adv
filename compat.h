@@ -21,6 +21,8 @@
 #ifndef _NET_BATMAN_ADV_COMPAT_H_
 #define _NET_BATMAN_ADV_COMPAT_H_
 
+#ifdef __KERNEL__
+
 #include <linux/version.h>	/* LINUX_VERSION_CODE */
 #include <linux/kconfig.h>
 #include <generated/autoconf.h>
@@ -158,5 +160,7 @@ static int __batadv_interface_kill_vid(struct net_device *dev, __be16 proto,\
 	batadv_softif_slave_add(__dev, __slave_dev)
 
 #endif /* < KERNEL_VERSION(4, 15, 0) */
+
+#endif /* __KERNEL__ */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */
