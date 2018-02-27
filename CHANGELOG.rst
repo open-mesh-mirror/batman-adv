@@ -1,5 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2018.0 (2018-02-26)
+===================
+
+* support latest kernels (3.2 - 4.16)
+* coding style cleanups and refactoring
+* mark licenses clearer, change UAPI header from ISC to MIT
+* bugs squashed:
+
+  - fix packet checksum handling in receive path
+  - fix handling of large number of interfaces
+  - fix netlink dumping of gateways and BLA claims+backbones
+
 2017.4 (2017-12-05)
 ===================
 
