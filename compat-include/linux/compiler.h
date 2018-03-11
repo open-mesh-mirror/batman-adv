@@ -26,11 +26,15 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
 
+#ifndef READ_ONCE
 #define READ_ONCE(x) ACCESS_ONCE(x)
+#endif
 
+#ifndef WRITE_ONCE
 #define WRITE_ONCE(x, val) ({ \
 	ACCESS_ONCE(x) = (val); \
 })
+#endif
 
 #endif /* < KERNEL_VERSION(3, 19, 0) */
 
