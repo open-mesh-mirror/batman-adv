@@ -18,7 +18,7 @@
 
 # read README.external for more information about the configuration
 # batman-adv DebugFS entries:
-export CONFIG_BATMAN_ADV_DEBUGFS=y
+export CONFIG_BATMAN_ADV_DEBUGFS=n
 # B.A.T.M.A.N. debugging:
 export CONFIG_BATMAN_ADV_DEBUG=n
 # B.A.T.M.A.N. bridge loop avoidance:
