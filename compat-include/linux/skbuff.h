@@ -77,6 +77,18 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+
+static inline void skb_postpush_rcsum(struct sk_buff *skb,
+				      const void *start, unsigned int len)
+{
+	if (skb->ip_summed == CHECKSUM_COMPLETE)
+		skb->csum = csum_block_add(skb->csum,
+					   csum_partial(start, len, 0), 0);
+}
+
+#endif /* < KERNEL_VERSION(4, 5, 0) */
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
 
 static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
