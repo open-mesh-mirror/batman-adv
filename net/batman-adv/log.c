@@ -22,6 +22,7 @@
 #include <linux/compiler.h>
 #include <linux/debugfs.h>
 #include <linux/errno.h>
+#include <linux/eventpoll.h>
 #include <linux/export.h>
 #include <linux/fcntl.h>
 #include <linux/fs.h>
@@ -193,7 +194,7 @@ static __poll_t batadv_log_poll(struct file *file, poll_table *wait)
 	poll_wait(file, &debug_log->queue_wait, wait);
 
 	if (!batadv_log_empty(debug_log))
-		return POLLIN | POLLRDNORM;
+		return EPOLLIN | EPOLLRDNORM;
 
 	return 0;
 }

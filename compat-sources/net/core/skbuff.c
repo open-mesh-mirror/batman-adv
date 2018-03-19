@@ -93,23 +93,6 @@ skb_checksum_validate(struct sk_buff *skb, int proto,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
 
-static inline void skb_postpush_rcsum(struct sk_buff *skb,
-				      const void *start, unsigned int len)
-{
-	/* For performing the reverse operation to skb_postpull_rcsum(),
-	 * we can instead of ...
-	 *
-	 *   skb->csum = csum_add(skb->csum, csum_partial(start, len, 0));
-	 *
-	 * ... just use this equivalent version here to save a few
-	 * instructions. Feeding csum of 0 in csum_partial() and later
-	 * on adding skb->csum is equivalent to feed skb->csum in the
-	 * first place.
-	 */
-	if (skb->ip_summed == CHECKSUM_COMPLETE)
-		skb->csum = csum_partial(start, len, skb->csum);
-}
-
 /**
  *	skb_push_rcsum - push skb and update receive checksum
  *	@skb: buffer to update
