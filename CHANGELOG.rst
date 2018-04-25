@@ -1,5 +1,21 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2018.1 (2018-04-25)
+===================
+
+* support latest kernels (3.2 - 4.17)
+* coding style cleanups and refactoring
+* add DAT cache and multicast flags netlink support
+* avoid redundant multicast TT entries
+* bugs squashed:
+
+  - update data pointers after skb_cow()
+  - fix header size check in batadv_dbg_arp()
+  - fix skbuff rcsum on packet reroute
+  - fix multicast-via-unicast transmission with AP isolation
+  - fix packet loss for broadcasted DHCP packets to a server
+  - fix multicast packet loss with a single WANT_ALL_IPV4/6 flag
+
 2018.0 (2018-02-26)
 ===================
 
