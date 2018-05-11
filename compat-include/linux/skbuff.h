@@ -77,7 +77,7 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 47)
 
 static inline void skb_postpush_rcsum(struct sk_buff *skb,
 				      const void *start, unsigned int len)
