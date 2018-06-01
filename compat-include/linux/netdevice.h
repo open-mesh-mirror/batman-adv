@@ -25,31 +25,6 @@
 #include <linux/version.h>
 #include_next <linux/netdevice.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
-
-#include <linux/netdev_features.h>
-
-#endif /* < KERNEL_VERSION(3, 3, 0) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
-
-#define netdev_upper_dev_unlink(slave, master) netdev_set_master(slave, NULL)
-#define netdev_master_upper_dev_get(dev) \
-({\
-	ASSERT_RTNL();\
-	dev->master;\
-})
-
-#endif /* < KERNEL_VERSION(3, 9, 0) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
-
-#define NETDEV_CHANGEUPPER	0x0015
-
-#define netdev_notifier_info_to_dev(ptr) ptr
-
-#endif /* < KERNEL_VERSION(3, 11, 0) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 
 /* alloc_netdev() was defined differently before 2.6.38 */
@@ -65,12 +40,7 @@
 
 #endif /* < KERNEL_VERSION(3, 19, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
-
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
-	netdev_set_master(dev, upper_dev)
-
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
 
 #define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
 	netdev_master_upper_dev_link(dev, upper_dev)

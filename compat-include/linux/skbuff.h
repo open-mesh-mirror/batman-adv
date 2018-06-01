@@ -25,38 +25,6 @@
 #include <linux/version.h>
 #include_next <linux/skbuff.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
-
-/* hack for not correctly set mac_len. This may happen for some special
- * configurations like batman-adv on VLANs.
- *
- * This is pretty dirty, but we only use skb_share_check() in main.c right
- * before mac_len is checked, and the recomputation shouldn't hurt too much.
- */
-#define skb_share_check(skb, b) \
-	({ \
-		struct sk_buff *_t_skb; \
-		_t_skb = skb_share_check(skb, b); \
-		if (_t_skb) \
-			skb_reset_mac_len(_t_skb); \
-		_t_skb; \
-	})
-
-#endif /* < KERNEL_VERSION(3, 8, 0) */
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
-
-/* older kernels still need to call skb_abort_seq_read() */
-#define skb_seq_read(consumed, data, st) \
-	({ \
-		int __len = skb_seq_read(consumed, data, st); \
-		if (__len == 0) \
-			skb_abort_seq_read(st); \
-		__len; \
-	})
-
-#endif /* < KERNEL_VERSION(3, 11, 0) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
 
 #define pskb_copy_for_clone pskb_copy

@@ -23,11 +23,7 @@
 #define _NET_BATMAN_ADV_COMPAT_UAPI_LINUX_NL80211_H_
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
 #include_next <uapi/linux/nl80211.h>
-#else
-#include <linux/nl80211.h>
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 

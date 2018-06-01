@@ -25,17 +25,6 @@
 #include <linux/version.h>
 #include_next <linux/timer.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
-
-#define __setup_timer(_timer, _fn, _data, _flags) \
-	do { \
-		init_timer(_timer); \
-		(_timer)->function = (_fn); \
-		(_timer)->data = (_data); \
-	} while (0)
-
-#endif /* < KERNEL_VERSION(3, 7, 0) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
 
 #define TIMER_DATA_TYPE		unsigned long

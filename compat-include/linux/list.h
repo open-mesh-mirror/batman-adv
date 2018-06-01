@@ -25,27 +25,6 @@
 #include <linux/version.h>
 #include_next <linux/list.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 9, 0)
-
-#define hlist_entry_safe(ptr, type, member) \
-	({ typeof(ptr) ____ptr = (ptr); \
-	   ____ptr ? hlist_entry(____ptr, type, member) : NULL; \
-	})
-
-#undef hlist_for_each_entry
-#define hlist_for_each_entry(pos, head, member) \
-	for (pos = hlist_entry_safe((head)->first, typeof(*(pos)), member);\
-	pos; \
-	pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
-
-#undef hlist_for_each_entry_safe
-#define hlist_for_each_entry_safe(pos, n, head, member) \
-	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
-	pos && ({ n = pos->member.next; 1; }); \
-	pos = hlist_entry_safe(n, typeof(*pos), member))
-
-#endif /* < KERNEL_VERSION(3, 9, 0) */
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 17, 0)
 
 #define hlist_add_behind(n, prev) hlist_add_after(prev, n)

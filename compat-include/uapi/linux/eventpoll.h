@@ -24,11 +24,7 @@
 
 #include <linux/version.h>
 #include <linux/types.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0)
 #include_next <uapi/linux/eventpoll.h>
-#else
-#include <linux/eventpoll.h>
-#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 
