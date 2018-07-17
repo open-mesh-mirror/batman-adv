@@ -28,7 +28,7 @@ export CONFIG_BATMAN_ADV_DAT=y
 # B.A.T.M.A.N network coding (catwoman):
 export CONFIG_BATMAN_ADV_NC=n
 # B.A.T.M.A.N. multicast optimizations:
-export CONFIG_BATMAN_ADV_MCAST=y
+export CONFIG_BATMAN_ADV_MCAST=n
 # B.A.T.M.A.N. tracing support:
 export CONFIG_BATMAN_ADV_TRACING=n
 # B.A.T.M.A.N. V routing algorithm (experimental):
