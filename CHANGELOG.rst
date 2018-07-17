@@ -1,5 +1,26 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2018.2 (2018-07-10)
+===================
+
+* support latest kernels (3.16 - 4.18)
+* dropped support for kernels < 3.16 (note the removed build directory)
+* coding style cleanups and refactoring
+* avoid old nodes disabling multicast optimizations completely
+* disable ethtool based B.A.T.M.A.N. V speed detection for virtual interfaces
+* enable B.A.T.M.A.N. V compilation by default
+* disable debugfs support by default
+* bugs squashed:
+
+  - fix TT sync flags for intermediate TT responses
+  - avoid race in TT TVLV allocator helper
+  - prevent TT request storms by not sending inconsistent TT TVLVs
+  - fix best gw refcnt after netlink dump
+  - adjust debugfs paths for interfaces after a namechange
+  - fix single entry TT non-sync flag storage
+  - fix multicast TT issues with bogus ROAM flags
+  - work around insufficient memory initialization in cfg80211's station info
+
 2018.1 (2018-04-25)
 ===================
 
