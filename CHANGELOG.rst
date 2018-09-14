@@ -1,5 +1,20 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2018.3 (2018-09-14)
+===================
+
+* support latest kernels (3.16 - 4.19)
+* coding style cleanups and refactoring
+* enable the DAT by default for the in-tree Linux module
+* bugs squashed:
+
+  - fix segfault when writing to sysfs files under batman_adv/ with
+    CONFIG_BATMAN_ADV_DEBUG enabled
+  - avoid information leakage in probe ELP packets
+  - adjust reference counters when queue_work fails
+  - prevent duplicated entries in various lists
+
+
 2018.2 (2018-07-10)
 ===================
 
