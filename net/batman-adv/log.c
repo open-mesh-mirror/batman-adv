@@ -124,7 +124,8 @@ static int batadv_log_open(struct inode *inode, struct file *file)
 	if (!try_module_get(THIS_MODULE))
 		return -EBUSY;
 
-	batadv_debugfs_deprecated(file, "Use tracepoint batadv:batadv_dbg instead\n");
+	batadv_debugfs_deprecated(file,
+				  "Use tracepoint batadv:batadv_dbg instead\n");
 
 	nonseekable_open(inode, file);
 	file->private_data = inode->i_private;
