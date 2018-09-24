@@ -27,10 +27,19 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
 
-static inline struct dentry *file_dentry(const struct file *file)
+static inline struct dentry *batadv_file_dentry(const struct file *file)
 {
-	return file->f_path.dentry;
+	struct dentry *dentry = file->f_path.dentry;
+
+#ifdef DCACHE_OP_REAL
+	if (unlikely(dentry->d_flags & DCACHE_OP_REAL))
+		return dentry->d_op->d_real(dentry, file_inode(file));
+#endif
+
+	return dentry;
 }
+
+#define file_dentry batadv_file_dentry
 
 #endif /* < KERNEL_VERSION(4, 6, 0) */
 
