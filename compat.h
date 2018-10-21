@@ -30,11 +30,6 @@
 
 #include "compat-autoconf.h"
 
-/* test for dependency CONFIG_BATMAN_ADV_DEBUG -> CONFIG_BATMAN_ADV_DEBUGFS */
-#if defined(CONFIG_BATMAN_ADV_DEBUG) && !defined(CONFIG_BATMAN_ADV_DEBUGFS)
-#error CONFIG_BATMAN_ADV_DEBUG=y requires CONFIG_BATMAN_ADV_DEBUGFS=y
-#endif
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
 
 /* wild hack for batadv_getlink_net only */
