@@ -1,5 +1,18 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2018.4 (2018-11-14)
+===================
+
+* support latest kernels (3.16 - 4.20)
+* coding style cleanups and refactoring
+* improve tx performance by avoiding unnecessary locking
+* add help messages regarding deprecation of debugfs files
+* support for debug message tracepoints
+* explicit ELP padding to allow TVLVs in the future
+* bugs squashed:
+
+  - fix skb_over_panic for merged fragments with small tailroom
+
 2018.3 (2018-09-14)
 ===================
 
