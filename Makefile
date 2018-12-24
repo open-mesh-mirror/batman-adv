@@ -45,6 +45,7 @@ export KERNELPATH
 RM ?= rm -f
 CP := cp -fpR
 LN := ln -sf
+DEPMOD := depmod -a
 
 REVISION= $(shell	if [ -d "$(PWD)/.git" ]; then \
 				echo $$(git --git-dir="$(PWD)/.git" describe --always --dirty --match "v*" |sed 's/^v//' 2> /dev/null || echo "[unknown]"); \
@@ -90,7 +91,7 @@ clean:
 
 install: config
 	$(MAKE) -C $(KERNELPATH) $(BUILD_FLAGS) modules_install
-	depmod -a
+	$(DEPMOD)
 
 config:
 	$(PWD)/gen-compat-autoconf.sh $(PWD)/compat-autoconf.h
