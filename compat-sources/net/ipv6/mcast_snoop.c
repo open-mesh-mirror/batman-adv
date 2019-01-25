@@ -139,8 +139,7 @@ static inline __sum16 ipv6_mc_validate_checksum(struct sk_buff *skb)
 	return skb_checksum_validate(skb, IPPROTO_ICMPV6, ip6_compute_pseudo);
 }
 
-static int __ipv6_mc_check_mld(struct sk_buff *skb,
-			       struct sk_buff **skb_trimmed)
+static int __ipv6_mc_check_mld(struct sk_buff *skb)
 
 {
 	struct sk_buff *skb_chk = NULL;
@@ -168,10 +167,7 @@ static int __ipv6_mc_check_mld(struct sk_buff *skb,
 		return ret;
 	}
 
-	if (skb_trimmed)
-		*skb_trimmed = skb_chk;
-	else
-		kfree_skb(skb_chk);
+	kfree_skb(skb_chk);
 
 	return 0;
 }
@@ -179,7 +175,6 @@ static int __ipv6_mc_check_mld(struct sk_buff *skb,
 /**
  * ipv6_mc_check_mld - checks whether this is a sane MLD packet
  * @skb: the skb to validate
- * @skb_trimmed: to store an skb pointer trimmed to IPv6 packet tail (optional)
  *
  * Checks whether an IPv6 packet is a valid MLD packet. If so sets
  * skb network and transport headers accordingly and returns zero.
@@ -188,18 +183,8 @@ static int __ipv6_mc_check_mld(struct sk_buff *skb,
  *  standard
  * -ENOMSG: IP header validation succeeded but it is not an MLD packet.
  * -ENOMEM: A memory allocation failure happened.
- *
- * Optionally, an skb pointer might be provided via skb_trimmed (or set it
- * to NULL): After parsing an MLD packet successfully it will point to
- * an skb which has its tail aligned to the IP packet end. This might
- * either be the originally provided skb or a trimmed, cloned version if
- * the skb frame had data beyond the IP packet. A cloned skb allows us
- * to leave the original skb and its full frame unchanged (which might be
- * desirable for layer 2 frame jugglers).
- *
- * The caller needs to release a reference count from any returned skb_trimmed.
  */
-int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed)
+int ipv6_mc_check_mld(struct sk_buff *skb)
 {
 	int ret;
 
@@ -211,7 +196,7 @@ int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed)
 	if (ret < 0)
 		return ret;
 
-	return __ipv6_mc_check_mld(skb, skb_trimmed);
+	return __ipv6_mc_check_mld(skb);
 }
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */

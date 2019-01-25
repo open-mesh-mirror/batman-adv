@@ -27,7 +27,17 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
 
-int ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+int ip_mc_check_igmp(struct sk_buff *skb);
+
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+
+static inline int batadv_ip_mc_check_igmp(struct sk_buff *skb)
+{
+	return ip_mc_check_igmp(skb, NULL);
+}
+
+#define ip_mc_check_igmp(skb) \
+	batadv_ip_mc_check_igmp(skb)
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */
 

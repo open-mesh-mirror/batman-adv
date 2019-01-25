@@ -168,7 +168,7 @@ static inline __sum16 ip_mc_validate_checksum(struct sk_buff *skb)
 	return skb_checksum_simple_validate(skb);
 }
 
-static int __ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
+static int __ip_mc_check_igmp(struct sk_buff *skb)
 
 {
 	struct sk_buff *skb_chk;
@@ -195,10 +195,7 @@ static int __ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
 		return ret;
 	}
 
-	if (skb_trimmed)
-		*skb_trimmed = skb_chk;
-	else
-		kfree_skb(skb_chk);
+	kfree_skb(skb_chk);
 
 	return 0;
 }
@@ -206,7 +203,6 @@ static int __ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
 /**
  * ip_mc_check_igmp - checks whether this is a sane IGMP packet
  * @skb: the skb to validate
- * @skb_trimmed: to store an skb pointer trimmed to IPv4 packet tail (optional)
  *
  * Checks whether an IPv4 packet is a valid IGMP packet. If so sets
  * skb network and transport headers accordingly and returns zero.
@@ -215,18 +211,8 @@ static int __ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
  *  standard
  * -ENOMSG: IP header validation succeeded but it is not an IGMP packet.
  * -ENOMEM: A memory allocation failure happened.
- *
- * Optionally, an skb pointer might be provided via skb_trimmed (or set it
- * to NULL): After parsing an IGMP packet successfully it will point to
- * an skb which has its tail aligned to the IP packet end. This might
- * either be the originally provided skb or a trimmed, cloned version if
- * the skb frame had data beyond the IP packet. A cloned skb allows us
- * to leave the original skb and its full frame unchanged (which might be
- * desirable for layer 2 frame jugglers).
- *
- * The caller needs to release a reference count from any returned skb_trimmed.
  */
-int ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
+int ip_mc_check_igmp(struct sk_buff *skb)
 {
 	int ret = ip_mc_check_iphdr(skb);
 
@@ -236,7 +222,7 @@ int ip_mc_check_igmp(struct sk_buff *skb, struct sk_buff **skb_trimmed)
 	if (ip_hdr(skb)->protocol != IPPROTO_IGMP)
 		return -ENOMSG;
 
-	return __ip_mc_check_igmp(skb, skb_trimmed);
+	return __ip_mc_check_igmp(skb);
 }
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */

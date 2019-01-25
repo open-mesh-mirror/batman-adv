@@ -27,7 +27,17 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
 
-int ipv6_mc_check_mld(struct sk_buff *skb, struct sk_buff **skb_trimmed);
+int ipv6_mc_check_mld(struct sk_buff *skb);
+
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+
+static inline int batadv_ipv6_mc_check_mld(struct sk_buff *skb)
+{
+	return ipv6_mc_check_mld(skb, NULL);
+}
+
+#define ipv6_mc_check_mld(skb) \
+	batadv_ipv6_mc_check_mld(skb)
 
 #endif /* < KERNEL_VERSION(4, 2, 0) */
 
