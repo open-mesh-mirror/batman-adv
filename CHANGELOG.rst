@@ -1,5 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.0 (2019-02-01)
+===================
+
+* support latest kernels (3.16 - 5.0)
+* coding style cleanups and refactoring
+* allow to enable debug tracing without full batman-adv debugfs support
+* enable inconsistency reporting for most netlink dump commands
+* bugs squashed:
+
+  - avoid unnecessary kernel warning (panic) during detection of interface loops
+  - work around incorrect ethernet header offset in transmit code path
+
 2018.4 (2018-11-14)
 ===================
 
