@@ -1,5 +1,20 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.1 (2019-03-28)
+===================
+
+* support latest kernels (3.16 - 5.1)
+* coding style cleanups and refactoring
+* implement meshif, hardif and vlan interface via netlink
+* snoop DHCP ACKs to improve DAT cache efficiency
+* bugs squashed:
+
+  - avoid potential reference counter underflows and use-after free errors for
+    several objects
+  - fix GCC warning when B.A.T.M.A.N. V is build in but cfg80211 is not
+    available
+  - reject too small VLAN packets before they are processed further
+
 2019.0 (2019-02-01)
 ===================
 
