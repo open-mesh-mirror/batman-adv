@@ -33,6 +33,25 @@ void batadv_genl_dump_check_consistent(struct netlink_callback *cb,
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
 
+enum genl_validate_flags {
+	GENL_DONT_VALIDATE_STRICT		= BIT(0),
+	GENL_DONT_VALIDATE_DUMP			= BIT(1),
+	GENL_DONT_VALIDATE_DUMP_STRICT		= BIT(2),
+};
+
+struct batadv_genl_ops {
+	int		       (*doit)(struct sk_buff *skb,
+				       struct genl_info *info);
+	int		       (*start)(struct netlink_callback *cb);
+	int		       (*dumpit)(struct sk_buff *skb,
+					 struct netlink_callback *cb);
+	int		       (*done)(struct netlink_callback *cb);
+	u8			cmd;
+	u8			internal_flags;
+	u8			flags;
+	u8			validate;
+};
+
 struct batadv_genl_family {
 	/* data handled by the actual kernel */
 	struct genl_family family;
@@ -50,7 +69,7 @@ struct batadv_genl_family {
 			 struct genl_info *info);
         void (*post_doit)(const struct genl_ops *ops, struct sk_buff *skb,
 			  struct genl_info *info);
-	const struct genl_ops *ops;
+	const struct batadv_genl_ops *ops;
 	const struct genl_multicast_group *mcgrps;
 	unsigned int n_ops;
 	unsigned int n_mcgrps;
@@ -62,8 +81,6 @@ struct batadv_genl_family {
 	 */
 	struct genl_ops *copy_ops;
 };
-
-#define genl_family batadv_genl_family
 
 static inline int batadv_genl_register_family(struct batadv_genl_family *family)
 {
@@ -82,18 +99,37 @@ static inline int batadv_genl_register_family(struct batadv_genl_family *family)
 	family->family.n_mcgrps = family->n_mcgrps;
 	family->family.module = family->module;
 
-	ops = kmemdup(family->ops, sizeof(*ops) * family->n_ops, GFP_KERNEL);
+	ops = kzalloc(sizeof(*ops) * family->n_ops, GFP_KERNEL);
 	if (!ops)
 		return -ENOMEM;
 
-	for (i = 0; i < family->family.n_ops; i++)
+	for (i = 0; i < family->family.n_ops; i++) {
+		ops[i].doit = family->ops[i].doit;
+		ops[i].start = family->ops[i].start;
+		ops[i].dumpit = family->ops[i].dumpit;
+		ops[i].done = family->ops[i].done;
+		ops[i].cmd = family->ops[i].cmd;
+		ops[i].internal_flags = family->ops[i].internal_flags;
+		ops[i].flags = family->ops[i].flags;
 		ops[i].policy = family->policy;
+	}
 
 	family->family.ops = ops;
 	family->copy_ops = ops;
 
 	return genl_register_family(&family->family);
 }
+
+typedef struct genl_ops batadv_genl_ops_old;
+
+#define batadv_pre_doit(__x, __y, __z) \
+	batadv_pre_doit(const batadv_genl_ops_old *ops, __y, __z)
+
+#define batadv_post_doit(__x, __y, __z) \
+	batadv_post_doit(const batadv_genl_ops_old *ops, __y, __z)
+
+#define genl_ops batadv_genl_ops
+#define genl_family batadv_genl_family
 
 #define genl_register_family(family) \
 	batadv_genl_register_family((family))
