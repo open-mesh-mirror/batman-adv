@@ -42,7 +42,6 @@ enum genl_validate_flags {
 struct batadv_genl_ops {
 	int		       (*doit)(struct sk_buff *skb,
 				       struct genl_info *info);
-	int		       (*start)(struct netlink_callback *cb);
 	int		       (*dumpit)(struct sk_buff *skb,
 					 struct netlink_callback *cb);
 	int		       (*done)(struct netlink_callback *cb);
@@ -105,7 +104,6 @@ static inline int batadv_genl_register_family(struct batadv_genl_family *family)
 
 	for (i = 0; i < family->family.n_ops; i++) {
 		ops[i].doit = family->ops[i].doit;
-		ops[i].start = family->ops[i].start;
 		ops[i].dumpit = family->ops[i].dumpit;
 		ops[i].done = family->ops[i].done;
 		ops[i].cmd = family->ops[i].cmd;
