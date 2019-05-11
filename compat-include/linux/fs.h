@@ -31,4 +31,15 @@ static inline struct dentry *batadv_file_dentry(const struct file *file)
 
 #endif /* < KERNEL_VERSION(4, 6, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+
+static inline int batadv_stream_open(struct inode *inode, struct file *filp)
+{
+	return nonseekable_open(inode, filp);
+}
+
+#define stream_open batadv_stream_open
+
+#endif /* < KERNEL_VERSION(5, 2, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_FS_H_ */
