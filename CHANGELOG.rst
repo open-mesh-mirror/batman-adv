@@ -1,5 +1,18 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.2 (2019-05-23)
+===================
+
+* support latest kernels (3.16 - 5.2)
+* coding style cleanups and refactoring
+* implement multicast-to-unicast support for multiple targets
+* deprecate sysfs support and make it optional
+* refresh DAT entry timeouts on incoming ARP Replies
+* bugs squashed:
+
+  - fix multicast tt/tvlv worker locking
+  - drop roam tvlv handler when unregistering mesh interface
+
 2019.1 (2019-03-28)
 ===================
 
