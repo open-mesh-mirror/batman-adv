@@ -379,11 +379,14 @@ batadv_mcast_mla_softif_get_ipv4(struct net_device *dev,
 	if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV4)
 		return 0;
 
-	in_dev = in_dev_get(dev);
-	if (!in_dev)
-		return 0;
-
 	rcu_read_lock();
+
+	in_dev = __in_dev_get_rcu(dev);
+	if (!in_dev) {
+		rcu_read_unlock();
+		return 0;
+	}
+
 	for (pmc = rcu_dereference(in_dev->mc_list); pmc;
 	     pmc = rcu_dereference(pmc->next_rcu)) {
 		if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
@@ -410,7 +413,6 @@ batadv_mcast_mla_softif_get_ipv4(struct net_device *dev,
 		ret++;
 	}
 	rcu_read_unlock();
-	in_dev_put(in_dev);
 
 	return ret;
 }
@@ -444,9 +446,13 @@ batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
 	if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV6)
 		return 0;
 
-	in6_dev = in6_dev_get(dev);
-	if (!in6_dev)
+	rcu_read_lock();
+
+	in6_dev = __in6_dev_get(dev);
+	if (!in6_dev) {
+		rcu_read_unlock();
 		return 0;
+	}
 
 	read_lock_bh(&in6_dev->lock);
 	for (pmc6 = in6_dev->mc_list; pmc6; pmc6 = pmc6->next) {
@@ -479,7 +485,7 @@ batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
 		ret++;
 	}
 	read_unlock_bh(&in6_dev->lock);
-	in6_dev_put(in6_dev);
+	rcu_read_unlock();
 
 	return ret;
 }
