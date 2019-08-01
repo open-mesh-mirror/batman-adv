@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.3 (2019-08-01)
+===================
+
+* support latest kernels (3.16 - 5.3)
+* coding style cleanups and refactoring
+* add routable multicast optimizations
+* bugs squashed:
+
+  - fix duplicated OGMs on NETDEV_UP
+  - fix dumping of multicast flags
+
 2019.2 (2019-05-23)
 ===================
 
