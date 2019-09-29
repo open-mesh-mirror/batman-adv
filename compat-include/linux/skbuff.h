@@ -77,4 +77,10 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data,
 
 #endif /* < KERNEL_VERSION(4, 13, 0) */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
+
+#define nf_reset_ct nf_reset
+
+#endif /* < KERNEL_VERSION(5, 4, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_SKBUFF_H_ */
