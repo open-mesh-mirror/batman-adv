@@ -73,10 +73,10 @@ enum batadv_dhcp_recipient {
  * struct batadv_hard_iface_bat_iv - per hard-interface B.A.T.M.A.N. IV data
  */
 struct batadv_hard_iface_bat_iv {
-	/** @ogm_buff: buffer holding the OGM packet */
+	/** @ogm_buff: buffer holding the OGM packet. rtnl protected */
 	unsigned char *ogm_buff;
 
-	/** @ogm_buff_len: length of the OGM packet buffer */
+	/** @ogm_buff_len: length of the OGM packet buffer. rtnl protected */
 	int ogm_buff_len;
 
 	/** @ogm_seqno: OGM sequence number - used to identify each OGM */
