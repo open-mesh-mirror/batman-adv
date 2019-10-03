@@ -1518,10 +1518,10 @@ struct batadv_softif_vlan {
  * struct batadv_priv_bat_v - B.A.T.M.A.N. V per soft-interface private data
  */
 struct batadv_priv_bat_v {
-	/** @ogm_buff: buffer holding the OGM packet */
+	/** @ogm_buff: buffer holding the OGM packet. rtnl protected */
 	unsigned char *ogm_buff;
 
-	/** @ogm_buff_len: length of the OGM packet buffer */
+	/** @ogm_buff_len: length of the OGM packet buffer. rtnl protected */
 	int ogm_buff_len;
 
 	/** @ogm_seqno: OGM sequence number - used to identify each OGM */
