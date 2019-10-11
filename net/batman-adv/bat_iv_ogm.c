@@ -29,6 +29,7 @@
 #include <linux/random.h>
 #include <linux/rculist.h>
 #include <linux/rcupdate.h>
+#include <linux/rtnetlink.h>
 #include <linux/seq_file.h>
 #include <linux/skbuff.h>
 #include <linux/slab.h>
@@ -193,6 +194,8 @@ static int batadv_iv_ogm_iface_enable(struct batadv_hard_iface *hard_iface)
 	unsigned char *ogm_buff;
 	u32 random_seqno;
 
+	ASSERT_RTNL();
+
 	/* randomize initial seqno to avoid collision */
 	get_random_bytes(&random_seqno, sizeof(random_seqno));
 	atomic_set(&hard_iface->bat_iv.ogm_seqno, random_seqno);
@@ -217,6 +220,8 @@ static int batadv_iv_ogm_iface_enable(struct batadv_hard_iface *hard_iface)
 
 static void batadv_iv_ogm_iface_disable(struct batadv_hard_iface *hard_iface)
 {
+	ASSERT_RTNL();
+
 	kfree(hard_iface->bat_iv.ogm_buff);
 	hard_iface->bat_iv.ogm_buff = NULL;
 }
@@ -225,6 +230,8 @@ static void batadv_iv_ogm_iface_update_mac(struct batadv_hard_iface *hard_iface)
 {
 	struct batadv_ogm_packet *batadv_ogm_packet;
 	unsigned char *ogm_buff = hard_iface->bat_iv.ogm_buff;
+
+	ASSERT_RTNL();
 
 	batadv_ogm_packet = (struct batadv_ogm_packet *)ogm_buff;
 	ether_addr_copy(batadv_ogm_packet->orig,
@@ -238,6 +245,8 @@ batadv_iv_ogm_primary_iface_set(struct batadv_hard_iface *hard_iface)
 {
 	struct batadv_ogm_packet *batadv_ogm_packet;
 	unsigned char *ogm_buff = hard_iface->bat_iv.ogm_buff;
+
+	ASSERT_RTNL();
 
 	batadv_ogm_packet = (struct batadv_ogm_packet *)ogm_buff;
 	batadv_ogm_packet->ttl = BATADV_TTL;
@@ -752,6 +761,8 @@ static void batadv_iv_ogm_schedule(struct batadv_hard_iface *hard_iface)
 	u32 seqno;
 	u16 tvlv_len = 0;
 	unsigned long send_time;
+
+	ASSERT_RTNL();
 
 	if (hard_iface->if_status == BATADV_IF_NOT_IN_USE ||
 	    hard_iface->if_status == BATADV_IF_TO_BE_REMOVED)
@@ -1643,16 +1654,12 @@ static void batadv_iv_ogm_process(const struct sk_buff *skb, int ogm_offset,
 	batadv_orig_node_put(orig_node);
 }
 
-static void batadv_iv_send_outstanding_bat_ogm_packet(struct work_struct *work)
+static void
+batadv_iv_send_outstanding_forw_packet(struct batadv_forw_packet *forw_packet)
 {
-	struct delayed_work *delayed_work;
-	struct batadv_forw_packet *forw_packet;
 	struct batadv_priv *bat_priv;
 	bool dropped = false;
 
-	delayed_work = to_delayed_work(work);
-	forw_packet = container_of(delayed_work, struct batadv_forw_packet,
-				   delayed_work);
 	bat_priv = netdev_priv(forw_packet->if_incoming->soft_iface);
 
 	if (atomic_read(&bat_priv->mesh_state) == BATADV_MESH_DEACTIVATING) {
@@ -1679,6 +1686,20 @@ out:
 	if (batadv_forw_packet_steal(forw_packet,
 				     &bat_priv->forw_bat_list_lock))
 		batadv_forw_packet_free(forw_packet, dropped);
+}
+
+static void batadv_iv_send_outstanding_bat_ogm_packet(struct work_struct *work)
+{
+	struct delayed_work *delayed_work;
+	struct batadv_forw_packet *forw_packet;
+
+	delayed_work = to_delayed_work(work);
+	forw_packet = container_of(delayed_work, struct batadv_forw_packet,
+				   delayed_work);
+
+	rtnl_lock();
+	batadv_iv_send_outstanding_forw_packet(forw_packet);
+	rtnl_unlock();
 }
 
 static int batadv_iv_ogm_receive(struct sk_buff *skb,
