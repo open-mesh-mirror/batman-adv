@@ -17,6 +17,7 @@
 #include <linux/if.h>
 #include <linux/if_ether.h>
 #include <linux/kref.h>
+#include <linux/mutex.h>
 #include <linux/netdevice.h>
 #include <linux/netlink.h>
 #include <linux/sched.h> /* for linux/wait.h */
@@ -73,14 +74,17 @@ enum batadv_dhcp_recipient {
  * struct batadv_hard_iface_bat_iv - per hard-interface B.A.T.M.A.N. IV data
  */
 struct batadv_hard_iface_bat_iv {
-	/** @ogm_buff: buffer holding the OGM packet. rtnl protected */
+	/** @ogm_buff: buffer holding the OGM packet */
 	unsigned char *ogm_buff;
 
-	/** @ogm_buff_len: length of the OGM packet buffer. rtnl protected */
+	/** @ogm_buff_len: length of the OGM packet buffer */
 	int ogm_buff_len;
 
 	/** @ogm_seqno: OGM sequence number - used to identify each OGM */
 	atomic_t ogm_seqno;
+
+	/** @ogm_buff_mutex: lock protecting ogm_buff and ogm_buff_len */
+	struct mutex ogm_buff_mutex;
 };
 
 /**
@@ -1530,14 +1534,17 @@ struct batadv_softif_vlan {
  * struct batadv_priv_bat_v - B.A.T.M.A.N. V per soft-interface private data
  */
 struct batadv_priv_bat_v {
-	/** @ogm_buff: buffer holding the OGM packet. rtnl protected */
+	/** @ogm_buff: buffer holding the OGM packet */
 	unsigned char *ogm_buff;
 
-	/** @ogm_buff_len: length of the OGM packet buffer. rtnl protected */
+	/** @ogm_buff_len: length of the OGM packet buffer */
 	int ogm_buff_len;
 
 	/** @ogm_seqno: OGM sequence number - used to identify each OGM */
 	atomic_t ogm_seqno;
+
+	/** @ogm_buff_mutex: lock protecting ogm_buff and ogm_buff_len */
+	struct mutex ogm_buff_mutex;
 
 	/** @ogm_wq: workqueue used to schedule OGM transmissions */
 	struct delayed_work ogm_wq;
