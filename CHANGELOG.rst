@@ -1,5 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.4 (2019-10-25)
+===================
+
+* support latest kernels (3.16 - 5.4)
+* coding style cleanups and refactoring
+* implement aggregation of OGM2 packets
+* bugs squashed:
+
+  - fix length validation in netlink messages
+  - fix out of buffer read when parsing aggregated packets
+  - avoid race condition in OGM(2) packet modification and submission
+
 2019.3 (2019-08-01)
 ===================
 
