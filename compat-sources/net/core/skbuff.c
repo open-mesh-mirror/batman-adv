@@ -46,7 +46,7 @@ __sum16 skb_checksum_simple_validate(struct sk_buff *skb)
 	case CHECKSUM_COMPLETE:
 		if (!csum_fold(skb->csum))
 			break;
-		/* fall through */
+		fallthrough;
 	case CHECKSUM_NONE:
 		skb->csum = 0;
 		return skb_checksum_complete(skb);
@@ -72,7 +72,7 @@ skb_checksum_validate(struct sk_buff *skb, int proto,
 		if (!csum_ipv6_magic(&ip6h->saddr, &ip6h->daddr, skb->len,
 				     IPPROTO_ICMPV6, skb->csum))
 			break;
-		/*FALLTHROUGH*/
+		fallthrough;
 	case CHECKSUM_NONE:
 		skb->csum = ~csum_unfold(csum_ipv6_magic(&ip6h->saddr,
 							 &ip6h->daddr,
