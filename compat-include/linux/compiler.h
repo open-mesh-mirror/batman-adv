@@ -31,7 +31,11 @@
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
 
 #ifndef fallthrough
-#define fallthrough                    do {} while (0)  /* fallthrough */
+#if __GNUC__ > 7 && !defined(__CHECKER__)
+# define fallthrough                    __attribute__((__fallthrough__))
+#else
+# define fallthrough                    do {} while (0)  /* fallthrough */
+#endif
 #endif
 
 #endif /* < KERNEL_VERSION(5, 4, 0) */
