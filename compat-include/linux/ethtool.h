@@ -21,7 +21,6 @@ struct batadv_ethtool_link_ksettings {
 	struct {
 		__u32	speed;
 		__u8	duplex;
-		__u8	autoneg;
 	} base;
 };
 
@@ -42,7 +41,6 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 		return ret;
 
 	link_ksettings->base.duplex = cmd.duplex;
-	link_ksettings->base.autoneg = cmd.autoneg;
 	link_ksettings->base.speed = ethtool_cmd_speed(&cmd);
 
 	return 0;
