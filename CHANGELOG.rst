@@ -1,5 +1,14 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2019.5 (2019-12-12)
+===================
+
+* support latest kernels (3.16 - 5.5)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix DAT candidate selection on little endian systems
+
 2019.4 (2019-10-25)
 ===================
 
