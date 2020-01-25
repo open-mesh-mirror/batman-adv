@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/types.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
+#if LINUX_VERSION_IS_LESS(4, 16, 0)
 
 #ifdef __CHECK_POLL
 typedef unsigned __bitwise __poll_t;
@@ -21,6 +21,6 @@ typedef unsigned __bitwise __poll_t;
 typedef unsigned __poll_t;
 #endif
 
-#endif /* < KERNEL_VERSION(4, 16, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 16, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_TYPES_H_ */

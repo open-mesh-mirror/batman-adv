@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <net/genetlink.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+#if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 static inline
 void batadv_genl_dump_check_consistent(struct netlink_callback *cb,
@@ -28,10 +28,10 @@ void batadv_genl_dump_check_consistent(struct netlink_callback *cb,
 
 #define genl_dump_check_consistent batadv_genl_dump_check_consistent
 
-#endif /* < KERNEL_VERSION(4, 15, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+#if LINUX_VERSION_IS_LESS(5, 2, 0)
 
 enum genl_validate_flags {
 	GENL_DONT_VALIDATE_STRICT		= BIT(0),
@@ -150,6 +150,6 @@ batadv_genl_unregister_family(struct batadv_genl_family *family)
 	genlmsg_multicast_netns(&(_family)->family, _net, _skb, _portid, \
 				_group, _flags)
 
-#endif /* < KERNEL_VERSION(5, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 2, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_NET_GENETLINK_H_ */

@@ -15,34 +15,34 @@
 
 #include "compat-autoconf.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
+#if LINUX_VERSION_IS_LESS(4, 0, 0)
 
 /* wild hack for batadv_getlink_net only */
 #define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
 
-#endif /* < KERNEL_VERSION(4, 0, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 0, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
+#if LINUX_VERSION_IS_LESS(4, 3, 0)
 
 #define IFF_NO_QUEUE	0; dev->tx_queue_len = 0
 
-#endif /* < KERNEL_VERSION(4, 3, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_IS_LESS(4, 6, 0)
 
 /* workaround for current issues with Debian's make-kpkg */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_IS_GEQ(4, 5, 0)
 #include <uapi/linux/pkt_cls.h>
 #endif
 
-#endif /* < KERNEL_VERSION(4, 6, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 6, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
+#if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 #define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
 	batadv_softif_slave_add(__dev, __slave_dev)
 
-#endif /* < KERNEL_VERSION(4, 15, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
 
 #endif /* __KERNEL__ */
 

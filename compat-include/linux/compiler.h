@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/compiler.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
+#if LINUX_VERSION_IS_LESS(3, 19, 0)
 
 #ifndef READ_ONCE
 #define READ_ONCE(x) ACCESS_ONCE(x)
@@ -25,10 +25,10 @@
 })
 #endif
 
-#endif /* < KERNEL_VERSION(3, 19, 0) */
+#endif /* LINUX_VERSION_IS_LESS(3, 19, 0) */
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
+#if LINUX_VERSION_IS_LESS(5, 4, 0)
 
 #ifndef fallthrough
 #if __GNUC__ > 7 && !defined(__CHECKER__)
@@ -38,6 +38,6 @@
 #endif
 #endif
 
-#endif /* < KERNEL_VERSION(5, 4, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 4, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_COMPILER_H_ */

@@ -13,10 +13,10 @@
 #include <linux/version.h>
 #include_next <linux/cache.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_IS_LESS(4, 6, 0)
 
 #define __ro_after_init
 
-#endif /* < KERNEL_VERSION(4, 6, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 6, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_LINUX_CACHE_H */

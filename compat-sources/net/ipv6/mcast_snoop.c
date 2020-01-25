@@ -11,7 +11,7 @@
 #include <net/addrconf.h>
 #include <net/ip6_checksum.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_IS_LESS(4, 2, 0)
 
 static int ipv6_mc_check_ip6hdr(struct sk_buff *skb)
 {
@@ -186,4 +186,4 @@ int ipv6_mc_check_mld(struct sk_buff *skb)
 	return __ipv6_mc_check_mld(skb);
 }
 
-#endif /* < KERNEL_VERSION(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */

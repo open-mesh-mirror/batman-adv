@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/skbuff.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+#if LINUX_VERSION_IS_LESS(3, 16, 0)
 
 #define pskb_copy_for_clone pskb_copy
 
@@ -23,17 +23,17 @@ __sum16
 skb_checksum_validate(struct sk_buff *skb, int proto,
 		      __wsum (*compute_pseudo)(struct sk_buff *skb, int proto));
 
-#endif /* < KERNEL_VERSION(3, 16, 0) */
+#endif /* LINUX_VERSION_IS_LESS(3, 16, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_IS_LESS(4, 2, 0)
 
 struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 				     unsigned int transport_len,
 				     __sum16(*skb_chkf)(struct sk_buff *skb));
 
-#endif /* < KERNEL_VERSION(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#if LINUX_VERSION_IS_LESS(4, 5, 0)
 
 static inline void batadv_skb_postpush_rcsum(struct sk_buff *skb,
 					     const void *start,
@@ -46,9 +46,9 @@ static inline void batadv_skb_postpush_rcsum(struct sk_buff *skb,
 
 #define skb_postpush_rcsum batadv_skb_postpush_rcsum
 
-#endif /* < KERNEL_VERSION(4, 5, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 5, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+#if LINUX_VERSION_IS_LESS(4, 13, 0)
 
 static inline void *batadv_skb_put(struct sk_buff *skb, unsigned int len)
 {
@@ -75,12 +75,12 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data,
 	return tmp;
 }
 
-#endif /* < KERNEL_VERSION(4, 13, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 13, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)
+#if LINUX_VERSION_IS_LESS(5, 4, 0)
 
 #define nf_reset_ct nf_reset
 
-#endif /* < KERNEL_VERSION(5, 4, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 4, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_SKBUFF_H_ */

@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <net/ip6_checksum.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+#if LINUX_VERSION_IS_LESS(3, 16, 0)
 
 static inline __wsum ip6_compute_pseudo(struct sk_buff *skb, int proto)
 {
@@ -22,6 +22,6 @@ static inline __wsum ip6_compute_pseudo(struct sk_buff *skb, int proto)
 					    skb->len, proto, 0));
 }
 
-#endif /* < KERNEL_VERSION(3, 16, 0) */
+#endif /* LINUX_VERSION_IS_LESS(3, 16, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_NET_IP6_CHECKSUM_H_ */

@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <net/netlink.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+#if LINUX_VERSION_IS_LESS(4, 1, 0)
 
 static inline int nla_put_in_addr(struct sk_buff *skb, int attrtype,
 				  __be32 addr)
@@ -23,6 +23,6 @@ static inline int nla_put_in_addr(struct sk_buff *skb, int attrtype,
 	return nla_put_be32(skb, attrtype, tmp);
 }
 
-#endif /* < KERNEL_VERSION(4, 1, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 1, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_NET_NETLINK_H_ */

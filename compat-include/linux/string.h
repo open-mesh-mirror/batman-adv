@@ -12,7 +12,7 @@
 #include_next <linux/string.h>
 #include <asm-generic/errno-base.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
+#if LINUX_VERSION_IS_LESS(4, 3, 0)
 
 #ifndef __HAVE_ARCH_STRSCPY
 
@@ -46,6 +46,6 @@ static inline ssize_t batadv_strscpy(char *dest, const char *src, size_t count)
 
 #endif
 
-#endif /* < KERNEL_VERSION(4, 3, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_STRING_H_ */

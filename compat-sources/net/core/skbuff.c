@@ -35,7 +35,7 @@
 #include <net/checksum.h>
 #include <net/ip6_checksum.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)
+#if LINUX_VERSION_IS_LESS(3, 16, 0)
 
 /* Compare with:
  * "bridge: multicast: call skb_checksum_{simple_, }validate"
@@ -84,9 +84,9 @@ skb_checksum_validate(struct sk_buff *skb, int proto,
 	return 0;
 }
 
-#endif /* < KERNEL_VERSION(3, 16, 0) */
+#endif /* LINUX_VERSION_IS_LESS(3, 16, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_IS_LESS(4, 2, 0)
 
 /**
  *	skb_push_rcsum - push skb and update receive checksum
@@ -192,4 +192,4 @@ struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
 	return skb_chk;
 }
 
-#endif /* < KERNEL_VERSION(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */

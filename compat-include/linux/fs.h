@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/fs.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_IS_LESS(4, 6, 0)
 
 static inline struct dentry *batadv_file_dentry(const struct file *file)
 {
@@ -29,9 +29,9 @@ static inline struct dentry *batadv_file_dentry(const struct file *file)
 
 #define file_dentry batadv_file_dentry
 
-#endif /* < KERNEL_VERSION(4, 6, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 6, 0) */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+#if LINUX_VERSION_IS_LESS(5, 2, 0)
 
 static inline int batadv_stream_open(struct inode *inode, struct file *filp)
 {
@@ -40,6 +40,6 @@ static inline int batadv_stream_open(struct inode *inode, struct file *filp)
 
 #define stream_open batadv_stream_open
 
-#endif /* < KERNEL_VERSION(5, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 2, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_FS_H_ */

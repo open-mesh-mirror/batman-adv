@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/uaccess.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
+#if LINUX_VERSION_IS_LESS(5, 0, 0)
 
 static inline int batadv_access_ok(int type, const void __user *p,
 				   unsigned long size)
@@ -32,6 +32,6 @@ static inline int batadv_access_ok(int type, const void __user *p,
 #define access_ok2(addr, size)	batadv_access_ok(VERIFY_WRITE, (addr), (size))
 #define access_ok3(type, addr, size)	batadv_access_ok((type), (addr), (size))
 
-#endif /* < KERNEL_VERSION(5, 0, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 0, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_UACCESS_H_ */

@@ -13,12 +13,12 @@
 #include <linux/version.h>
 #include_next <linux/stddef.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
+#if LINUX_VERSION_IS_LESS(4, 16, 0)
 
 #ifndef sizeof_field
 #define sizeof_field(TYPE, MEMBER) sizeof((((TYPE *)0)->MEMBER))
 #endif
 
-#endif /* < KERNEL_VERSION(4, 16, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 16, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_STDDEF_H_ */

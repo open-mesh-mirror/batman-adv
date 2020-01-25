@@ -17,9 +17,9 @@
 #include <linux/compiler.h>
 #include <linux/log2.h>
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)
+#if LINUX_VERSION_IS_GEQ(4, 3, 0)
 #undef DECLARE_EWMA
-#endif /* < KERNEL_VERSION(4, 3, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
 
 /*
  * Exponentially weighted moving average (EWMA)

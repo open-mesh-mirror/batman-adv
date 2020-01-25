@@ -13,11 +13,11 @@
 #include <linux/version.h>
 #include_next <linux/igmp.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_IS_LESS(4, 2, 0)
 
 int ip_mc_check_igmp(struct sk_buff *skb);
 
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 1, 0)
+#elif LINUX_VERSION_IS_LESS(5, 1, 0)
 
 static inline int batadv_ip_mc_check_igmp(struct sk_buff *skb)
 {
@@ -27,6 +27,6 @@ static inline int batadv_ip_mc_check_igmp(struct sk_buff *skb)
 #define ip_mc_check_igmp(skb) \
 	batadv_ip_mc_check_igmp(skb)
 
-#endif /* < KERNEL_VERSION(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_IGMP_H_ */

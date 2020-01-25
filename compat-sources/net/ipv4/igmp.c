@@ -71,7 +71,7 @@
 #include <linux/skbuff.h>
 #include <net/ip.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_IS_LESS(4, 2, 0)
 
 static int ip_mc_check_iphdr(struct sk_buff *skb)
 {
@@ -220,4 +220,4 @@ int ip_mc_check_igmp(struct sk_buff *skb)
 	return __ip_mc_check_igmp(skb);
 }
 
-#endif /* < KERNEL_VERSION(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */

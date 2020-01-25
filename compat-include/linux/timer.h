@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/timer.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
+#if LINUX_VERSION_IS_LESS(4, 14, 0)
 
 #define TIMER_DATA_TYPE		unsigned long
 #define TIMER_FUNC_TYPE		void (*)(TIMER_DATA_TYPE)
@@ -29,6 +29,6 @@ static inline void timer_setup(struct timer_list *timer,
 #define from_timer(var, callback_timer, timer_fieldname) \
 	container_of(callback_timer, typeof(*var), timer_fieldname)
 
-#endif /* < KERNEL_VERSION(4, 14, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 14, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_LINUX_TIMER_H */

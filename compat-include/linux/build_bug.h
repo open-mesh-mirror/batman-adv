@@ -11,7 +11,7 @@
 #define _NET_BATMAN_ADV_COMPAT_LINUX_BUILD_BUG_H_
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
+#if LINUX_VERSION_IS_GEQ(4, 13, 0)
 #include_next <linux/build_bug.h>
 #else
 #include <linux/bug.h>

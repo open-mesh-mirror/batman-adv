@@ -14,7 +14,7 @@
 #include <linux/types.h>
 #include_next <uapi/linux/eventpoll.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+#if LINUX_VERSION_IS_LESS(4, 12, 0)
 
 #ifndef EPOLLIN
 #define EPOLLIN		(__force __poll_t)0x00000001
@@ -24,6 +24,6 @@
 #define EPOLLRDNORM	(__force __poll_t)0x00000040
 #endif
 
-#endif /* < KERNEL_VERSION(4, 12, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 12, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_UAPI_LINUX_EVENTPOLL_H_ */

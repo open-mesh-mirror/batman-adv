@@ -13,7 +13,7 @@
 #include <linux/version.h>
 #include_next <linux/ethtool.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
+#if LINUX_VERSION_IS_LESS(4, 6, 0)
 
 #define ethtool_link_ksettings batadv_ethtool_link_ksettings
 
@@ -48,6 +48,6 @@ batadv_ethtool_get_link_ksettings(struct net_device *dev,
 	return 0;
 }
 
-#endif /* < KERNEL_VERSION(4, 6, 0) */
+#endif /* LINUX_VERSION_IS_LESS(4, 6, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_ETHTOOL_H_ */
