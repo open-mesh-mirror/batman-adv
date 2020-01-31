@@ -28,15 +28,6 @@
 
 #endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
 
-#if LINUX_VERSION_IS_LESS(4, 6, 0)
-
-/* workaround for current issues with Debian's make-kpkg */
-#if LINUX_VERSION_IS_GEQ(4, 5, 0)
-#include <uapi/linux/pkt_cls.h>
-#endif
-
-#endif /* LINUX_VERSION_IS_LESS(4, 6, 0) */
-
 #if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 #define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
