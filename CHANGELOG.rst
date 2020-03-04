@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2020.0 (2020-03-04)
+===================
+
+* support latest kernels (3.16 - 5.6)
+* coding style cleanups and refactoring
+* use wifi tx rates as fallback for the B.A.T.M.A.N. V throughput estimation
+* disable deprecated sysfs support by default
+* bugs squashed:
+
+  - fix crash during the scheduling of OGMs for removed interfaces
+
 2019.5 (2019-12-12)
 ===================
 
