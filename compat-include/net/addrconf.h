@@ -13,11 +13,7 @@
 #include <linux/version.h>
 #include_next <net/addrconf.h>
 
-#if LINUX_VERSION_IS_LESS(4, 2, 0)
-
-int ipv6_mc_check_mld(struct sk_buff *skb);
-
-#elif LINUX_VERSION_IS_LESS(5, 1, 0)
+#if LINUX_VERSION_IS_LESS(5, 1, 0)
 
 static inline int batadv_ipv6_mc_check_mld(struct sk_buff *skb)
 {
@@ -27,6 +23,6 @@ static inline int batadv_ipv6_mc_check_mld(struct sk_buff *skb)
 #define ipv6_mc_check_mld(skb) \
 	batadv_ipv6_mc_check_mld(skb)
 
-#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 1, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_NET_ADDRCONF_H_ */

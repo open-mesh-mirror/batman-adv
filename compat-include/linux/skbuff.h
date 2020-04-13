@@ -13,26 +13,6 @@
 #include <linux/version.h>
 #include_next <linux/skbuff.h>
 
-#if LINUX_VERSION_IS_LESS(3, 16, 0)
-
-#define pskb_copy_for_clone pskb_copy
-
-__sum16 skb_checksum_simple_validate(struct sk_buff *skb);
-
-__sum16
-skb_checksum_validate(struct sk_buff *skb, int proto,
-		      __wsum (*compute_pseudo)(struct sk_buff *skb, int proto));
-
-#endif /* LINUX_VERSION_IS_LESS(3, 16, 0) */
-
-#if LINUX_VERSION_IS_LESS(4, 2, 0)
-
-struct sk_buff *skb_checksum_trimmed(struct sk_buff *skb,
-				     unsigned int transport_len,
-				     __sum16(*skb_chkf)(struct sk_buff *skb));
-
-#endif /* LINUX_VERSION_IS_LESS(4, 2, 0) */
-
 #if LINUX_VERSION_IS_LESS(4, 5, 0)
 
 static inline void batadv_skb_postpush_rcsum(struct sk_buff *skb,

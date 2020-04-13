@@ -49,8 +49,6 @@ ifneq ($(REVISION),)
 NOSTDINC_FLAGS += -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
 endif
 
-include $(PWD)/compat-sources/Makefile
-
 obj-y += net/batman-adv/
 
 export batman-adv-y

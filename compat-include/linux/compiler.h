@@ -13,21 +13,6 @@
 #include <linux/version.h>
 #include_next <linux/compiler.h>
 
-#if LINUX_VERSION_IS_LESS(3, 19, 0)
-
-#ifndef READ_ONCE
-#define READ_ONCE(x) ACCESS_ONCE(x)
-#endif
-
-#ifndef WRITE_ONCE
-#define WRITE_ONCE(x, val) ({ \
-	ACCESS_ONCE(x) = (val); \
-})
-#endif
-
-#endif /* LINUX_VERSION_IS_LESS(3, 19, 0) */
-
-
 #if LINUX_VERSION_IS_LESS(5, 4, 0)
 
 #ifndef fallthrough

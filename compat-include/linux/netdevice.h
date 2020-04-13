@@ -13,21 +13,6 @@
 #include <linux/version.h>
 #include_next <linux/netdevice.h>
 
-#if LINUX_VERSION_IS_LESS(3, 17, 0)
-
-/* alloc_netdev() was defined differently before 2.6.38 */
-#undef alloc_netdev
-#define alloc_netdev(sizeof_priv, name, name_assign_type, setup) \
-	alloc_netdev_mqs(sizeof_priv, name, setup, 1, 1)
-
-#endif /* LINUX_VERSION_IS_LESS(3, 17, 0) */
-
-#if LINUX_VERSION_IS_LESS(4, 1, 0)
-
-#define dev_get_iflink(_net_dev) ((_net_dev)->iflink)
-
-#endif /* LINUX_VERSION_IS_LESS(3, 19, 0) */
-
 #if LINUX_VERSION_IS_LESS(4, 5, 0)
 
 #define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \

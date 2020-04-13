@@ -15,19 +15,6 @@
 
 #include "compat-autoconf.h"
 
-#if LINUX_VERSION_IS_LESS(4, 0, 0)
-
-/* wild hack for batadv_getlink_net only */
-#define get_link_net get_xstats_size || 1 ? fallback_net : (struct net*)netdev->rtnl_link_ops->get_xstats_size
-
-#endif /* LINUX_VERSION_IS_LESS(4, 0, 0) */
-
-#if LINUX_VERSION_IS_LESS(4, 3, 0)
-
-#define IFF_NO_QUEUE	0; dev->tx_queue_len = 0
-
-#endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
-
 #if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 #define batadv_softif_slave_add(__dev, __slave_dev, __extack) \

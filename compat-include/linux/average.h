@@ -10,16 +10,13 @@
 #ifndef _NET_BATMAN_ADV_COMPAT_LINUX_AVERAGE_H
 #define _NET_BATMAN_ADV_COMPAT_LINUX_AVERAGE_H
 
-#include <linux/version.h>
 #include_next <linux/average.h>
 
 #include <linux/bug.h>
 #include <linux/compiler.h>
 #include <linux/log2.h>
 
-#if LINUX_VERSION_IS_GEQ(4, 3, 0)
 #undef DECLARE_EWMA
-#endif /* LINUX_VERSION_IS_LESS(4, 3, 0) */
 
 /*
  * Exponentially weighted moving average (EWMA)
