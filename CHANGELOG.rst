@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2020.1 (2020-04-24)
+===================
+
+* support latest kernels (3.16 - 5.7)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix reference leaks in throughput_override sysfs file
+  - fix reference leak in B.A.T.M.A.N. V OGM error handling
+  - fix network coding random weighting
+
 2020.0 (2020-03-04)
 ===================
 
