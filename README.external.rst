@@ -8,9 +8,9 @@ Introduction
 ============
 
 The  batman-adv  module  is  shipped  as part of the Linux kernel
-and as external module. The external  module   allows   to    get
+and as an external module. The external  module   allows  to  get
 new    features without  upgrading  to  a  newer  kernel  version
-and to get batman-adv specific bugfixes  for  kernels  that   are
+and to get batman-adv specific bug fixes for  kernels  that   are
 not   supported   anymore.  It compiles  against  and should work
 with  Linux 4.4  -  5.8.  Supporting  older   versions   is   not
 planned,  but it's probably easy to backport it. If you work on a
@@ -39,7 +39,7 @@ CONFIGURATION
 The     in-kernel    module    can    be    configured    through
 menuconfig.   When  compiling outside  of the kernel tree,  it is
 necessary  to  configure  it  using    the   make  options.  Each
-option  can be set to to y (enabled), n (disabled) or m (build as
+option  can  be  set  to y (enabled), n (disabled) or m (build as
 module).  Available  options  and  their    possible   values are
 (default marked with an "*")
 
