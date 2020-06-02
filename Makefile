@@ -4,24 +4,24 @@
 # Marek Lindner, Simon Wunderlich
 
 # read README.external for more information about the configuration
-# batman-adv DebugFS entries:
-export CONFIG_BATMAN_ADV_DEBUGFS=n
-# B.A.T.M.A.N. debugging:
-export CONFIG_BATMAN_ADV_DEBUG=n
+# B.A.T.M.A.N. V routing algorithm (experimental):
+export CONFIG_BATMAN_ADV_BATMAN_V=y
 # B.A.T.M.A.N. bridge loop avoidance:
 export CONFIG_BATMAN_ADV_BLA=y
 # B.A.T.M.A.N. distributed ARP table:
 export CONFIG_BATMAN_ADV_DAT=y
-# B.A.T.M.A.N network coding (catwoman):
-export CONFIG_BATMAN_ADV_NC=n
+# B.A.T.M.A.N. debugging:
+export CONFIG_BATMAN_ADV_DEBUG=n
+# batman-adv DebugFS entries:
+export CONFIG_BATMAN_ADV_DEBUGFS=n
 # B.A.T.M.A.N. multicast optimizations:
 export CONFIG_BATMAN_ADV_MCAST=y
+# B.A.T.M.A.N network coding (catwoman):
+export CONFIG_BATMAN_ADV_NC=n
 # B.A.T.M.A.N. sysfs support:
 export CONFIG_BATMAN_ADV_SYSFS=n
 # B.A.T.M.A.N. tracing support:
 export CONFIG_BATMAN_ADV_TRACING=n
-# B.A.T.M.A.N. V routing algorithm (experimental):
-export CONFIG_BATMAN_ADV_BATMAN_V=y
 
 PWD:=$(shell pwd)
 KERNELPATH ?= /lib/modules/$(shell uname -r)/build
