@@ -1,5 +1,13 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2020.2 (2020-07-06)
+===================
+
+* support latest kernels (4.4 - 5.8)
+* coding style cleanups and refactoring
+* dropped support for kernels < 4.4
+* re-enabled link speed detection for interfaces without auto negotiation
+
 2020.1 (2020-04-24)
 ===================
 
