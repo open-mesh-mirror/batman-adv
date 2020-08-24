@@ -1,5 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2020.3 (2020-08-24)
+===================
+
+* support latest kernels (4.4 - 5.9)
+* coding style cleanups and refactoring
+* introduce a configurable per interface hop penalty
+* bugs squashed:
+
+  - avoid uninitialized chaddr when handling DHCP
+  - fix own OGMv2 check in aggregation receive handling
+  - fix "NOHZ: local_softirq_pending 08" warnings caused by BLA
+
 2020.2 (2020-07-06)
 ===================
 
