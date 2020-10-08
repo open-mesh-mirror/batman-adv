@@ -31,15 +31,17 @@ void batadv_genl_dump_check_consistent(struct netlink_callback *cb,
 #endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
 
 
-#if LINUX_VERSION_IS_LESS(5, 2, 0)
+#if LINUX_VERSION_IS_LESS(5, 10, 0)
 
+#if LINUX_VERSION_IS_LESS(5, 2, 0)
 enum genl_validate_flags {
 	GENL_DONT_VALIDATE_STRICT		= BIT(0),
 	GENL_DONT_VALIDATE_DUMP			= BIT(1),
 	GENL_DONT_VALIDATE_DUMP_STRICT		= BIT(2),
 };
+#endif /* LINUX_VERSION_IS_LESS(5, 2, 0) */
 
-struct batadv_genl_ops {
+struct batadv_genl_small_ops {
 	int		       (*doit)(struct sk_buff *skb,
 				       struct genl_info *info);
 	int		       (*dumpit)(struct sk_buff *skb,
@@ -68,9 +70,9 @@ struct batadv_genl_family {
 			 struct genl_info *info);
         void (*post_doit)(const struct genl_ops *ops, struct sk_buff *skb,
 			  struct genl_info *info);
-	const struct batadv_genl_ops *ops;
+	const struct batadv_genl_small_ops *small_ops;
 	const struct genl_multicast_group *mcgrps;
-	unsigned int n_ops;
+	unsigned int n_small_ops;
 	unsigned int n_mcgrps;
 	struct module *module;
 
@@ -94,23 +96,31 @@ static inline int batadv_genl_register_family(struct batadv_genl_family *family)
 	family->family.pre_doit = family->pre_doit;
 	family->family.post_doit = family->post_doit;
 	family->family.mcgrps = family->mcgrps;
-	family->family.n_ops = family->n_ops;
+	family->family.n_ops = family->n_small_ops;
 	family->family.n_mcgrps = family->n_mcgrps;
 	family->family.module = family->module;
 
-	ops = kzalloc(sizeof(*ops) * family->n_ops, GFP_KERNEL);
+	ops = kzalloc(sizeof(*ops) * family->n_small_ops, GFP_KERNEL);
 	if (!ops)
 		return -ENOMEM;
 
 	for (i = 0; i < family->family.n_ops; i++) {
-		ops[i].doit = family->ops[i].doit;
-		ops[i].dumpit = family->ops[i].dumpit;
-		ops[i].done = family->ops[i].done;
-		ops[i].cmd = family->ops[i].cmd;
-		ops[i].internal_flags = family->ops[i].internal_flags;
-		ops[i].flags = family->ops[i].flags;
+		ops[i].doit = family->small_ops[i].doit;
+		ops[i].dumpit = family->small_ops[i].dumpit;
+		ops[i].done = family->small_ops[i].done;
+		ops[i].cmd = family->small_ops[i].cmd;
+		ops[i].internal_flags = family->small_ops[i].internal_flags;
+		ops[i].flags = family->small_ops[i].flags;
+#if LINUX_VERSION_IS_GEQ(5, 2, 0)
+		ops[i].validate = family->small_ops[i].validate;
+#else
 		ops[i].policy = family->policy;
+#endif
 	}
+
+#if LINUX_VERSION_IS_GEQ(5, 2, 0)
+	family->family.policy = family->policy;
+#endif
 
 	family->family.ops = ops;
 	family->copy_ops = ops;
@@ -126,7 +136,7 @@ typedef struct genl_ops batadv_genl_ops_old;
 #define batadv_post_doit(__x, __y, __z) \
 	batadv_post_doit(const batadv_genl_ops_old *ops, __y, __z)
 
-#define genl_ops batadv_genl_ops
+#define genl_small_ops batadv_genl_small_ops
 #define genl_family batadv_genl_family
 
 #define genl_register_family(family) \
@@ -150,6 +160,6 @@ batadv_genl_unregister_family(struct batadv_genl_family *family)
 	genlmsg_multicast_netns(&(_family)->family, _net, _skb, _portid, \
 				_group, _flags)
 
-#endif /* LINUX_VERSION_IS_LESS(5, 2, 0) */
+#endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_NET_GENETLINK_H_ */
