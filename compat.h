@@ -15,6 +15,17 @@
 
 #include "compat-autoconf.h"
 
+#if LINUX_VERSION_IS_LESS(4, 13, 0)
+
+#define batadv_softif_validate(__tb, __data, __extack) \
+	batadv_softif_validate(__tb, __data)
+
+#define batadv_softif_newlink(__src_net, __dev, __tb, __data, __extack) \
+	batadv_softif_newlink(__src_net, __dev, __tb, __data)
+
+#endif /* LINUX_VERSION_IS_LESS(4, 13, 0) */
+
+
 #if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 #define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
