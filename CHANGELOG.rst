@@ -1,5 +1,15 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2020.4 (2020-10-27)
+===================
+
+* support latest kernels (4.4 - 5.10)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix incorrect reroute handling of multicast packets
+  - improve handling of multicast packets by bridge loop avoidance
+
 2020.3 (2020-08-24)
 ===================
 
