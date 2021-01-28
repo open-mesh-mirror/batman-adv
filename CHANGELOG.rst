@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2021.0 (2021-01-28)
+===================
+
+* support latest kernels (4.4 - 5.11)
+* coding style cleanups and refactoring
+* drop support for sysfs+debugfs
+* allow to select routing algorithm during creation of interface
+* bugs squashed:
+
+  - allocate enough reserved room on fragments for lower devices
+
 2020.4 (2020-10-27)
 ===================
 
