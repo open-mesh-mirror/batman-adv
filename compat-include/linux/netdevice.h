@@ -54,4 +54,17 @@ static inline void batadv_netif_trans_update(struct net_device *dev)
 
 #endif /* LINUX_VERSION_IS_LESS(4, 11, 9) */
 
+#if LINUX_VERSION_IS_LESS(5, 10, 0)
+
+#define netif_rx_any_context batadv_netif_rx_any_context
+static inline int batadv_netif_rx_any_context(struct sk_buff *skb)
+{
+	if (in_interrupt())
+		return netif_rx(skb);
+	else
+		return netif_rx_ni(skb);
+}
+
+#endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
