@@ -34,7 +34,7 @@ TRACE_EVENT(batadv_dbg,
 	    TP_ARGS(bat_priv, vaf),
 
 	    TP_STRUCT__entry(
-		    __string(device, bat_priv->soft_iface->name)
+		    __string(device, bat_priv->mesh_iface->name)
 		    __string(driver, KBUILD_MODNAME)
 		    __vstring(msg, vaf->fmt, vaf->va)
 	    ),
@@ -44,7 +44,7 @@ TRACE_EVENT(batadv_dbg,
 		    __assign_str(device);
 		    __assign_str(driver);
 #else // UGLY_HACK_OLD
-		    __assign_str(device, bat_priv->soft_iface->name);
+		    __assign_str(device, bat_priv->mesh_iface->name);
 		    __assign_str(driver, KBUILD_MODNAME);
 #endif // UGLY_HACK_STOP
 		    __assign_vstr(msg, vaf->fmt, vaf->va);

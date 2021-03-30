@@ -19,7 +19,7 @@ static bool batadv_mcast_mla_is_duplicate(u8 *mcast_addr,
 					  struct hlist_head *mcast_list);
 
 static inline int
-compat_batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
+compat_batadv_mcast_mla_meshif_get_ipv6(struct net_device *dev,
 				 struct hlist_head *mcast_list,
 				 struct batadv_mcast_mla_flags *flags,
 				 u8 *mcast_addr,
@@ -79,7 +79,7 @@ compat_batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
 
 #define ifmcaddr6 \
 		net_device *orig_dev = dev; \
-		return compat_batadv_mcast_mla_softif_get_ipv6(orig_dev, \
+		return compat_batadv_mcast_mla_meshif_get_ipv6(orig_dev, \
 							       mcast_list, \
 							       flags, \
 							       mcast_addr, \
@@ -87,7 +87,7 @@ compat_batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
 							       in6_dev = NULL); \
 	} \
 	static inline int \
-	__unused_batadv_mcast_mla_softif_get_ipv6(struct net_device *dev, \
+	__unused_batadv_mcast_mla_meshif_get_ipv6(struct net_device *dev, \
 					     struct hlist_head *mcast_list, \
 					     struct batadv_mcast_mla_flags *flags) \
 	{ \
