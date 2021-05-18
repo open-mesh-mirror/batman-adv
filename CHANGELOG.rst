@@ -1,5 +1,14 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2021.1 (2021-05-18)
+===================
+
+* support latest kernels (4.4 - 5.13)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - correctly initialize padding when sending out translation table TVLVs
+
 2021.0 (2021-01-28)
 ===================
 
