@@ -67,4 +67,27 @@ static inline int batadv_netif_rx_any_context(struct sk_buff *skb)
 
 #endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
 
+
+#if LINUX_VERSION_IS_LESS(5, 15, 0)
+
+static inline void batadv_dev_put(struct net_device *dev)
+{
+	if (!dev)
+		return;
+
+	dev_put(dev);
+}
+#define dev_put batadv_dev_put
+
+static inline void batadv_dev_hold(struct net_device *dev)
+{
+	if (!dev)
+		return;
+
+	dev_hold(dev);
+}
+#define dev_hold batadv_dev_hold
+
+#endif /* LINUX_VERSION_IS_LESS(5, 15, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
