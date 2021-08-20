@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2021.2 (2021-08-20)
+===================
+
+* support latest kernels (4.4 - 5.14)
+* coding style cleanups and refactoring
+* add MRD + routable IPv4 multicast with bridges support
+* rewrite of broadcast queuing
+* bugs squashed:
+
+  - avoid kernel warnings on timing related checks
+
 2021.1 (2021-05-18)
 ===================
 
