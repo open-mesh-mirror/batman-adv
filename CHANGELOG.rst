@@ -1,5 +1,12 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2021.3 (2021-09-14)
+===================
+
+* support latest kernels (4.4 - 5.15)
+* coding style cleanups and refactoring
+* reduced memory copy overhead when sending broadcasts
+
 2021.2 (2021-08-20)
 ===================
 
