@@ -13,27 +13,12 @@
 #include <linux/version.h>
 #include_next <linux/netdevice.h>
 
-#if LINUX_VERSION_IS_LESS(4, 5, 0)
-
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
-	netdev_master_upper_dev_link(dev, upper_dev)
-
-#elif LINUX_VERSION_IS_LESS(4, 15, 0)
+#if LINUX_VERSION_IS_LESS(4, 15, 0)
 
 #define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
 	netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info)
 
 #endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
-
-#if LINUX_VERSION_IS_LESS(4, 7, 0)
-
-#define netif_trans_update batadv_netif_trans_update
-static inline void batadv_netif_trans_update(struct net_device *dev)
-{
-	dev->trans_start = jiffies;
-}
-
-#endif /* LINUX_VERSION_IS_LESS(4, 7, 0) */
 
 #if LINUX_VERSION_IS_LESS(4, 11, 9)
 

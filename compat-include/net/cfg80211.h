@@ -13,24 +13,6 @@
 #include <linux/version.h>
 #include_next <net/cfg80211.h>
 
-#if LINUX_VERSION_IS_LESS(4, 8, 0)
-
-#if !IS_ENABLED(CONFIG_CFG80211) && \
-    LINUX_VERSION_IS_GEQ(3, 16, 0)
-
-#define cfg80211_get_station(dev, mac_addr, sinfo) \
-	batadv_cfg80211_get_station(dev, mac_addr, sinfo)
-
-static inline int batadv_cfg80211_get_station(struct net_device *dev,
-					      const u8 *mac_addr,
-					      struct station_info *sinfo)
-{
-	return -ENOENT;
-}
-#endif
-
-#endif /* LINUX_VERSION_IS_LESS(4, 8, 0) */
-
 
 #if LINUX_VERSION_IS_LESS(4, 18, 0) && IS_ENABLED(CONFIG_CFG80211)
 
