@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2022.0 (2021-02-03)
+===================
+
+* support latest kernels (4.9 - 5.17)
+* dropped support for kernels < 4.9
+* coding style cleanups and refactoring
+* allow netlink usage in unprivileged containers
+* bugs squashed:
+
+  - don't send link-local multicast to mcast routers
+
 2021.4 (2021-11-19)
 ===================
 
