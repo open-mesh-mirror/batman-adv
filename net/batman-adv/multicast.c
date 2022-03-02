@@ -135,7 +135,11 @@ static u8 batadv_mcast_mla_rtr_flags_softif_get_ipv6(struct net_device *dev)
 {
 	struct inet6_dev *in6_dev = __in6_dev_get(dev);
 
+#if LINUX_VERSION_IS_GEQ(5, 18, 0) // UGLY_HACK_NEW
+	if (in6_dev && atomic_read(&in6_dev->cnf.mc_forwarding))
+#else // UGLY_HACK_OLD
 	if (in6_dev && in6_dev->cnf.mc_forwarding)
+#endif // UGLY_HACK_STOP
 		return BATADV_NO_FLAGS;
 	else
 		return BATADV_MCAST_WANT_NO_RTR6;
