@@ -39,19 +39,6 @@
 
 #endif /* LINUX_VERSION_IS_LESS(4, 11, 9) */
 
-#if LINUX_VERSION_IS_LESS(5, 10, 0)
-
-#define netif_rx_any_context batadv_netif_rx_any_context
-static inline int batadv_netif_rx_any_context(struct sk_buff *skb)
-{
-	if (in_interrupt())
-		return netif_rx(skb);
-	else
-		return netif_rx_ni(skb);
-}
-
-#endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
-
 
 #if LINUX_VERSION_IS_LESS(5, 15, 0)
 
@@ -74,5 +61,18 @@ static inline void batadv_dev_hold(struct net_device *dev)
 #define dev_hold batadv_dev_hold
 
 #endif /* LINUX_VERSION_IS_LESS(5, 15, 0) */
+
+#if LINUX_VERSION_IS_LESS(5, 18, 0)
+
+static inline int batadv_netif_rx(struct sk_buff *skb)
+{
+	if (in_interrupt())
+		return netif_rx(skb);
+	else
+		return netif_rx_ni(skb);
+}
+#define netif_rx batadv_netif_rx
+
+#endif /* LINUX_VERSION_IS_LESS(5, 18, 0) */
 
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
