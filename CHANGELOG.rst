@@ -1,5 +1,18 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2022.1 (2021-05-06)
+===================
+
+* support latest kernels (4.9 - 5.18)
+* bugs squashed:
+
+  - resolve "time-of-check-time-of-use" race condition when checking the
+    the network namespace of a lower device
+  - fix sanity check of network devices in different namespaces with
+    colliding IDs
+  - prevent transmission errors after splitting large GRO packets into
+    smaller fragments
+
 2022.0 (2021-02-03)
 ===================
 
