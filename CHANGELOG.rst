@@ -1,6 +1,6 @@
 .. SPDX-License-Identifier: GPL-2.0
 
-2022.1 (2021-05-06)
+2022.1 (2022-05-06)
 ===================
 
 * support latest kernels (4.9 - 5.18)
@@ -13,7 +13,7 @@
   - prevent transmission errors after splitting large GRO packets into
     smaller fragments
 
-2022.0 (2021-02-03)
+2022.0 (2022-02-03)
 ===================
 
 * support latest kernels (4.9 - 5.17)
