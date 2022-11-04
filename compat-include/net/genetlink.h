@@ -162,4 +162,11 @@ batadv_genl_unregister_family(struct batadv_genl_family *family)
 
 #endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
 
+
+#if LINUX_VERSION_IS_LESS(6, 2, 0)
+
+#define genl_split_ops genl_ops
+
+#endif /* LINUX_VERSION_IS_LESS(6, 2, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_NET_GENETLINK_H_ */
