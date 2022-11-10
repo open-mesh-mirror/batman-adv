@@ -1,5 +1,15 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2022.3 (2022-11-10)
+===================
+
+* support latest kernels (4.9 - 6.1)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - limit the minimum MTU of hard-interface to avoid
+    "Forced to purge local tt entries" errors
+
 2022.2 (2022-07-26)
 ===================
 
