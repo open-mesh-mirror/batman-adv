@@ -20,25 +20,6 @@
 
 #endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
 
-#if LINUX_VERSION_IS_LESS(4, 11, 9)
-
-/* work around missing attribute needs_free_netdev and priv_destructor in
- * net_device
- */
-#define ether_setup(dev) \
-	void batadv_softif_free2(struct net_device *dev) \
-	{ \
-		batadv_softif_free(dev); \
-		free_netdev(dev); \
-	} \
-	void (*t1)(struct net_device *dev) __attribute__((unused)); \
-	bool t2 __attribute__((unused)); \
-	ether_setup(dev)
-#define needs_free_netdev destructor = batadv_softif_free2; t2
-#define priv_destructor destructor = batadv_softif_free2; t1
-
-#endif /* LINUX_VERSION_IS_LESS(4, 11, 9) */
-
 
 #if LINUX_VERSION_IS_LESS(5, 15, 0)
 
