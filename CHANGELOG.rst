@@ -1,5 +1,13 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2023.1 (2023-05-25)
+===================
+
+* support latest kernels (4.14 - 6.4)
+* drop single unicast transfer optimization for unsnoopable IP addresses
+* prepare infrastructure for multicast packets with multiple unicast destination
+  addresses
+
 2023.0 (2023-01-26)
 ===================
 
