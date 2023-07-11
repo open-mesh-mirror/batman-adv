@@ -11,7 +11,8 @@
 #define _NET_BATMAN_ADV_COMPAT_LINUX_KSTRTOX_H_
 
 #include <linux/version.h>
-#if LINUX_VERSION_IS_GEQ(5, 14, 0)
+#if (LINUX_VERSION_IS_GEQ(5, 10, 185) && LINUX_VERSION_IS_LESS(5, 11, 0)) || \
+    LINUX_VERSION_IS_GEQ(5, 14, 0)
 #include_next <linux/kstrtox.h>
 #else
 #include <linux/kernel.h>
