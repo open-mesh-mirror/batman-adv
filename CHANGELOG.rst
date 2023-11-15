@@ -1,5 +1,15 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2023.3 (2023-11-15)
+===================
+
+* support latest kernels (4.14 - 6.7)
+* coding style cleanups and refactoring
+* only warn about too small MTU when soft interfaces wasn't already reduced
+* bugs squashed:
+
+  - Hold rtnl lock during MTU update via netlink
+
 2023.2 (2023-08-16)
 ===================
 
