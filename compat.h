@@ -16,13 +16,6 @@
 #include "compat-autoconf.h"
 
 
-#if LINUX_VERSION_IS_LESS(4, 15, 0)
-
-#define batadv_softif_slave_add(__dev, __slave_dev, __extack) \
-	batadv_softif_slave_add(__dev, __slave_dev)
-
-#endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
-
 #endif /* __KERNEL__ */
 
 #endif /* _NET_BATMAN_ADV_COMPAT_H_ */

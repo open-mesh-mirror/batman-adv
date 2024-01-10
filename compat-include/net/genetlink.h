@@ -13,24 +13,6 @@
 #include <linux/version.h>
 #include_next <net/genetlink.h>
 
-#if LINUX_VERSION_IS_LESS(4, 15, 0)
-
-static inline
-void batadv_genl_dump_check_consistent(struct netlink_callback *cb,
-				       void *user_hdr)
-{
-	struct genl_family genl_family = {
-		.hdrsize = 0,
-	};
-
-	genl_dump_check_consistent(cb, user_hdr, &genl_family);
-}
-
-#define genl_dump_check_consistent batadv_genl_dump_check_consistent
-
-#endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
-
-
 #if LINUX_VERSION_IS_LESS(5, 10, 0)
 
 #if LINUX_VERSION_IS_LESS(5, 2, 0)

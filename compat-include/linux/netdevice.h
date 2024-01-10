@@ -13,14 +13,6 @@
 #include <linux/version.h>
 #include_next <linux/netdevice.h>
 
-#if LINUX_VERSION_IS_LESS(4, 15, 0)
-
-#define netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info, extack) \
-	netdev_master_upper_dev_link(dev, upper_dev, upper_priv, upper_info)
-
-#endif /* LINUX_VERSION_IS_LESS(4, 15, 0) */
-
-
 #if LINUX_VERSION_IS_LESS(5, 15, 0)
 
 static inline void batadv_dev_put(struct net_device *dev)
