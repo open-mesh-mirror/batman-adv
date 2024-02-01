@@ -1,5 +1,12 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2024.0 (2024-02-01)
+===================
+
+* support latest kernels (4.19 - 6.8)
+* coding style cleanups and refactoring
+* Add stateless multicast packet format support
+
 2023.3 (2023-11-15)
 ===================
 
