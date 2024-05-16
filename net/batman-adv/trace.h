@@ -40,8 +40,13 @@ TRACE_EVENT(batadv_dbg,
 	    ),
 
 	    TP_fast_assign(
+#if LINUX_VERSION_IS_GEQ(6, 10, 0) // UGLY_HACK_NEW
+		    __assign_str(device);
+		    __assign_str(driver);
+#else // UGLY_HACK_OLD
 		    __assign_str(device, bat_priv->soft_iface->name);
 		    __assign_str(driver, KBUILD_MODNAME);
+#endif // UGLY_HACK_STOP
 		    __assign_vstr(msg, vaf->fmt, vaf->va);
 	    ),
 
