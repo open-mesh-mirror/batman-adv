@@ -8,7 +8,11 @@
 /net/batman-adv/batman-adv.ko
 /net/batman-adv/.batman-adv.ko.cmd
 /net/batman-adv/batman-adv.mod.c
+/net/batman-adv/batman-adv.mod
 /net/batman-adv/modules.order
 /net/batman-adv/*.o
-/net/batman-adv/.*.o.cmd
+/net/batman-adv/.*.cmd
+/net/batman-adv/.*.mod.*
+/.Module.symvers.cmd
+/.modules.order.cmd
 /.tmp_versions
