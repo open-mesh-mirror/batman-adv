@@ -1020,12 +1020,13 @@ static void batadv_softif_init_early(struct net_device *dev)
 	dev->netdev_ops = &batadv_netdev_ops;
 	dev->needs_free_netdev = true;
 	dev->priv_destructor = batadv_softif_free;
-	dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_NETNS_LOCAL;
+	dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 	dev->priv_flags |= IFF_NO_QUEUE;
 #if LINUX_VERSION_IS_GEQ(6, 12, 0) // UGLY_HACK_NEW
 	dev->lltx = true;
+	dev->netns_local = true;
 #else // UGLY_HACK_OLD
-	dev->features |= NETIF_F_LLTX;
+	dev->features |= NETIF_F_LLTX | NETIF_F_NETNS_LOCAL;
 #endif // UGLY_HACK_STOP
 
 	/* can't call min_mtu, because the needed variables
