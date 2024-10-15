@@ -1,5 +1,14 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2024.3 (2024-10-15)
+===================
+
+* support latest kernels (4.19 - 6.12)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - avoid processing of translation table updates for out-of-spec VIDs
+
 2024.2 (2024-06-20)
 ===================
 
