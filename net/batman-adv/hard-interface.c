@@ -946,7 +946,7 @@ static int batadv_hard_if_event_softif(unsigned long event,
 	switch (event) {
 	case NETDEV_REGISTER:
 		bat_priv = netdev_priv(net_dev);
-		batadv_softif_create_vlan(bat_priv, BATADV_NO_FLAGS);
+		batadv_softif_create_vlan_own(bat_priv, BATADV_NO_FLAGS);
 		break;
 	}
 

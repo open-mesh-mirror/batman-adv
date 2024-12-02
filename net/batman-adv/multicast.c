@@ -724,6 +724,7 @@ static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
 {
 	struct batadv_hw_addr *mcast_entry;
 	struct hlist_node *tmp;
+	int ret;
 
 	if (!mcast_list)
 		return;
@@ -733,9 +734,10 @@ static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
 						  &bat_priv->mcast.mla_list))
 			continue;
 
-		if (!batadv_tt_local_add(bat_priv->soft_iface,
-					 mcast_entry->addr, BATADV_NO_FLAGS,
-					 BATADV_NULL_IFINDEX, BATADV_NO_MARK))
+		ret = batadv_tt_local_add(bat_priv->soft_iface,
+					  mcast_entry->addr, BATADV_NO_FLAGS,
+					  BATADV_NULL_IFINDEX, BATADV_NO_MARK);
+		if (ret <= 0)
 			continue;
 
 		hlist_del(&mcast_entry->list);

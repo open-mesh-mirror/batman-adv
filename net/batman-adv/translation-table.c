@@ -626,8 +626,8 @@ static void batadv_tt_global_free(struct batadv_priv *bat_priv,
  *
  * Return: true if the client was successfully added, false otherwise.
  */
-bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
-			 unsigned short vid, int ifindex, u32 mark)
+int batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
+			unsigned short vid, int ifindex, u32 mark)
 {
 	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
 	struct batadv_tt_local_entry *tt_local;
@@ -639,10 +639,10 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
 	struct hlist_head *head;
 	struct batadv_tt_orig_list_entry *orig_entry;
 	int hash_added, table_size, packet_size_max;
-	bool ret = false;
 	bool roamed_back = false;
 	u8 remote_flags;
 	u32 match_mark;
+	int ret = 0;
 
 	if (ifindex != BATADV_NULL_IFINDEX)
 		in_dev = dev_get_by_index(net, ifindex);
@@ -693,21 +693,22 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
 		net_ratelimited_function(batadv_info, soft_iface,
 					 "Local translation table size (%i) exceeds maximum packet size (%i); Ignoring new local tt entry: %pM\n",
 					 table_size, packet_size_max, addr);
+		ret = -E2BIG;
 		goto out;
 	}
 
 	tt_local = kmem_cache_alloc(batadv_tl_cache, GFP_ATOMIC);
-	if (!tt_local)
+	if (!tt_local) {
+		ret = -ENOMEM;
 		goto out;
+	}
 
 	/* increase the refcounter of the related vlan */
-	vlan = batadv_softif_vlan_get(bat_priv, vid);
+	vlan = batadv_softif_vlan_get_or_create(bat_priv, vid);
 	if (!vlan) {
-		net_ratelimited_function(batadv_info, soft_iface,
-					 "adding TT local entry %pM to non-existent VLAN %d\n",
-					 addr, batadv_print_vid(vid));
 		kmem_cache_free(batadv_tl_cache, tt_local);
 		tt_local = NULL;
+		ret = -ENOMEM;
 		goto out;
 	}
 
@@ -804,7 +805,7 @@ check_roaming:
 	if (remote_flags ^ (tt_local->common.flags & BATADV_TT_REMOTE_MASK))
 		batadv_tt_local_event(bat_priv, tt_local, BATADV_NO_FLAGS);
 
-	ret = true;
+	ret = 1;
 out:
 	batadv_hardif_put(in_hardif);
 	dev_put(in_dev);

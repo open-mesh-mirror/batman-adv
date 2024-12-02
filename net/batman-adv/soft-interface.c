@@ -141,6 +141,10 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p)
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(vlan, &bat_priv->softif_vlan_list, list) {
+		/* we don't use this VID ourself, avoid adding us to it */
+		if (!batadv_is_my_client(bat_priv, old_addr, vlan->vid))
+			continue;
+
 		batadv_tt_local_remove(bat_priv, old_addr, vlan->vid,
 				       "mac address changed", false);
 		batadv_tt_local_add(dev, addr->sa_data, vlan->vid,
@@ -549,13 +553,15 @@ struct batadv_softif_vlan *batadv_softif_vlan_get(struct batadv_priv *bat_priv,
 }
 
 /**
- * batadv_softif_create_vlan() - allocate the needed resources for a new vlan
+ * batadv_softif_create_vlan() - create a softif vlan struct
  * @bat_priv: the bat priv with all the soft interface information
  * @vid: the VLAN identifier
  *
- * Return: 0 on success, a negative error otherwise.
+ * Return: a pointer to the newly allocated softif vlan struct on success, NULL
+ * otherwise.
  */
-int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
+static struct batadv_softif_vlan *
+batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 {
 	struct batadv_softif_vlan *vlan;
 
@@ -563,55 +569,93 @@ int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 
 	vlan = batadv_softif_vlan_get(bat_priv, vid);
 	if (vlan) {
-		batadv_softif_vlan_put(vlan);
 		spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
-		return -EEXIST;
+		return vlan;
 	}
 
 	vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
 	if (!vlan) {
 		spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
-		return -ENOMEM;
+		return NULL;
 	}
 
 	vlan->bat_priv = bat_priv;
 	vlan->vid = vid;
+	/* hold only one refcount, caller will store a reference to us in
+	 * tt_local->vlan without releasing any refcount
+	 */
 	kref_init(&vlan->refcount);
 
 	atomic_set(&vlan->ap_isolation, 0);
 
-	kref_get(&vlan->refcount);
 	hlist_add_head_rcu(&vlan->list, &bat_priv->softif_vlan_list);
 	spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
+
+	return vlan;
+}
+
+/**
+ * batadv_softif_vlan_get_or_create() - retrieve or create a softif vlan struct
+ * @bat_priv: the bat priv with all the soft interface information
+ * @vid: the VLAN identifier
+ *
+ * Return: the softif vlan struct if found or created or NULL otherwise.
+ */
+struct batadv_softif_vlan *
+batadv_softif_vlan_get_or_create(struct batadv_priv *bat_priv,
+				 unsigned short vid)
+{
+	struct batadv_softif_vlan *vlan = batadv_softif_vlan_get(bat_priv, vid);
+
+	if (vlan)
+		return vlan;
+
+	return batadv_softif_create_vlan(bat_priv, vid);
+}
+
+/**
+ * batadv_softif_create_vlan_own() - add our own softif to the local TT
+ * @bat_priv: the bat priv with all the soft interface information
+ * @vid: the VLAN identifier
+ *
+ * Adds the MAC address of our own soft interface with the given VLAN ID as
+ * a permanent local TT entry.
+ *
+ * Return: 0 on success, a negative error otherwise.
+ */
+int batadv_softif_create_vlan_own(struct batadv_priv *bat_priv,
+				  unsigned short vid)
+{
+	int ret;
 
 	/* add a new TT local entry. This one will be marked with the NOPURGE
 	 * flag
 	 */
-	batadv_tt_local_add(bat_priv->soft_iface,
-			    bat_priv->soft_iface->dev_addr, vid,
-			    BATADV_NULL_IFINDEX, BATADV_NO_MARK);
-
-	/* don't return reference to new softif_vlan */
-	batadv_softif_vlan_put(vlan);
+	ret = batadv_tt_local_add(bat_priv->soft_iface,
+				  bat_priv->soft_iface->dev_addr, vid,
+				  BATADV_NULL_IFINDEX, BATADV_NO_MARK);
+	if (ret < 0)
+		return ret;
 
 	return 0;
 }
 
 /**
- * batadv_softif_destroy_vlan() - remove and destroy a softif_vlan object
+ * batadv_softif_destroy_vlan_own() - remove our own softif from the local TT
  * @bat_priv: the bat priv with all the soft interface information
- * @vlan: the object to remove
+ * @vid: the VLAN identifier
+ *
+ * Removes the MAC address of our own soft interface with the given VLAN ID from
+ * the local TT.
  */
-static void batadv_softif_destroy_vlan(struct batadv_priv *bat_priv,
-				       struct batadv_softif_vlan *vlan)
+static void batadv_softif_destroy_vlan_own(struct batadv_priv *bat_priv,
+					   unsigned short vid)
 {
 	/* explicitly remove the associated TT local entry because it is marked
 	 * with the NOPURGE flag
 	 */
-	batadv_tt_local_remove(bat_priv, bat_priv->soft_iface->dev_addr,
-			       vlan->vid, "vlan interface destroyed", false);
-
-	batadv_softif_vlan_put(vlan);
+	batadv_tt_local_remove(bat_priv, bat_priv->soft_iface->dev_addr, vid,
+			       "vlan interface destroyed", false);
 }
 
 /**
@@ -629,7 +673,6 @@ static int batadv_interface_add_vid(struct net_device *dev, __be16 proto,
 				    unsigned short vid)
 {
 	struct batadv_priv *bat_priv = netdev_priv(dev);
-	struct batadv_softif_vlan *vlan;
 
 	/* only 802.1Q vlans are supported.
 	 * batman-adv does not know how to handle other types
@@ -647,25 +690,7 @@ static int batadv_interface_add_vid(struct net_device *dev, __be16 proto,
 
 	vid |= BATADV_VLAN_HAS_TAG;
 
-	/* if a new vlan is getting created and it already exists, it means that
-	 * it was not deleted yet. batadv_softif_vlan_get() increases the
-	 * refcount in order to revive the object.
-	 *
-	 * if it does not exist then create it.
-	 */
-	vlan = batadv_softif_vlan_get(bat_priv, vid);
-	if (!vlan)
-		return batadv_softif_create_vlan(bat_priv, vid);
-
-	/* add a new TT local entry. This one will be marked with the NOPURGE
-	 * flag. This must be added again, even if the vlan object already
-	 * exists, because the entry was deleted by kill_vid()
-	 */
-	batadv_tt_local_add(bat_priv->soft_iface,
-			    bat_priv->soft_iface->dev_addr, vid,
-			    BATADV_NULL_IFINDEX, BATADV_NO_MARK);
-
-	return 0;
+	return batadv_softif_create_vlan_own(bat_priv, vid);
 }
 
 /**
@@ -684,7 +709,6 @@ static int batadv_interface_kill_vid(struct net_device *dev, __be16 proto,
 				     unsigned short vid)
 {
 	struct batadv_priv *bat_priv = netdev_priv(dev);
-	struct batadv_softif_vlan *vlan;
 
 	/* only 802.1Q vlans are supported. batman-adv does not know how to
 	 * handle other types
@@ -698,15 +722,7 @@ static int batadv_interface_kill_vid(struct net_device *dev, __be16 proto,
 	if (vid == 0)
 		return 0;
 
-	vlan = batadv_softif_vlan_get(bat_priv, vid | BATADV_VLAN_HAS_TAG);
-	if (!vlan)
-		return -ENOENT;
-
-	batadv_softif_destroy_vlan(bat_priv, vlan);
-
-	/* finally free the vlan object */
-	batadv_softif_vlan_put(vlan);
-
+	batadv_softif_destroy_vlan_own(bat_priv, vid | BATADV_VLAN_HAS_TAG);
 	return 0;
 }
 
@@ -1118,7 +1134,6 @@ static void batadv_softif_destroy_netlink(struct net_device *soft_iface,
 {
 	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
 	struct batadv_hard_iface *hard_iface;
-	struct batadv_softif_vlan *vlan;
 
 	list_for_each_entry(hard_iface, &batadv_hardif_list, list) {
 		if (hard_iface->soft_iface == soft_iface)
@@ -1126,11 +1141,7 @@ static void batadv_softif_destroy_netlink(struct net_device *soft_iface,
 	}
 
 	/* destroy the "untagged" VLAN */
-	vlan = batadv_softif_vlan_get(bat_priv, BATADV_NO_FLAGS);
-	if (vlan) {
-		batadv_softif_destroy_vlan(bat_priv, vlan);
-		batadv_softif_vlan_put(vlan);
-	}
+	batadv_softif_destroy_vlan_own(bat_priv, BATADV_NO_FLAGS);
 
 	unregister_netdevice_queue(soft_iface, head);
 }
