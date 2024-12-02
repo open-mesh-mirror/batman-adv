@@ -46,6 +46,7 @@
 #include "distributed-arp-table.h"
 #include "gateway_client.h"
 #include "hard-interface.h"
+#include "log.h"
 #include "multicast.h"
 #include "network-coding.h"
 #include "send.h"
@@ -561,8 +562,9 @@ struct batadv_softif_vlan *batadv_softif_vlan_get(struct batadv_priv *bat_priv,
  * otherwise.
  */
 static struct batadv_softif_vlan *
-batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
+batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid, bool own)
 {
+	unsigned short vlan_dyn_max, vlan_dyn_count;
 	struct batadv_softif_vlan *vlan;
 
 	spin_lock_bh(&bat_priv->softif_vlan_list_lock);
@@ -571,6 +573,19 @@ batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 	if (vlan) {
 		spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
 		return vlan;
+	}
+
+	vlan_dyn_max = bat_priv->softif_vlan_dyn_max;
+	vlan_dyn_count = bat_priv->softif_vlan_dyn_count;
+
+	if (vid & BATADV_VLAN_HAS_TAG && !own &&
+	    vlan_dyn_max <= vlan_dyn_count) {
+		spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
+
+		net_ratelimited_function(batadv_info, bat_priv->soft_iface,
+					 "not adding VLAN %d, already learned %hu VID(s)\n",
+					 batadv_print_vid(vid), vlan_dyn_max);
+		return NULL;
 	}
 
 	vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
@@ -588,6 +603,9 @@ batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 
 	atomic_set(&vlan->ap_isolation, 0);
 
+	if (vid & BATADV_VLAN_HAS_TAG && !own)
+		bat_priv->softif_vlan_dyn_count++;
+
 	hlist_add_head_rcu(&vlan->list, &bat_priv->softif_vlan_list);
 	spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
 
@@ -597,20 +615,21 @@ batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 /**
  * batadv_softif_vlan_get_or_create() - retrieve or create a softif vlan struct
  * @bat_priv: the bat priv with all the soft interface information
+ * @addr: the mac address of the client to add
  * @vid: the VLAN identifier
  *
  * Return: the softif vlan struct if found or created or NULL otherwise.
  */
 struct batadv_softif_vlan *
-batadv_softif_vlan_get_or_create(struct batadv_priv *bat_priv,
-				 unsigned short vid)
+batadv_softif_vlan_get_or_create(struct batadv_priv *bat_priv, const u8 *addr,
+				 unsigned short vid, bool own)
 {
 	struct batadv_softif_vlan *vlan = batadv_softif_vlan_get(bat_priv, vid);
 
 	if (vlan)
 		return vlan;
 
-	return batadv_softif_create_vlan(bat_priv, vid);
+	return batadv_softif_create_vlan(bat_priv, vid, own);
 }
 
 /**
@@ -824,6 +843,8 @@ static int batadv_softif_init_late(struct net_device *dev)
 	bat_priv->tt.last_changeset_len = 0;
 	bat_priv->isolation_mark = 0;
 	bat_priv->isolation_mark_mask = 0;
+	bat_priv->softif_vlan_dyn_max = 0;
+	bat_priv->softif_vlan_dyn_count = 0;
 
 	/* randomize initial seqno to avoid collision */
 	get_random_bytes(&random_seqno, sizeof(random_seqno));

@@ -129,6 +129,7 @@ static const struct nla_policy batadv_netlink_policy[NUM_BATADV_ATTR] = {
 	[BATADV_ATTR_MCAST_FLAGS]		= { .type = NLA_U32 },
 	[BATADV_ATTR_MCAST_FLAGS_PRIV]		= { .type = NLA_U32 },
 	[BATADV_ATTR_VLANID]			= { .type = NLA_U16 },
+	[BATADV_ATTR_VLAN_DYN_MAX]		= { .type = NLA_U16 },
 	[BATADV_ATTR_AGGREGATED_OGMS_ENABLED]	= { .type = NLA_U8 },
 	[BATADV_ATTR_AP_ISOLATION_ENABLED]	= { .type = NLA_U8 },
 	[BATADV_ATTR_ISOLATION_MARK]		= { .type = NLA_U32 },
@@ -355,6 +356,10 @@ static int batadv_netlink_mesh_fill(struct sk_buff *msg,
 
 	if (nla_put_u32(msg, BATADV_ATTR_ORIG_INTERVAL,
 			atomic_read(&bat_priv->orig_interval)))
+		goto nla_put_failure;
+
+	if (nla_put_u16(msg, BATADV_ATTR_VLAN_DYN_MAX,
+			bat_priv->softif_vlan_dyn_max))
 		goto nla_put_failure;
 
 	batadv_hardif_put(primary_if);
@@ -609,6 +614,16 @@ static int batadv_netlink_set_mesh(struct sk_buff *skb, struct genl_info *info)
 		orig_interval = max_t(u32, orig_interval, 2 * BATADV_JITTER);
 
 		atomic_set(&bat_priv->orig_interval, orig_interval);
+	}
+
+	if (info->attrs[BATADV_ATTR_VLAN_DYN_MAX]) {
+		u16 vlan_dyn_max;
+
+		attr = info->attrs[BATADV_ATTR_VLAN_DYN_MAX];
+		vlan_dyn_max = nla_get_u16(attr);
+		vlan_dyn_max = min_t(u16, vlan_dyn_max, VLAN_N_VID);
+
+		bat_priv->softif_vlan_dyn_max = vlan_dyn_max;
 	}
 
 	batadv_netlink_notify_mesh(bat_priv);

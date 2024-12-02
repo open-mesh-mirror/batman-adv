@@ -1771,6 +1771,12 @@ struct batadv_priv {
 	/** @softif_vlan_list_lock: lock protecting softif_vlan_list */
 	spinlock_t softif_vlan_list_lock;
 
+	/** @softif_vlan_dyn_max: maximum number of allowed learned VLANs */
+	unsigned short softif_vlan_dyn_max;
+
+	/** @softif_vlan_dyn_count: current number of learned VLANs */
+	unsigned short softif_vlan_dyn_count;
+
 #ifdef CONFIG_BATMAN_ADV_BLA
 	/** @bla: bridge loop avoidance data */
 	struct batadv_priv_bla bla;
