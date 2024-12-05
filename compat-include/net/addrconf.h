@@ -13,18 +13,6 @@
 #include <linux/version.h>
 #include_next <net/addrconf.h>
 
-#if LINUX_VERSION_IS_LESS(5, 1, 0)
-
-static inline int batadv_ipv6_mc_check_mld(struct sk_buff *skb)
-{
-	return ipv6_mc_check_mld(skb, NULL);
-}
-
-#define ipv6_mc_check_mld(skb) \
-	batadv_ipv6_mc_check_mld(skb)
-
-#endif /* LINUX_VERSION_IS_LESS(5, 1, 0) */
-
 #if LINUX_VERSION_IS_LESS(5, 13, 0)
 
 static bool batadv_mcast_mla_is_duplicate(u8 *mcast_addr,

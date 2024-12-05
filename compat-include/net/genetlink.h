@@ -15,14 +15,6 @@
 
 #if LINUX_VERSION_IS_LESS(5, 10, 0)
 
-#if LINUX_VERSION_IS_LESS(5, 2, 0)
-enum genl_validate_flags {
-	GENL_DONT_VALIDATE_STRICT		= BIT(0),
-	GENL_DONT_VALIDATE_DUMP			= BIT(1),
-	GENL_DONT_VALIDATE_DUMP_STRICT		= BIT(2),
-};
-#endif /* LINUX_VERSION_IS_LESS(5, 2, 0) */
-
 struct batadv_genl_small_ops {
 	int		       (*doit)(struct sk_buff *skb,
 				       struct genl_info *info);
@@ -93,16 +85,10 @@ static inline int batadv_genl_register_family(struct batadv_genl_family *family)
 		ops[i].cmd = family->small_ops[i].cmd;
 		ops[i].internal_flags = family->small_ops[i].internal_flags;
 		ops[i].flags = family->small_ops[i].flags;
-#if LINUX_VERSION_IS_GEQ(5, 2, 0)
 		ops[i].validate = family->small_ops[i].validate;
-#else
-		ops[i].policy = family->policy;
-#endif
 	}
 
-#if LINUX_VERSION_IS_GEQ(5, 2, 0)
 	family->family.policy = family->policy;
-#endif
 
 	family->family.ops = ops;
 	family->copy_ops = ops;
