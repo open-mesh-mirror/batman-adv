@@ -1,5 +1,15 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2024.4 (2024-12-10)
+===================
+
+* support latest kernels (5.4 - 6.13)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - prevent transmission of uninitialized memory for TT TVLVs
+  - avoid stuck, overfull translation table changes list
+
 2024.3 (2024-10-15)
 ===================
 
