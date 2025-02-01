@@ -62,32 +62,29 @@ void batadv_hash_set_lock_class(struct batadv_hashtable *hash,
 void batadv_hash_destroy(struct batadv_hashtable *hash);
 
 /**
- *	batadv_hash_add() - adds data to the hashtable
+ *	batadv_hash_add_bucket() - adds data to a hashtable bucket
  *	@hash: storage hash table
  *	@compare: callback to determine if 2 hash elements are identical
- *	@choose: callback calculating the hash index
+ *	@index: bucket index previously chosen by the hash choose function
  *	@data: data passed to the aforementioned callbacks as argument
  *	@data_node: to be added element
  *
  *	Return: 0 on success, 1 if the element already is in the hash
  *	and -1 on error.
  */
-static inline int batadv_hash_add(struct batadv_hashtable *hash,
-				  batadv_hashdata_compare_cb compare,
-				  batadv_hashdata_choose_cb choose,
-				  const void *data,
-				  struct hlist_node *data_node)
+static inline int batadv_hash_add_bucket(struct batadv_hashtable *hash,
+					 batadv_hashdata_compare_cb compare,
+					 u32 index, const void *data,
+					 struct hlist_node *data_node)
 {
-	u32 index;
-	int ret = -1;
+	spinlock_t *list_lock; /* spinlock to protect write access */
 	struct hlist_head *head;
 	struct hlist_node *node;
-	spinlock_t *list_lock; /* spinlock to protect write access */
+	int ret = -1;
 
 	if (!hash)
 		goto out;
 
-	index = choose(data, hash->size);
 	head = &hash->table[index];
 	list_lock = &hash->list_locks[index];
 
@@ -111,6 +108,29 @@ unlock:
 	spin_unlock_bh(list_lock);
 out:
 	return ret;
+}
+
+/**
+ *	batadv_hash_add() - adds data to the hashtable
+ *	@hash: storage hash table
+ *	@compare: callback to determine if 2 hash elements are identical
+ *	@choose: callback calculating the hash index
+ *	@data: data passed to the aforementioned callbacks as argument
+ *	@data_node: to be added element
+ *
+ *	Return: 0 on success, 1 if the element already is in the hash
+ *	and -1 on error.
+ */
+static inline int batadv_hash_add(struct batadv_hashtable *hash,
+				  batadv_hashdata_compare_cb compare,
+				  batadv_hashdata_choose_cb choose,
+				  const void *data,
+				  struct hlist_node *data_node)
+{
+	u32 index;
+
+	index = choose(data, hash->size);
+	return batadv_hash_add_bucket(hash, compare, index, data, data_node);
 }
 
 /**

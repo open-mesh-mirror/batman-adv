@@ -8,6 +8,7 @@
 #define _NET_BATMAN_ADV_ORIGINATOR_H_
 
 #include "main.h"
+#include "hash.h"
 
 #include <linux/compiler.h>
 #include <linux/if_ether.h>
@@ -165,10 +166,17 @@ batadv_orig_ifinfo_put(struct batadv_orig_ifinfo *orig_ifinfo)
  */
 static inline void batadv_orig_node_put(struct batadv_orig_node *orig_node)
 {
+	spinlock_t *list_lock;
+	u32 bucket_index;
+
 	if (!orig_node)
 		return;
 
 	/* batadv_orig_node_release takes these locks */
+	bucket_index = orig_node->bucket_index;
+	list_lock = &orig_node->bat_priv->orig_hash->list_locks[bucket_index];
+
+	lockdep_assert_not_held(list_lock);
 	lockdep_assert_not_held(&orig_node->neigh_list_lock);
 	lockdep_assert_not_held(&orig_node->vlan_list_lock);
 

@@ -299,6 +299,7 @@ void batadv_neigh_node_release(struct kref *ref)
 	batadv_hardif_neigh_put(neigh_node->hardif_neigh);
 
 	batadv_hardif_put(neigh_node->if_incoming);
+	batadv_orig_node_put(neigh_node->orig_node);
 
 	kfree_rcu(neigh_node, rcu);
 }
@@ -696,6 +697,7 @@ batadv_neigh_node_create(struct batadv_orig_node *orig_node,
 	kref_get(&hard_iface->refcount);
 	ether_addr_copy(neigh_node->addr, neigh_addr);
 	neigh_node->if_incoming = hard_iface;
+	kref_get(&orig_node->refcount);
 	neigh_node->orig_node = orig_node;
 	neigh_node->last_seen = jiffies;
 
@@ -853,6 +855,8 @@ void batadv_orig_node_release(struct kref *ref)
 	struct batadv_orig_ifinfo *orig_ifinfo;
 	struct batadv_orig_node_vlan *vlan;
 	struct batadv_orig_ifinfo *last_candidate;
+	spinlock_t *list_lock;
+	u32 bucket_index;
 
 	orig_node = container_of(ref, struct batadv_orig_node, refcount);
 
@@ -887,6 +891,13 @@ void batadv_orig_node_release(struct kref *ref)
 	/* Free nc_nodes */
 	batadv_nc_purge_orig(orig_node->bat_priv, orig_node, NULL);
 
+	/* remove from hash */
+	bucket_index = orig_node->bucket_index;
+	list_lock = &orig_node->bat_priv->orig_hash->list_locks[bucket_index];
+	spin_lock_bh(list_lock);
+	hlist_del_rcu(&orig_node->hash_entry);
+	spin_unlock_bh(list_lock);
+
 	call_rcu(&orig_node->rcu, batadv_orig_node_free_rcu);
 }
 
@@ -899,8 +910,8 @@ void batadv_originator_free(struct batadv_priv *bat_priv)
 	struct batadv_hashtable *hash = bat_priv->orig_hash;
 	struct hlist_node *node_tmp;
 	struct hlist_head *head;
-	spinlock_t *list_lock; /* spinlock to protect write access */
 	struct batadv_orig_node *orig_node;
+	spinlock_t *list_lock;
 	u32 i;
 
 	if (!hash)
@@ -910,6 +921,7 @@ void batadv_originator_free(struct batadv_priv *bat_priv)
 
 	bat_priv->orig_hash = NULL;
 
+	/* TODO replace somehow 
 	for (i = 0; i < hash->size; i++) {
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
@@ -922,6 +934,7 @@ void batadv_originator_free(struct batadv_priv *bat_priv)
 		}
 		spin_unlock_bh(list_lock);
 	}
+	*/
 
 	batadv_hash_destroy(hash);
 }
@@ -1279,16 +1292,17 @@ void batadv_purge_orig_ref(struct batadv_priv *bat_priv)
 			continue;
 		list_lock = &hash->list_locks[i];
 
+		// TODO conflicts with the orig_release code
 		spin_lock_bh(list_lock);
 		hlist_for_each_entry_safe(orig_node, node_tmp,
 					  head, hash_entry) {
 			if (batadv_purge_orig_node(bat_priv, orig_node)) {
 				batadv_gw_node_delete(bat_priv, orig_node);
-				hlist_del_rcu(&orig_node->hash_entry);
+				// hash list del was here but put will handle this
 				batadv_tt_global_del_orig(orig_node->bat_priv,
 							  orig_node, -1,
 							  "originator timed out");
-				batadv_orig_node_put(orig_node);
+				// put was previously here
 				continue;
 			}
 

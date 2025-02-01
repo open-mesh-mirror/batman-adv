@@ -487,6 +487,9 @@ struct batadv_orig_node {
 	/** @hash_entry: hlist node for &batadv_priv.orig_hash */
 	struct hlist_node hash_entry;
 
+	/** @bucket_index: bucket index in &batadv_priv.orig_hash */
+	u32 bucket_index;
+
 	/** @bat_priv: pointer to soft_iface this orig node belongs to */
 	struct batadv_priv *bat_priv;
 

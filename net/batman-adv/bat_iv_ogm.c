@@ -140,6 +140,7 @@ static struct batadv_orig_node *
 batadv_iv_ogm_orig_get(struct batadv_priv *bat_priv, const u8 *addr)
 {
 	struct batadv_orig_node *orig_node;
+	u32 bucket_index;
 	int hash_added;
 
 	orig_node = batadv_orig_hash_find(bat_priv, addr);
@@ -152,18 +153,22 @@ batadv_iv_ogm_orig_get(struct batadv_priv *bat_priv, const u8 *addr)
 
 	spin_lock_init(&orig_node->bat_iv.ogm_cnt_lock);
 
-	kref_get(&orig_node->refcount);
-	hash_added = batadv_hash_add(bat_priv->orig_hash, batadv_compare_orig,
-				     batadv_choose_orig, orig_node,
-				     &orig_node->hash_entry);
+	bucket_index = batadv_choose_orig(orig_node, bat_priv->orig_hash->size);
+	orig_node->bucket_index = bucket_index;
+
+	/* not increasing reference counter because hash is not influencing
+	 * lifetime of originator. hash entry will be removed when
+	 * the reference counter reaches zero
+	 */
+	hash_added = batadv_hash_add_bucket(bat_priv->orig_hash,
+					    batadv_compare_orig, bucket_index,
+					    orig_node, &orig_node->hash_entry);
 	if (hash_added != 0)
-		goto free_orig_node_hash;
+		goto free_orig_node;
 
 	return orig_node;
 
-free_orig_node_hash:
-	/* reference for batadv_hash_add */
-	batadv_orig_node_put(orig_node);
+free_orig_node:
 	/* reference from batadv_orig_node_new */
 	batadv_orig_node_put(orig_node);
 
