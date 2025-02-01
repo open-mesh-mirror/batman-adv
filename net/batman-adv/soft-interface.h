@@ -10,6 +10,7 @@
 #include "main.h"
 
 #include <linux/kref.h>
+#include <linux/lockdep.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>
@@ -35,6 +36,9 @@ static inline void batadv_softif_vlan_put(struct batadv_softif_vlan *vlan)
 {
 	if (!vlan)
 		return;
+
+	/* batadv_softif_vlan_release takes these locks */
+	lockdep_assert_not_held(&vlan->bat_priv->softif_vlan_list_lock);
 
 	kref_put(&vlan->refcount, batadv_softif_vlan_release);
 }

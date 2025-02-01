@@ -10,6 +10,7 @@
 #include "main.h"
 
 #include <linux/kref.h>
+#include <linux/lockdep.h>
 #include <linux/netdevice.h>
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
@@ -66,6 +67,9 @@ batadv_tt_global_entry_put(struct batadv_tt_global_entry *tt_global_entry)
 {
 	if (!tt_global_entry)
 		return;
+
+	/* batadv_tt_global_entry_release takes these locks */
+	lockdep_assert_not_held(&tt_global_entry->list_lock);
 
 	kref_put(&tt_global_entry->common.refcount,
 		 batadv_tt_global_entry_release);

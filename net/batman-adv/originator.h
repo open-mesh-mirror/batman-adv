@@ -13,6 +13,7 @@
 #include <linux/if_ether.h>
 #include <linux/jhash.h>
 #include <linux/kref.h>
+#include <linux/lockdep.h>
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
 #include <linux/types.h>
@@ -124,6 +125,9 @@ batadv_hardif_neigh_put(struct batadv_hardif_neigh_node *hardif_neigh)
 	if (!hardif_neigh)
 		return;
 
+	/* batadv_hardif_neigh_release takes these locks */
+	lockdep_assert_not_held(&hardif_neigh->if_incoming->neigh_list_lock);
+
 	kref_put(&hardif_neigh->refcount, batadv_hardif_neigh_release);
 }
 
@@ -163,6 +167,10 @@ static inline void batadv_orig_node_put(struct batadv_orig_node *orig_node)
 {
 	if (!orig_node)
 		return;
+
+	/* batadv_orig_node_release takes these locks */
+	lockdep_assert_not_held(&orig_node->neigh_list_lock);
+	lockdep_assert_not_held(&orig_node->vlan_list_lock);
 
 	kref_put(&orig_node->refcount, batadv_orig_node_release);
 }

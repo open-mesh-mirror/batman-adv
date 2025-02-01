@@ -23,6 +23,7 @@
 #include <linux/kthread.h>
 #include <linux/limits.h>
 #include <linux/list.h>
+#include <linux/lockdep.h>
 #include <linux/minmax.h>
 #include <linux/netdevice.h>
 #include <linux/param.h>
@@ -360,6 +361,9 @@ static void batadv_tp_vars_put(struct batadv_tp_vars *tp_vars)
 {
 	if (!tp_vars)
 		return;
+
+	/* batadv_tp_vars_release takes these locks */
+	lockdep_assert_not_held(&tp_vars->unacked_lock);
 
 	kref_put(&tp_vars->refcount, batadv_tp_vars_release);
 }

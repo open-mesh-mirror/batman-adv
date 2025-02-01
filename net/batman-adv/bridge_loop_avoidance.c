@@ -204,6 +204,10 @@ static void batadv_claim_put(struct batadv_bla_claim *claim)
 	if (!claim)
 		return;
 
+	/* batadv_claim_release takes these locks */
+	lockdep_assert_not_held(&claim->backbone_lock);
+	lockdep_assert_not_held(&claim->backbone_gw->crc_lock);
+
 	kref_put(&claim->refcount, batadv_claim_release);
 }
 
