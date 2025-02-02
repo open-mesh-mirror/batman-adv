@@ -58,7 +58,7 @@
 
 * support latest kernels (4.14 - 6.7)
 * coding style cleanups and refactoring
-* only warn about too small MTU when soft interfaces wasn't already reduced
+* only warn about too small MTU when mesh interfaces wasn't already reduced
 * bugs squashed:
 
   - Hold rtnl lock during MTU update via netlink
@@ -583,7 +583,7 @@
 
   - Fix gw_bandwidth calculation on 32 bit systems
   - prevent potential hlist double deletion
-  - fix soft interface access on unload
+  - fix mesh interface access on unload
   - fix invalid stack access in DAT
   - lock CRC access in bridge loop avoidance
   - fix TT client duplicate detection with VLANs
@@ -722,7 +722,7 @@
 * generalize many functions (neighbor comparison, etc) to prepare
   code-sharing of BATMAN IV and BATMAN V
 * set SKB priority according to content (for correct WMM classification)
-* add a dummy soft-interface rx mode handler to allow static multicast
+* add a dummy mesh-interface rx mode handler to allow static multicast
   listeners
 * bugs squashed:
 
@@ -738,7 +738,7 @@
 * bugs squashed:
 
   - fix potential kernel paging errors for unicast transmissions
-  - fix network coding initialization for multiple soft interfaces
+  - fix network coding initialization for multiple mesh interfaces
   - fix BLA VLAN handling regression
   - improve backward compatibility code
 
@@ -891,7 +891,7 @@
 * support latest kernels (2.6.29 - 3.3)
 * Fix bat_socket_read memory corruption (CVE-2011-4604)
 * Cleanup of gateway handling code
-* many bugs (hang when softif creation fails, memory leaks when hashes
+* many bugs (hang when meshif creation fails, memory leaks when hashes
   table cannot be filled, wrong filter for missed ogms, many smaller
   translation table problems, ...) fixed
 
@@ -935,7 +935,7 @@
 * cleanup of coding style
 * rename of HNA to TT
 * support for multi vlan in bridge loop detection
-* many bug fixes (rcu protection of router/primary_if/softif_neigh,
+* many bug fixes (rcu protection of router/primary_if/meshif_neigh,
   race condition in TQ calculation, deadlock when creating new mesh
   interfaces, ...)
 
@@ -956,7 +956,7 @@
 * support latest kernels (2.6.21 - 2.6.38)
 * conversion of reference counting to kref
 * allow merging and refragmentation of unicast packets during transfers
-* add softif bridge loop detection
+* add meshif bridge loop detection
 * make hop_penalty configurable through sysfs
 * reimplement most of the batman-adv hash functionality
 * support for optimized DHCP based gateway selection
