@@ -443,22 +443,26 @@ batadv_iv_ogm_can_aggregate(const struct batadv_ogm_packet *new_bat_ogm_packet,
 			    const struct batadv_forw_packet *forw_packet)
 {
 	struct batadv_ogm_packet *batadv_ogm_packet;
-	int aggregated_bytes = forw_packet->packet_len + packet_len;
+	unsigned int aggregated_bytes = forw_packet->packet_len + packet_len;
 	struct batadv_hard_iface *primary_if = NULL;
 	u8 packet_num = forw_packet->num_packets;
 	bool res = false;
 	unsigned long aggregation_end_time;
+	unsigned int max_bytes;
 
 	batadv_ogm_packet = (struct batadv_ogm_packet *)forw_packet->skb->data;
 	aggregation_end_time = send_time;
 	aggregation_end_time += msecs_to_jiffies(BATADV_MAX_AGGREGATION_MS);
+
+	max_bytes = min_t(unsigned int, if_outgoing->net_dev->mtu,
+			  BATADV_MAX_AGGREGATION_BYTES);
 
 	/* we can aggregate the current packet to this aggregated packet
 	 * if:
 	 *
 	 * - the send time is within our MAX_AGGREGATION_MS time
 	 * - the resulting packet won't be bigger than
-	 *   MAX_AGGREGATION_BYTES
+	 *   MAX_AGGREGATION_BYTES and MTU of the outgoing interface
 	 * - the number of packets is lower than MAX_AGGREGATION_PACKETS
 	 * otherwise aggregation is not possible
 	 */
@@ -466,7 +470,7 @@ batadv_iv_ogm_can_aggregate(const struct batadv_ogm_packet *new_bat_ogm_packet,
 	    !time_after_eq(aggregation_end_time, forw_packet->send_time))
 		return false;
 
-	if (aggregated_bytes > BATADV_MAX_AGGREGATION_BYTES)
+	if (aggregated_bytes > max_bytes)
 		return false;
 
 	if (packet_num >= BATADV_MAX_AGGREGATION_PACKETS)
@@ -551,9 +555,9 @@ static void batadv_iv_ogm_aggregate_new(const unsigned char *packet_buff,
 	unsigned int skb_size;
 	atomic_t *queue_left = own_packet ? NULL : &bat_priv->batman_queue_left;
 
-	if (atomic_read(&bat_priv->aggregated_ogms) &&
-	    packet_len < BATADV_MAX_AGGREGATION_BYTES)
-		skb_size = BATADV_MAX_AGGREGATION_BYTES;
+	if (atomic_read(&bat_priv->aggregated_ogms))
+		skb_size = max_t(unsigned int, BATADV_MAX_AGGREGATION_BYTES,
+				 packet_len);
 	else
 		skb_size = packet_len;
 
