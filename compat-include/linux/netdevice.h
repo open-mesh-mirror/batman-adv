@@ -35,6 +35,26 @@ static inline void batadv_dev_hold(struct net_device *dev)
 
 #endif /* LINUX_VERSION_IS_LESS(5, 15, 0) */
 
+#if LINUX_VERSION_IS_LESS(5, 17, 0)
+
+typedef struct {} netdevice_tracker;
+
+#define netdev_hold(__dev, __tracker, __gfp) \
+	dev_hold(__dev)
+
+#define netdev_put(__dev, __tracker) \
+	dev_put(__dev)
+
+#elif LINUX_VERSION_IS_LESS(6, 0, 0)
+
+#define netdev_hold(__dev, __tracker, __gfp) \
+	dev_hold_track(__dev, __tracker, __gfp)
+
+#define netdev_put(__dev, __tracker) \
+	dev_put_track(__dev, __tracker)
+
+#endif /* LINUX_VERSION_IS_LESS(5, 17, 0) */
+
 #if LINUX_VERSION_IS_LESS(5, 18, 0)
 
 static inline int batadv_netif_rx(struct sk_buff *skb)
