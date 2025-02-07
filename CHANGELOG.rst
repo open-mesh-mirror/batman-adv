@@ -1,5 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2025.0 (2025-02-07)
+===================
+
+* support latest kernels (5.4 - 6.14)
+* handle VLAN 0 as untagged VLAN
+* TT changes in OGMs no longer contain redundant TT changes
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix incorrect offset in OGM handler for translation table TVLV
+  - force stop of throughput detection workers on interface removal
+
 2024.4 (2024-12-10)
 ===================
 
