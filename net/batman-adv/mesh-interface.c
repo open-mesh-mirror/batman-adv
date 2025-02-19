@@ -1082,19 +1082,25 @@ static int batadv_meshif_validate(struct nlattr *tb[], struct nlattr *data[],
 
 /**
  * batadv_meshif_newlink() - pre-initialize and register new batadv link
- * @src_net: the applicable net namespace
  * @dev: network device to register
- * @tb: IFLA_INFO_DATA netlink attributes
- * @data: enum batadv_ifla_attrs attributes
+ * @params: rtnl newlink parameters
  * @extack: extended ACK report struct
  *
  * Return: 0 if successful or error otherwise.
  */
+#if LINUX_VERSION_IS_GEQ(6, 15, 0) // UGLY_HACK_NEW
+static int batadv_meshif_newlink(struct net_device *dev,
+				 struct rtnl_newlink_params *params,
+#else // UGLY_HACK_OLD
 static int batadv_meshif_newlink(struct net *src_net, struct net_device *dev,
 				 struct nlattr *tb[], struct nlattr *data[],
+#endif // UGLY_HACK_STOP
 				 struct netlink_ext_ack *extack)
 {
 	struct batadv_priv *bat_priv = netdev_priv(dev);
+#if LINUX_VERSION_IS_GEQ(6, 15, 0) // UGLY_HACK_NEW
+	struct nlattr **data = params->data;
+#endif // UGLY_HACK_STOP
 	const char *algo_name;
 	int err;
 
