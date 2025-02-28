@@ -1036,10 +1036,13 @@ static void batadv_meshif_init_early(struct net_device *dev)
 	dev->priv_destructor = batadv_meshif_free;
 	dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER;
 	dev->priv_flags |= IFF_NO_QUEUE;
-#if LINUX_VERSION_IS_GEQ(6, 12, 0) // UGLY_HACK_NEW
+#if LINUX_VERSION_IS_GEQ(6, 15, 0) // UGLY_HACK_NEW
+	dev->lltx = true;
+	dev->netns_immutable = true;
+#elif LINUX_VERSION_IS_GEQ(6, 12, 0) // UGLY_HACK_OLD
 	dev->lltx = true;
 	dev->netns_local = true;
-#else // UGLY_HACK_OLD
+#else
 	dev->features |= NETIF_F_LLTX | NETIF_F_NETNS_LOCAL;
 #endif // UGLY_HACK_STOP
 
