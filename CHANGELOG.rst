@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2025.1 (2025-04-17)
+===================
+
+* support latest kernels (5.4 - 6.15)
+* added support for jumbo frames
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - don't limit size of aggregated incoming OGMs
+  - limit outgoing OGMs aggregates by MTU of outgoing interface
+
 2025.0 (2025-02-07)
 ===================
 
