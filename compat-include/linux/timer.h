@@ -20,4 +20,11 @@
 
 #endif /* LINUX_VERSION_IS_LESS(6, 2, 0) */
 
+#if LINUX_VERSION_IS_LESS(6, 16, 0)
+
+#define timer_container_of(var, callback_timer, timer_fieldname)	\
+	from_timer(var, callback_timer, timer_fieldname)
+
+#endif /* LINUX_VERSION_IS_LESS(6, 16, 0) */
+
 #endif /* _NET_BATMAN_ADV_COMPAT_LINUX_TIMER_H_ */
