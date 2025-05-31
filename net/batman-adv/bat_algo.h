@@ -11,7 +11,6 @@
 
 #include <linux/netlink.h>
 #include <linux/skbuff.h>
-#include <linux/types.h>
 
 extern char batadv_routing_algo[];
 
