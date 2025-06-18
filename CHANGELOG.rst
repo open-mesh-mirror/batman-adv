@@ -1,5 +1,14 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2025.2 (2025-06-18)
+===================
+
+* support latest kernels (5.4 - 6.16)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix duplicate MAC address check
+
 2025.1 (2025-04-17)
 ===================
 
