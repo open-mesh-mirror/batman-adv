@@ -15,6 +15,9 @@
 
 #include "compat-autoconf.h"
 
+#if LINUX_VERSION_IS_LESS(5, 10, 0)
+#include "net/genetlink.h"
+#endif /* LINUX_VERSION_IS_LESS(5, 10, 0) */
 
 #endif /* __KERNEL__ */
 
