@@ -1,5 +1,14 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2025.3 (2025-09-05)
+===================
+
+* support latest kernels (5.4 - 6.17)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - fix OOB read/write in network-coding decode
+
 2025.2 (2025-06-18)
 ===================
 
