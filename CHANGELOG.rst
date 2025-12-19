@@ -1,5 +1,11 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2025.5 (2025-12-19)
+===================
+
+* support latest kernels (5.10 - 6.19)
+* coding style cleanups and refactoring
+
 2025.4 (2025-10-24)
 ===================
 
