@@ -1,6 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0
 
-/.gitignore export-ignore
-/.gitattributes export-ignore
 *.c   diff=cpp
 *.h   diff=cpp
