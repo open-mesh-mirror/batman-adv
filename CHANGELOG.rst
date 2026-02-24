@@ -1,5 +1,13 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2026.0 (2026-02-24)
+===================
+
+* support latest kernels (5.10 - 7.0)
+* bugs squashed:
+
+  - fix double-rtnl_lock ELP metric worker
+
 2025.5 (2025-12-19)
 ===================
 
