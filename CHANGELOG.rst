@@ -1,5 +1,16 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2026.1 (2026-04-08)
+===================
+
+* support latest kernels (5.10 - 7.1)
+* coding style cleanups and refactoring
+* bugs squashed:
+
+  - reject oversized global TT response buffers
+  - avoid OGM aggregation when skb tailroom is insufficient
+  - prevent freed backbones when dumping BLA claims
+
 2026.0 (2026-02-24)
 ===================
 
