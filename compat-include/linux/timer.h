@@ -18,6 +18,11 @@
 #define timer_delete_sync(_timer) del_timer_sync(_timer)
 #define timer_delete(_timer) del_timer(_timer)
 
+static inline int timer_shutdown_sync(struct timer_list *timer)
+{
+	return del_timer_sync(timer);
+}
+
 #endif /* LINUX_VERSION_IS_LESS(6, 2, 0) */
 
 #if LINUX_VERSION_IS_LESS(6, 16, 0)
