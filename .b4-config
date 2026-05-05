@@ -3,3 +3,4 @@
   linkmask = https://patch.msgid.link/%s
   send-series-to = b.a.t.m.a.n@lists.open-mesh.org
   send-prefixes = batadv
+  thanks-commit-url-mask = https://git.open-mesh.org/batman-adv/c/%.12s
