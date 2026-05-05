@@ -1,0 +1,5 @@
+[b4]
+  midmask = https://lore.kernel.org/%s
+  linkmask = https://patch.msgid.link/%s
+  send-series-to = b.a.t.m.a.n@lists.open-mesh.org
+  send-prefixes = batadv
