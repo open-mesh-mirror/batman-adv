@@ -40,7 +40,7 @@ NOSTDINC_FLAGS += \
 	$(CFLAGS)
 
 ifneq ($(REVISION),)
-NOSTDINC_FLAGS += -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
+export CFLAGS_version.o := -DBATADV_SOURCE_VERSION=\"$(REVISION)\"
 endif
 
 obj-y += net/batman-adv/
