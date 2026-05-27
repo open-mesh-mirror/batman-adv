@@ -6,7 +6,8 @@
 #include <linux/version.h>
 #include_next <linux/slab.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(7, 0, 0)
+#if LINUX_VERSION_IS_LESS(7, 0, 0) && \
+    !(LINUX_VERSION_IS_GEQ(6, 18, 33) && LINUX_VERSION_IS_LESS(6, 19, 0))
 
 #define kzalloc_obj(P, GFP) \
 	kzalloc(sizeof(P), GFP)
