@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#include "version.h"
-
 #include <generated/utsrelease.h>
 #include <linux/module.h>
-
-#ifdef CONFIG_BATMAN_ADV_IN_TREE // UGLY_HACK_NEW
-#define BATADV_SOURCE_VERSION "linux-" UTS_RELEASE
-#else // UGLY_HACK_OLD
+// UGLY_HACK_OLD
+#include <linux/utsname.h>
 
 /* prefer version provided by Makefile */
 #ifndef BATADV_SOURCE_VERSION
 #define BATADV_SOURCE_VERSION "2026.2"
 #endif
 
-#endif // UGLY_HACK_STOP
+#undef UTS_RELEASE
+#define UTS_RELEASE BATADV_SOURCE_VERSION
 
-const char *batadv_version = BATADV_SOURCE_VERSION;
+struct new_utsname batadv_version_name = {
+        .release = BATADV_SOURCE_VERSION,
+};
+
+// UGLY_HACK_STOP
 
 /* WARNING userspace tools like batctl were relying on
  * /sys/module/batman_adv/version to check if the module was loaded. If it
@@ -24,4 +25,4 @@ const char *batadv_version = BATADV_SOURCE_VERSION;
  * interface. It should be kept until it is unlikely that there are active
  * installations of these "broken" versions of these tools with recent kernels.
  */
-MODULE_VERSION(BATADV_SOURCE_VERSION);
+MODULE_VERSION(UTS_RELEASE);

@@ -33,6 +33,7 @@
 #include <linux/sprintf.h>
 #include <linux/stddef.h>
 #include <linux/string.h>
+#include <linux/utsname.h>
 #include <linux/workqueue.h>
 #include <net/dsfield.h>
 #include <net/genetlink.h>
@@ -57,7 +58,6 @@
 #include "send.h"
 #include "tp_meter.h"
 #include "translation-table.h"
-#include "version.h"
 
 /* List manipulations on hardif_list have to be rtnl_lock()'ed,
  * list traversals just rcu-locked
@@ -119,7 +119,7 @@ static int __init batadv_init(void)
 	batadv_netlink_register();
 
 	pr_info("B.A.T.M.A.N. advanced %s (compatibility version %i) loaded\n",
-		batadv_version, BATADV_COMPAT_VERSION);
+		init_utsname()->release, BATADV_COMPAT_VERSION);
 
 	return 0;
 

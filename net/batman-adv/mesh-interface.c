@@ -37,6 +37,7 @@
 #include <linux/stddef.h>
 #include <linux/string.h>
 #include <linux/types.h>
+#include <linux/utsname.h>
 #include <net/netlink.h>
 #include <net/rtnetlink.h>
 #include <uapi/linux/batadv_packet.h>
@@ -50,7 +51,6 @@
 #include "multicast.h"
 #include "send.h"
 #include "translation-table.h"
-#include "version.h"
 
 /**
  * batadv_skb_head_push() - Increase header size and move (push) head pointer
@@ -894,7 +894,7 @@ static void batadv_get_drvinfo(struct net_device *dev,
 			       struct ethtool_drvinfo *info)
 {
 	strscpy(info->driver, "B.A.T.M.A.N. advanced", sizeof(info->driver));
-	strscpy(info->version, batadv_version, sizeof(info->version));
+	strscpy(info->version, init_utsname()->release, sizeof(info->version));
 	strscpy(info->fw_version, "N/A", sizeof(info->fw_version));
 	strscpy(info->bus_info, "batman", sizeof(info->bus_info));
 }

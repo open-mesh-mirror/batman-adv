@@ -29,6 +29,7 @@
 #include <linux/skbuff.h>
 #include <linux/stddef.h>
 #include <linux/types.h>
+#include <linux/utsname.h>
 #include <net/genetlink.h>
 #include <net/net_namespace.h>
 #include <net/netlink.h>
@@ -48,7 +49,6 @@
 #include "originator.h"
 #include "tp_meter.h"
 #include "translation-table.h"
-#include "version.h"
 
 struct genl_family batadv_netlink_family;
 
@@ -235,7 +235,7 @@ static int batadv_netlink_mesh_fill(struct sk_buff *msg,
 	if (!hdr)
 		return -ENOBUFS;
 
-	if (nla_put_string(msg, BATADV_ATTR_VERSION, batadv_version) ||
+	if (nla_put_string(msg, BATADV_ATTR_VERSION, init_utsname()->release) ||
 	    nla_put_string(msg, BATADV_ATTR_ALGO_NAME,
 			   bat_priv->algo_ops->name) ||
 	    nla_put_u32(msg, BATADV_ATTR_MESH_IFINDEX, mesh_iface->ifindex) ||

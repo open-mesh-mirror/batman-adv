@@ -8,6 +8,8 @@
 /compat-sources/**/*.o
 /modules.order
 /Module.symvers
+/..module-common.o.cmd
+/.module-common.o
 /net/batman-adv/batman-adv.ko
 /net/batman-adv/.batman-adv.ko.cmd
 /net/batman-adv/batman-adv.mod.c
