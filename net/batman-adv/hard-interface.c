@@ -1161,6 +1161,8 @@ struct notifier_block batadv_hard_if_notifier = {
 
 /**
  * batadv_wifi_net_devices_init() - Initialize wifi devices cache
+ *
+ * Return: 0 on success, negative error code on failure
  */
 int __init batadv_wifi_net_devices_init(void)
 {
