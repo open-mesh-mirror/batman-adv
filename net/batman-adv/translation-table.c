@@ -170,7 +170,9 @@ batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
 		    unsigned short vid)
 {
 	struct hlist_head *head;
-	struct batadv_tt_common_entry to_search, *tt, *tt_tmp = NULL;
+	struct batadv_tt_common_entry to_search;
+	struct batadv_tt_common_entry *tt;
+	struct batadv_tt_common_entry *tt_tmp = NULL;
 	u32 index;
 
 	if (!hash)
@@ -474,10 +476,13 @@ static void batadv_tt_local_event(struct batadv_priv *bat_priv,
 				  struct batadv_tt_local_entry *tt_local_entry,
 				  u8 event_flags)
 {
-	struct batadv_tt_change_node *tt_change_node, *entry, *safe;
+	struct batadv_tt_change_node *tt_change_node;
+	struct batadv_tt_change_node *entry;
+	struct batadv_tt_change_node *safe;
 	struct batadv_tt_common_entry *common = &tt_local_entry->common;
 	u8 flags = common->flags | event_flags;
-	bool del_op_requested, del_op_entry;
+	bool del_op_requested;
+	bool del_op_entry;
 	size_t changes;
 
 	tt_change_node = kmem_cache_alloc(batadv_tt_change_cache, GFP_ATOMIC);
@@ -669,7 +674,9 @@ bool batadv_tt_local_add(struct net_device *mesh_iface, const u8 *addr,
 	struct net_device *in_dev = NULL;
 	struct hlist_head *head;
 	struct batadv_tt_orig_list_entry *orig_entry;
-	int hash_added, table_size, packet_size_max;
+	int hash_added;
+	int table_size;
+	int packet_size_max;
 	bool ret = false;
 	bool roamed_back = false;
 	bool iif_is_wifi = false;
@@ -1055,10 +1062,12 @@ out:
  */
 static void batadv_tt_tvlv_container_update(struct batadv_priv *bat_priv)
 {
-	struct batadv_tt_change_node *entry, *safe;
+	struct batadv_tt_change_node *entry;
+	struct batadv_tt_change_node *safe;
 	struct batadv_tvlv_tt_data *tt_data;
 	struct batadv_tvlv_tt_change *tt_change;
-	int tt_diff_len, tt_change_len = 0;
+	int tt_diff_len;
+	int tt_change_len = 0;
 	int tt_diff_entries_num = 0;
 	int tt_diff_entries_count = 0;
 	bool drop_changes = false;
@@ -1338,7 +1347,8 @@ u16 batadv_tt_local_remove(struct batadv_priv *bat_priv, const u8 *addr,
 {
 	struct batadv_tt_local_entry *tt_removed_entry;
 	struct batadv_tt_local_entry *tt_local_entry;
-	u16 flags, curr_flags = BATADV_NO_FLAGS;
+	u16 flags;
+	u16 curr_flags = BATADV_NO_FLAGS;
 	struct hlist_node *tt_removed_node;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr, vid);
@@ -1521,7 +1531,8 @@ static int batadv_tt_global_init(struct batadv_priv *bat_priv)
  */
 static void batadv_tt_changes_list_free(struct batadv_priv *bat_priv)
 {
-	struct batadv_tt_change_node *entry, *safe;
+	struct batadv_tt_change_node *entry;
+	struct batadv_tt_change_node *safe;
 
 	spin_lock_bh(&bat_priv->tt.changes_list_lock);
 
@@ -1550,7 +1561,8 @@ static struct batadv_tt_orig_list_entry *
 batadv_tt_global_orig_entry_find(const struct batadv_tt_global_entry *entry,
 				 const struct batadv_orig_node *orig_node)
 {
-	struct batadv_tt_orig_list_entry *tmp_orig_entry, *orig_entry = NULL;
+	struct batadv_tt_orig_list_entry *tmp_orig_entry;
+	struct batadv_tt_orig_list_entry *orig_entry = NULL;
 	const struct hlist_head *head;
 
 	rcu_read_lock();
@@ -1862,10 +1874,12 @@ static struct batadv_tt_orig_list_entry *
 batadv_transtable_best_orig(struct batadv_priv *bat_priv,
 			    struct batadv_tt_global_entry *tt_global_entry)
 {
-	struct batadv_neigh_node *router, *best_router = NULL;
+	struct batadv_neigh_node *router;
+	struct batadv_neigh_node *best_router = NULL;
 	struct batadv_algo_ops *bao = bat_priv->algo_ops;
 	struct hlist_head *head;
-	struct batadv_tt_orig_list_entry *orig_entry, *best_entry = NULL;
+	struct batadv_tt_orig_list_entry *orig_entry;
+	struct batadv_tt_orig_list_entry *best_entry = NULL;
 
 	head = &tt_global_entry->orig_list;
 	hlist_for_each_entry_rcu(orig_entry, head, list) {
@@ -1972,7 +1986,8 @@ batadv_tt_global_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 			    struct batadv_priv *bat_priv,
 			    struct batadv_tt_common_entry *common, int *sub_s)
 {
-	struct batadv_tt_orig_list_entry *orig_entry, *best_entry;
+	struct batadv_tt_orig_list_entry *orig_entry;
+	struct batadv_tt_orig_list_entry *best_entry;
 	struct batadv_tt_global_entry *global;
 	struct hlist_head *head;
 	int sub = 0;
@@ -2589,7 +2604,9 @@ static u32 batadv_tt_global_crc(struct batadv_priv *bat_priv,
 	struct batadv_tt_common_entry *tt_common;
 	struct batadv_tt_global_entry *tt_global;
 	struct hlist_head *head;
-	u32 i, crc_tmp, crc = 0;
+	u32 i;
+	u32 crc_tmp;
+	u32 crc = 0;
 	u8 flags;
 	__be16 tmp_vid;
 
@@ -2667,7 +2684,9 @@ static u32 batadv_tt_local_crc(struct batadv_priv *bat_priv,
 	struct batadv_hashtable *hash = bat_priv->tt.local_hash;
 	struct batadv_tt_common_entry *tt_common;
 	struct hlist_head *head;
-	u32 i, crc_tmp, crc = 0;
+	u32 i;
+	u32 crc_tmp;
+	u32 crc = 0;
 	u8 flags;
 	__be16 tmp_vid;
 
@@ -2818,7 +2837,8 @@ static struct batadv_tt_req_node *
 batadv_tt_req_node_new(struct batadv_priv *bat_priv,
 		       struct batadv_orig_node *orig_node)
 {
-	struct batadv_tt_req_node *tt_req_node_tmp, *tt_req_node = NULL;
+	struct batadv_tt_req_node *tt_req_node_tmp;
+	struct batadv_tt_req_node *tt_req_node = NULL;
 
 	spin_lock_bh(&bat_priv->tt.req_list_lock);
 	hlist_for_each_entry(tt_req_node_tmp, &bat_priv->tt.req_list, list) {
@@ -2927,7 +2947,8 @@ static u16 batadv_tt_tvlv_generate(struct batadv_priv *bat_priv,
 	struct batadv_tt_common_entry *tt_common_entry;
 	struct batadv_tvlv_tt_change *tt_change;
 	struct hlist_head *head;
-	u16 tt_tot, tt_num_entries = 0;
+	u16 tt_tot;
+	u16 tt_num_entries = 0;
 	u8 flags;
 	bool ret;
 	u32 i;
@@ -2981,7 +3002,8 @@ static bool batadv_tt_global_check_crc(struct batadv_orig_node *orig_node,
 {
 	struct batadv_tvlv_tt_vlan_data *tt_vlan_tmp;
 	struct batadv_orig_node_vlan *vlan;
-	int i, orig_num_vlan;
+	int i;
+	int orig_num_vlan;
 	u32 crc;
 
 	/* check if each received CRC matches the locally stored one */
@@ -3088,7 +3110,8 @@ static bool batadv_send_tt_request(struct batadv_priv *bat_priv,
 	struct batadv_tt_req_node *tt_req_node = NULL;
 	struct batadv_hard_iface *primary_if;
 	bool ret = false;
-	int i, size;
+	int i;
+	int size;
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if)
@@ -3168,8 +3191,10 @@ static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 	struct batadv_orig_node *res_dst_orig_node = NULL;
 	struct batadv_tvlv_tt_change *tt_change;
 	struct batadv_tvlv_tt_data *tvlv_tt_data = NULL;
-	bool ret = false, full_table;
-	u8 orig_ttvn, req_ttvn;
+	bool ret = false;
+	bool full_table;
+	u8 orig_ttvn;
+	u8 req_ttvn;
 	u16 tvlv_len;
 	s32 tt_len;
 
@@ -3297,7 +3322,8 @@ static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 	struct batadv_hard_iface *primary_if = NULL;
 	struct batadv_tvlv_tt_change *tt_change;
 	struct batadv_orig_node *orig_node;
-	u8 my_ttvn, req_ttvn;
+	u8 my_ttvn;
+	u8 req_ttvn;
 	u16 tvlv_len;
 	bool full_table;
 	s32 tt_len;
@@ -3619,7 +3645,8 @@ out:
  */
 static void batadv_tt_roam_list_free(struct batadv_priv *bat_priv)
 {
-	struct batadv_tt_roam_node *node, *safe;
+	struct batadv_tt_roam_node *node;
+	struct batadv_tt_roam_node *safe;
 
 	spin_lock_bh(&bat_priv->tt.roam_list_lock);
 
@@ -3637,7 +3664,8 @@ static void batadv_tt_roam_list_free(struct batadv_priv *bat_priv)
  */
 static void batadv_tt_roam_purge(struct batadv_priv *bat_priv)
 {
-	struct batadv_tt_roam_node *node, *safe;
+	struct batadv_tt_roam_node *node;
+	struct batadv_tt_roam_node *safe;
 
 	spin_lock_bh(&bat_priv->tt.roam_list_lock);
 	list_for_each_entry_safe(node, safe, &bat_priv->tt.roam_list, list) {
@@ -4168,7 +4196,8 @@ void batadv_tt_local_resize_to_mtu(struct net_device *mesh_iface)
 {
 	struct batadv_priv *bat_priv = netdev_priv(mesh_iface);
 	int packet_size_max = READ_ONCE(bat_priv->packet_size_max);
-	int table_size, timeout = BATADV_TT_LOCAL_TIMEOUT / 2;
+	int table_size;
+	int timeout = BATADV_TT_LOCAL_TIMEOUT / 2;
 	bool reduced = false;
 
 	spin_lock_bh(&bat_priv->tt.commit_lock);
@@ -4212,7 +4241,8 @@ static void batadv_tt_tvlv_ogm_handler_v1(struct batadv_priv *bat_priv,
 {
 	struct batadv_tvlv_tt_change *tt_change;
 	struct batadv_tvlv_tt_data *tt_data;
-	u16 num_entries, num_vlan;
+	u16 num_entries;
+	u16 num_vlan;
 	size_t tt_data_sz;
 
 	if (tvlv_value_len < sizeof(*tt_data))
@@ -4253,7 +4283,8 @@ static int batadv_tt_tvlv_unicast_handler_v1(struct batadv_priv *bat_priv,
 					     u16 tvlv_value_len)
 {
 	struct batadv_tvlv_tt_data *tt_data;
-	u16 tt_vlan_len, tt_num_entries;
+	u16 tt_vlan_len;
+	u16 tt_num_entries;
 	char tt_flag;
 	bool ret;
 
