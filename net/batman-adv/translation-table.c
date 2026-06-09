@@ -78,6 +78,10 @@ static void batadv_tt_global_del(struct batadv_priv *bat_priv,
 // UGLY_HACK_OLD
 #if LINUX_VERSION_IS_LESS(6, 12, 0)
 
+/**
+ * batadv_tt_local_entry_free_rcu() - RCU callback to free a tt_local_entry
+ * @rcu: rcu_head embedded in the to-be-freed tt_local_entry
+ */
 static void batadv_tt_local_entry_free_rcu(struct rcu_head *rcu)
 {
 	struct batadv_tt_local_entry *tt_local_entry;
@@ -86,6 +90,10 @@ static void batadv_tt_local_entry_free_rcu(struct rcu_head *rcu)
 	kmem_cache_free(batadv_tl_cache, tt_local_entry);
 }
 
+/**
+ * batadv_tt_global_entry_free_rcu() - RCU callback to free a tt_global_entry
+ * @rcu: rcu_head embedded in the to-be-freed tt_global_entry
+ */
 static void batadv_tt_global_entry_free_rcu(struct rcu_head *rcu)
 {
 	struct batadv_tt_global_entry *tt_global_entry;
@@ -94,6 +102,11 @@ static void batadv_tt_global_entry_free_rcu(struct rcu_head *rcu)
 	kmem_cache_free(batadv_tg_cache, tt_global_entry);
 }
 
+/**
+ * batadv_tt_orig_list_entry_free_rcu() - RCU callback to free a
+ *  tt_orig_list_entry
+ * @rcu: rcu_head embedded in the to-be-freed tt_orig_list_entry
+ */
 static void batadv_tt_orig_list_entry_free_rcu(struct rcu_head *rcu)
 {
 	struct batadv_tt_orig_list_entry *orig_entry;
