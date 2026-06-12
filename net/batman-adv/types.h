@@ -1852,7 +1852,7 @@ struct batadv_tt_common_entry {
 	struct hlist_node hash_entry;
 
 	/** @flags: various state handling flags (see batadv_tt_client_flags) */
-	u16 flags;
+	atomic_t flags;
 
 	/** @added_at: timestamp used for purging stale tt common entries */
 	unsigned long added_at;
