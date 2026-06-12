@@ -1851,11 +1851,20 @@ struct batadv_tt_common_entry {
 	 */
 	struct hlist_node hash_entry;
 
-	/** @flags: various state handling flags (see batadv_tt_client_flags) */
+	/**
+	 * @flags: various state handling flags (see batadv_tt_client_flags),
+	 * protected by @flags_lock
+	 */
 	u16 flags;
 
 	/** @added_at: timestamp used for purging stale tt common entries */
 	unsigned long added_at;
+
+	/**
+	 * @flags_lock: protect modifications of @flags and
+	 *  @batadv_tt_global_entry.roam_at
+	 */
+	spinlock_t flags_lock;
 
 	/** @refcount: number of contexts the object is used */
 	struct kref refcount;
