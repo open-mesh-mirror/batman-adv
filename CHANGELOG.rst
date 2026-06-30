@@ -1,5 +1,81 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2026.2 (2026-06-30)
+===================
+
+* support latest kernels (5.10 - 7.2)
+* coding style cleanups and refactoring
+* switch wifi flags lookup to specialized rhashtable
+* skip unnecessary TVLV buffer allocation of each OGM(v2) transmission
+* bugs squashed:
+
+  - batman_iv: stop caching unowned originator pointers
+  - batman_iv: fix integer overflow on buff_pos
+  - batman_iv: avoid bonding logic for outgoing OGM
+  - batman_iv: recover OGM scheduling after forward packet error
+  - batman_v: stop OGMv2 on disabled interface
+  - batman_v: prevent ELP transmission interval underflow
+  - batman_v: prevent OGM aggregation on disabled hardif
+  - bla: prevent use-after-free when deleting claims
+  - bla: only purge non-released claims
+  - bla: put backbone reference on failed claim hash insert
+  - bla: fix report_work leak on backbone_gw purge
+  - bla: avoid double decrement of bla.num_requests
+  - bla: avoid NULL-ptr deref for claim via dropped interface
+  - bla: annotate lasttime access with READ/WRITE_ONCE
+  - bla: reacquire gw address after skb realloc
+  - dat: acquire ARP hw source only after skb realloc
+  - dat: ensure accessible eth_hdr proto field
+  - dat: handle forward allocation error
+  - dat: prevent false sharing between VLANs
+  - frag: fix reassembly length accounting
+  - frag: disallow unicast fragment in fragment
+  - frag: ensure fragment is writable before modifying TTL
+  - frag: avoid underflow of TTL
+  - gw: acquire ethernet header only after skb realloc
+  - gw: clear current gateway during teardown
+  - gw: don't deselect gateway with active hardif
+  - mcast: fix use-after-free in orig_node RCU release
+  - routing: access unicast_ttvn skb->data only after skb realloc
+  - routing: ensure bcast is writable before modifying TTL
+  - routing: fix (m|b)cast csum after decrementing TTL
+  - routing: retrieve ethhdr after potential skb realloc on RX
+  - tp_meter: reject new sessions during teardown
+  - tp_meter: stop sessions during mesh teardown
+  - tp_meter: fix counter underflow during shutdown
+  - tp_meter: fix tp_num leak on kmalloc failure
+  - tp_meter: fix tp_vars reference leak in receiver shutdown
+  - tp_meter: avoid use of uninit sender vars
+  - tp_meter: directly shut down timer on cleanup
+  - tp_meter: fix race condition in send error reporting
+  - tp_meter: avoid role confusion in tp_list
+  - tp_meter: keep unacked list in ascending ordered
+  - tp_meter: initialize dup_acks explicitly
+  - tp_meter: initialize dec_cwnd explicitly
+  - tp_meter: avoid window underflow
+  - tp_meter: avoid divide-by-zero for dec_cwnd
+  - tp_meter: fix fast recovery precondition
+  - tp_meter: handle seqno wrap-around for fast recovery detection
+  - tp_meter: add only finished tp_vars to lists
+  - tp_meter: use locking for all congestion control variables
+  - tp_meter: initialize last_recv_time during init
+  - tp_meter: restrict number of unacked list entries
+  - tp_meter: annotate last_recv_time access with READ/WRITE_ONCE
+  - tp_meter: prevent parallel modifications of last_recv
+  - tp_meter: handle overlapping packets
+  - tt: reject oversized local TVLV buffers
+  - tt: fix negative tt_buff_len
+  - tt: fix negative last_changeset_len
+  - tt: fix TOCTOU race for reported vlans
+  - tt: avoid empty VLAN responses
+  - tt: prevent TVLV entry number overflow
+  - tt: don't merge change entries with different VIDs
+  - tt: track roam count per VID
+  - tvlv: abort OGM send on tvlv append failure
+  - tvlv: reject oversized TVLV packets
+  - tvlv: avoid race of cifsnotfound handler state
+  - tvlv: enforce 2-byte alignment
+
 2026.1 (2026-04-08)
 ===================
 
