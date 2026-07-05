@@ -3228,7 +3228,7 @@ static bool batadv_send_tt_request(struct batadv_priv *bat_priv,
 out:
 	batadv_hardif_put(primary_if);
 
-	if (ret && tt_req_node) {
+	if (!ret && tt_req_node) {
 		spin_lock_bh(&bat_priv->tt.req_list_lock);
 		if (!hlist_unhashed(&tt_req_node->list)) {
 			hlist_del_init(&tt_req_node->list);
@@ -4352,7 +4352,7 @@ static int batadv_tt_tvlv_unicast_handler_v1(struct batadv_priv *bat_priv,
 {
 	struct batadv_tvlv_tt_data *tt_data;
 	u16 tt_num_entries;
-	u16 tt_vlan_len;
+	size_t tt_vlan_len;
 	char tt_flag;
 	bool ret;
 
