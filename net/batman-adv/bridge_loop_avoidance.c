@@ -766,6 +766,8 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
 		spin_lock_bh(&backbone_gw->crc_lock);
 		backbone_gw->crc ^= claim_crc;
 		spin_unlock_bh(&backbone_gw->crc_lock);
+
+		WRITE_ONCE(backbone_gw->lasttime, jiffies);
 	}
 
 	if (old_backbone_gw) {
@@ -777,7 +779,6 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
 		batadv_backbone_gw_put(old_backbone_gw);
 	}
 
-	WRITE_ONCE(backbone_gw->lasttime, jiffies);
 	batadv_claim_put(claim);
 }
 
