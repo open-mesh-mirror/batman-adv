@@ -401,7 +401,8 @@ static void batadv_tt_local_size_inc(struct batadv_priv *bat_priv,
  *
  * It must only be called after a batadv_tt_local_entry without NEW flag
  * was removed from bat_priv->tt.local_hash (under the specific
- * list_locks[i]).
+ * list_locks[i]) or when it is ensured that it is not accessible
+ * in this list.
  */
 static void batadv_tt_local_size_dec(struct batadv_priv *bat_priv,
 				     unsigned short vid)
@@ -1475,6 +1476,13 @@ u16 batadv_tt_local_remove(struct batadv_priv *bat_priv, const u8 *addr,
 					     &tt_local_entry->common);
 	if (!tt_removed_node)
 		goto out;
+
+	/* batadv_tt_local_transition_new() may have committed the entry and
+	 * thus counted it in the local table size since the BATADV_TT_CLIENT_NEW
+	 * check above.
+	 */
+	if (!(batadv_tt_flags_get(&tt_local_entry->common) & BATADV_TT_CLIENT_NEW))
+		batadv_tt_local_size_dec(bat_priv, tt_local_entry->common.vid);
 
 	/* drop reference of remove hash entry */
 	batadv_tt_local_entry_put(tt_local_entry);
