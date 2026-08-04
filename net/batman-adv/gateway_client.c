@@ -555,7 +555,10 @@ out:
  * @chaddr: buffer where the client address will be stored. Valid
  *  only if the function returns BATADV_DHCP_TO_CLIENT
  *
- * This function may re-allocate the data buffer of the skb passed as argument.
+ * Warning: This function may reallocate the skb data buffer via
+ * pskb_may_pull()/... Any pointer into the skb data (e.g.
+ * obtained from skb->data or eth_hdr()) before this call must be considered
+ * invalid afterwards and has to be reacquired.
  *
  * Return:
  * - BATADV_DHCP_NO if the packet is not a dhcp message or if there was an error
@@ -680,7 +683,7 @@ batadv_gw_dhcp_recipient_get(struct sk_buff *skb, unsigned int *header_len,
  * previously selected is not the best one anymore.
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *

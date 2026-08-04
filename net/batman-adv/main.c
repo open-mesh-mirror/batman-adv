@@ -619,7 +619,7 @@ void batadv_recv_handler_unregister(u8 packet_type)
  * accessible after skb->data.
  *
  * Warning: This function may reallocate the skb data buffer via
- * pskb_may_pull(). Any pointer into the skb data (e.g. obtained from skb->data
+ * pskb_may_pull()/... Any pointer into the skb data (e.g. obtained from skb->data
  * or eth_hdr()) before this call must be considered invalid afterwards and has
  * to be reacquired.
  *

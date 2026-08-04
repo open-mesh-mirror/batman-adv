@@ -1073,7 +1073,7 @@ out:
  * @hdr_size: size of the possible header before the ARP packet in the skb
  *
  * Warning: This function may reallocate the skb data buffer via
- * pskb_may_pull(). Any pointer into the skb data (e.g. obtained from skb->data
+ * pskb_may_pull()/... Any pointer into the skb data (e.g. obtained from skb->data
  * or eth_hdr()) before this call must be considered invalid afterwards and has
  * to be reacquired.
  *
@@ -1223,7 +1223,7 @@ batadv_dat_arp_create_reply(struct batadv_priv *bat_priv, __be32 ip_src,
  * @skb: packet to check
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_dat_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_dat_get_vid()/.... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
@@ -1334,7 +1334,7 @@ out:
  * @hdr_size: size of the encapsulation header
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_dat_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_dat_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
@@ -1408,7 +1408,7 @@ out:
  * @skb: packet to check
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_dat_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_dat_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  */
@@ -1463,7 +1463,7 @@ void batadv_dat_snoop_outgoing_arp_reply(struct batadv_priv *bat_priv,
  * @hdr_size: size of the encapsulation header
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_dat_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_dat_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
@@ -1884,9 +1884,9 @@ void batadv_dat_snoop_outgoing_dhcp_ack(struct batadv_priv *bat_priv,
  * field and DHCP Your IP Address field are added to the local DAT cache.
  *
  * Warning: This function may reallocate the skb data buffer via
- * pskb_may_pull()/batadv_dat_get_vid(). Any pointer into the skb data (e.g.
- * obtained from skb->data or eth_hdr()) before this call must be considered
- * invalid afterwards and has to be reacquired.
+ * pskb_may_pull()/batadv_dat_get_vid()/... Any pointer into the skb data
+ * (e.g.obtained from skb->data or eth_hdr()) before this call must be
+ * considered invalid afterwards and has to be reacquired.
  */
 void batadv_dat_snoop_incoming_dhcp_ack(struct batadv_priv *bat_priv,
 					struct sk_buff *skb, int hdr_size)
@@ -1936,7 +1936,7 @@ void batadv_dat_snoop_incoming_dhcp_ack(struct batadv_priv *bat_priv,
  * @forw_packet: the broadcast packet
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_dat_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_dat_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *

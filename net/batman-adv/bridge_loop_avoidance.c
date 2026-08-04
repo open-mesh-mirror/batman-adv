@@ -1093,7 +1093,7 @@ static int batadv_check_claim_group(struct batadv_priv *bat_priv,
  * @skb: the frame to be checked
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_get_vid(). Any pointer into the skb data (e.g. obtained
+ * batadv_get_vid()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
@@ -1831,7 +1831,7 @@ bool batadv_bla_is_backbone_gw_orig(struct batadv_priv *bat_priv, u8 *orig,
  * @hdr_size: maximum length of the frame
  *
  * Warning: This function may reallocate the skb data buffer via
- * pskb_may_pull() and batadv_get_vid(). Any pointer into the skb data (e.g.
+ * pskb_may_pull()/batadv_get_vid()/... Any pointer into the skb data (e.g.
  * obtained from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
@@ -2090,7 +2090,10 @@ out:
  *
  * in these cases, the skb is further handled by this function.
  *
- * This call might reallocate skb data.
+ * Warning: This function may reallocate the skb data buffer via
+ * batadv_bla_process_claim()/... Any pointer into the skb data (e.g.
+ * obtained from skb->data or eth_hdr()) before this call must be considered
+ * invalid afterwards and has to be reacquired.
  *
  * Return: true if handled, otherwise it returns false and the caller shall
  * further process the skb.

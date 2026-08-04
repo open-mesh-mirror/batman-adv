@@ -58,7 +58,7 @@
  * @len: number of bytes to add
  *
  * Warning: This function may reallocate the skb data buffer via
- * skb_cow_head(). Any pointer into the skb data (e.g. obtained
+ * skb_cow_head()/... Any pointer into the skb data (e.g. obtained
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *

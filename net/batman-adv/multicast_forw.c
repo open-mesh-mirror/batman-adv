@@ -1081,7 +1081,7 @@ unsigned int batadv_mcast_forw_packet_hdrlen(unsigned int num_dests)
  * bytes (minimum IPv6 MTU + vlan ethernet header size) large.
  *
  * Warning: This function may reallocate the skb data buffer via
- * skb_cow() / skb_linearize(). Any pointer into the skb data (e.g.
+ * skb_cow()/skb_linearize()/... Any pointer into the skb data (e.g.
  * obtained from skb->data or eth_hdr()) before this call must be
  * considered invalid afterwards and has to be reacquired.
  *
@@ -1129,7 +1129,7 @@ static int batadv_mcast_forw_expand_head(struct batadv_priv *bat_priv,
  * according want-all flags, is attached accordingly.
  *
  * Warning: This function may reallocate the skb data buffer via
- * batadv_mcast_forw_expand_head(). Any pointer into the skb data (e.g.
+ * batadv_mcast_forw_expand_head()/... Any pointer into the skb data (e.g.
  * obtained from skb->data or eth_hdr()) before this call must be
  * considered invalid afterwards and has to be reacquired.
  *

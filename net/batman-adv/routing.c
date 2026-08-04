@@ -173,7 +173,7 @@ bool batadv_window_protected(struct batadv_priv *bat_priv, s32 seq_num_diff,
  * @header_len: minimal header length of packet type
  *
  * Warning: This function may reallocate the skb data buffer via
- * skb_cow() / skb_linearize(). Any pointer into the skb data (e.g.
+ * skb_cow()/skb_linearize()/... Any pointer into the skb data (e.g.
  * obtained from skb->data or eth_hdr()) before this call must be
  * considered invalid afterwards and has to be reacquired.
  *
@@ -876,7 +876,7 @@ out:
  * @hdr_len: length of the unicast header preceding the payload
  *
  * Warning: This function may reallocate the skb data buffer via
- * pskb_may_pull() and batadv_get_vid(). Any pointer into the skb data (e.g.
+ * pskb_may_pull()/batadv_get_vid()/... Any pointer into the skb data (e.g.
  * obtained from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
