@@ -1385,7 +1385,9 @@ out:
  * contents of its TVLV forwards it and/or decapsulates it to hand it to the
  * mesh interface.
  *
- * Return: NET_RX_SUCCESS on success or NET_RX_DROP in case of failure
+ * Return: NET_RX_SUCCESS if the skb was locally received, NET_RX_DROP otherwise
+ * or a negative errno code when the multicast tracker TVLV could not be
+ * processed
  */
 int batadv_recv_mcast_packet(struct sk_buff *skb,
 			     struct batadv_hard_iface *recv_if)
