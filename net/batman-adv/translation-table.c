@@ -3452,8 +3452,8 @@ static bool batadv_send_tt_response(struct batadv_priv *bat_priv,
  * @ttvn: TTVN of @orig_node corresponding to @tt_change
  *
  * Walk @tt_change and add/remove the announced clients in the global TT.
- * Abort early without marking the TTVN as up to date if adding an entry
- * fails, so that the next TT request can re-sync the full table.
+ * Abort early without marking the @orig_node TT as initialized if adding
+ * an entry fails, so that the next TT request can re-sync the full table.
  */
 static void _batadv_tt_update_changes(struct batadv_priv *bat_priv,
 				      struct batadv_orig_node *orig_node,

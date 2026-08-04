@@ -35,7 +35,7 @@ typedef bool (*batadv_hashdata_compare_cb)(const struct hlist_node *node,
  * @key: opaque payload whose key selects the bucket
  * @size: number of buckets in the hash table
  *
- * Return: bucket index derived from the key in @data and the table @size.
+ * Return: bucket index derived from the key in @key and the table @size.
  */
 typedef u32 (*batadv_hashdata_choose_cb)(const void *key, u32 size);
 

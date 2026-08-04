@@ -524,8 +524,8 @@ err_out:
 /**
  * batadv_recv_handler_init() - initialise the RX handler dispatch table
  *
- * Initialise all entries of the RX handler table (+ unused to the
- * default drop handler) and perform compile-time size sanity checks on
+ * Initialise all entries of the RX handler table as either "unhandled" or with
+ * protocol indepentend handlers, and perform compile-time size sanity checks on
  * all on-wire packet structs.
  */
 static void batadv_recv_handler_init(void)

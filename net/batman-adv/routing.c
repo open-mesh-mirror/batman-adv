@@ -880,8 +880,8 @@ out:
  * obtained from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
- * Return: true if the packet may be processed further, false if it has been
- *  consumed or has to be dropped by the caller
+ * Return: true if the packet may be processed further, false if has to be
+ * dropped by the caller
  */
 static bool batadv_check_unicast_ttvn(struct batadv_priv *bat_priv,
 				      struct sk_buff *skb, int hdr_len)
