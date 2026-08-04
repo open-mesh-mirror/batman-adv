@@ -517,10 +517,11 @@ int batadv_frag_send_packet(struct sk_buff *skb,
 	unsigned int header_size;
 	int ret;
 
+	header_size = sizeof(frag_header);
+
 	/* To avoid merge and refragmentation at next-hops we never send
 	 * fragments larger than BATADV_FRAG_MAX_FRAG_SIZE
 	 */
-	header_size = sizeof(frag_header);
 	mtu = min_t(unsigned int, mtu, BATADV_FRAG_MAX_FRAG_SIZE);
 	max_fragment_size = mtu - header_size;
 

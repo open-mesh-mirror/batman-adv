@@ -4200,10 +4200,11 @@ void batadv_tt_local_resize_to_mtu(struct net_device *mesh_iface)
 	int packet_size_max;
 	int table_size;
 
+	packet_size_max = READ_ONCE(bat_priv->packet_size_max);
+
 	spin_lock_bh(&bat_priv->tt.commit_lock);
 
 	while (timeout) {
-		packet_size_max = READ_ONCE(bat_priv->packet_size_max);
 		table_size = batadv_tt_local_table_transmit_size(bat_priv);
 		if (packet_size_max >= table_size)
 			break;
