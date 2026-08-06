@@ -519,7 +519,7 @@ err_ifinfo1:
  * @neigh2: second neighbour to compare
  * @if_outgoing2: outgoing interface to use for @neigh2
  *
- * Return: true if the throughput of @neigh1 is at least 3/4 of the
+ * Return: true if the throughput of @neigh1 is more than 3/4 of the
  *  @neigh2 throughput
  */
 static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
