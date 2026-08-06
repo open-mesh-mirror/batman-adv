@@ -519,8 +519,8 @@ err_ifinfo1:
  * @neigh2: second neighbour to compare
  * @if_outgoing2: outgoing interface to use for @neigh2
  *
- * Return: true if the throughput of @neigh2 is at least 3/4 of the
- *  @neigh1 throughput
+ * Return: true if the throughput of @neigh1 is at least 3/4 of the
+ *  @neigh2 throughput
  */
 static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
 				  struct batadv_hard_iface *if_outgoing1,
@@ -540,10 +540,10 @@ static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
 	if (!ifinfo2)
 		goto err_ifinfo2;
 
-	threshold = ifinfo1->bat_v.throughput / 4;
-	threshold = ifinfo1->bat_v.throughput - threshold;
+	threshold = ifinfo2->bat_v.throughput / 4;
+	threshold = ifinfo2->bat_v.throughput - threshold;
 
-	ret = ifinfo2->bat_v.throughput > threshold;
+	ret = ifinfo1->bat_v.throughput > threshold;
 
 	batadv_neigh_ifinfo_put(ifinfo2);
 err_ifinfo2:
