@@ -2490,8 +2490,8 @@ static void batadv_tt_global_table_free(struct batadv_priv *bat_priv)
 /**
  * _batadv_is_ap_isolated() - check whether two clients are AP-isolated from
  *  each other
- * @tt_local_entry: local TT entry of the sending client
- * @tt_global_entry: global TT entry of the destination client
+ * @tt_local_entry: local TT entry of one local client
+ * @tt_global_entry: global TT entry of the remote client
  *
  * Return: true if traffic between the two clients should be dropped because
  *  either both are WiFi clients or both carry the ISOLATION flag; false
