@@ -2087,14 +2087,14 @@ struct batadv_algo_neigh_ops {
 		   struct batadv_hard_iface *if_outgoing2);
 
 	/**
-	 * @is_similar_or_better: check if neigh1 is equally similar or better
-	 *  than neigh2 for their respective outgoing interface from the metric
+	 * @is_similar_or_better: check if @candidate is equally similar or better
+	 *  than @reference for their respective outgoing interface from the metric
 	 *  prospective
 	 */
-	bool (*is_similar_or_better)(struct batadv_neigh_node *neigh1,
-				     struct batadv_hard_iface *if_outgoing1,
-				     struct batadv_neigh_node *neigh2,
-				     struct batadv_hard_iface *if_outgoing2);
+	bool (*is_similar_or_better)(struct batadv_neigh_node *candidate,
+				     struct batadv_hard_iface *if_outgoing_cand,
+				     struct batadv_neigh_node *reference,
+				     struct batadv_hard_iface *if_outgoing_ref);
 
 	/** @dump: dump neighbors to a netlink socket (optional) */
 	void (*dump)(struct sk_buff *msg, struct netlink_callback *cb,
