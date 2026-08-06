@@ -548,7 +548,7 @@ static void batadv_dbg_arp(struct batadv_priv *bat_priv, struct sk_buff *skb,
 			break;
 		default:
 			batadv_dbg(BATADV_DBG_DAT, bat_priv, "* type: Unknown (%u)!\n",
-				   unicast_4addr_packet->u.packet_type);
+				   unicast_4addr_packet->subtype);
 		}
 		break;
 	case BATADV_BCAST:
