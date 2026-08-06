@@ -6,18 +6,22 @@
 #include <linux/version.h>
 #include_next <linux/slab.h>
 
-#if LINUX_VERSION_IS_LESS(7, 0, 0) && \
-    !(LINUX_VERSION_IS_GEQ(6, 18, 33) && LINUX_VERSION_IS_LESS(6, 19, 0)) && \
-    !(LINUX_VERSION_IS_GEQ(6, 12, 97) && LINUX_VERSION_IS_LESS(6, 13, 0))
+#if LINUX_VERSION_IS_LESS(7, 0, 0)
 
+#ifndef kzalloc_obj
 #define kzalloc_obj(P, GFP) \
 	kzalloc(sizeof(P), GFP)
+#endif /* kzalloc_obj */
 
+#ifndef kmalloc_obj
 #define kmalloc_obj(P, GFP) \
 	kmalloc(sizeof(P), GFP)
+#endif /* kmalloc_obj */
 
+#ifndef kmalloc_objs
 #define kmalloc_objs(P, COUNT, GFP) \
 	kmalloc_array((COUNT), sizeof(P), GFP)
+#endif /* kmalloc_objs */
 
 #endif /* < KERNEL_VERSION(7, 0, 0) */
 
