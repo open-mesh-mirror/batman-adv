@@ -8,7 +8,7 @@
 
 #if LINUX_VERSION_IS_LESS(7, 0, 0) && \
     !(LINUX_VERSION_IS_GEQ(6, 18, 33) && LINUX_VERSION_IS_LESS(6, 19, 0)) && \
-    !(LINUX_VERSION_IS_GEQ(6, 12, 37) && LINUX_VERSION_IS_LESS(6, 13, 0))
+    !(LINUX_VERSION_IS_GEQ(6, 12, 97) && LINUX_VERSION_IS_LESS(6, 13, 0))
 
 #define kzalloc_obj(P, GFP) \
 	kzalloc(sizeof(P), GFP)
