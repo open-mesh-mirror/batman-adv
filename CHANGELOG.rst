@@ -1,5 +1,35 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2026.3 (2026-08-31)
+===================
+
+* support latest kernels (5.15 - 7.3)
+* coding style cleanups and refactoring
+* reduce memory and runtime overhead by only handling attached interfaces
+* optimize throughput meters unacked packets handling
+* bugs squashed:
+
+  - clean untagged VLAN on netdev registration failure
+  - ensure minimal ethernet header on TX
+  - fix VLAN priority offset
+  - bla: avoid CRC corruption due to parallel claim add
+  - bla: fix freeing of claims on meshif deletion
+  - bla: prevent CRC corruptions after claim flush
+  - dat: atomically update mac addresses
+  - dat: avoid unaligned fault in IP extraction
+  - dat: fix tie-break for candidate selection
+  - frag: fix primary_if leak on failed linearization
+  - frag: fix stale receive device on merged fragments
+  - frag: free unfragmentable packet
+  - mcast: avoid OOB read of num_dests header
+  - mcast: fix TX priority extraction for BATADV_FORW_MCAST
+  - mcast: ensure unshared skb for multicast packets
+  - mcast: linearize skbuff for packet generation
+  - mcast: reject unrepresentable TVLV offsets
+  - tt: avoid request storms during pending request
+  - tt: prevent TVLV OOB check overflow
+  - tvlv: handle negative tvlv processing return codes
+
 2026.2 (2026-06-30)
 ===================
 
