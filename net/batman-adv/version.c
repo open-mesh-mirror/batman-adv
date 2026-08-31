@@ -7,7 +7,7 @@
 
 /* prefer version provided by Makefile */
 #ifndef BATADV_SOURCE_VERSION
-#define BATADV_SOURCE_VERSION "2026.3"
+#define BATADV_SOURCE_VERSION "2026.4"
 #endif
 
 #undef UTS_RELEASE
