@@ -1549,14 +1549,14 @@ batadv_tt_local_remove_now(struct batadv_priv *bat_priv,
 	struct batadv_tt_common_entry *common = &tt_local_entry->common;
 	struct hlist_node *tt_removed_node;
 
-	batadv_tt_local_event(bat_priv, tt_local_entry, BATADV_TT_CLIENT_DEL);
-
 	/* remove exactly this object when still present in hash */
 	tt_removed_node = batadv_hash_remove(bat_priv->tt.local_hash,
 					     batadv_compare_tt_entry,
 					     batadv_choose_tt, common);
 	if (!tt_removed_node)
 		return;
+
+	batadv_tt_local_event(bat_priv, tt_local_entry, BATADV_TT_CLIENT_DEL);
 
 	/* batadv_tt_local_transition_new() may have committed the entry and
 	 * thus counted it in the local table size since the
