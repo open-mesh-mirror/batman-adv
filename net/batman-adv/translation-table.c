@@ -1531,13 +1531,16 @@ batadv_tt_local_mark_removed(struct batadv_tt_local_entry *tt_local_entry,
 }
 
 /**
- * batadv_tt_local_remove_now() - purge a local entry which was never announced
+ * batadv_tt_local_remove_now() - purge a local entry which was not (yet) announced
  * @bat_priv: the bat priv with all the mesh interface information
  * @tt_local_entry: local TT entry to purge
  *
- * A client which was added right after the last ttvn increment was never sent
- * to the other nodes. It can therefore be dropped from the local table without
- * waiting for the next ttvn increment.
+ * A client which was added right after the last ttvn increment was not (yet)
+ * sent to the other nodes. It can therefore be dropped from the local table
+ * without waiting for the next ttvn increment.
+ *
+ * If it was still announced by a parallel context before it was removed from
+ * the hash, then the local TT size adjustment will be handled automatically.
  */
 static void
 batadv_tt_local_remove_now(struct batadv_priv *bat_priv,
