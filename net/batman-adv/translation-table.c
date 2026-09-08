@@ -1514,7 +1514,10 @@ batadv_tt_local_mark_removed(struct batadv_tt_local_entry *tt_local_entry,
 	scoped_guard(spinlock_bh, &common->flags_lock) {
 		*curr_flags = common->flags;
 
-		/* mark the local client as ROAMed */
+		/* if this global entry addition is due to a roaming, the node
+		 * has to mark the local entry as "roamed" in order to
+		 * correctly reroute packets later
+		 */
 		if (roaming)
 			common->flags |= BATADV_TT_CLIENT_ROAM;
 
@@ -1585,22 +1588,22 @@ u16 batadv_tt_local_remove(struct batadv_priv *bat_priv, const u8 *addr,
 	if (!tt_local_entry)
 		return BATADV_NO_FLAGS;
 
-	flags = BATADV_TT_CLIENT_DEL;
-	/* if this global entry addition is due to a roaming, the node has to
-	 * mark the local entry as "roamed" in order to correctly reroute
-	 * packets later
-	 */
-	if (roaming)
-		flags |= BATADV_TT_CLIENT_ROAM;
+	if (batadv_tt_local_mark_removed(tt_local_entry, roaming, &curr_flags)) {
+		/* queue (roamed) del event which was prepared by
+		 * batadv_tt_local_mark_removed()
+		 */
+		flags = BATADV_TT_CLIENT_DEL;
+		if (roaming)
+			flags |= BATADV_TT_CLIENT_ROAM;
 
-	if (batadv_tt_local_mark_removed(tt_local_entry, roaming, &curr_flags))
 		batadv_tt_local_set_pending_event(bat_priv, tt_local_entry,
 						  flags, message);
-	else
+	} else {
 		/* if this client has been added right now, it is possible to
 		 * immediately purge it
 		 */
 		batadv_tt_local_remove_now(bat_priv, tt_local_entry);
+	}
 
 	batadv_tt_local_entry_put(tt_local_entry);
 
