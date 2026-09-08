@@ -1923,9 +1923,10 @@ out:
  * @tt_global_entry: the global TT entry of the announced client
  * @flags: TT flags announced for this non-mesh client
  *
- * A client which is announced by another originator is no longer a local
- * client. Remove it from the local table and take over the WIFI flag it was
- * tracked with.
+ * A non-multicast client which is announced by another originator is no longer
+ * a local client. Remove it from the local table and (for the global entry)
+ * take over the WIFI flag it was tracked with. Reset the roaming flag in case
+ * the announcement didn't contain the roaming flag.
  */
 static void
 batadv_tt_global_purge_local(struct batadv_priv *bat_priv,
