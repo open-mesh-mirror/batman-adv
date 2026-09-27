@@ -8,19 +8,21 @@
 
 #if LINUX_VERSION_IS_LESS(7, 0, 0)
 
+#include <linux/gfp.h>
+
 #ifndef kzalloc_obj
-#define kzalloc_obj(P, GFP) \
-	kzalloc(sizeof(P), GFP)
+#define kzalloc_obj(P, ...) \
+	kzalloc(sizeof(P), default_gfp(__VA_ARGS__))
 #endif /* kzalloc_obj */
 
 #ifndef kmalloc_obj
-#define kmalloc_obj(P, GFP) \
-	kmalloc(sizeof(P), GFP)
+#define kmalloc_obj(P, ...) \
+	kmalloc(sizeof(P), default_gfp(__VA_ARGS__))
 #endif /* kmalloc_obj */
 
 #ifndef kmalloc_objs
-#define kmalloc_objs(P, COUNT, GFP) \
-	kmalloc_array((COUNT), sizeof(P), GFP)
+#define kmalloc_objs(P, COUNT, ...) \
+	kmalloc_array((COUNT), sizeof(P), default_gfp(__VA_ARGS__))
 #endif /* kmalloc_objs */
 
 #endif /* < KERNEL_VERSION(7, 0, 0) */
