@@ -7,6 +7,7 @@
 #include "originator.h"
 #include "main.h"
 
+#include <linux/atomic.h>
 #include <linux/container_of.h>
 #include <linux/err.h>
 #include <linux/errno.h>
@@ -1290,6 +1291,7 @@ void batadv_purge_orig_ref(struct batadv_priv *bat_priv)
 			if (batadv_purge_orig_node(bat_priv, orig_node)) {
 				batadv_gw_node_delete(bat_priv, orig_node);
 				hlist_del_rcu(&orig_node->hash_entry);
+				atomic_inc(&hash->generation);
 				batadv_tt_global_del_orig(orig_node->bat_priv,
 							  orig_node, -1,
 							  "originator timed out");
