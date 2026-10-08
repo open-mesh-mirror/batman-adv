@@ -319,6 +319,7 @@ batadv_bla_del_backbone_claims(struct batadv_bla_backbone_gw *backbone_gw)
 				continue;
 
 			hlist_del_rcu(&claim->hash_entry);
+			atomic_inc(&hash->generation);
 			batadv_claim_put(claim);
 		}
 		spin_unlock_bh(list_lock);
@@ -1286,6 +1287,7 @@ purge_now:
 				batadv_bla_del_backbone_claims(backbone_gw);
 
 				hlist_del_rcu(&backbone_gw->hash_entry);
+				atomic_inc(&hash->generation);
 				break;
 			}
 			spin_unlock_bh(list_lock);
