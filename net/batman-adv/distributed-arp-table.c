@@ -248,6 +248,7 @@ static void __batadv_dat_purge(struct batadv_priv *bat_priv,
 				continue;
 
 			hlist_del_rcu(&dat_entry->hash_entry);
+			atomic_inc(&bat_priv->dat.hash->generation);
 			batadv_dat_entry_put(dat_entry);
 		}
 		spin_unlock_bh(list_lock);
