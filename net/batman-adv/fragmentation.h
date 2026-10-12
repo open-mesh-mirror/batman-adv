@@ -36,6 +36,7 @@ int batadv_frag_send_packet(struct sk_buff *skb,
  */
 static inline bool
 batadv_frag_check_entry(struct batadv_frag_table_entry *frags_entry)
+	__must_hold(&frags_entry->lock)
 {
 	if (!hlist_empty(&frags_entry->fragment_list) &&
 	    batadv_has_timed_out(frags_entry->timestamp, BATADV_FRAG_TIMEOUT))

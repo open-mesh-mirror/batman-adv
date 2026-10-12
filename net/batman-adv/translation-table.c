@@ -2419,6 +2419,7 @@ out:
 static struct batadv_tt_orig_list_entry *
 batadv_transtable_best_orig(struct batadv_priv *bat_priv,
 			    struct batadv_tt_global_entry *tt_global_entry)
+	__must_hold_shared(RCU)
 {
 	struct batadv_tt_orig_list_entry *best_entry = NULL;
 	struct batadv_algo_ops *bao = bat_priv->algo_ops;
@@ -2532,6 +2533,7 @@ static int
 batadv_tt_global_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 			    struct batadv_priv *bat_priv,
 			    struct batadv_tt_common_entry *common, int *sub_s)
+	__must_hold_shared(RCU)
 {
 	struct batadv_tt_orig_list_entry *orig_entry;
 	struct batadv_tt_orig_list_entry *best_entry;
@@ -2672,6 +2674,7 @@ int batadv_tt_global_dump(struct sk_buff *msg, struct netlink_callback *cb)
 static void
 _batadv_tt_global_del_orig_entry(struct batadv_tt_global_entry *tt_global_entry,
 				 struct batadv_tt_orig_list_entry *orig_entry)
+	__must_hold(&tt_global_entry->list_lock)
 {
 	lockdep_assert_held(&tt_global_entry->list_lock);
 
@@ -4545,6 +4548,7 @@ static void batadv_tt_local_purge_pending_clients(struct batadv_priv *bat_priv)
  * Caller must hold tt->commit_lock.
  */
 static void batadv_tt_local_commit_changes_nolock(struct batadv_priv *bat_priv)
+	__must_hold(&bat_priv->tt.commit_lock)
 {
 	LIST_HEAD(changes_list);
 	int changes_num;

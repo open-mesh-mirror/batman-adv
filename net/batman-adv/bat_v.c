@@ -213,6 +213,7 @@ batadv_v_neigh_dump_hardif(struct sk_buff *msg, u32 portid, u32 seq,
 			   struct batadv_priv *bat_priv,
 			   struct batadv_hard_iface *hard_iface,
 			   int *idx_s)
+	__must_hold_shared(RCU)
 {
 	struct batadv_hardif_neigh_node *hardif_neigh;
 	int idx = 0;
@@ -370,6 +371,7 @@ batadv_v_orig_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 			 struct batadv_priv *bat_priv,
 			 struct batadv_hard_iface *if_outgoing,
 			 struct batadv_orig_node *orig_node, int *sub_s)
+	__must_hold_shared(RCU)
 {
 	struct batadv_neigh_node *neigh_node_best;
 	struct batadv_neigh_node *neigh_node;

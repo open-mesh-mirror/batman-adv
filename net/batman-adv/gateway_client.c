@@ -335,6 +335,7 @@ out:
 static void batadv_gw_node_add(struct batadv_priv *bat_priv,
 			       struct batadv_orig_node *orig_node,
 			       struct batadv_tvlv_gateway_data *gateway)
+	__must_hold(&bat_priv->gw.list_lock)
 {
 	struct batadv_gw_node *gw_node;
 

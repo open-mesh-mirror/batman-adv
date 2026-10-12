@@ -136,6 +136,7 @@ static void batadv_tvlv_container_put(struct batadv_tvlv_container *tvlv)
  */
 static struct batadv_tvlv_container * __must_check
 batadv_tvlv_container_get(struct batadv_priv *bat_priv, u8 type, u8 version)
+	__must_hold(&bat_priv->tvlv.container_list_lock)
 {
 	struct batadv_tvlv_container *tvlv = NULL;
 	struct batadv_tvlv_container *tvlv_tmp;
@@ -168,6 +169,7 @@ batadv_tvlv_container_get(struct batadv_priv *bat_priv, u8 type, u8 version)
  * Return: size of all currently registered tvlv containers in bytes.
  */
 static size_t batadv_tvlv_container_list_size(struct batadv_priv *bat_priv)
+	__must_hold(&bat_priv->tvlv.container_list_lock)
 {
 	struct batadv_tvlv_container *tvlv;
 	size_t tvlv_len = 0;
@@ -193,6 +195,7 @@ static size_t batadv_tvlv_container_list_size(struct batadv_priv *bat_priv)
  */
 static void batadv_tvlv_container_remove(struct batadv_priv *bat_priv,
 					 struct batadv_tvlv_container *tvlv)
+	__must_hold(&bat_priv->tvlv.container_list_lock)
 {
 	lockdep_assert_held(&bat_priv->tvlv.container_list_lock);
 

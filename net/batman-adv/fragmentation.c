@@ -107,6 +107,7 @@ static size_t batadv_frag_size_limit(void)
  */
 static bool batadv_frag_init_chain(struct batadv_frag_table_entry *chain,
 				   u16 seqno)
+	__must_hold(&chain->lock)
 {
 	lockdep_assert_held(&chain->lock);
 

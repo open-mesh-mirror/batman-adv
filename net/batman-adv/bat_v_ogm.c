@@ -163,6 +163,7 @@ static unsigned int batadv_v_ogm_len(struct sk_buff *skb)
  */
 static bool batadv_v_ogm_queue_left(struct sk_buff *skb,
 				    struct batadv_hard_iface *hard_iface)
+	__must_hold(&hard_iface->bat_v.aggr_list.lock)
 {
 	unsigned int max = min_t(unsigned int, hard_iface->net_dev->mtu,
 				 BATADV_MAX_AGGREGATION_BYTES);
@@ -182,6 +183,7 @@ static bool batadv_v_ogm_queue_left(struct sk_buff *skb,
  * Caller needs to hold the hard_iface->bat_v.aggr_list.lock.
  */
 static void batadv_v_ogm_aggr_list_free(struct batadv_hard_iface *hard_iface)
+	__must_hold(&hard_iface->bat_v.aggr_list.lock)
 {
 	lockdep_assert_held(&hard_iface->bat_v.aggr_list.lock);
 
@@ -201,6 +203,7 @@ static void batadv_v_ogm_aggr_list_free(struct batadv_hard_iface *hard_iface)
  * Caller needs to hold the hard_iface->bat_v.aggr_list.lock.
  */
 static void batadv_v_ogm_aggr_send(struct batadv_hard_iface *hard_iface)
+	__must_hold(&hard_iface->bat_v.aggr_list.lock)
 {
 	unsigned int aggr_len = hard_iface->bat_v.aggr_len;
 	struct sk_buff *skb_aggr;
@@ -269,6 +272,7 @@ unlock:
  * @bat_priv: the bat priv with all the mesh interface information
  */
 static void batadv_v_ogm_send_meshif(struct batadv_priv *bat_priv)
+	__must_hold(&bat_priv->bat_v.ogm_buff_mutex)
 {
 	struct batadv_ogm2_packet *ogm_packet;
 	struct batadv_hard_iface *hard_iface;

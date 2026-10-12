@@ -893,6 +893,7 @@ batadv_iv_ogm_slide_own_bcast_window(struct batadv_hard_iface *hard_iface)
  * @hard_iface: interface whose ogm buffer should be transmitted
  */
 static void batadv_iv_ogm_schedule_buff(struct batadv_hard_iface *hard_iface)
+	__must_hold(&hard_iface->bat_iv.ogm_buff_mutex)
 {
 	struct batadv_priv *bat_priv = netdev_priv(hard_iface->mesh_iface);
 	struct batadv_ogm_buf *ogm_buff = &hard_iface->bat_iv.ogm_buff;
@@ -2108,6 +2109,7 @@ batadv_iv_ogm_orig_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 			      struct batadv_priv *bat_priv,
 			      struct batadv_hard_iface *if_outgoing,
 			      struct batadv_orig_node *orig_node, int *sub_s)
+	__must_hold_shared(RCU)
 {
 	struct batadv_neigh_node *neigh_node_best;
 	struct batadv_neigh_node *neigh_node;
@@ -2336,6 +2338,7 @@ batadv_iv_ogm_neigh_dump_hardif(struct sk_buff *msg, u32 portid, u32 seq,
 				struct batadv_priv *bat_priv,
 				struct batadv_hard_iface *hard_iface,
 				int *idx_s)
+	__must_hold_shared(RCU)
 {
 	struct batadv_hardif_neigh_node *hardif_neigh;
 	int idx = 0;
