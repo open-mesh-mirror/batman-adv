@@ -214,7 +214,7 @@ static void batadv_claim_put(struct batadv_bla_claim *claim)
  *
  * Return: claim if found or NULL otherwise.
  */
-static struct batadv_bla_claim *
+static struct batadv_bla_claim * __must_check
 batadv_claim_hash_find(struct batadv_priv *bat_priv,
 		       const struct batadv_bla_claim_key *key)
 {
@@ -254,7 +254,7 @@ batadv_claim_hash_find(struct batadv_priv *bat_priv,
  *
  * Return: backbone gateway if found or NULL otherwise
  */
-static struct batadv_bla_backbone_gw *
+static struct batadv_bla_backbone_gw * __must_check
 batadv_backbone_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
 			  unsigned short vid)
 {
@@ -481,7 +481,7 @@ static void batadv_bla_loopdetect_report(struct work_struct *work)
  *
  * Return: the (possibly created) backbone gateway or NULL on error
  */
-static struct batadv_bla_backbone_gw *
+static struct batadv_bla_backbone_gw * __must_check
 batadv_bla_get_backbone_gw(struct batadv_priv *bat_priv, const u8 *orig,
 			   unsigned short vid, bool own_backbone)
 {
@@ -789,7 +789,7 @@ static void batadv_bla_add_claim(struct batadv_priv *bat_priv,
  *
  * Return: valid reference to claim::backbone_gw
  */
-static struct batadv_bla_backbone_gw *
+static struct batadv_bla_backbone_gw * __must_check
 batadv_bla_claim_get_backbone_gw(struct batadv_bla_claim *claim)
 {
 	struct batadv_bla_backbone_gw *backbone_gw;

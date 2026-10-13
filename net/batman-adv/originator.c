@@ -530,7 +530,7 @@ out:
  *
  * Return: neighbor when found. Otherwise NULL
  */
-static struct batadv_neigh_node *
+static struct batadv_neigh_node * __must_check
 batadv_neigh_node_get(const struct batadv_orig_node *orig_node,
 		      const struct batadv_hard_iface *hard_iface,
 		      const u8 *addr)
@@ -565,7 +565,7 @@ batadv_neigh_node_get(const struct batadv_orig_node *orig_node,
  *
  * Return: the hardif neighbour node if found or created or NULL otherwise.
  */
-static struct batadv_hardif_neigh_node *
+static struct batadv_hardif_neigh_node * __must_check
 batadv_hardif_neigh_create(struct batadv_hard_iface *hard_iface,
 			   const u8 *neigh_addr,
 			   struct batadv_orig_node *orig_node)
@@ -612,7 +612,7 @@ out:
  *
  * Return: the hardif neighbour node if found or created or NULL otherwise.
  */
-static struct batadv_hardif_neigh_node *
+static struct batadv_hardif_neigh_node * __must_check
 batadv_hardif_neigh_get_or_create(struct batadv_hard_iface *hard_iface,
 				  const u8 *neigh_addr,
 				  struct batadv_orig_node *orig_node)
@@ -670,7 +670,7 @@ batadv_hardif_neigh_get(const struct batadv_hard_iface *hard_iface,
  *
  * Return: the neighbour node if found or created or NULL otherwise.
  */
-static struct batadv_neigh_node *
+static struct batadv_neigh_node * __must_check
 batadv_neigh_node_create(struct batadv_orig_node *orig_node,
 			 struct batadv_hard_iface *hard_iface,
 			 const u8 *neigh_addr)
@@ -1170,7 +1170,7 @@ batadv_purge_orig_neighbors(struct batadv_priv *bat_priv,
  *
  * Return: the current best neighbor, with refcount increased.
  */
-static struct batadv_neigh_node *
+static struct batadv_neigh_node * __must_check
 batadv_find_best_neighbor(struct batadv_priv *bat_priv,
 			  struct batadv_orig_node *orig_node,
 			  struct batadv_hard_iface *if_outgoing)

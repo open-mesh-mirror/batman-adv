@@ -259,7 +259,7 @@ err:
  *
  * Return: the merged skb or NULL on error.
  */
-static struct sk_buff *
+static struct sk_buff * __must_check
 batadv_frag_merge_packets(struct hlist_head *chain)
 {
 	int hdr_size = sizeof(struct batadv_frag_packet);
@@ -475,10 +475,10 @@ free_skb:
  *
  * Return: the new fragment, NULL on error.
  */
-static struct sk_buff *batadv_frag_create(struct net_device *net_dev,
-					  struct sk_buff *skb,
-					  struct batadv_frag_packet *frag_head,
-					  unsigned int fragment_size)
+static struct sk_buff * __must_check
+batadv_frag_create(struct net_device *net_dev, struct sk_buff *skb,
+		   struct batadv_frag_packet *frag_head,
+		   unsigned int fragment_size)
 {
 	unsigned int ll_reserved = LL_RESERVED_SPACE(net_dev);
 	unsigned int tailroom = net_dev->needed_tailroom;

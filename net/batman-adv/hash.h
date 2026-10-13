@@ -66,7 +66,7 @@ struct batadv_hashtable {
 };
 
 /* allocates and clears the hash */
-struct batadv_hashtable *batadv_hash_new(u32 size);
+struct batadv_hashtable * __must_check batadv_hash_new(u32 size);
 
 /* set class key for all locks */
 void batadv_hash_set_lock_class(struct batadv_hashtable *hash,

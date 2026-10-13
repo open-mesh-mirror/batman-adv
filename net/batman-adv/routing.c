@@ -542,7 +542,7 @@ static int batadv_check_unicast_packet(struct batadv_priv *bat_priv,
  *
  * The object is returned with refcounter increased by 1.
  */
-static struct batadv_orig_ifinfo *
+static struct batadv_orig_ifinfo * __must_check
 batadv_last_bonding_get(struct batadv_orig_node *orig_node)
 {
 	struct batadv_orig_ifinfo *last_bonding_candidate;

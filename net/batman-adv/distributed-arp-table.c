@@ -396,7 +396,7 @@ static u32 batadv_hash_dat(const void *data, u32 size)
  *
  * Return: the dat_entry if found, NULL otherwise.
  */
-static struct batadv_dat_entry *
+static struct batadv_dat_entry * __must_check
 batadv_dat_entry_hash_find(struct batadv_priv *bat_priv, __be32 ip,
 			   unsigned short vid)
 {
@@ -704,7 +704,7 @@ static void batadv_choose_next_candidate(struct batadv_priv *bat_priv,
  *
  * Return: the candidate array of size BATADV_DAT_CANDIDATE_NUM.
  */
-static struct batadv_dat_candidate *
+static struct batadv_dat_candidate * __must_check
 batadv_dat_select_candidates(struct batadv_priv *bat_priv, __be32 ip_dst,
 			     unsigned short vid)
 {
@@ -1195,7 +1195,7 @@ static unsigned short batadv_dat_get_vid(struct sk_buff *skb, int *hdr_size)
  *
  * Return: An skb containing an ARP Reply.
  */
-static struct sk_buff *
+static struct sk_buff * __must_check
 batadv_dat_arp_create_reply(struct batadv_priv *bat_priv, __be32 ip_src,
 			    __be32 ip_dst, const u8 *hw_src, const u8 *hw_dst,
 			    unsigned short vid)

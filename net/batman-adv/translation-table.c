@@ -191,7 +191,7 @@ static inline u32 batadv_choose_tt(const void *data, u32 size)
  * Return: a pointer to the tt_common struct belonging to the searched client if
  * found, NULL otherwise.
  */
-static struct batadv_tt_common_entry *
+static struct batadv_tt_common_entry * __must_check
 batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
 		    unsigned short vid)
 {
@@ -235,7 +235,7 @@ batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
  * Return: a pointer to the corresponding tt_local_entry struct if the client is
  * found, NULL otherwise.
  */
-static struct batadv_tt_local_entry *
+static struct batadv_tt_local_entry * __must_check
 batadv_tt_local_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
 			  unsigned short vid)
 {
@@ -1018,7 +1018,7 @@ static bool batadv_tt_local_add_existing(struct batadv_priv *bat_priv,
  * Return: the new entry with an initialized reference counter on success, NULL
  * otherwise.
  */
-static struct batadv_tt_local_entry *
+static struct batadv_tt_local_entry * __must_check
 batadv_tt_local_create(struct net_device *mesh_iface, const u8 *addr,
 		       unsigned short vid, bool iif_is_wifi)
 {
@@ -2009,7 +2009,7 @@ static void batadv_tt_changes_list_free(struct batadv_priv *bat_priv)
  *
  * Return: it with an increased refcounter, NULL if not found
  */
-static struct batadv_tt_orig_list_entry *
+static struct batadv_tt_orig_list_entry * __must_check
 batadv_tt_global_orig_entry_find(const struct batadv_tt_global_entry *entry,
 				 const struct batadv_orig_node *orig_node)
 {
@@ -2247,7 +2247,7 @@ batadv_tt_global_merge_flags(struct batadv_tt_global_entry *tt_global_entry,
  * Return: the new entry with an initialized reference counter on success, NULL
  * otherwise.
  */
-static struct batadv_tt_global_entry *
+static struct batadv_tt_global_entry * __must_check
 batadv_tt_global_create(const unsigned char *tt_addr, unsigned short vid,
 			u16 flags)
 {
@@ -3400,7 +3400,7 @@ static void batadv_tt_req_purge(struct batadv_priv *bat_priv)
  * Return: the pointer to the new tt_req_node struct if no request
  * has already been issued for this orig_node, NULL otherwise.
  */
-static struct batadv_tt_req_node *
+static struct batadv_tt_req_node * __must_check
 batadv_tt_req_node_new(struct batadv_priv *bat_priv,
 		       struct batadv_orig_node *orig_node)
 {
