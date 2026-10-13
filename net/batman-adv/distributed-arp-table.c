@@ -276,19 +276,18 @@ static void batadv_dat_purge(struct work_struct *work)
 /**
  * batadv_compare_dat() - comparing function used in the local DAT hash table
  * @node: node in the local table
- * @data2: second object to compare the node to
+ * @data2: &struct batadv_dat_entry_key to compare the node to
  *
- * Return: true if the two entries are the same, false otherwise.
+ * Return: true if the entry has the given key, false otherwise.
  */
 static bool batadv_compare_dat(const struct hlist_node *node, const void *data2)
 {
-	const struct batadv_dat_entry *entry1;
-	const struct batadv_dat_entry *entry2;
+	const struct batadv_dat_entry_key *key = data2;
+	const struct batadv_dat_entry *entry;
 
-	entry1 = container_of(node, struct batadv_dat_entry, hash_entry);
-	entry2 = data2;
+	entry = container_of(node, struct batadv_dat_entry, hash_entry);
 
-	return entry1->ip == entry2->ip && entry1->vid == entry2->vid;
+	return entry->key.ip == key->ip && entry->key.vid == key->vid;
 }
 
 /**
@@ -352,30 +351,30 @@ static __be32 batadv_arp_ip_dst(struct sk_buff *skb, int hdr_size)
 
 /**
  * batadv_hash_dat() - compute the hash value for an IP address
- * @data: data to hash
+ * @data: &struct batadv_dat_entry_key to hash
  * @size: size of the hash table
  *
  * Return: the selected index in the hash table for the given data.
  */
 static u32 batadv_hash_dat(const void *data, u32 size)
 {
-	const struct batadv_dat_entry *dat = data;
-	const unsigned char *key;
+	const struct batadv_dat_entry_key *key = data;
+	const unsigned char *buf;
 	u32 hash = 0;
 	__be16 vid;
 	u32 i;
 
-	key = (__force const unsigned char *)&dat->ip;
-	for (i = 0; i < sizeof(dat->ip); i++) {
-		hash += key[i];
+	buf = (__force const unsigned char *)&key->ip;
+	for (i = 0; i < sizeof(key->ip); i++) {
+		hash += buf[i];
 		hash += (hash << 10);
 		hash ^= (hash >> 6);
 	}
 
-	vid = htons(dat->vid);
-	key = (__force const unsigned char *)&vid;
-	for (i = 0; i < sizeof(dat->vid); i++) {
-		hash += key[i];
+	vid = htons(key->vid);
+	buf = (__force const unsigned char *)&vid;
+	for (i = 0; i < sizeof(key->vid); i++) {
+		hash += buf[i];
 		hash += (hash << 10);
 		hash ^= (hash >> 6);
 	}
@@ -402,26 +401,23 @@ batadv_dat_entry_hash_find(struct batadv_priv *bat_priv, __be32 ip,
 {
 	struct batadv_hashtable *hash = bat_priv->dat.hash;
 	struct batadv_dat_entry *dat_entry_tmp = NULL;
+	struct batadv_dat_entry_key key = {
+		.ip = ip,
+		.vid = vid,
+	};
 	struct batadv_dat_entry *dat_entry;
-	struct batadv_dat_entry to_find;
 	struct hlist_head *head;
 	u32 index;
 
 	if (!hash)
 		return NULL;
 
-	to_find.ip = ip;
-	to_find.vid = vid;
-
-	index = batadv_hash_dat(&to_find, hash->size);
+	index = batadv_hash_dat(&key, hash->size);
 	head = &hash->table[index];
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(dat_entry, head, hash_entry) {
-		if (dat_entry->ip != ip)
-			continue;
-
-		if (dat_entry->vid != vid)
+		if (!batadv_compare_dat(&dat_entry->hash_entry, &key))
 			continue;
 
 		if (!kref_get_unless_zero(&dat_entry->refcount))
@@ -457,7 +453,7 @@ static void batadv_dat_entry_add(struct batadv_priv *bat_priv, __be32 ip,
 		WRITE_ONCE(dat_entry->last_update, jiffies);
 		batadv_dbg(BATADV_DBG_DAT, bat_priv,
 			   "Entry updated: %pI4 %pM (vid: %d)\n",
-			   &dat_entry->ip, mac_addr,
+			   &dat_entry->key.ip, mac_addr,
 			   batadv_print_vid(vid));
 		goto out;
 	}
@@ -466,15 +462,15 @@ static void batadv_dat_entry_add(struct batadv_priv *bat_priv, __be32 ip,
 	if (!dat_entry)
 		goto out;
 
-	dat_entry->ip = ip;
-	dat_entry->vid = vid;
+	dat_entry->key.ip = ip;
+	dat_entry->key.vid = vid;
 	atomic64_set(&dat_entry->mac_addr, u64_mac);
 	WRITE_ONCE(dat_entry->last_update, jiffies);
 	kref_init(&dat_entry->refcount);
 
 	kref_get(&dat_entry->refcount);
 	hash_added = batadv_hash_add(bat_priv->dat.hash, batadv_compare_dat,
-				     batadv_hash_dat, dat_entry,
+				     batadv_hash_dat, &dat_entry->key,
 				     &dat_entry->hash_entry);
 
 	if (unlikely(hash_added != 0)) {
@@ -484,7 +480,7 @@ static void batadv_dat_entry_add(struct batadv_priv *bat_priv, __be32 ip,
 	}
 
 	batadv_dbg(BATADV_DBG_DAT, bat_priv, "New entry added: %pI4 %pM (vid: %d)\n",
-		   &dat_entry->ip, mac_addr, batadv_print_vid(vid));
+		   &dat_entry->key.ip, mac_addr, batadv_print_vid(vid));
 
 out:
 	batadv_dat_entry_put(dat_entry);
@@ -712,8 +708,11 @@ batadv_dat_select_candidates(struct batadv_priv *bat_priv, __be32 ip_dst,
 			     unsigned short vid)
 {
 	batadv_dat_addr_t last_max = BATADV_DAT_ADDR_MAX;
+	struct batadv_dat_entry_key key = {
+		.ip = ip_dst,
+		.vid = vid,
+	};
 	struct batadv_dat_candidate *res;
-	struct batadv_dat_entry dat;
 	batadv_dat_addr_t ip_key;
 	int select;
 
@@ -724,9 +723,7 @@ batadv_dat_select_candidates(struct batadv_priv *bat_priv, __be32 ip_dst,
 	if (!res)
 		return NULL;
 
-	dat.ip = ip_dst;
-	dat.vid = vid;
-	ip_key = (batadv_dat_addr_t)batadv_hash_dat(&dat,
+	ip_key = (batadv_dat_addr_t)batadv_hash_dat(&key,
 						    BATADV_DAT_ADDR_MAX);
 
 	batadv_dbg(BATADV_DBG_DAT, bat_priv,
@@ -960,9 +957,9 @@ batadv_dat_cache_dump_entry(struct sk_buff *msg, u32 portid,
 	u64_to_ether_addr(u64_mac, mac);
 
 	if (nla_put_in_addr(msg, BATADV_ATTR_DAT_CACHE_IP4ADDRESS,
-			    dat_entry->ip) ||
+			    dat_entry->key.ip) ||
 	    nla_put(msg, BATADV_ATTR_DAT_CACHE_HWADDRESS, ETH_ALEN, mac) ||
-	    nla_put_u16(msg, BATADV_ATTR_DAT_CACHE_VID, dat_entry->vid) ||
+	    nla_put_u16(msg, BATADV_ATTR_DAT_CACHE_VID, dat_entry->key.vid) ||
 	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS, msecs)) {
 		genlmsg_cancel(msg, hdr);
 		return -EMSGSIZE;
@@ -1521,7 +1518,7 @@ bool batadv_dat_snoop_incoming_arp_reply(struct batadv_priv *bat_priv,
 			batadv_dbg(BATADV_DBG_DAT, bat_priv,
 				   "Doubled ARP reply removed: ARP MSG = [src: %pM-%pI4 dst: %pM-%pI4]; dat_entry: %pM-%pI4\n",
 				   hw_src, &ip_src, hw_dst, &ip_dst,
-				   mac, &dat_entry->ip);
+				   mac, &dat_entry->key.ip);
 			dropped = true;
 		}
 	}
