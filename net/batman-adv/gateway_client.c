@@ -74,7 +74,8 @@ void batadv_gw_node_release(struct kref *ref)
  * batadv_gw_get_selected_gw_node() - Get currently selected gateway
  * @bat_priv: the bat priv with all the mesh interface information
  *
- * Return: selected gateway (with increased refcnt), NULL on errors
+ * Return: selected gateway, NULL on errors.
+ * The returned object has an increased refcounter.
  */
 struct batadv_gw_node *
 batadv_gw_get_selected_gw_node(struct batadv_priv *bat_priv)
@@ -98,7 +99,8 @@ out:
  * batadv_gw_get_selected_orig() - Get originator of currently selected gateway
  * @bat_priv: the bat priv with all the mesh interface information
  *
- * Return: orig_node of selected gateway (with increased refcnt), NULL on errors
+ * Return: orig_node of selected gateway, NULL on errors.
+ * The returned object has an increased refcounter.
  */
 struct batadv_orig_node *
 batadv_gw_get_selected_orig(struct batadv_priv *bat_priv)
@@ -374,6 +376,7 @@ static void batadv_gw_node_add(struct batadv_priv *bat_priv,
  * @orig_node: originator announcing gateway capabilities
  *
  * Return: gateway node if found or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 struct batadv_gw_node *batadv_gw_node_get(struct batadv_priv *bat_priv,
 					  struct batadv_orig_node *orig_node)

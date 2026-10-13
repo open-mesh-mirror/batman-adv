@@ -190,6 +190,7 @@ static inline u32 batadv_choose_tt(const void *data, u32 size)
  *
  * Return: a pointer to the tt_common struct belonging to the searched client if
  * found, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_common_entry * __must_check
 batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
@@ -234,6 +235,7 @@ batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
  *
  * Return: a pointer to the corresponding tt_local_entry struct if the client is
  * found, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_local_entry * __must_check
 batadv_tt_local_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
@@ -259,6 +261,7 @@ batadv_tt_local_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
  *
  * Return: a pointer to the corresponding tt_global_entry struct if the client
  * is found, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 struct batadv_tt_global_entry *
 batadv_tt_global_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
@@ -1015,8 +1018,8 @@ static bool batadv_tt_local_add_existing(struct batadv_priv *bat_priv,
  * as BATADV_TT_CLIENT_NEW to avoid sending it in a full table response going
  * out before the next ttvn increment (consistency check).
  *
- * Return: the new entry with an initialized reference counter on success, NULL
- * otherwise.
+ * Return: the new entry on success, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_local_entry * __must_check
 batadv_tt_local_create(struct net_device *mesh_iface, const u8 *addr,
@@ -2007,7 +2010,8 @@ static void batadv_tt_changes_list_free(struct batadv_priv *bat_priv)
  * retrieve the orig_tt_list_entry belonging to orig_node from the
  * batadv_tt_global_entry list
  *
- * Return: it with an increased refcounter, NULL if not found
+ * Return: found entry on success, NULL if not found.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_orig_list_entry * __must_check
 batadv_tt_global_orig_entry_find(const struct batadv_tt_global_entry *entry,
@@ -2244,8 +2248,8 @@ batadv_tt_global_merge_flags(struct batadv_tt_global_entry *tt_global_entry,
  * The returned entry is not yet part of bat_priv->tt.global_hash and has an
  * empty originator list.
  *
- * Return: the new entry with an initialized reference counter on success, NULL
- * otherwise.
+ * Return: the new entry on success, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_global_entry * __must_check
 batadv_tt_global_create(const unsigned char *tt_addr, unsigned short vid,
@@ -2409,6 +2413,8 @@ out:
  *
  * This function assumes the caller holds rcu_read_lock().
  * Return: best originator list entry or NULL on errors.
+ * The returned object has no increased refcounter and is only valid inside
+ * the RCU read-side critical section of the caller.
  */
 static struct batadv_tt_orig_list_entry *
 batadv_transtable_best_orig(struct batadv_priv *bat_priv,
@@ -3077,6 +3083,7 @@ _batadv_is_ap_isolated(struct batadv_tt_local_entry *tt_local_entry,
  * mesh for contacting the client 'addr', NULL otherwise.
  * In case of multiple originators serving the same client, the function returns
  * the best one (best in terms of metric towards the destination node).
+ * The returned object has an increased refcounter.
  *
  * If the two clients are AP isolated the function returns NULL.
  */
@@ -3399,6 +3406,7 @@ static void batadv_tt_req_purge(struct batadv_priv *bat_priv)
  *
  * Return: the pointer to the new tt_req_node struct if no request
  * has already been issued for this orig_node, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tt_req_node * __must_check
 batadv_tt_req_node_new(struct batadv_priv *bat_priv,

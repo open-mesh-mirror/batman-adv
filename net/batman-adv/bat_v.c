@@ -612,7 +612,8 @@ out:
  * batadv_v_gw_get_best_gw_node() - retrieve the best GW node
  * @bat_priv: the bat priv with all the mesh interface information
  *
- * Return: the GW node having the best GW-metric, NULL if no GW is known
+ * Return: the GW node having the best GW-metric, NULL if no GW is known.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_gw_node * __must_check
 batadv_v_gw_get_best_gw_node(struct batadv_priv *bat_priv)

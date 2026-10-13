@@ -73,7 +73,8 @@ void batadv_hardif_release(struct kref *ref)
  * batadv_hardif_get_by_netdev() - Get hard interface object of a net_device
  * @net_dev: net_device to search for
  *
- * Return: batadv_hard_iface of net_dev (with increased refcnt), NULL on errors
+ * Return: batadv_hard_iface of net_dev, NULL on errors.
+ * The returned object has an increased refcounter.
  */
 struct batadv_hard_iface *
 batadv_hardif_get_by_netdev(struct net_device *net_dev)
@@ -236,6 +237,7 @@ static bool batadv_is_valid_iface(const struct net_device *net_dev)
  *
  * Return: the 'real' net device or the original net device and NULL in case
  *  of an error.
+ * The returned object has an increased refcounter.
  */
 struct net_device *__batadv_get_real_netdev(struct net_device *netdev)
 {
@@ -284,6 +286,7 @@ out:
  *
  * Return: the 'real' net device or the original net device and NULL in case
  *  of an error.
+ * The returned object has an increased refcounter.
  */
 struct net_device *batadv_get_real_netdev(struct net_device *net_device)
 {
@@ -485,6 +488,7 @@ out:
  *
  * Return: first hard interface in BATADV_IF_ACTIVE state attached to
  *  @mesh_iface, or NULL if none is active.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_hard_iface * __must_check
 batadv_hardif_get_active(struct net_device *mesh_iface)

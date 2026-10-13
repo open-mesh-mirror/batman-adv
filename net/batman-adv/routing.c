@@ -587,6 +587,7 @@ batadv_last_bonding_replace(struct batadv_orig_node *orig_node,
  *
  * Return: the router which should be used for this orig_node on
  * this interface, or NULL if not available.
+ * The returned object has an increased refcounter.
  */
 struct batadv_neigh_node *
 batadv_find_router(struct batadv_priv *bat_priv,

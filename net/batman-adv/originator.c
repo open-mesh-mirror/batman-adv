@@ -48,7 +48,8 @@ static struct lock_class_key batadv_orig_hash_lock_class_key;
  * @bat_priv: the bat priv with all the mesh interface information
  * @addr: mac address of the originator
  *
- * Return: orig_node (with increased refcnt), NULL on errors
+ * Return: orig_node, NULL on errors.
+ * The returned object has an increased refcounter.
  */
 struct batadv_orig_node *
 batadv_orig_hash_find(struct batadv_priv *bat_priv, const u8 *addr)
@@ -106,6 +107,7 @@ bool batadv_compare_orig(const struct hlist_node *node, const void *data2)
  *
  * Return: the vlan object identified by vid and belonging to orig_node or NULL
  * if it does not exist.
+ * The returned object has an increased refcounter.
  */
 struct batadv_orig_node_vlan *
 batadv_orig_node_vlan_get(struct batadv_orig_node *orig_node,
@@ -346,6 +348,7 @@ batadv_orig_router_get(struct batadv_orig_node *orig_node,
  *
  * Return: A neighbor node which is the best router towards the given originator
  * address.
+ * The returned object has an increased refcounter.
  */
 struct batadv_neigh_node *
 batadv_orig_to_router(struct batadv_priv *bat_priv, const u8 *orig_addr,
@@ -528,7 +531,8 @@ out:
  * Looks for and possibly returns a neighbour belonging to this originator list
  * which is connected through the provided hard interface.
  *
- * Return: neighbor when found. Otherwise NULL
+ * Return: neighbor when found. Otherwise NULL.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_neigh_node * __must_check
 batadv_neigh_node_get(const struct batadv_orig_node *orig_node,
@@ -564,6 +568,7 @@ batadv_neigh_node_get(const struct batadv_orig_node *orig_node,
  * @orig_node: originator object representing the neighbour
  *
  * Return: the hardif neighbour node if found or created or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_hardif_neigh_node * __must_check
 batadv_hardif_neigh_create(struct batadv_hard_iface *hard_iface,
@@ -611,6 +616,7 @@ out:
  * @orig_node: originator object representing the neighbour
  *
  * Return: the hardif neighbour node if found or created or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_hardif_neigh_node * __must_check
 batadv_hardif_neigh_get_or_create(struct batadv_hard_iface *hard_iface,
@@ -634,7 +640,8 @@ batadv_hardif_neigh_get_or_create(struct batadv_hard_iface *hard_iface,
  *
  * Looks for and possibly returns a neighbour belonging to this hard interface.
  *
- * Return: neighbor when found. Otherwise NULL
+ * Return: neighbor when found. Otherwise NULL.
+ * The returned object has an increased refcounter.
  */
 struct batadv_hardif_neigh_node *
 batadv_hardif_neigh_get(const struct batadv_hard_iface *hard_iface,
@@ -669,6 +676,7 @@ batadv_hardif_neigh_get(const struct batadv_hard_iface *hard_iface,
  * Allocates a new neigh_node object and initialises all the generic fields.
  *
  * Return: the neighbour node if found or created or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_neigh_node * __must_check
 batadv_neigh_node_create(struct batadv_orig_node *orig_node,
@@ -734,6 +742,7 @@ out:
  * @neigh_addr: the mac address of the neighbour interface
  *
  * Return: the neighbour node if found or created or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 struct batadv_neigh_node *
 batadv_neigh_node_get_or_create(struct batadv_orig_node *orig_node,
@@ -945,6 +954,7 @@ void batadv_originator_free(struct batadv_priv *bat_priv)
  * The new object is not added to the originator list.
  *
  * Return: the newly created object or NULL on failure.
+ * The returned object has an increased refcounter.
  */
 struct batadv_orig_node *batadv_orig_node_new(struct batadv_priv *bat_priv,
 					      const u8 *addr)

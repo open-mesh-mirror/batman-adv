@@ -99,7 +99,8 @@ static inline void batadv_hardif_put(struct batadv_hard_iface *hard_iface)
  * batadv_primary_if_get_selected() - Get reference to primary interface
  * @bat_priv: the bat priv with all the mesh interface information
  *
- * Return: primary interface (with increased refcnt), otherwise NULL
+ * Return: primary interface, otherwise NULL.
+ * The returned object has an increased refcounter.
  */
 static inline struct batadv_hard_iface * __must_check
 batadv_primary_if_get_selected(struct batadv_priv *bat_priv)

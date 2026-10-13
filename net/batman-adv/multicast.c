@@ -80,6 +80,7 @@ static void batadv_mcast_start_timer(struct batadv_priv *bat_priv)
  *
  * Return: NULL if no such bridge exists. Otherwise the net device of the
  * bridge.
+ * The returned object has an increased refcounter.
  */
 static struct net_device * __must_check
 batadv_mcast_get_bridge(struct net_device *mesh_iface)

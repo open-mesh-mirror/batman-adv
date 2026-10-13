@@ -109,6 +109,8 @@ batadv_mcast_forw_push_est_padding(struct sk_buff *skb, int count,
  * @entry_offset: the offset of the hlist node within the orig_node struct
  *
  * Return: The orig_node containing the hlist node on success, NULL on error.
+ * The returned object has no increased refcounter and is only valid inside
+ * the RCU read-side critical section of the caller.
  */
 static struct batadv_orig_node *
 batadv_mcast_forw_orig_entry(struct hlist_node *node,

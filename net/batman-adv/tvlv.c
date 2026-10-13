@@ -68,6 +68,7 @@ static void batadv_tvlv_handler_put(struct batadv_tvlv_handler *tvlv_handler)
  * @version: tvlv handler version to look for
  *
  * Return: tvlv handler if found or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tvlv_handler * __must_check
 batadv_tvlv_handler_get(struct batadv_priv *bat_priv, u8 type, u8 version)
@@ -131,6 +132,7 @@ static void batadv_tvlv_container_put(struct batadv_tvlv_container *tvlv)
  * (tvlv.container_list_lock).
  *
  * Return: tvlv container if found or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_tvlv_container * __must_check
 batadv_tvlv_container_get(struct batadv_priv *bat_priv, u8 type, u8 version)

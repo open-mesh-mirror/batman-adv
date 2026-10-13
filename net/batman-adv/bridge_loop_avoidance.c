@@ -213,6 +213,7 @@ static void batadv_claim_put(struct batadv_bla_claim *claim)
  * @key: key of the searched claim
  *
  * Return: claim if found or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_bla_claim * __must_check
 batadv_claim_hash_find(struct batadv_priv *bat_priv,
@@ -252,7 +253,8 @@ batadv_claim_hash_find(struct batadv_priv *bat_priv,
  * @addr: the address of the originator
  * @vid: the VLAN ID
  *
- * Return: backbone gateway if found or NULL otherwise
+ * Return: backbone gateway if found or NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_bla_backbone_gw * __must_check
 batadv_backbone_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
@@ -479,7 +481,8 @@ static void batadv_bla_loopdetect_report(struct work_struct *work)
  * @vid: the VLAN ID
  * @own_backbone: set if the requested backbone is local
  *
- * Return: the (possibly created) backbone gateway or NULL on error
+ * Return: the (possibly created) backbone gateway or NULL on error.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_bla_backbone_gw * __must_check
 batadv_bla_get_backbone_gw(struct batadv_priv *bat_priv, const u8 *orig,

@@ -395,6 +395,7 @@ static u32 batadv_hash_dat(const void *data, u32 size)
  * @vid: VLAN identifier
  *
  * Return: the dat_entry if found, NULL otherwise.
+ * The returned object has an increased refcounter.
  */
 static struct batadv_dat_entry * __must_check
 batadv_dat_entry_hash_find(struct batadv_priv *bat_priv, __be32 ip,

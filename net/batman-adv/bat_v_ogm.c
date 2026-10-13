@@ -51,6 +51,7 @@
  * Return: the orig_node corresponding to the specified address. If such an
  * object does not exist, it is allocated here. In case of allocation failure
  * returns NULL.
+ * The returned object has an increased refcounter.
  */
 struct batadv_orig_node *batadv_v_ogm_orig_get(struct batadv_priv *bat_priv,
 					       const u8 *addr)
