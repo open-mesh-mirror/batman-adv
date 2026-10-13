@@ -1788,9 +1788,10 @@ enum batadv_bla_backbone_gw_state {
 };
 
 /**
- * struct batadv_bla_backbone_gw - batman-adv gateway bridged into the LAN
+ * struct batadv_bla_backbone_gw_key - key of a backbone gateway in
+ *  &batadv_priv_bla.backbone_hash
  */
-struct batadv_bla_backbone_gw {
+struct batadv_bla_backbone_gw_key {
 	/**
 	 * @orig: originator address of backbone node (mac address of primary
 	 *  iface)
@@ -1799,6 +1800,14 @@ struct batadv_bla_backbone_gw {
 
 	/** @vid: vlan id this gateway was detected on */
 	unsigned short vid;
+};
+
+/**
+ * struct batadv_bla_backbone_gw - batman-adv gateway bridged into the LAN
+ */
+struct batadv_bla_backbone_gw {
+	/** @key: hash key identifying the backbone gateway */
+	struct batadv_bla_backbone_gw_key key;
 
 	/** @hash_entry: hlist node for &batadv_priv_bla.backbone_hash */
 	struct hlist_node hash_entry;
