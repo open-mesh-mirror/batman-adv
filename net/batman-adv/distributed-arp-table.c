@@ -1337,6 +1337,8 @@ out:
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
+ * The skb is never consumed by this function.
+ *
  * Return: true if the request has been answered, false otherwise.
  */
 bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
@@ -1396,8 +1398,6 @@ bool batadv_dat_snoop_incoming_arp_request(struct batadv_priv *bat_priv,
 	}
 out:
 	batadv_dat_entry_put(dat_entry);
-	if (ret)
-		kfree_skb(skb);
 	return ret;
 }
 
@@ -1466,7 +1466,9 @@ void batadv_dat_snoop_outgoing_arp_reply(struct batadv_priv *bat_priv,
  * from skb->data or eth_hdr()) before this call must be considered
  * invalid afterwards and has to be reacquired.
  *
- * Return: true if the packet was snooped and consumed by DAT. False if the
+ * The skb is never consumed by this function.
+ *
+ * Return: true if the packet was snooped and has to be dropped. False if the
  * packet has to be delivered to the interface
  */
 bool batadv_dat_snoop_incoming_arp_reply(struct batadv_priv *bat_priv,
@@ -1556,8 +1558,6 @@ bool batadv_dat_snoop_incoming_arp_reply(struct batadv_priv *bat_priv,
 	 */
 	dropped |= batadv_is_my_client(bat_priv, hw_src, vid);
 out:
-	if (dropped)
-		kfree_skb(skb);
 	batadv_dat_entry_put(dat_entry);
 	/* if dropped == false -> deliver to the interface */
 	return dropped;
