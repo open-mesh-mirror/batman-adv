@@ -1883,14 +1883,23 @@ struct batadv_bla_claim {
 #endif
 
 /**
- * struct batadv_tt_common_entry - tt local & tt global common data
+ * struct batadv_tt_common_entry_key - key of a TT entry in
+ *  &batadv_priv_tt.local_hash or &batadv_priv_tt.global_hash
  */
-struct batadv_tt_common_entry {
+struct batadv_tt_common_entry_key {
 	/** @addr: mac address of non-mesh client */
 	u8 addr[ETH_ALEN] __aligned(2);
 
 	/** @vid: VLAN identifier */
 	unsigned short vid;
+};
+
+/**
+ * struct batadv_tt_common_entry - tt local & tt global common data
+ */
+struct batadv_tt_common_entry {
+	/** @key: hash key identifying the TT client */
+	struct batadv_tt_common_entry_key key;
 
 	/**
 	 * @hash_entry: hlist node for &batadv_priv_tt.local_hash or for
