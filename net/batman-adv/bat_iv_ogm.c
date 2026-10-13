@@ -155,7 +155,7 @@ batadv_iv_ogm_orig_get(struct batadv_priv *bat_priv, const u8 *addr)
 
 	kref_get(&orig_node->refcount);
 	hash_added = batadv_hash_add(bat_priv->orig_hash, batadv_compare_orig,
-				     batadv_choose_orig, orig_node,
+				     batadv_choose_orig, orig_node->orig,
 				     &orig_node->hash_entry);
 	if (hash_added != 0)
 		goto free_orig_node_hash;

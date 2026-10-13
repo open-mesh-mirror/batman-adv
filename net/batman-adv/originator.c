@@ -45,12 +45,12 @@ static struct lock_class_key batadv_orig_hash_lock_class_key;
 /**
  * batadv_orig_hash_find() - Find and return originator from orig_hash
  * @bat_priv: the bat priv with all the mesh interface information
- * @data: mac address of the originator
+ * @addr: mac address of the originator
  *
  * Return: orig_node (with increased refcnt), NULL on errors
  */
 struct batadv_orig_node *
-batadv_orig_hash_find(struct batadv_priv *bat_priv, const void *data)
+batadv_orig_hash_find(struct batadv_priv *bat_priv, const u8 *addr)
 {
 	struct batadv_hashtable *hash = bat_priv->orig_hash;
 	struct batadv_orig_node *orig_node_tmp = NULL;
@@ -61,12 +61,12 @@ batadv_orig_hash_find(struct batadv_priv *bat_priv, const void *data)
 	if (!hash)
 		return NULL;
 
-	index = batadv_choose_orig(data, hash->size);
+	index = batadv_choose_orig(addr, hash->size);
 	head = &hash->table[index];
 
 	rcu_read_lock();
 	hlist_for_each_entry_rcu(orig_node, head, hash_entry) {
-		if (!batadv_compare_eth(orig_node, data))
+		if (!batadv_compare_orig(&orig_node->hash_entry, addr))
 			continue;
 
 		if (!kref_get_unless_zero(&orig_node->refcount))
@@ -85,16 +85,17 @@ static void batadv_purge_orig(struct work_struct *work);
 /**
  * batadv_compare_orig() - comparing function used in the originator hash table
  * @node: node in the local table
- * @data2: second object to compare the node to
+ * @data2: mac address of the originator to compare the node to
  *
- * Return: true if they are the same originator
+ * Return: true if the node is the originator with the given address
  */
 bool batadv_compare_orig(const struct hlist_node *node, const void *data2)
 {
-	const void *data1 = container_of(node, struct batadv_orig_node,
-					 hash_entry);
+	const struct batadv_orig_node *orig_node;
 
-	return batadv_compare_eth(data1, data2);
+	orig_node = container_of(node, struct batadv_orig_node, hash_entry);
+
+	return batadv_compare_eth(orig_node->orig, data2);
 }
 
 /**

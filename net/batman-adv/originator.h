@@ -83,7 +83,7 @@ static inline u32 batadv_choose_orig(const void *data, u32 size)
 }
 
 struct batadv_orig_node *
-batadv_orig_hash_find(struct batadv_priv *bat_priv, const void *data);
+batadv_orig_hash_find(struct batadv_priv *bat_priv, const u8 *addr);
 
 /**
  * batadv_orig_node_vlan_put() - decrement the refcounter and possibly release
