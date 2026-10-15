@@ -12,4 +12,12 @@
 
 #endif /* LINUX_VERSION_IS_LESS(6, 10, 0) */
 
+#if LINUX_VERSION_IS_LESS(7, 0, 0)
+
+#ifndef __must_hold_shared
+#define __must_hold_shared(...)	__must_hold(__VA_ARGS__)
+#endif
+
+#endif /* LINUX_VERSION_IS_LESS(7, 0, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_COMPILER_TYPES_H_ */
