@@ -16,4 +16,11 @@
 
 #endif /* LINUX_VERSION_IS_LESS(6, 0, 0) */
 
+#if LINUX_VERSION_IS_LESS(6, 15, 0) && \
+    !(LINUX_VERSION_IS_GEQ(6, 12, 114) && LINUX_VERSION_IS_LESS(6, 13, 0))
+
+#define netns_immutable netns_local
+
+#endif /* LINUX_VERSION_IS_LESS(6, 15, 0) */
+
 #endif	/* _NET_BATMAN_ADV_COMPAT_LINUX_NETDEVICE_H_ */
