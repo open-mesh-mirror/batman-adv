@@ -1099,13 +1099,25 @@ static void batadv_tt_tvlv_container_update(struct batadv_priv *bat_priv)
 	tvlv_len = batadv_tt_prepare_tvlv_local_data(bat_priv, &tt_data,
 						     &tt_change, &tt_diff_len);
 	if (!tvlv_len) {
-		/* the TTVN of the changes is lost and the other nodes will
-		 * have to request the full table anyway
+		/* the changes are lost and the other nodes have to request the
+		 * full table. Don't answer TT requests for the new TTVN with
+		 * the stale changeset of the previous TTVN
 		 */
 		list_for_each_entry_safe(entry, safe, &changes_list, list) {
 			list_del(&entry->list);
 			kmem_cache_free(batadv_tt_change_cache, entry);
 		}
+
+		spin_lock_bh(&bat_priv->tt.last_changeset_lock);
+		kfree(bat_priv->tt.last_changeset);
+		bat_priv->tt.last_changeset = NULL;
+		bat_priv->tt.last_changeset_len = 0;
+		spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
+
+		/* announce the already committed TTVN in the next OGM interval
+		 * instead of waiting for BATADV_TT_OGM_APPEND_MAX idle rounds
+		 */
+		atomic_set(&bat_priv->tt.ogm_append_cnt, 0);
 		return;
 	}
 
