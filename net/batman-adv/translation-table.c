@@ -1439,18 +1439,22 @@ static void batadv_tt_tvlv_container_update(struct batadv_priv *bat_priv,
 	if (!tvlv_len) {
 		/* the changes are lost and the other nodes have to request the
 		 * full table. Don't answer TT requests for the new TTVN with
-		 * the stale changeset of the previous TTVN
+		 * the stale changeset of the previous TTVN. Without changes, the
+		 * TTVN was not incremented and the last changeset is still valid
 		 */
-		list_for_each_entry_safe(entry, safe, changes_list, list) {
-			list_del(&entry->list);
-			kmem_cache_free(batadv_tt_change_cache, entry);
-		}
+		if (drop_changes || tt_diff_entries_num > 0) {
+			list_for_each_entry_safe(entry, safe, changes_list,
+						 list) {
+				list_del(&entry->list);
+				kmem_cache_free(batadv_tt_change_cache, entry);
+			}
 
-		spin_lock_bh(&bat_priv->tt.last_changeset_lock);
-		kfree(bat_priv->tt.last_changeset);
-		bat_priv->tt.last_changeset = NULL;
-		bat_priv->tt.last_changeset_len = 0;
-		spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
+			spin_lock_bh(&bat_priv->tt.last_changeset_lock);
+			kfree(bat_priv->tt.last_changeset);
+			bat_priv->tt.last_changeset = NULL;
+			bat_priv->tt.last_changeset_len = 0;
+			spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
+		}
 
 		/* announce the already committed TTVN in the next OGM interval
 		 * instead of waiting for BATADV_TT_OGM_APPEND_MAX idle rounds
