@@ -2184,8 +2184,9 @@ void batadv_mcast_free(struct batadv_priv *bat_priv)
 	batadv_tvlv_handler_unregister(bat_priv, BATADV_TVLV_MCAST_TRACKER, 1);
 	batadv_tvlv_handler_unregister(bat_priv, BATADV_TVLV_MCAST, 2);
 
-	/* safely calling outside of worker, as worker was canceled above */
+	spin_lock(&bat_priv->mcast.mla_lock);
 	batadv_mcast_mla_tt_retract(bat_priv, NULL);
+	spin_unlock(&bat_priv->mcast.mla_lock);
 }
 
 /**
