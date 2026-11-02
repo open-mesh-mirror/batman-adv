@@ -92,6 +92,7 @@ int batadv_send_skb_packet(struct sk_buff *skb,
 	skb->protocol = htons(ETH_P_BATMAN);
 
 	skb->dev = hard_iface->net_dev;
+	skb_clear_tstamp(skb);
 
 	/* dev_queue_xmit() returns a negative result on error.	 However on
 	 * congestion and traffic shaping, it drops and returns NET_XMIT_DROP
