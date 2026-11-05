@@ -1,5 +1,33 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+2026.4 (2026-11-05)
+===================
+
+* support latest kernels (5.18 - 7.4)
+* coding style cleanups and refactoring
+* improve locking and state handling for the translation table
+* bugs squashed:
+
+  - avoid WARN_ON for orig_ifinfo allocation failure
+  - bla: avoid double free after failed backbone_hash alloc
+  - bat_v: fix bonding candidate selection
+  - clear skbuff timestamp on send
+  - close OGM aggregation before transmission
+  - dat: fix printing of unknown 4addr subtype
+  - dat: initialize orig_node of unfilled candidate slots
+  - fix skb leak when hard_iface is being released
+  - mcast: validate tracker padding before forwarding
+  - stop originator purge worker before freeing TT
+  - tpmeter: fix u32 truncation of reported bytes
+  - tt: clear ROAM flag when re-adding a pending local client
+  - tt: don't drop local events queued during TVLV update
+  - tt: ignore ROAM flag of received ADD changes
+  - tt: limit local table to single TVLV response size
+  - tt: only transmit local ROAM flag together with DEL
+  - tt: only update flags for TT events
+  - tt: send ROAM_ADV on each roamed back client
+  - tt: take local changes snapshot before TTVN decision
+
 2026.3 (2026-08-31)
 ===================
 
